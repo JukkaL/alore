@@ -25,9 +25,9 @@ then
   exit 1
 fi
 
-if [ ! -f ./Makefile.in ] || [ ! -d .svn ]
+if [ ! -f ./Makefile.in ] || [ ! -d .git ]
 then
-  echo "You must run this script in the root directory of the Alore svn"
+  echo "You must run this script in the root directory of the Alore git"
   echo "working copy!"
   exit 1
 fi
