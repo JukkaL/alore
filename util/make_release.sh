@@ -90,8 +90,6 @@ mkdir $DEST/util
 cp util/*.alo $DEST/util
 mkdir $DEST/util/compiler
 cp util/compiler/*.alo $DEST/util/compiler
-# Omit whenbroke.alo, since it only works in a svn working copy.
-rm $DEST/util/whenbroke.alo
 
 # Copy the test directory contents.
 for dir in `find test -xtype d -a -regex '[a-z0-9/]*'`
