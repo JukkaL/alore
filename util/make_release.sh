@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Generate and test a tar.gz source release file from a svn working copy.
+# Generate and test a tar.gz source release file from a git working copy.
 #
 # TODO:
 #  - generate also a zip file (for Windows users)

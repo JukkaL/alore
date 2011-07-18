@@ -30,7 +30,7 @@ MOD_CFLAGS = $(CFLAGS) @CC_SHARED_FLAGS@
 IMPLIB = @IMPLIB@
 
 # Either buildversion or empty (depending on whether we are building from a
-# svn working copy or not).
+# git working copy or not).
 VERSIONDEP = @VERSIONDEP@
 
 # @SOEXT@ and @EXEEXT@ are also required.
@@ -228,7 +228,7 @@ checkhtml: doc
 checklinks: doc
 	linkchecker -a --no-status doc/html/index.html
 
-# Always update build.h if building from a svn working copy.
+# Always update build.h if building from a git working copy.
 build.h: $(VERSIONDEP)
 	@if [ -d .git ]; \
 	then \

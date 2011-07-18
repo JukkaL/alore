@@ -4,7 +4,7 @@
 
 cd doc
 
-# Determine version string (either a svn revision or release string).
+# Determine version string (either a git revision or release string).
 VERSION=`egrep "^#define (A_VERSION|A_SNAPSHOT)" ../src/version.h | \
             sed 's/^.*"\(.*\)".*/\1/g'`
 VERSION_STR="Release $VERSION"
