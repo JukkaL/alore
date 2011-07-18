@@ -1,0 +1,4 @@
+module bar::zar
+import foo2
+
+var AnotherGlobal = foo2::Global - 1

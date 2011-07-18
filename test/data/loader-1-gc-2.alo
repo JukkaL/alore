@@ -1,0 +1,12 @@
+import foo5
+
+def Get()
+  return foo5::Foo
+end
+
+def Set(v)
+  foo5::Foo = v
+end
+
+def Main()
+end

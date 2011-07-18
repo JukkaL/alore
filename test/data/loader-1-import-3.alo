@@ -1,0 +1,6 @@
+import foo4
+
+var Foo = foo4::Global
+
+def Main()
+end

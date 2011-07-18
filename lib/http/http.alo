@@ -1,0 +1,326 @@
+-- http.alo - HTTP client
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module http
+
+import socket
+import io
+import string
+import re
+import base64
+import url
+import os
+
+
+-- FIX:
+--  - do not raise IoError if there is an obvious protocol error
+--  - verify that ValueErrors or TypeErrors are not raised in response to
+--    protocol errors
+--  - windows proxy support
+--  ? result type constants
+
+
+private const InitialState
+
+
+const HttpPort = 80
+
+
+class HttpError is IoError
+end
+
+
+class Http
+  private var socket
+  private var host
+  private var port
+  private var username
+  private var password
+  private var numPendingRequests = 0
+  private var numRequests = 0
+  private var open = True
+
+  def create(host, port = HttpPort)
+    socket = Socket(host, port, Buffered)
+    self.host = host
+    self.port = port
+  end
+  
+  def auth(username, password)
+    self.username = username
+    self.password = password
+  end
+  
+  def request(method, url, headers = [], body = "")
+    -- Method and location must not be empty.
+    if method == "" or method == nil
+      raise HttpError("Empty or missing request method")
+    end
+    if url == "" or url == nil
+      raise HttpError("Empty or missing request URL")
+    end
+    
+    socket.write("{} {} HTTP/1.1".format(method, url), CR+LF)
+    
+    -- Generate the host header.
+    
+    var hosth = host
+    var porth = port
+    -- If using a proxy, we need to extract the host name from the requested
+    -- URL.
+    if url.startsWith("http")
+      var u = Url(url)
+      hosth = u.host
+      porth = u.port
+    end
+    -- Non-default port must be included in the host header.
+    if porth != HttpPort and porth != -1
+      hosth = "{}:{}".format(hosth, porth)
+    end
+    socket.write("Host: ", hosth, CR+LF)
+    
+    for hv in headers
+      socket.write("{}: {}".format(hv.left, hv.right), CR+LF)
+    end
+    if username != nil
+      var auth = Base64Encode("{}:{}".format(username, password))
+      socket.write("Authorization: Basic ", auth, CR+LF)
+    end
+    if body != ""
+      socket.write("Content-Length: {}".format(body.length()), CR+LF)
+    end
+    socket.write(CR+LF)
+    socket.write(body)
+    socket.flush()
+    
+    numRequests += 1
+    numPendingRequests += 1
+  end
+  
+  def response()
+    if numPendingRequests == 0
+      raise HttpError("No active requests")
+    end
+  
+    var version, status, reason, headers = readHead()
+    
+    -- When using HTTP 1.0, only a single request can be passed unless
+    -- the non-standard Keep-Alive header is present (ignored currently).
+    if version == "1.0" --and not headers.hasKey("keep-alive")
+      open = False
+    end
+    
+    -- HTTP 1.1 (and later) may use the "Connection: close" header to deny 
+    -- additional requests.
+    if version != "1.0" and version >= "1" and 
+       headers.hasKey("connection") and
+       headers["connection"].lower().find("close") >= 0
+      open = False
+    end
+    
+    numPendingRequests -= 1
+    
+    return HttpResponse(version, status, reason, headers, socket)
+  end
+
+  private def readHead()
+    var a, m
+  
+    repeat
+      a = []
+      var status = socket.readLn()
+      m = Match("HTTP/([0-9.]+) +([0-9]+)(.*)", status)
+      if m == nil
+        raise HttpError("Invalid response")
+      end
+      while True
+        var s = socket.readLn()
+        if s == ""
+          break
+        end
+        a.append(s)
+      end
+    until m.group(2)[0] != "1"
+    -- Ignore any responses with 1xx status codes.
+    
+    return m.group(1), Int(m.group(2)), m.group(3).strip(), HttpHeaders(a)
+  end  
+  
+  def close()
+    socket.close()
+  end
+  
+  def isOpen()
+    if numRequests > 0 and numPendingRequests == numRequests
+      raise HttpError("No responses read")
+    end
+    
+    return open
+  end
+end
+
+
+class HttpResponse is Stream
+  const version
+  const status
+  const reason
+  const headers
+  
+  private const socket
+  private var len
+  private var chunked = False
+  
+  def create(version, status, reason, headers, socket)
+    super.create(Input, Narrow, Buffered)
+    self.version = version
+    self.status = status
+    self.reason = reason
+    self.headers = headers
+    self.socket = socket
+    
+    if headers.hasKey("transfer-encoding")
+      if headers["transfer-encoding"].lower() == "chunked"
+        chunked = True
+        len = readChunkLen()
+      end
+    end
+    
+    if headers.hasKey("content-length") and not chunked
+      len = Int(headers["content-length"])
+    end
+  end
+  
+  def _read(n)
+    if len != nil
+      n = Min(n, len)
+      if len == 0
+        return nil
+      end
+    end
+    
+    var result
+    var p = socket.peek()
+    if p != ""
+      n = Min(p.length(), n)
+      socket.read(n)
+      result = p[:n]
+    else
+      result = socket._read(n)
+    end
+    if len != nil
+      len -= result.length()
+    end
+    if len == 0 and chunked
+      -- Discard CRLF at the end of a chunk.
+      socket.read(2)
+      len = readChunkLen()
+    end
+    return result
+  end
+  
+  def close()
+    if not eof()
+      read()
+    end
+  end
+  
+  private def readChunkLen()
+    var s = socket.readLn()
+    s = s.split(";")[0]
+    var l
+    try
+      l = Int(s, 16)
+    except ValueError
+      raise HttpError("Protocol error")
+    end
+    if l == 0
+      -- Ignore trailer.
+      repeat
+        s = socket.readLn()
+      until s == ""
+    end
+    return l
+  end
+end
+
+
+class HttpHeaders is Map
+  def create(a)
+    super.create()
+    var i = 0
+    while i < a.length()
+      -- Accept as headers all lines that do not start with a colon.
+      if Match("[^:]+:", a[i]) != nil
+        var name, rest = a[i].split(":", 1)
+        while i + 1 < a.length() and Match("[ \t]", a[i + 1]) != nil
+          i += 1
+          rest += LF + " " + a[i].strip()
+        end
+        var l = name.lower()
+        if altMap.hasKey(l)
+          -- Multiple header values with the same name are combined with a
+          -- comma (RFC 2616 section 4.2).
+          name = altMap[l]
+          var value = super._get(name)
+          if value is Str
+            super._set(name, value + ", " + rest.strip())
+          else
+            raise TypeError("Str expected")
+          end
+        else
+          super._set(name, rest.strip())
+        end
+        altMap[l] = name
+      else
+        raise HttpError("Invalid response headers")
+      end
+      i += 1
+    end
+  end
+  
+  def _get(name)
+    if name is Str
+      var item = super._get(altMap[name.lower()])
+      if item is Str
+        return item
+      end
+    end
+    raise TypeError("Str expected")
+  end
+  
+  def _set(name, value)
+    raise ValueError("Object immutable")
+  end
+  
+  def remove(name)
+    raise ValueError("Object immutable")
+  end
+  
+  def hasKey(name)
+    if name is Str
+      return altMap.hasKey(name.lower())
+    else
+      raise TypeError("Str expected")
+    end
+  end
+  
+  private var altMap = Map()
+end
+
+
+def DefaultProxy()
+  var env = GetEnv("http_proxy")
+  if env != nil
+    if not ":" in env
+      return (env, HttpPort)
+    else
+      var host, port = env.split(":")
+      return (host, Int(port))
+    end
+  end
+  return nil
+end

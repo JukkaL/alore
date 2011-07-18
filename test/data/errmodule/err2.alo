@@ -1,0 +1,6 @@
+-- A module with errors in it.
+
+module errmodule
+
+def Func()
+end

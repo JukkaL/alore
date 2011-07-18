@@ -1,0 +1,252 @@
+@head
+@module time
+@title Class <tt>time::DateTime</tt>
+@index DateTime
+
+<p>The <tt>DateTime</tt> class represents a specific point in time.
+<tt>DateTime</tt> instances are immutable.
+
+@class DateTime()
+@desc Construct a <tt>DateTime</tt> object representing the current time and 
+      date in local time.
+@end
+
+@class DateTime(year, month, day, hour, minute, second)
+@desc Construct a <tt>DateTime</tt> object representing a specific point in
+      time. Seconds
+      must be a float or an integer and all other arguments must
+      be integers. None of the values are restricted to any specific
+      range. If they are outside the valid range of values, they are
+      normalized and the excess is moved to the larger units. So if
+      seconds is 64, the actual second value becomes 4 and minutes are
+      incremented by one, etc.
+@end
+
+@class DateTime(string[, format])
+@desc Construct a <tt>DateTime</tt> object from a string. The format argument 
+      specifies the format of the string. If the format is omitted, the format
+      will be "YYYY-MM-DD hh:mm:ss.s".
+
+      <p>The format must contain <i>format sequences</i> for all
+      <tt>DateTime</tt> components (seconds, minutes, hours, day, month, year).
+      A format sequence matches a <tt>DateTime</tt>
+      component in the string. The following list contains all the
+      available format sequences and examples of valid values:
+      
+      <table class="no-border" summary="Format sequences">
+        <tr>
+          <td>s
+          <td>seconds (1, 30)
+        <tr>
+          <td>ss
+          <td>seconds, at least 2 digits (01, 30)
+        <tr>
+          <td>s.s
+          <td>seconds with an optional fraction (5, 5.0, 5.12, ...)
+        <tr>
+          <td>ss.s
+          <td>seconds with an optional fraction, at least 2 digits in the
+              integer part
+              (05, 05.0, 05.12, ...)
+        <tr>
+          <td>m
+          <td>minutes (1, 30)
+        <tr>
+          <td>mm
+          <td>minutes, at least 2 digits (01, 30)
+        <tr>
+          <td>h
+          <td>hours (1, 13)
+        <tr>
+          <td>hh
+          <td>hours, at least 2 digits (01, 30)
+        <tr>
+          <td>[am/pm]
+          <td>specifier for a.m. or p.m. (all h and hh sequences
+              in the same format string will also follow 12-hour clock
+              conventions; "am"
+              and "pm" in the formatting sequence may be replaced with
+              arbitrary strings, and the matched string must contain one of
+              these strings)
+        <tr>
+          <td>D
+          <td>day of month (1, 2, ...,  31)
+        <tr>
+          <td>DD
+          <td>day of month, at least 2 digits (01, 02, ... 31)
+        <tr>
+          <td>M
+          <td>month (1, 2, ..., 12)
+        <tr>
+          <td>MM
+          <td>month, at least 2 digits (01, 02, ... 12)
+        <tr>
+          <td>MMM
+          <td>abbreviated name of month (Jan, Feb, ..., Dec)
+        <tr>
+          <td>MMMM&nbsp;
+          <td>name of month (January, February, ..., December) 
+        <tr>
+          <td>YY
+          <td>year, 2 digits (00, 01, ... 99)
+        <tr>
+          <td>YYYY
+          <td>year, 4 digits (2005)
+      </table>
+
+      <p>Case is not significant in the month names and abbreviations.
+      The YY values 69-99 are mapped to years 1969-1999, and 00-68 are mapped
+      to years 2000-2068. It is recommended to use the YYYY format for
+      years so that years before 1969 and after 2068 can be represented.
+
+      <p>Any other characters in the format must be matched by the same
+      character in the string. As an exception, a backslash \ followed by a
+      character <i>c</i> must be matched by <i>c</i>.
+@end
+
+<h2>Members</h2>
+
+@var year
+@desc Year of the date
+@end
+
+@var month
+@desc Month of the date (1 = January, 2 = February, ...)
+@end
+
+@var day
+@desc Day of month (the first day of the month is 1)
+@end
+
+@var hour
+@desc Hour (range 0 to 23, inclusive)
+@end
+
+@var minute
+@desc Minute (range 0 to 59, inclusive)
+@end
+
+@var second
+@desc Seconds (0 &lt;= second &lt; 60; float)
+@end
+
+@var weekday
+@desc Weekday of the date (1 = Monday, 2 = Tuesday, ..., 7 = Sunday).
+@end
+
+@fun week([rule])
+@desc Return the week number. The rule argument specifies how the week number
+      is calculated. It can be one of @ref{FirstWeek}, @ref{FirstFourDayWeek}
+      or @ref{FirstFullWeek}. If unspecified,
+      <tt>FirstFourDayWeek</tt> is assumed. Sunday is considered to be the
+      last day of the week and Monday the first.
+@end
+
+@fun format(template)
+@desc <p class="trim">Format the date and time as a string.
+      The template string defines the format of
+      the result. The following <i>formatting sequences</i> in the template
+      are replaced with formatted <tt>DateTime</tt> components (examples within
+      parentheses):
+      
+      <table class="no-border" summary="Format sequences">
+        <tr>
+          <td>s
+          <td>seconds as an integer (5)
+        <tr>
+          <td>ss
+          <td>seconds as an integer, at least 2 digits (05)
+        <tr>
+          <td>s.s,&nbsp;s.ss, ...
+          <td>seconds as a fraction (5.0, 5.12, ...)
+        <tr>
+          <td>ss.s,&nbsp;ss.ss,&nbsp;...&nbsp;
+          <td>seconds as a fraction, at least 2 digits in the integer part
+              (05.0, 05.12, ...)
+        <tr>
+          <td>h
+          <td>hours (6)
+        <tr>
+          <td>hh
+          <td>hours, at least 2 digits (06)
+        <tr>
+          <td>m
+          <td>minutes (4)
+        <tr>
+          <td>mm
+          <td>minutes, at least 2 digits (04)
+        <tr>
+          <td>d
+          <td>days (3)
+        <tr>
+          <td>dd,&nbsp;ddd,&nbsp;...&nbsp;
+          <td>days, at least n digits (03, 003, ...)
+        <tr>
+          <td>-
+          <td>sign of the time (empty or "-")
+        <tr>
+          <td>[am/pm]
+          <td>a.m. or p.m. according 12-hour clock; all h and hh sequences
+              in the same format string will also follow 12-hour clock
+              conventions ("am" and "pm" may be replaced with arbitrary
+              strings, and one of these is substituted in the result string)
+        <tr>
+          <td>D
+          <td>day of month (5)
+        <tr>
+          <td>DD
+          <td>day of month, at least 2 digits (05)
+        <tr>
+          <td>M
+          <td>month (5)
+        <tr>
+          <td>MM
+          <td>month, at least 2 digits (05)
+        <tr>
+          <td>MMM
+          <td>abbreviated name of month (Feb)
+        <tr>
+          <td>MMMM&nbsp;
+          <td>name of month (February) 
+        <tr>
+          <td>YY
+          <td>year, 2 digits (06)
+        <tr>
+          <td>YYYY
+          <td>year, 4 digits (2006)
+        <tr>
+          <td>WWW
+          <td>abbreviation of weekday (Wed)
+        <tr>
+          <td>WWWW&nbsp;
+          <td>weekday (Wednesday)
+      </table>
+      <p>Other characters in the template are copied as such to the result.
+        As an exception, a backslash \ followed by a character <i>c</i> is
+        replaced with <i>c</i>.
+@end
+
+
+<h2>Operations</h2>
+
+
+@op datetime + time
+@op datetime - time
+@desc @ref{Time} objects can be added to and subtracted from
+      <tt>DateTime</tt> objects.
+@end
+
+@op Str(datetime)
+@desc Convert a <tt>DateTime</tt> object to a string of
+      the form "YYYY-MM-DD hh:mm:ss".
+@end
+
+@op datetime1 == datetime2
+@op datetime1 &lt; datetime2
+@desc <tt>DateTime</tt> objects can be compared for equality and order. An
+      earlier instant is smaller than a later instant.
+@end
+
+@op Hash(datetime)
+@desc Return the hash value of a <tt>DateTime</tt> object.
+@end

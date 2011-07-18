@@ -1,0 +1,110 @@
+-- arguments.alo - Access to parsed command line arguments
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module argparse
+
+
+-- This class represents a parsed command line argument list.
+class Arguments
+  private const parser         as Parser
+  private const opts           as Array<(Str, Str)>
+  private const _rest          as Array<Str>
+  private const descriptions   as Array<Str>
+  private const optMap = Map() as Map<Str, Array<Str>>
+
+  -- Construct an instance.
+  def create(parser as Parser, opts as Array<(Str, Str)>, 
+             rest as Array<Str>, descriptions as Array<Str>)
+    self.parser = parser
+    self.opts = opts
+    self._rest = rest
+    self.descriptions = descriptions
+    
+    for arg, value in opts
+      var a = self.optMap.get(arg, [])
+      a.append(value)
+      self.optMap[arg] = a
+    end
+  end
+
+  -- Return the argument of an argument, or default if the argument is not
+  -- present.
+  def get(name as Str, default as Str) as Str
+    if not hasKey(name)
+      return default
+    else
+      return self[name]
+    end
+  end
+  
+  -- Was the named argument given in the command line?
+  def hasKey(name as Str) as Boolean
+    return self.optMap.hasKey(name)
+  end
+  
+  -- Return an iterator that iterates over the options.
+  def iterator() as Iterator<(Str, Str)>
+    return self.opts.iterator()
+  end
+  
+  -- Return the rest of the arguments, if an arbitary-length argument list was
+  -- accepted.
+  def rest() as Array<Str>
+    return self._rest.copy()
+  end
+  
+  -- Return the number of options in the map.
+  def length() as Int
+    return self.opts.length()
+  end
+  
+  -- Return all the options that were provided.
+  def keys() as Array<Str>
+    var a = [] as <Str>
+    for arg, value in self.opts
+      if not arg in a
+        a.append(arg)
+      end
+    end
+    return a
+  end
+  
+  -- Return the values of all the options that were provided.
+  def values(name = nil as Str) as Array<Str>
+    if name == nil
+      var a = [] as <Str>
+      for arg, value in self.opts
+        a.append(value)
+      end
+      return a
+    elif hasKey(name)
+      return self.optMap[name]
+    else
+      self[name] -- Fail.
+    end
+  end
+  
+  -- Like Map items.
+  def items() as Array<(Str, Str)>
+    return self.opts.copy()
+  end
+  
+  -- Look up the argument for an option, or raise KeyError.
+  def _get(name as Str) as Str
+    var val = self.optMap.get(name, nil)
+    if val == nil
+      raise KeyError(Str(name))
+    else
+      -- IDEA: What if there are multiple instance? Should we report an error?
+      return val[-1]
+    end
+  end
+  
+  def _str() as Str
+    return "Arguments({}, {})".format(self.opts, rest())
+  end
+end

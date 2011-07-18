@@ -1,0 +1,41 @@
+@head
+@title Comparison operations
+
+<p>These API functions perform operations that are equivalent to using
+Alore comparison operators such as == and &lt;. Therefore they support multiple
+operand types and operator overloading, in a similar fashion to the Alore
+operators.
+
+<p>Each of these functions returns an int: 
+
+<ul>
+  <li>1 if the comparison was true
+  <li>0 if the comparison was false
+  <li>a negative value if a normal exception was raised.
+</ul>
+
+<p>All of these functions may raise direct or normal exceptions.
+
+@fun int AIsEq(AThread *t, AValue a, AValue b)
+@desc Perform the comparison operation a == b.
+@end
+
+@fun int  AIsNeq(AThread *t, AValue a, AValue b)
+@desc Perform the comparison operation a != b.
+@end
+
+@fun int AIsLt(AThread *t, AValue a, AValue b)
+@desc Perform the comparison operation a &lt; b.
+@end
+
+@fun int AIsGt(AThread *t, AValue a, AValue b)
+@desc Perform the comparison operation a &gt; b.
+@end
+
+@fun int AIsGte(AThread *t, AValue a, AValue b)
+@desc Perform the comparison operation a &gt;= b.
+@end
+
+@fun int AIsLte(AThread *t, AValue a, AValue b)
+@desc Perform the comparison operation a &lt;= b.
+@end

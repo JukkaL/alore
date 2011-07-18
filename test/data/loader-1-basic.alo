@@ -1,0 +1,22 @@
+const Foo = 3
+private var Private1 = 2;
+
+var Global1
+var Global2 = TimesThree(4)
+
+def TimesThree(x)
+  return Private2(x)
+end
+
+def Main()
+  Global1 = TimesThree(2)
+end
+
+class MyClass
+  def foo()
+  end
+end
+
+private def Private2(x)
+  return Foo * x + Private1 - 2
+end

@@ -1,0 +1,86 @@
+.TH ALOREC 1 "2010-10-11"
+
+./" Preview with groff:
+./"   groff -Tascii -man alore.man | less
+
+.SH NAME
+alorec \- Alore compiler
+.SH SYNOPSIS
+.B alorec
+[
+.I options
+]
+.I programfile
+.SH DESCRIPTION
+.B alorec
+is the Alore compiler.
+It compiles and links Alore programs into stand-alone binary executable files.
+.LP
+The Alore program in file
+.I programfile
+is compiled.
+The resulting file is created in the directory containing
+.IR programfile .
+The name of the file is
+.IR programfile
+with the extension removed.
+If
+.I programfile
+does not have an extension, the resulting file will have the extension
+.IR .out .
+.LP
+.B alorec
+uses
+.B gcc
+or
+.B cc
+as its back end.
+.LP
+Options start with
+.B '\-'
+and are described below.
+.SH OPTIONS
+.TP
+.B \-g
+Include C debugging information in the generated executable.
+.TP
+.B \-L path
+Add a path to the module search path.
+.TP
+.B \-v, \-\-version
+Show version information and exit.
+.TP
+.B \-\-keep-temps
+Do not delete temporary files created during compilation.
+.TP
+.B \-\-verbose
+Output additional debugging information.
+This is often useful for resolving compilation problems.
+.SH FILES AND DIRECTORIES
+Modules are searched in platform-specific default locations (typically
+/usr/local/lib/alore or /usr/lib/alore) and in the directory containing
+.IR programfile .
+Additionally, the environment variable ALOREPATH can be used
+to add additional directories to the module search path.
+.LP
+Modules are first searched in the directory containing
+.IR programfile ,
+then according to ALOREPATH and finally in the default locations.
+.SH ENVIRONMENT VARIABLES
+.IP ALOREPATH
+Search for imported modules in the additional directories specified by this
+environment variable.
+Multiple directories must be separated with ':'.
+The directories are searched in the order they appear in the value of this
+environment variable.
+.SH BUGS
+The created executable file contains the original program and any imported
+modules in textual form.
+.B alorec
+does not provide any protection against reverse engineering of programs.
+.SH "SEE ALSO"
+.BR alore (1),
+.BR gcc (1)
+.BR cc (1)
+.SH AUTHOR
+Jukka Lehtosalo

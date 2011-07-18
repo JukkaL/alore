@@ -1,0 +1,21 @@
+Credits
+-------
+
+These people have helped Alore become what it is today. The list is incomplete
+and in (more or less) alphabetical order.
+
+ -- Jukka Lehtosalo
+
+Max Bolingbroke
+Kathy Gray
+David J Greaves
+Jussi Hagman
+Riitta Ikonen
+Terho Ikonen
+Laura Lehtosalo
+Seppo Mattila
+Alan Mycroft
+Ilpo Riikonen
+Juha Sorva
+Jorma Tarhio
+Teemu Tomperi

@@ -1,0 +1,244 @@
+-- cgi.alo - Common Gateway Interface
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module cgi
+
+import os
+import string
+import url
+import io
+import email
+
+
+-- TODO:
+--  ? AsciiEscape - replace \u00ff with &#255; etc.
+
+
+-- Default maximum post size
+private var MaxPostSize = 10 * 1024 * 1024
+
+
+def HtmlEncode(s)
+  s = s.replace("&", "&amp;")
+  s = s.replace("<", "&lt;")
+  s = s.replace(">", "&gt;")
+  s = s.replace("""", "&quot;")
+  return s
+end
+
+
+def HtmlEncodeQuotes(s)
+  s = HtmlEncode(s)
+  s = s.replace("'", "&#39;")
+  return s
+end
+
+
+class Request is Map
+  def create()
+    super.create()
+    
+    var opts
+  
+    method = GetEnv("REQUEST_METHOD")
+    pathInfo = GetEnv("PATH_INFO")
+    remoteAddr = GetEnv("REMOTE_ADDR")
+    remoteHost = GetEnv("REMOTE_HOST")
+    contentType, opts = ParseHeader(GetEnv("CONTENT_TYPE"))
+    userAgent = GetEnv("HTTP_USER_AGENT")
+    
+    var cl = GetEnv("CONTENT_LENGTH")
+    if cl != nil
+      contentLength = Int(cl)
+      if MaxPostSize != -1 and contentLength > MaxPostSize
+        raise RuntimeError("Maximum post size exceeded")
+      end
+    end
+    
+    multiMap = Map()
+    uploadMap = Map()
+    
+    -- Handle query (GET, POST and HEAD are supported).
+    var q = nil
+    if method == "POST"
+      if contentType == "application/x-www-form-urlencoded"
+        q = RawStdIn.read(contentLength)
+      elif contentType == "multipart/form-data"
+        parseMultipart(opts["boundary"], contentLength)
+      end
+    else
+      q = GetEnv("QUERY_STRING")
+    end
+    if q != nil
+      for nameValue in ParseQuery(q)
+        addFormParam(nameValue.left, nameValue.right)
+      end
+    end
+  end
+  
+  def valueList(name)
+    if multiMap.hasKey(name)
+      return [self[name]] + multiMap[name]
+    elif hasKey(name)
+      return [self[name]]
+    else
+      return []
+    end
+  end
+  
+  def hasUpload(name)
+    return uploadMap.hasKey(name) and uploadMap[name] != []
+  end
+  
+  def uploadList(name)
+    if not uploadMap.hasKey(name)
+      return []
+    end
+    return uploadMap[name].copy()
+  end
+  
+  def uploads()
+    var res = []
+    for n in uploadMap.keys()
+      if uploadMap[n] != []
+        res.append(n)
+      end
+    end
+    return res
+  end
+  
+  const method
+  const contentType
+  const contentLength
+  const pathInfo
+  const remoteAddr
+  const remoteHost
+  const userAgent
+  
+  private var multiMap
+  private var uploadMap
+  
+  private def addFormParam(name, value)
+    if not hasKey(name)
+      self[name] = value
+    else
+      if not multiMap.hasKey(name)
+        multiMap[name] = []
+      end
+      multiMap[name].append(value)
+    end
+  end
+  
+  private def parseMultipart(boundary, len)
+    var s = RawStdIn.read(len)    
+    for part in ParseParts(s, boundary)
+      var m = Message(part)
+      var disp, opts = ParseHeader(m["Content-Disposition"])
+      if disp == "form-data"
+        var name = opts["name"]
+        if not opts.hasKey("filename")
+          -- IDEA: Handle different encodings? At least Mozilla does not
+          --       set the headers correctly... Perhaps it is best to never
+          --       do any decoding and simply return the raw data.
+          addFormParam(name, m.body)
+        else
+          var type = nil
+          if m.hasKey("Content-Type")
+            type = m["Content-Type"]
+          end
+          if not uploadMap.hasKey(name)
+            uploadMap[name] = []
+          end
+          uploadMap[name].append(UploadInfo(opts["filename"], type, m.body))
+        end
+      end
+    end
+  end
+end
+
+
+def SetMaxPostSize(n)
+  MaxPostSize = n
+end
+
+
+def ParseQuery(s)
+  var res = []
+  for x in s.split("&")
+    if "=" in x
+      var key, val = x.split("=")
+      res.append(UrlDecode(key) : UrlDecode(val))
+    end
+  end
+  return res
+end
+
+
+def DumpEnv()
+  var s = RawStdOut
+  s.write("<pre>")
+  for e in ListEnv()
+    s.writeLn("{} {}".format(HtmlEncode(e), HtmlEncode(Repr(GetEnv(e)))))
+  end
+  s.writeLn("</pre>")
+end
+
+
+class UploadInfo
+  const fileName
+  const contentType
+  const data
+end
+
+
+-- Parse a multipart message into parts.  
+private def ParseParts(s, boundaryId)
+  var boundary = "--" + boundaryId + CR + LF
+  var endBoundary = "--" + boundaryId + "--"
+  var p = []
+  var i = 0
+  while True
+    var last = False
+    var nb = s[i:].find(boundary)
+    if nb < 0
+      nb = s[i:].index(endBoundary)
+      last = True
+    end
+    nb += i
+    if i != 0
+      var ss = s[i:nb - 2]
+      p.append(ss)
+    end
+    if last
+      break
+    end
+    i = nb + boundary.length()
+  end
+  return p
+end
+
+
+-- Parse a header string of the form "value[; opt=value ...]".
+-- Return the main value and a map of options.
+private def ParseHeader(header)
+  if header == nil
+    return nil, nil
+  end
+  var a = header.split(";")
+  var main = a[0].strip()
+  var map = Map()
+  for s in a[1:]
+    var key, val = s.split("=", 1)
+    val = val.strip()
+    if val.startsWith("""") and val.endsWith("""")
+      -- IDEA: Handle escape sequences?
+      val = val[1:-1]
+    end
+    map[key.strip().lower()] = val
+  end
+  return main, map
+end

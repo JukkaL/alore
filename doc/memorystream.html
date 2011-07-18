@@ -1,0 +1,57 @@
+@head
+@module memorystream
+@title <tt>memorystream</tt>: Memory-based streams
+
+<p>This module defines the <tt>MemoryStream</tt> class that allows creating
+memory-based streams.
+
+@see The @ref{Stream} class is defined in the @ref{io} module.
+@end
+
+<h2>Class <tt>MemoryStream</tt></h2>
+
+@class MemoryStream([contents])
+@desc Construct a <tt>MemoryStream</tt> instance. If the contents argument is
+      provided,
+      the stream initially contains this string argument. Otherwise, the stream
+      is initially empty. The stream pointer will always be initially 
+      at the start of the stream. <tt>MemoryStream</tt> instances are always 
+      buffered and support both reading and writing.
+      <tt>MemoryStream</tt> inherits from @ref{io::Stream}.
+@end
+
+<h3><tt>MemoryStream</tt> methods</h3>
+
+<p>MemoryStream supports all the @ref{Stream} methods and the following
+additional methods:
+
+@fun seek(n)
+@desc Move the stream pointer to the specified index. 0 refers to the start
+      of the stream, 1 to the position between the first and the second
+      character, and so on.
+@end
+
+@fun pos()
+@desc Return the current stream pointer index.
+@end
+
+@fun size()
+@desc Return the length of the stream contents.
+@end
+
+@fun contents()
+@desc Return the contents of the stream as a string. This method works also if
+      the stream is closed.
+@end
+
+<h2>Example</h2>
+
+@example
+import memorystream
+
+def Main()
+  var s = MemoryStream("Line 1" + Newline + "Line 2")
+  s.readLn() -- Result: "Line 1"
+  s.readLn() -- Result: "Line 2"
+end
+@end

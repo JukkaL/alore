@@ -1,0 +1,286 @@
+module runtime
+
+import unittest
+import __testc
+
+
+class ForSuite is Suite
+  def testTestSimpleIntRange()
+    var a = [nil] * 3
+    for i in 1 to 3
+      a[i] = i
+    end
+    Assert(a[1] == 1 and a[2] == 2 and a[0] == nil)
+  end
+  
+  -- Test various cases of for i in i1 to i2
+  def testIntRange()
+    TestIntRangeMeta(IntRange)
+    TestIntRangeMeta(IntRange2)
+  end
+  
+  def testSimpleArray()
+    var j = 0
+    var d = [0, 0]
+    for i in [-2, 4]
+      d[j] = i
+      j += 1
+    end
+    Assert(d[0] == -2 and d[1] == 4)
+  end
+  
+  def testArray()
+    ForArray([])
+    ForArray([1])
+    ForArray(["foo", "bar"])
+    var a = [nil] * 10345
+    for i in 0 to 10345
+      a[i] = Str(i)
+    end
+    ForArray(a)
+  end
+  
+  def testSimpleIterator()
+    var a = [0, 0]
+    var i = 0
+    for x in IterableType(-2, 4)
+      a[i] = x
+      i += 1
+    end
+    Assert(a[0] == -2 and a[1] == 4)
+  end
+  
+  def testIterator()
+    ForIterator([])
+    ForIterator([1])
+    ForIterator(["foo", "bar"])
+    var a = [nil] * 10345
+    for i in 0 to 10345
+      a[i] = Str(i)
+    end
+    ForIterator(a)
+  end
+  
+  def testIteratorException()
+    var i = 0
+    try
+      for x in ErrIterator(0)
+        WriteLn("here")
+        i += 1
+      end
+    except e is MyError
+      Assert(e.msg == "foo")
+      i += 99
+    end
+    Assert(i == 99)
+    try
+      for x in ErrIterator(1)
+        i += 1
+      end
+    except e is MyError
+      Assert(e.msg == "bar")
+      i += 900
+    end
+    Assert(i == 999)
+    try
+      for x in ErrIterator(2)
+        i += 1
+      end
+    except e is MyError
+      Assert(e.msg == "foobar")
+      i += 1000
+    end
+    Assert(i == 1999)
+    i = 0
+    try
+      for x in ErrIterator(22)
+        i += 1
+      end
+    except MyError
+      i += 100
+    end
+    Assert(i == 110)
+  end
+  
+  -- Test for loop with more than a single loop variable.
+  def testMultiFor()
+    var aa = [nil] * 5
+    var n = 0
+  
+    for a, b, c in []
+      n += 1
+    end
+    Assert(n == 0)
+    
+    for a, b in [(1, 2)]
+      n += 1
+      aa[n] = (b, a)
+    end
+    Assert(n == 1)
+    Assert(aa[1] == (2, 1))
+    
+    n = 0
+    for a, b, c, d in (1, 2, 3, 4), ("foo", "bar", "zar", "dar"), (0, 0, 0, 0)
+      n += 1
+      aa[n] = (d, c, b, a)
+    end
+    Assert(n == 3)
+    Assert(aa[1] == (4, 3, 2, 1))
+    Assert(aa[2] == ("dar", "zar", "bar", "foo"))
+    Assert(aa[3] == (0, 0, 0, 0))
+  end
+end
+
+
+private def TestIntRangeMeta(f)
+  f(0, 0)
+  f(0, 1)
+  f(0, -1)
+  f(-1, 100)
+  f(10, 21)
+  f(-20, 10)
+  f(-30, -40)
+  f(ShortIntMax, ShortIntMax + 1)
+  f(ShortIntMin, ShortIntMin + 1)
+  f(ShortIntMin - 1, ShortIntMin + 1)
+  var large = 9999999999999999999999999999
+  f(large, large + 10)
+  f(-large, -large + 10)
+end
+
+
+private def IntRange(lo, hi)
+  if lo > hi
+    for i in lo to hi + 1
+      raise Exception()
+    end
+  else
+    var a = [nil] * (hi - lo + 2)
+    for i in lo to hi + 1
+      a[i - lo + 1] = i
+    end
+    var i = lo
+    while i <= hi
+      AssertEqual(a[i - lo + 1], i)
+      i += 1
+    end
+  end
+end
+
+
+private def IntRange2(lo, hi)
+  var r = lo to hi + 1
+  if lo > hi
+    for i in r
+      raise Exception()
+    end
+  else
+    var a = [nil] * (hi - lo + 2)
+    for i in r
+      a[i - lo + 1] = i
+    end
+    var i = lo
+    while i <= hi
+      Assert(a[i - lo + 1] == i)
+      i += 1
+    end
+  end
+end
+
+
+private def ForArray(a)
+  var d = [nil] * a.length()
+  var n = 0
+  for x in a
+    d[n] = x
+    n += 1
+  end
+  Assert(n == a.length())
+  for i in 0 to a.length()
+    Assert(d[i] == a[i])
+  end
+end
+
+
+private def ForIterator(a)
+  var d = [nil] * a.length()
+  var n = 0
+  for x in IterableType(*a)
+    d[n] = x
+    n += 1
+  end
+  Assert(n == a.length())
+  for i in 0 to a.length()
+    Assert(d[i] == a[i])
+  end
+end
+
+
+private class IterableType
+  var a
+  def create(*aa)
+    a = aa
+  end
+  def iterator()
+    return IteratorType(a)
+  end
+end
+
+
+private class IteratorType
+  var a
+  var i
+  def create(aa)
+    a = aa
+    i = 0
+  end
+  def hasNext()
+    return i < a.length()
+  end
+  def next()
+    i += 1
+    return a[i - 1]
+  end
+end
+    
+  
+private class ErrIterator
+  var i
+  var n
+  def create(nn)
+    n = nn
+    i = 0
+  end
+  def iterator()
+    if n == 0
+      raise MyError("foo")
+    else
+      i += 1
+      return self
+    end
+  end
+  def hasNext()
+    if i == n
+      raise MyError("bar")
+    else
+      i += 1
+      return True
+    end
+  end
+  def next()
+    if i == n
+      raise MyError("foobar")
+    else
+      i += 1
+      return 66
+    end
+  end
+end
+
+
+private class MyError is Exception
+  const msg
+  def create(m)
+    msg = m
+  end
+end

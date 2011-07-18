@@ -1,0 +1,14 @@
+Makefile
+alore
+alorec
+build.h
+config.h
+config.status
+config.log
+test/TEMP
+test/TMP
+test/TMPDIR/
+src/*.o
+lib/*.a
+lib/*.so
+*~

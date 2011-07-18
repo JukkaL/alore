@@ -1,0 +1,27 @@
+@head
+@module random
+@title <tt>random</tt>: Random number generation
+
+<p>This module contains functions for creating pseudo-random numbers.
+
+<h2>Functions</h2>
+
+@fun Random(n)
+@desc Return a pseudo-random integer in range 0, 1, ..., <i>n</i> &minus; 1.
+@end
+  
+@fun RandomFloat()
+@desc Return a pseudo-random float <i>x</i> so that 0 &lt;= <i>x</i> &lt; 1.
+@end
+  
+@fun Seed([seed])
+@desc Initialize the random number generator with the specified <i>seed</i>.
+      If two program instances initialize the random number generator with the
+      same seed value, the generated random numbers are equivalent if
+      the same sequence of function calls is used to generate the random
+      numbers. If the seed is missing, the seed value is taken from the current
+      system time.
+      @note Different random numbers may be generated on different operating
+            systems and on different versions of the Alore runtime.
+      @end
+@end

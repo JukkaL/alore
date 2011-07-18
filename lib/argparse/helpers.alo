@@ -1,0 +1,221 @@
+-- helpers.alo - Argparse helpers
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module argparse
+
+import set, re
+import sys
+
+
+-- This class performs the actual parsing of command line arguments.
+private class ParserHelper
+  private var args     as Array<Str>        -- Argument list
+  private var normOpts as Array<Array<Str>> -- Option aliases without args
+  
+  -- Options that require an argument
+  private var optsWithArgs as Set<Str>
+  
+  private var i = 0 as Int -- Current args index
+  
+  def parse(args as Array<Str>, descriptions as Array<Str>) as
+                                             (Array<(Str, Str)>, Array<Str>)
+    self.args = args
+                                   
+    self.normOpts, self.optsWithArgs = NormalizeOptions(descriptions)
+  
+    var opts = [] as <(Str, Str)>
+  
+    while self.i < self.args.length()
+      var ar = self.args[self.i]
+      if not ar.startsWith("-") or ar == "-"
+        break
+      end
+      
+      -- "--" signals and of arguments and is ignored.
+      if ar == "--"
+        self.i += 1
+        break
+      end
+      
+      var a = findOpt(self.args[self.i])
+      if a == []
+        raise OptError("invalid option {}".format(args[self.i]))
+      end
+  
+      -- Enumerate ovar all the arguments and their (potential) values.
+      for o, arg1 in a
+        var arg = arg1
+        if arg == nil and needsArg(o)
+          if self.i == self.args.length() - 1
+            raise OptError("option {} requires an argument".format(o))
+          end
+          arg = self.args[self.i + 1]
+          self.i += 1
+        end
+      
+        opts.append((o, arg))
+      end
+      
+      self.i += 1
+    end
+    
+    return opts, args[self.i:]
+  end
+  
+  -- Does an option need an argument?
+  private def needsArg(opt as Str) as Boolean
+    return opt in self.optsWithArgs
+  end
+  
+  -- Expand an option in one of the supported forms (-x, -xyz, --foo, --foo=x)
+  -- into a list of (option, arg) tuples. Return an empty list if the argument
+  -- does not look like a supported option. Raise OptError on various error
+  -- conditions.
+  private def findOpt(opt as Str) as Array<(Str, Str)>
+    var matches = [] as <Str>
+    
+    if opt.length() <= 1 or not opt.startsWith("-")
+      return []
+    end
+    
+    if not opt.startsWith("--") and opt.length() > 2
+      return findLongShortOpt(opt)
+    end
+    
+    -- Now opt is probably the name of an option or a prefix of an option name,
+    -- or an option with "=" in it.
+    
+    var optBase = opt    -- Option name without the value
+    var withArg = False
+    
+    -- Is it of form "-x=y" or "--foo=bar"?
+    if "=" in opt
+      optBase = opt[:opt.index("=")]
+      withArg = True
+    end
+    
+    -- Go through all the recognized options and find out which of those could
+    -- match.
+    for o in self.normOpts
+      -- Give priority to exact matches.
+      if optBase in o
+        matches = [optBase]
+        break
+      end
+      
+      -- Try to find a partial match.
+      for oo in o
+        if oo.startsWith(optBase) and not optBase in ("-", "--")
+          matches.append(oo)
+          break
+        end
+      end
+    end
+    
+    -- Now we have a list of matches. Verify that the option is not ambiguous.
+    if matches.length() == 1
+      -- Not ambiguous.
+      var o = matches[0]
+      if withArg
+        if not needsArg(o)
+          raise OptError("option {} doesn't allow an argument".format(o))
+        end
+        return [(o, opt[opt.index("=") + 1:])]
+      else
+        -- The caller will try to provide the argument, if needed, so no need
+        -- to verify it at this point.
+        return [(o, nil)]
+      end
+    elif matches.length() > 1
+      raise OptError("ambiguous option {}".format(opt))
+    else
+      return []
+    end
+  end
+  
+  -- Process short option with an argument or multiple short options (i.e.
+  -- a string of for "-xy..."). Return an array of (option, value) tuples.
+  private def findLongShortOpt(opt as Str) as Array<(Str, Str)>
+    -- First see if it's a short option with an argument.
+    for o in self.normOpts
+      for oo in o
+        if oo.length() == 2 and opt.startsWith(oo) and needsArg(oo)
+          -- Yes.
+          return [(oo, opt[2:])]
+        end
+      end
+    end
+    
+    -- It must be multiple options.
+    var res = [] as <(Str, Str)>
+    for c in opt[1:]
+      var opt2 = "-" + c
+      var found = False
+      for o in self.normOpts
+        if opt2 in o 
+          found = True
+          if not needsArg(opt2)
+            res.append((opt2, nil))
+          else
+            raise OptError("option {} requires an argument".format(opt2))
+          end
+        end
+      end
+      if not found
+        raise OptError("invalid option {}".format(opt2))
+      end
+    end
+    
+    return res
+  end
+end
+
+
+private class OptError is Exception
+end
+
+
+-- Translate a list of option descriptions into a list of aliased option arrays
+-- and a set of options that require an argument.
+--
+-- Example:
+--   NormalizeOptions(['-f --foo X']) == ([['-f', '--foo']], 
+--                                        Set(['-f', '--foo']))
+private def NormalizeOptions(opts as Array<Str>) as
+                                               (Array<Array<Str>>, Set<Str>)
+  var newOpts = []    as Array<Array<Str>>
+  var optArgs = Set() as Set<Str>
+  for o in opts
+    var a, argName = SplitDescription(o)
+    if argName != nil
+      for alt in a
+        optArgs.add(alt)
+      end
+    end
+    newOpts.append(a)
+  end
+  return newOpts, optArgs
+end
+
+
+-- Split an option description string into a list of option variants and
+-- an optional argument name (nil if no argument).
+--
+-- Example:
+--   SplitDescription("-f --foo X") == (["-f", "--fo"], "X")
+private def SplitDescription(o as Str) as (Array<Str>, Str)
+  var a = Split(o, " +")
+  if a.length() == 0 or not a[0].startsWith("-")
+    raise ValueError("Invalid description {}".format(Repr(o)))
+  end
+  var argName = nil as Str
+  if not a[-1].startsWith("-")
+    argName = a[-1]
+    a = a[:-1]
+  end
+  return a, argName
+end

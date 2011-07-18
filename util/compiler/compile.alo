@@ -1,0 +1,263 @@
+-- compile.alo - Alore-to-C compiler
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module compiler
+
+import string
+import set
+import os
+import re
+import io
+import __testc
+
+
+var BuiltInImports = Map("os" : ["time"])
+
+-- Modules that are required to be included in a program even if they are
+-- not explicitly imported (i.e. they are required by the std module).
+var RequiredModules = ["io", "encodings"]
+
+-- These modules need to be imported for some reason. In OS X, thread module
+-- has to be referenced from the main source file for some reason, or otherwise
+-- the thread module is not included in the linking.
+var ForcedModules = ["thread"]
+
+-- This extension is added to the target executable file if the target file 
+-- would otherwise overwrite the input source file.
+const Extension = ".out"
+
+
+def Compile(fnam)
+  var cfile = MyMakeTempFile("tmp######.c")
+  var ofile = MyMakeTempFile("tmp######.o")
+
+  var o = FileOutput(cfile, CurrentDir())
+  o.addFile(fnam)
+  o.output()
+  
+  Msg("C compiler: " + CCompiler)
+  Msg("C options: " + " ".join(COpts))
+  Msg("Linker options: " + " ".join(LinkDirOpts + LinkOpts))
+  
+  DoSystem("{} {}".format(CCompiler, " ".join(COpts)) + 
+           " -c ""{}"" -o ""{}""".format(cfile, ofile))
+  var dest = FileBase(fnam) + ExeSuffix()
+  -- Avoid overwriting the source file.
+  if dest == fnam
+    dest += Extension
+  end
+  CheckFileName(fnam)
+  DoSystem("{} -o ""{}"" ""{}"" {}".format(CCompiler, dest, ofile,
+                                          " ".join(LinkDirOpts + LinkOpts)))
+  if not Debug
+    DoSystem("strip " + GetStripOptions() + " """ + dest + """")
+  end
+end
+
+
+private class FileOutput
+  def create(fnam, basePath)
+    Msg("Processing {}".format(fnam))
+    f = File(fnam, Output)
+    self.basePath = basePath
+    for m in ForcedModules
+      cmodules.append(m)
+    end
+  end
+
+  def addFile(path)
+    Msg("Processing {}".format(path))
+    path = Join(basePath, path)
+    if not path in fileSet
+      fileSet.add(path)
+      files.append(FileInfo(path, offset))
+      var s = File(path).read()
+      data += s
+      offset = CStrLen(data)
+      var files, builtin, dyn = ImportedFiles(path)
+      for f in files
+        addFile(f)
+      end
+      for m in builtin
+        if not m in cmodules and not m in RequiredModules
+          cmodules.append(m)
+        end
+      end
+      for m in dyn
+        if not m in cmodules
+          cmodules.append(m)
+          LinkOpts.insertAt(0, "-la{}".format(m))
+        end
+      end
+    end
+  end
+  
+  def output()
+    f.writeLn("#include ""cmodules.h""")
+    f.writeLn("const char AloreModuleSearchPath[] = {};".format(
+              Cstr(ModuleSearchPathSeparator.join(ModuleSearchPaths))))
+    for m in cmodules
+      f.writeLn("extern AModuleDef A{}ModuleDef[];".format(m))
+    end
+    f.writeLn("AModuleDef *AAllModules[] = {")
+    for m in cmodules
+      f.writeLn("    A{}ModuleDef,".format(m))
+    end
+    f.writeLn("    NULL,")
+    f.writeLn("};")
+    f.writeLn("const int NumAloreSourceFiles = {};".format(files.length()))
+    f.writeLn("const char *AloreSourceFiles[] = {")
+    for i in files
+      f.writeLn("    ", Cstr(i.name), ",")
+    end
+    f.writeLn("};")
+    f.writeLn("const unsigned AloreSourceFileOffsets[] = {")
+    for i in files
+      f.writeLn("    ", i.offset, ",")
+    end
+    f.writeLn("    ", CStrLen(data))
+    f.writeLn("};")
+    f.writeLn("const char AloreSourceFileData[] =")
+    var i = 0
+    while i < data.length()
+      f.writeLn("    ", Cstr(data[i:Min(i + 50, data.length())]))
+      i += 50
+    end
+    f.writeLn(";")
+    f.close()
+  end
+  
+  private var f
+  private var basePath
+  private var files = []
+  private var fileSet = Set()
+  private var cmodules = []
+  private var offset = 0
+  private var data = ""
+end
+
+
+private def Cstr(s)
+  s = s.replace("\", "\\")
+  s = s.replace("""", "\""")
+  s = s.replace(CR, "\r")
+  s = s.replace(LF, "\n")
+  
+  -- Replace 0 characters with \\u0000. We know that the characters are
+  -- within comments or string literals, \\u0000 does not harm there, but
+  -- 0 characters within a C string literal would cause problems.
+  s = s.replace("\u0000", "\\" + "u0000")
+  
+  return """" + s + """"
+end
+
+
+private def CStrLen(s)
+  return s.length() + s.count("\u0000") * 5
+end
+  
+
+private class FileInfo
+  const name
+  const offset
+end
+
+
+-- Return array (files, builtin, dyn). Files is the list of Alore source files 
+-- imported by the given file, builtin is a list of built-in Alore C modules
+-- imported by the file, and dyn is a list of dynamic Alore C modules imported 
+-- by the file.
+private def ImportedFiles(p)
+  var res = []
+  var builtin = []
+  var dyn = []
+  for ss in File(p)
+    var s = ss.strip()
+    var rm = Match("import[ \t]+([^-]*)(--.*)?$", s)
+    if rm != nil
+      -- Get a normalized module name.
+      var m = rm.group(1)
+      m = m.replace(" ", "")
+      m = m.replace(Tab, "")
+      
+      for mm in m.split(",")
+        -- Convert into a path name.
+        var path = mm.replace("::", "/")
+        AddModuleFiles(path, res, builtin, dyn)
+      end
+    end
+  end
+  return res, builtin, dyn
+end
+
+
+private def AddModuleFiles(m, res, builtin, dyn, ind = "  ")
+  Msg(ind + "import {}".format(m))
+  -- Try to find the module.
+  var found = False
+  for mp in ModuleSearchPaths
+    var mp2 = Join(mp, m)
+    if mp == "."
+      mp2 = m
+    end
+    if IsDir(mp2)
+      -- Found it. Now find all the Alore source files in the module.
+      for f in ListDir(mp2)
+        if f.lower().endsWith(".alo")
+          res.append(Join(mp2, f))
+          found = True
+        end
+      end
+      if found
+        Msg(ind + "  Ordinary module ({})".format(mp2))
+        return
+      end
+    end
+  end
+  
+  var path = FindFile(ModuleSearchPaths, "liba{}.a".format(m))
+  if path != nil
+    if not m in dyn
+      var dir = DirName(path)
+      if dir == ""
+        dir = "."
+      end
+      AddLibPath(dir)
+    
+      var inf = Subst(path, ".a$", ".inf")
+      Msg(ind + "  Dynamic module ({})".format(path))
+      dyn.append(m)
+      
+      if IsFile(inf) and not m in DynLinkOpts
+        DynLinkOpts.add(m)
+        var f = File(inf)
+        -- FIX: Parse the file properly.
+        var o = f.readLn().split("=")[1]
+        f.close()
+        Msg(ind + "  Linker flags ({})".format(o))
+        LinkOpts.append(o)
+      end
+      
+      var soPath = GetDynLib(path)
+      Msg(ind + "  Access {}". format(soPath))
+      var imp = GetCModuleImports(soPath)
+      for m2 in imp
+        AddModuleFiles(m2, res, builtin, dyn, ind + "  ")
+      end
+    end
+  else
+    if not m in builtin
+      Msg(ind + "  Built-in module")
+      builtin.append(m)
+      if BuiltInImports.hasKey(m)
+        for m2 in BuiltInImports[m]
+          AddModuleFiles(m2, res, builtin, dyn, ind + "  ")
+        end
+      end
+    end
+  end
+end

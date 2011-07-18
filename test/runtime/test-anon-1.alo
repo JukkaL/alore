@@ -1,0 +1,382 @@
+-- Test cases for anonymous functions that do not access exposed local 
+-- variables or member variables.
+
+module runtime
+
+import unittest
+
+
+private var G1
+private var G2
+
+
+class AnonFuncSuite is Suite
+  def testEmptyFunction()
+    var f = def ()
+            end
+    f()
+    AssertEqual(nil, f())
+  end
+  
+  def testBasicFunction()
+    def ()
+      Gfunc(7)
+      G1 *= 2
+    end()
+    AssertEqual(G1, 18)
+  end
+  
+  def testReturnValue()
+    var x = def ()
+      return 5 + 18
+    end
+    AssertEqual(x(), 23)
+  end
+  
+  def testIf()
+    G1 = 55
+    var f = def ()
+      if G1 < 100
+        G1 += 1
+      else
+        G1 -= 1
+      end
+    end
+    f()
+    AssertEqual(G1, 56)
+  end
+  
+  def testSwitch()
+    G1 = 55
+    var f = def ()
+      switch G1
+        case "foo"
+          Gfunc(44)
+        case 5.6
+          Gfunc(77)
+        case 55
+          Gfunc(99)
+        else
+          Gfunc(11)
+      end
+    end
+    f()
+    AssertEqual(G1, 101)
+  end
+  
+  def testWhile()
+    var f = def ()
+      G1 = 10
+      while G1 > 2
+        G1 -= 1
+      end
+    end
+    f()
+    AssertEqual(G1, 2)
+  end
+  
+  def testRepeatAndBreak()
+    var f = def ()
+      G1 = 10
+      G2 = 10
+      repeat
+        G1 += 1
+        if G1 == 15
+          break
+        end
+        G2 += 1
+      until G2 == 17
+      G1 += 10
+    end
+    f()
+    AssertEqual(G1, 25)
+    AssertEqual(G2, 14)
+  end
+  
+  -- Test function definition within while loop + break after definition.
+  def testFunctionWithinLoop()
+    G1 = 0
+    -- Repeat outermost loop 10 times.
+    var i = 1
+    while i <= 10
+      for j in 1 to 6
+        var f = def ()
+          G2 = 0
+          while G2 < 2
+            G1 += 1
+            G2 += 1
+          end
+        end
+        f() -- Increment G1 by 2.
+      end
+      -- G1 is incremented by 10.
+      var j = 1
+      while True
+        var f = def()
+          G1 += 100
+        end
+        if j == 3
+          break
+        end
+        f()
+        j += 1
+      end
+      -- G1 is incremented by 200.
+      i += 1
+    end
+    AssertEqual(G1, 2100)
+  end
+  
+  -- Test local variables outside function definition.
+  def testLocalsOutsideFunction()
+    var v1 = 20
+    var f = def ()
+      return 44
+    end
+    v1 += 1
+    var v2 = 30
+    v2 += 1
+    AssertEqual(v1, 21)
+    AssertEqual(v2, 31)
+    AssertEqual(f(), 44)
+  end
+  
+  -- Test function as a function parameter.
+  def testFunctionAsParameter()
+    var x = CallFunc(5 + 8, def ()
+                              return Gfunc2(4, 6, 1, 2)
+                            end, 2 * 3)
+    AssertEqual(x, 4 * 6 - 1 - 2 + (5 + 8) - 2 * 3)
+  end
+  
+  def testLocalVars()
+    var z = 55
+    var f = def ()
+      if True
+        var x = 99
+      end
+      var x = 7
+      var y = 8
+      return x + y
+    end
+    var x = "a"
+    var y = "b"
+    AssertEqual(f(), 15)
+    AssertEqual(z, 55)
+    AssertEqual(x, "a")
+    if True
+      var pp = False
+      repeat
+        f = def ()
+          var tt = "foo"
+          return tt * 2
+        end
+        AssertEqual(f(), "foofoo")
+      until True
+      Assert(not pp)
+    end
+  end
+  
+  def testFor()
+    G1 = 0
+    for i in 1 to 6
+      G1 += 1
+      var f = def ()
+        for j in 1 to 4
+          G1 += 2
+        end
+        var j = 99
+        return j
+      end
+      AssertEqual(f(), 99)
+    end
+    AssertEqual(G1, 35)
+  end
+  
+  def testArrayLiteral()
+    var a = [6, 7, def () 
+                     return [1+2]
+                   end, 8]
+    AssertEqual(a[0], 6)
+    AssertEqual(a[1], 7)
+    AssertEqual(a[3], 8)
+    AssertEqual(a[2](), [3])
+  end
+  
+  def testTry()
+    var ef = def ()
+      try
+        1 / 0
+        return 5
+      except ArithmeticError
+        return 6
+      end
+      return 7
+    end
+    AssertEqual(ef(), 6)
+    
+    var ff = def ()
+      G1 = 5
+      try
+        raise IoError("foo")
+      finally
+        G1 += 1
+      end
+      1 / 0
+    end
+    AssertRaises(IoError, ff, [])
+    AssertEqual(G1, 6)
+  end
+
+  -- Test try statement in a function defined within a try statement, and test
+  -- catching exceptions raised in an anonymous function.
+  def testTryWithinTry()
+    G1 = 1
+    try
+      try
+        var f = def ()
+          try
+            1 / 0
+          finally
+            G1 += 2
+          end
+          G1 += 99
+        end
+        f()
+      finally
+        G1 += 4
+      end
+    except ArithmeticError
+      G1 += 8
+    end
+    AssertEqual(G1, 1 + 2 + 4 + 8)      
+  end
+  
+  def testBasicArguments()
+    var f = def (x)
+      return x + 1
+    end
+    AssertEqual(f(5), 6)
+    
+    f = def (x, y, z)
+      if x == 3
+        return x * y - z
+      end
+    end
+    AssertEqual(f(3, 4, 5), 3 * 4 - 5)
+    
+    var x = 5
+    var y = x + 1
+    AssertEqual(y, 6)
+  end
+  
+  def testOptionalArguments()
+    var f = def (x, y = x + 1, z = 4 * 4)
+      return x * y + z
+    end
+    AssertEqual(f(4), 4 * 5 + 16)
+    AssertEqual(f(4, 2), 4 * 2 + 16)
+    AssertEqual(f(4, 2, 3), 4 * 2 + 3)
+  end
+  
+  def testVarArgs()
+    var f = def (*a)
+      return a + a
+    end
+    AssertEqual(f(), [])
+    AssertEqual(f(1), [1, 1])
+    AssertEqual(f(1, 5), [1, 5, 1, 5])
+    
+    f = def (x, y = 5, *a)
+      return x + y, a
+    end
+    AssertEqual(f(1), [1 + 5, []])
+    AssertEqual(f(1, 2), [1 + 2, []])
+    AssertEqual(f(1, 2, 3, 4), [1 + 2, [3, 4]])
+  end
+  
+  def testInvalidArgCount()
+    var f = def ()
+    end    
+    AssertRaises(ValueError, f, [1])
+    
+    f = def (x)
+      return x + 1
+    end    
+    AssertRaises(ValueError, f, [])
+  end
+  
+  def testStrConversion()
+    var f = def ()
+    end
+    AssertEqual(Str(f), "anonymous function")
+    AssertEqual(Repr(f), "anonymous function")
+  end
+  
+  def testTypeCheck()
+    var f = def()
+    end
+    Assert(f is Function)
+    AssertType(Function, f)
+  end
+  
+  -- Test trivial nested anonymous functions that do not access local 
+  -- variables defined in outer scopes.
+  def testNestedAnonymousFunctions()
+    var f = def ()
+      var g = def ()
+        return 33
+      end
+      return g
+    end
+    AssertEqual(f()(), 33)
+  end
+  
+  -- Test multiple nested anonymous functions that do not access local 
+  -- variables defined in outer scopes.
+  def testMultipleNestedAnonymousFunctions()
+    var f1 = def ()
+      var f2 = def ()
+        var f3 = def ()
+          var f4 = def (x)
+            var f5 = def ()
+              var f6 = def (y, z)
+                return y + z
+              end
+              return f6(5, 6)
+            end
+            return f5() + x
+          end
+          return f4(1) + 2
+        end
+        return f3() + 3
+      end
+      return f2() + 4
+    end
+    AssertEqual(f1(), 1 + 2 + 3 + 4 + 5 + 6)
+  end
+  
+  -- Test calling an anonymous function many times.
+  def testMultipleCalls()
+    var body = def ()
+    end
+    for i in 0 to 10000
+      body()
+    end  
+  end
+end
+
+
+private def Gfunc(x)
+  G1 = x + 2
+end
+
+
+private def Gfunc2(x, y, z, z0)
+  return x * y - z - z0
+end
+
+
+private def CallFunc(a, f, b)
+  return f() + a - b
+end

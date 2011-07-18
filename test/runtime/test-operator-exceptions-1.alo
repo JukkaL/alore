@@ -1,0 +1,351 @@
+module runtime
+
+import unittest
+import helpers
+import __testc
+import libs
+import reflect
+
+
+-- Test cases for raising exceptions when applying operators to operands with
+-- invalid types.
+class OperatorExceptionsSuite is Suite
+  -- Test exceptions with the calling operator [].
+  def testCallExceptions()
+    -- Test invalid callable object.
+    for f in ObjList
+      if not (f is Function or f is Type)
+        TestOperatorException(CallOp, f, 0, TypeError)
+        TestOperatorException(CallOp, f, 1, TypeError)
+        TestOperatorException(CallOp, f, 2, TypeError)
+        TestOperatorException(CallVarArgOp, f, (1, 2), TypeError)
+        TestOperatorException(CallVarArgOp, f, 1, TypeError)
+      end
+    end
+    
+    -- Test invalid variable arguments.
+    for a in ObjList
+      if not a is Array
+        TestOperatorException(CallVarArgOp, VarArgF, a, TypeError)
+        TestOperatorException(CallVarArgOp, CallTrace, a, TypeError)
+      end
+    end
+  end
+  
+  -- Test basic exceptions with the indexing operator [].
+  def testIndexExceptions()
+   -- Test type errors.
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+        
+        if x == nil or y == nil or ((not (x is Str or x is Array)) or 
+                                    (not (y is Int or y is Range)))
+          TestOperatorException(IndexOp, x, y, e)
+        end
+      end
+    end
+    
+    -- Test array index overflow.
+    TestOperatorException(IndexOp, [], 0, IndexError)
+    TestOperatorException(IndexOp, [], 1, IndexError)
+    TestOperatorException(IndexOp, (1, 2, 3), -5, IndexError)
+    TestOperatorException(IndexOp, (1, 2, 3), 3, IndexError)
+    TestOperatorException(IndexOp, (1, 2, 3), 4, IndexError)
+    TestOperatorException(IndexOp, (1, 2, 3), -4, IndexError)
+  end
+  
+  -- Test string index overflow.
+  def testStringIndexOverflow()
+    for w in 1 to 3
+      for f in SandSSFunc(w)
+        TestOperatorException(IndexOp, f("aBcdefghi"), -10, IndexError)
+        TestOperatorException(IndexOp, f("aBcdefghi"), 9, IndexError)
+        TestOperatorException(IndexOp, f("aBcdefghi"), 10, IndexError)
+      end
+    end
+    TestOperatorException(IndexOp, "", 0, IndexError)
+    TestOperatorException(IndexOp, "", 1, IndexError)
+    TestOperatorException(IndexOp, "", -1, IndexError)
+  end
+  
+  --- Test exceptions with the add operator +.
+  def testAddExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+
+        if not ((IsNumeric(x) and IsNumeric(y)) or
+                (x is Str and y is Str) or
+                (x is Array and y is Array))
+          TestOperatorException(AddOp, x, y, e)
+        end
+      end
+    end
+  end
+  
+  -- Test exceptions with the subtraction operator -.
+  def testSubExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+  
+        if not (IsNumeric(x) and IsNumeric(y))
+          TestOperatorException(SubOp, x, y, e)
+        end
+      end
+    end
+  end
+  
+  -- Test exceptions with the multiplication operator *.
+  def testMulExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+
+        if not ((IsNumeric(x) and IsNumeric(y)) or
+                (x is Int and y is Str) or
+                (x is Str and y is Int) or
+                (x is Array and y is Int) or
+                (x is Int and y is Array))
+          TestOperatorException(MulOp, x, y, e)
+        end
+      end
+    end
+  end
+  
+  -- Test exceptions with the division operator /.
+  def testDivExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+  
+        if not (IsNumeric(x) and IsNumeric(y))
+          TestOperatorException(DivOp, x, y, e)
+        end
+      end
+    end
+    TestOperatorException(DivOp, 1, 0, ArithmeticError)
+    TestOperatorException(DivOp, 1.0, 0, ArithmeticError)
+    TestOperatorException(DivOp, 1, 0.0, ArithmeticError)
+    TestOperatorException(DivOp, 1.0, 0.0, ArithmeticError)
+  end
+  
+  -- Test exceptions with the integer division operator div.
+  def testIntDivExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+  
+        if not (IsNumeric(x) and IsNumeric(y))
+          TestOperatorException(IntDivOp, x, y, e)
+        end
+      end
+    end
+    TestOperatorException(IntDivOp, 1, 0, ArithmeticError)
+    TestOperatorException(IntDivOp, 1.0, 0, ArithmeticError)
+    TestOperatorException(IntDivOp, 1, 0.0, ArithmeticError)
+    TestOperatorException(IntDivOp, 1.0, 0.0, ArithmeticError)
+  end
+  
+  -- Test exceptions with the modulus operator mod.
+  def testModExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+  
+        if not (IsNumeric(x) and IsNumeric(y))
+          TestOperatorException(ModOp, x, y, e)
+        end
+      end
+    end
+    TestOperatorException(ModOp, 1, 0, ArithmeticError)
+    TestOperatorException(ModOp, 1.0, 0, ArithmeticError)
+    TestOperatorException(ModOp, 1, 0.0, ArithmeticError)
+    TestOperatorException(ModOp, 1.0, 0.0, ArithmeticError)
+  end
+  
+  -- Test exceptions with the power operator **.
+  def testPowExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+  
+        if not (IsNumeric(x) and IsNumeric(y))
+          TestOperatorException(PowOp, x, y, e)
+        end
+      end
+    end
+  end
+  
+  -- Test exceptions with the in operator.
+  def testInExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+        
+        if not (y is Array or y is Range or 
+                (x is Str and y is Str))
+          TestOperatorException(InOp, x, y, e)
+        end
+      end
+    end
+  end
+  
+  -- Test exceptions with the comparison operators <, <=, >, >=.
+  def testComparisonExceptions()
+    for x in ObjList
+      for y in ObjList
+        var e = TypeError
+  
+        if not ((IsNumeric(x) and IsNumeric(y)) or
+                (x is Str and y is Str) or
+                (x is Array and y is Array))
+          TestOperatorException(LtOp, x, y, e)
+          TestOperatorException(LteOp, x, y, e)
+          TestOperatorException(GtOp, x, y, e)
+          TestOperatorException(GteOp, x, y, e)
+        end
+      end
+    end
+  end
+end
+
+
+private const IndexOp
+private const AddOp
+private const SubOp
+private const MulOp
+private const DivOp
+private const IntDivOp
+private const ModOp
+private const PowOp
+private const InOp
+private const LtOp
+private const LteOp
+private const GtOp
+private const GteOp
+private const CallOp
+private const CallVarArgOp
+
+
+private def DoIndexOp(b, i)
+  return b[i]
+end
+
+private def DoAddOp(x, y)
+  return x + y
+end
+
+private def DoSubOp(x, y)
+  return x - y
+end
+
+private def DoMulOp(x, y)
+  return x * y
+end
+
+private def DoDivOp(x, y)
+  return x / y
+end
+
+private def DoIntDivOp(x, y)
+  return x div y
+end
+
+private def DoModOp(x, y)
+  return x mod y
+end
+
+private def DoPowOp(x, y)
+  return x**y
+end
+
+private def DoInOp(x, y)
+  return x in y
+end
+
+private def DoLtOp(x, y)
+  return x < y
+end
+
+private def DoLteOp(x, y)
+  return x <= y
+end
+
+private def DoGtOp(x, y)
+  return x > y
+end
+
+private def DoGteOp(x, y)
+  return x >= y
+end
+
+private def DoCallOp(f, a)
+  if a == 0
+    f()
+  elif a == 1
+    f(1)
+  elif a == 2
+    f(1, 2)
+  else
+    raise Exception()
+  end
+end
+
+private def DoCallVarArgOp(f, a)
+  f(1, *a)
+end
+
+
+private const OpMap = Map(
+  IndexOp : DoIndexOp,
+  AddOp : DoAddOp,
+  SubOp : DoSubOp,
+  MulOp : DoMulOp,
+  DivOp : DoDivOp,
+  IntDivOp : DoIntDivOp,
+  ModOp : DoModOp,
+  PowOp : DoPowOp,
+  InOp : DoInOp,
+  LtOp : DoLtOp,
+  LteOp : DoLteOp,
+  GtOp : DoGtOp,
+  GteOp : DoGteOp,
+  CallOp : DoCallOp,
+  CallVarArgOp : DoCallVarArgOp)
+
+
+private def TestOperatorException(op, arg1, arg2, type = TypeError)
+  -- IDEA: Allow testing exception messages.
+  
+  var e = nil
+  
+  try
+    OpMap[op](arg1, arg2)
+  except ee is Exception
+    e = ee
+  end
+  
+  Assert(e != nil)
+  if not e is type
+    WriteLn("Types: ", TypeOf(arg1), ", ", TypeOf(arg2))
+    WriteLn("Expected: ", type)
+    WriteLn("Actual: ", TypeOf(e))
+  end
+  AssertType(type, e)
+end
+
+
+private def IsNumeric(x)
+  return x is Int or x is Float
+end
+
+
+private def VarArgF(*a)
+end
+
+
+private def IsInst(x)
+  return x is helpers::Base or x is Array or x is Boolean
+end

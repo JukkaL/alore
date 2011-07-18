@@ -1,0 +1,105 @@
+module helpers
+
+-- This file contains some utility functions and classes, some of which might 
+-- be obsolete.
+
+import iohelpers
+import unittest
+
+
+var Long
+
+const LongLen = 10000
+
+const SymbolicConst
+
+
+def Main()
+  Long = [nil] * LongLen
+  var i = 0
+  while i < LongLen
+    Long[i] = i + 1
+    i += 1
+  end
+end
+
+
+def CreateArray(*a)
+  return a
+end
+
+
+-- Drop the first n elements of array a and return an array containing
+-- the rest.
+def DropFirst(a, n)
+  var newLen = a.length() - n
+  var na = [nil] * newLen
+  var i = 0
+  while i < newLen
+    na[i] = a[i + n]
+    i += 1
+  end
+  return na
+end
+
+
+def VerifyArrays(a1, a2)
+  try
+    -- If this is a constructor test, we don't get a array but an instance
+    -- that has the array as a member variable.
+    VerifyArrays(a1.inst, a2)
+  except MemberError
+    Assert(a1.length() == a2.length())
+
+    var i = 0
+    while i < a1.length()
+      Assert(a1[i] == a2[i])
+      i += 1
+    end
+  end
+end
+
+
+-- List of objects that contains all object types.
+const ObjList = (55, 1000000000000, [1, 2], "foo", Chr(3000), NarrowSubStr(),
+                 WideSubStr(), Base, Array, 1.0, 1 to 4, Ord, VerifyArrays,
+                 Base().foo, nil, True, Base(), Derived(), "a" : 2, 
+                 SymbolicConst)
+
+
+class Base
+  def foo()
+  end
+end
+
+class Derived is Base
+end
+
+
+-- Assert that two string arrays are equal. Display any differences in human-
+-- readably form.
+def AssertStringArraysEqual(expected, actual, msg)
+  if actual != expected
+    WriteLn("Expected:")
+    for i in 0 to expected.length()
+      Write("  ", expected[i])
+      if i >= actual.length() or expected[i] != actual[i]
+        Write(" (diff)")
+      end
+      WriteLn()
+    end
+    WriteLn("Actual:")
+    for i in 0 to actual.length()
+      Write("  ", actual[i])
+      if i >= expected.length() or expected[i] != actual[i]
+        Write(" (diff)")
+      end
+      WriteLn()
+    end
+    raise AssertionFailure(msg)
+  end
+end
+
+
+interface HelperInterface
+end

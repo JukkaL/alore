@@ -1,0 +1,30 @@
+@head
+@module std
+@title Class <tt>std::Object</tt>
+@index Object
+
+<p><tt>Object</tt> is the top class in the Alore class hierarchy, and all
+other classes are either directly or indirectly derived from it.
+<tt>Object</tt> defines an empty constructor, and the only operation that it
+supports is identity-based equality comparison using == or !=.
+
+<p>A class that does not define a superclass implicitly inherits from
+<tt>Object</tt>:
+
+@example
+  class A
+  end
+
+  A() is Object  -- True
+  A() == A()     -- False (== operation inherited from Object)
+@end
+
+@class Object()
+@desc Construct an instance of <tt>Object</tt>.
+@end
+
+<h2>Operations</h2>
+
+@op object == x
+@desc An instance of <tt>Object</tt> is equal only to itself.
+@end

@@ -1,0 +1,44 @@
+@head
+@module base64
+@title <tt>base64</tt>: Base64 encoding and decoding
+
+<p>This module contains functions for base64 encoding and decoding of arbitrary
+narrow binary strings. Base64 allows representing arbitrary binary data
+using only a limited set of printable ASCII characters. Base64 encoding can be
+used, for example, in encoding email messages and in parts of the HTTP
+protocol.
+
+<p>The base64 alphabet contains the following characters (but = is only used
+for padding):
+
+@example
+   A B C ... Z a b c ... z 0 1 2 3 ... 9 + / =
+@end
+
+<p>The Base64 encoding is defined in
+<a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a>.
+
+<h2>Functions</h2>
+
+@fun Base64Encode(str)
+@desc Return the base64 encoded form of the input string. The input string may
+      be an arbitrary narrow binary string.
+@end
+
+@fun Base64Decode(str)
+@desc Return the decoded form of the input string. The input must be
+      a valid base64 encoded string.
+
+      @note Non-alphabet characters in the input string, including whitespace
+            characters, generate an exception.
+      @end
+@end
+
+<h2>Examples</h2>
+
+@example
+  Base64Encode("Alore")     -- Result: "QWxvcmU="
+  Base64Decode("QWxvcmU=")  -- Result: "Alore"
+@end
+
+

@@ -1,0 +1,15 @@
+﻿
+
+-- This is a source file with a UTF-8 byte order mark character at the 
+-- beginning without an encoding declaration.
+-- Some editors (such as Windows Notepad) may insert a BOM character at the
+-- the beginning of a file saved as UTF-8 text.
+
+
+def Main()
+  -- Include an UTF-8 string literal.
+  "axy︫z", "a\u0080xy\ufe2bz"
+end
+
+
+const Ss = ""

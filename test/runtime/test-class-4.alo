@@ -1,0 +1,81 @@
+module runtime
+
+-- Test case for accessing private members using the "self.x" notation.
+
+import unittest
+
+
+class ClassSuite4 is Suite
+  def testTestPrivateMembers()
+    Test(1, 2, 3)
+  end
+  
+  def testTestPrivateMemberErrors()
+    TestError()
+  end
+end
+
+
+private class Test
+  private var x
+  private const y
+  private def z = n
+    public = n + 1
+  end
+  private def z
+    return public
+  end
+  
+  var public  
+
+  def create(x, y, z)
+    Assert(x == 1)
+    Assert(y == 2)
+    Assert(z == 3)
+    
+    self.x = x + 1
+    Assert(self.x == 2)
+    self.y = y + 1
+    Assert(self.y == 3)
+    self.z = z + 1
+    Assert(self.z == 5)
+    
+    testMethod()
+  end
+
+  def testMethod()
+    self.x = 2
+    Assert(self.x == 2)
+  end
+end
+
+
+private class TestError
+  private var x
+  
+  def create()
+    var nerr = 0
+
+    try
+      foo()
+    except MemberError
+      nerr += 1
+    end
+    Assert(nerr == 1)
+
+    try
+      bar()
+    except MemberError
+      nerr += 1
+    end
+    Assert(nerr == 2)
+  end
+  
+  def foo()
+    (self).x = 3
+  end
+  
+  def bar()
+    return (self).x
+  end
+end

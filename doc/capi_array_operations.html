@@ -1,0 +1,87 @@
+@head
+@title Array operations
+
+<p>These operations are provided for working with array objects. Only the most
+commonly needed operations are supported. Generic operations such as
+@ref{AAdd} and @ref{ACallMethod} can be used as well to perform additional
+operations.
+
+<p>It is important to note that most of these operations only accept direct
+instances of <tt>std::Array</tt>, i.e. they do not support subtypes of
+<tt>Array</tt>. As a result of this limitation, these operations are 
+fast, since they do not have to verify the type of argument objects and
+can directly access the internals of array objects without having
+to perform polymorphic method dispatches.
+
+<p>Code that wishes to remain faithful to Alore semantics and avoid explicit
+type checks may have to either use generic operations such as those described
+in section
+@href{Collection operations} or use two separate implementations, an efficient
+one for <tt>Array</tt> objects that uses operations described in this
+section, and a generic but less efficient one for objects of <tt>Array</tt>
+subtypes or other sequence types.
+
+<h2>Creating</h2>
+
+@fun AValue AMakeArray(AThread *t, Assize_t len)
+@desc Create a <tt>std::Array</tt> object of the specified length. The object
+      is initialized to contain <tt>nil</tt> values for all items.
+@end
+
+<h2>Reading and updating</h2>
+
+@fun Assize_t AArrayLen(AValue v)
+@desc Return the length of an array. The argument must be a <tt>std::Array</tt>
+      object, since this function performs no error checking. Subtypes of
+      <tt>Array</tt> are not supported.
+@end
+
+@fun AValue AArrayItem(AValue v, Assize_t index)
+@desc Return the value of an item in an array. The first argument must be an
+      <tt>std::Array</tt> object, and the index (0-based) must be non-negative
+      and less than the length of the array. This function performs no
+      error checking. Subtypes of <tt>Array</tt> are not supported.
+@end
+
+@fun void ASetArrayItem(AThread *t, AValue v, Assize_t index, AValue item)
+@desc Set the value of an item in an array. The second argument must be an
+      <tt>std::Array</tt> object, and the index (0-based) must be non-negative
+      and less than then length of the array. This function performs
+      no error checking of the argument values. Subtypes of <tt>Array</tt>
+      are not supported. Raise a direct exception if out of memory.
+@end
+
+@fun void AAppendArray(AThread *t, AValue v, AValue item)
+@desc Append an item to the end of an array, increasing the length of the
+      array by one. The argument v must be <tt>std::Array</tt> object, since
+      this function performs no error checking. Subtypes of <tt>Array</tt>
+      are not supported either. Raise a direct exception if out of memory.
+@end
+
+@fun AValue ASubArray(AThread *t, AValue v, Assize_t i1, Assize_t i2)
+@desc Return the subarray i1:i2 of an array. The rules for indices are
+      similar to when indexing subarrays in Alore code, and
+      negative indices are supported. As an exception, the constant
+      <tt>A_SLICE_END</tt> as the end index
+      specifies a subarray extending to the end of the array.
+      Subtypes of <tt>Array</tt> are not supported. @raise-direct
+@end
+
+<h2>Checking</h2>
+
+@fun ABool AIsArray(AValue v)
+@desc Return a boolean indicating whether the type of v is <tt>std::Array</tt>.
+      This operations returns false for objects belonging to a subtype of
+      <tt>Array</tt>. See also @ref{AIsArraySubType} described below.
+@end
+
+@fun void AExpectArray(AThread *t, AValue v)
+@desc Check if the type of v is <tt>std::Array</tt> and raise a direct
+      @ref{std::TypeError} exception if it is not. The exception is raised
+      also for objects belonging to a subtype <tt>Array</tt>.
+@end
+
+@fun ABool AIsArraySubType(AValue v)
+@desc Return a boolean indicating whether the type of v is <tt>std::Array</tt>
+      or a subtype of <tt>Array</tt>.
+@end

@@ -1,0 +1,46 @@
+@head
+@module std
+@title Class <tt>std::Pair</tt>
+@index Pair
+
+<p>Instances of the <tt>Pair</tt> class represent immutable pairs of two
+arbitrary values. Pairs can only be constructed using the colon (<tt>:</tt>)
+operator. A typical use of pair objects is as arguments to the constructor of
+the @ref{std::Map} class, where pairs represent (key, value) pairs, and in
+<i>range indexing</i>.
+
+@class Pair
+@desc The <tt>Pair</tt> type. Pair objects can be constructed using the
+    colon (<tt>:</tt>) operator. Within an index expression (inside square
+    brackets [ ]), the left or right operand, or both, can be left out; in this
+    case the values default to <tt>nil</tt>.
+@end
+
+<h2>Member constants</h2>
+
+@var left
+@desc The first (left) item in the pair.
+@end
+
+@var right
+@desc The second (right) item in the pair.
+@end
+
+<h2>Operations</h2>
+
+@op x : y
+@desc Construct a pair with values <tt>x</tt> and <tt>y</tt>.
+@end
+
+@op pair == x
+@desc Pair objects can be compared for equality. Two pairs are equal if and
+  only if both their left and right items are equal.
+@end
+
+@op Str(pair)
+@desc Convert a pair to a string.
+@end
+
+@op Hash(pair)
+@desc Return the hash value of a pair.
+@end

@@ -1,0 +1,135 @@
+module runtime
+
+-- Test different call patterns
+
+import unittest
+import calltest
+import helpers
+
+
+-- Test recursion
+class CallSuite2 is Suite
+  def testT1()
+    Assert(Fib(1) == 1)
+    Assert(Fib(2) == 1)
+    Assert(Fib(3) == 2)
+    Assert(Fib(8) == 21)
+    Assert(Fib(13) == 233)
+    Assert(Fib(20) == 6765)
+  
+    Assert(TheCount(0) == 0)
+    Assert(TheCount(1) == 1)
+    Assert(TheCount(100) == 100)
+    Assert(TheCount(12345) == 12345)
+  
+    Ok()
+  end
+  
+  -- Test mutual recursion
+  def testT2()
+    Assert(Count1(12356) == 12356)
+    Ok()
+  end
+  
+  -- Test method recursion
+  def testT3()
+    var r = Rec()
+    Assert(r.CountMethod1(6345) == 6345)
+    Assert(r.CountMethod2(5432) == 5432)
+  
+    Ok()
+  end
+  
+  -- Default arguments that depend on other arguments
+  def testT4()
+    VerifyArrays(Def1(7), (7, 7))
+    VerifyArrays(Def1(7, 3), (7, 3))
+  
+    VerifyArrays(Def2(), (1, 1))
+    VerifyArrays(Def2(7), (7, 7))
+    VerifyArrays(Def2(7, 3), (7, 3))
+  
+    VerifyArrays(Def3(4), (4, 1, 2, 7, 8))
+    VerifyArrays(Def3(4, 5), (4, 5, 2, 11, 12))
+    VerifyArrays(Def3(4, 5, 6), (4, 5, 6, 15, 16))
+    VerifyArrays(Def3(4, 5, 6, 7), (4, 5, 6, 7, 8))
+    VerifyArrays(Def3(4, 5, 6, 7, 9), (4, 5, 6, 7, 9))
+  
+    Ok()
+  end
+  
+end
+
+
+private def Fib(n)
+  if n <= 2
+    return 1
+  else
+    return Fib(n - 2) + Fib(n - 1)
+  end
+end
+
+private def TheCount(n)
+  if n == 0
+    return 0
+  else
+    return 1 + TheCount(n - 1)
+  end
+end
+
+
+private def Count1(n)
+  if n == 0
+    return 0
+  else
+    return 1 + Count2(n - 1)
+  end
+end
+
+private def Count2(n)
+  if n == 0
+    return 0
+  else
+    return 1 + Count1(n - 1)
+  end
+end
+
+
+private class Rec
+  var i
+
+  def create()
+    i = 123
+  end
+
+  def CountMethod1(n)
+    Assert(i == 123)
+    if n == 0
+      return 0
+    else
+      return 1 + CountMethod2(n - 1)
+    end
+  end
+
+  def CountMethod2(n)
+    Assert(i == 123)
+    if n == 0
+      return 0
+    else
+      return 1 + CountMethod1(n - 1)
+    end
+  end
+end
+
+
+private def Def1(a, b = a)
+  return (a, b)
+end
+
+private def Def2(a = 1, b = a)
+  return (a, b)
+end
+
+private def Def3(a, b = 1, c = 2, d = a + b + c, e = d + 1)
+  return (a, b, c, d, e)
+end

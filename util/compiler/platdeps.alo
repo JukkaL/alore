@@ -1,0 +1,236 @@
+-- platdeps.alo - Platform specific compiler issues
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module compiler
+
+import sys
+import os
+import re
+import loader
+import string
+import io
+
+
+const ModuleSearchPathSeparator = GetModuleSearchPathSeparator()
+
+
+private def GetModuleSearchPathSeparator()
+  if Platform == "windows"
+    return ";"
+  else
+    return ":"
+  end
+end
+
+
+def GetLinkOpts(isDebug)
+  var linkOpts
+  
+  -- IDEA: Use HAVE_LIBM to decide whether -lm is needed.
+  
+  switch Platform
+    case "linux"
+      linkOpts = ["-export-dynamic", "-lalorec", "-lm", "-pthread"]
+    case "windows"
+      linkOpts = ["-lalorec", "-lm", "-lwsock32", "-lmpr"]
+    case "solaris"
+      linkOpts = ["-lalorec", "-lm"]
+    case "osx"
+      linkOpts = ["-lalorec", "-lm"]
+    else
+      -- These default linker options might work...
+      linkOpts = ["-export-dynamic", "-lalorec", "-lm", "-pthread"]
+  end
+  
+  if __ConfigOpt("HAVE_LIBDL")
+    linkOpts.append("-ldl")
+  end
+  
+  if __ConfigOpt("HAVE_LIBSOCKET")
+    linkOpts.append("-lsocket")
+  end
+  
+  if __ConfigOpt("HAVE_LIBNSL")
+    linkOpts.append("-lnsl")
+  end
+  
+  if isDebug
+    linkOpts.append("-g")
+  end
+  
+  if Platform == "osx"
+    -- OS X: Create an export list and use it when linking.
+    var p = MyMakeTempFile("tmp######.lst")
+    var f = File(p, Output)
+    for ex in Exports
+      f.writeLn("_" + ex)
+    end
+    f.close()
+    linkOpts.append("-Wl,-exported_symbols_list,{}".format(p))
+  end
+  
+  return linkOpts  
+end
+
+
+def GetCOpts(isDebug)
+  var copts = []
+  var p = DirName(ProgramPath)
+
+  if Platform == "windows"  
+    if IsStandalone
+      var incPaths = [Join(p, "include")]
+      if not IsDir(incPaths[0])
+        incPaths = [Join(p, "src"), p]
+      end
+      for ip in incPaths
+        copts.append("-I{}".format(ip))
+      end
+    else
+      if BaseName(p).lower() == "util"
+        copts.append("-I{}".format(Join(DirName(p), "src")))
+        copts.append("-I{}".format(DirName(p)))
+      end
+    end
+  else
+    -- Generic C options.
+    
+    if IsStandalone
+      if p.endsWith("/bin")
+        copts.append("-I{}".format(Join(DirName(p), "include/alore")))
+      else
+        -- Probably running alorec in the build directory.
+        copts.append("-I{}".format(Join(p, "src")))
+        copts.append("-I{}".format(p))
+      end
+    else
+      if p.endsWith("/util")
+        copts.append("-I{}".format(Join(DirName(p), "src")))
+        copts.append("-I{}".format(DirName(p)))
+      end
+    end
+  end
+  
+  if isDebug
+    copts.append("-g")
+  end
+  
+  return copts
+end
+
+
+private def GetBaseModuleSearchPaths()
+  var moduleSearchPaths
+  var p = DirName(ProgramPath)
+
+  if Platform == "windows"
+    if IsStandalone
+      moduleSearchPaths = [Join(p, "lib")]
+    else
+      moduleSearchPaths = ModuleSearchPath.split(ModuleSearchPathSeparator)
+    end
+  else
+    if IsStandalone
+      if p.endsWith("/bin")
+        moduleSearchPaths = [Join(DirName(p), "lib/alore")]
+      else
+        -- Probably running alorec in the build directory.
+        moduleSearchPaths = [Join(p, "lib")]
+      end
+    else
+      moduleSearchPaths = ModuleSearchPath.split(ModuleSearchPathSeparator)
+    end
+  end
+  
+  -- When run as standalone, we need to manually process the ALOREPATH 
+  -- environment variable.
+  if IsStandalone
+    var pp = GetEnv("ALOREPATH")
+    if pp != "" and pp != nil
+      for ppp in Reversed(pp.split(ModuleSearchPathSeparator))
+        moduleSearchPaths.insertAt(0, ppp)
+      end
+    end
+  end
+  
+  return moduleSearchPaths
+end
+
+
+private def GetCCompiler()
+  if Platform == "solaris"
+    -- FIX: Need to check if only gcc is available.
+    return "cc"
+  elif Platform == "linux" or Platform == "freebsd"
+    return "gcc -pthread"
+  else
+    return "gcc"
+  end
+end
+
+
+-- Return the path to libalorec.a.
+def FindMainLibPath()
+  var paths = []
+  var p = DirName(ProgramPath)
+  
+  if Platform == "windows"
+    if IsStandalone
+      -- Translate * -> */lib
+      paths.append(Join(p, "lib"))
+    else
+      -- Translate */util -> */lib
+      paths.append(Join(DirName(p), "lib"))
+    end
+  else
+    if IsStandalone
+      if p.endsWith("/bin")
+        -- Translate */bin -> */lib
+        paths.append(Join(DirName(p), "lib"))
+      else
+        -- Probably running alorec in the build directory.
+        paths.append(Join(p, "lib"))
+      end
+    else
+      if p.endsWith("/util")
+        -- Translate */util -> */lib
+        paths.append(Join(DirName(p), "lib"))
+      end
+    end
+  end
+  
+  return FindFile(paths, "libalorec.a")
+end
+
+
+def ExeSuffix()
+  if Platform == "windows"
+    return ".exe"
+  else
+    return ""
+  end
+end
+
+
+def GetDynLib(path)
+  if Platform != "windows"
+    return Subst(path, "liba([a-zA-Z0-9_]+)\.a$", "\1.so")
+  else
+    return Subst(path, "liba([a-zA-Z0-9_]+)\.a$", "\1.dll")
+  end
+end
+
+
+def GetStripOptions()
+  if Platform == "osx"
+    -- Strip only local symbols (the  linker has already removed non-exported
+    -- global symbols).
+    return "-x"
+  else
+    return ""
+  end
+end

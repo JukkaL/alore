@@ -1,0 +1,111 @@
+@head
+@module io
+@title Class <tt>io::Stream</tt>
+@index Stream
+
+<p>The <tt>Stream</tt> class represents a generic stream of character data.
+<tt>Stream</tt> provides a high-level buffered interface for reading and
+writing strings, but does not implement the actual writing or reading.
+<tt>Stream</tt> subclasses must provide <tt>_write</tt> and/or <tt>_read</tt>
+methods for actually processing data. 
+
+@class Stream(...)
+@desc Construct a Stream object. The arguments may include some of the options
+      @ref{Input} and @ref{Output} (<tt>Input</tt> is the default if none
+      are specified), and one of the buffering options @ref{Buffered},
+      @ref{LineBuffered} or @ref{Unbuffered} (buffering is enabled by
+      default). Finally, the arguments may include @ref{Narrow}
+      to indicate a narrow (8-bit) stream that only accepts character codes
+      less than 256. By default, any 16-bit character codes are supported.
+@end
+
+<h2><tt>Stream</tt> methods</h2>
+
+@fun write(...)
+@desc Write the arguments to the stream. Non-string arguments will be first
+      converted to strings using the @ref{std::Str} constructor.
+@end
+
+@fun writeLn(...)
+@desc Write the arguments to the stream, followed by a line break. Non-string
+      arguments will be first converted to strings using the @ref{std::Str}
+      constructor.
+@end      
+
+@fun read([size])
+@desc Read up to a specified number of characters from the stream and return
+      them as a string. Read less than <i>size</i> characters only if the end 
+      of stream was encountered. If the number
+      of characters is not specified, read until the end of the stream.
+      Return an empty string at the end of stream.
+@end
+
+@fun readLn()
+@desc Read a line from the stream, and return the line without the line ending.
+      Raise @ref{IoError} if called at the end of stream.
+@end
+
+@fun readLines()
+@desc Read the rest of the stream as lines, close the stream and return an
+      array containing the
+      lines. Line endings are not included in the lines. The stream will be
+      closed even if there is an IO error.
+@end
+
+@fun flush()
+@desc Flush the output buffer of the stream by writing its contents. If the 
+      buffer is empty or does not exist, do nothing. This method can only
+      be used on streams that support writing.
+@end
+
+@fun eof()
+@desc Return a boolean indicating whether there are any characters
+      left in the stream before the end of stream. This method can only be used
+      on streams that support reading.
+@end
+
+@fun close()
+@desc Close the stream by flushing the output buffers. Subclasses of
+      <tt>Stream</tt>
+      should also release any operating system resources that might be
+      allocated for the object. Any stream operations other than
+      <tt>close</tt> made to a closed stream object will fail. Calling
+      <tt>close</tt> on a closed stream does nothing.
+@end
+
+@fun peek()
+@desc Return the contents of the input buffer as a string. If the input buffer
+      is empty or does not exist, return an empty string. This method can only
+      be used on streams that support reading.
+@end
+
+@fun iterator()
+@desc Return an iterator that iterates over all the lines in the stream.
+      Line endings are not included in the lines.
+@end
+
+<h2><tt>Stream</tt> operations</h2>
+
+@op for line in stream
+@desc The lines in a stream can be enumerated with a for loop. Line endings
+      are not included in the lines.
+@end
+
+<h2><tt>Stream</tt> subclass methods</h2>
+
+<p>At least one of these methods must be provided by subclasses of
+<tt>Stream</tt> (<tt>_write</tt> for output streams and <tt>_read</tt> for
+input streams). <tt>Stream</tt> does not implement these and therefore is an
+abstract class.
+
+@fun _write(...)
+@desc Write the arguments directly to the stream without buffering. The
+      arguments are strings.
+@end
+
+@fun _read(size)
+@desc Read up to the specified number of characters from the stream, directly
+      without buffering. Return <tt>nil</tt> if at the end of the stream.
+@end
+
+@end-class

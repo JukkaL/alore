@@ -1,0 +1,68 @@
+@head
+@title Collection operations
+
+<p>These operations are useful for dealing with collection objects, such as
+Array, Map or Set objects.
+
+<p>All of these operations may raise direct or normal exceptions. They always
+check the validity of their arguments and raise exceptions on any error 
+conditions.
+
+@see There are faster but more specific operations for dealing with only
+     Array objects, described in section @href{Array operations}.
+@end
+
+@fun Assize_t ALen(AThread *t, AValue collection)
+@desc Call the length() method of the argument, and return the value converted
+      to a C integer. Raise <tt>std::TypeError</tt> if the return value
+      is not an
+      <tt>Int</tt> object. If a normal exception was raised, return a negative
+      value.
+@end
+
+@fun AValue AGetItem(AThread *t, AValue collection, AValue index)
+@desc Return <tt>collection[index]</tt>, i.e. the result of the <tt>_get</tt> 
+      method of collection. This method may return <tt>AError</tt>.
+@end
+
+@fun AValue ASetItem(AThread *t, AValue collection, AValue index, AValue object)
+@desc Assign object to <tt>collection[index]</tt>, i.e. call the <tt>_set</tt>
+      method of collection. The return value is ANil, if
+      successful, or AError.
+@end
+
+@fun AValue AGetItemAt(AThread *t, AValue collection, Assize_t index)
+@desc Return <tt>collection[index]</tt> after converting index to an 
+      <tt>Int</tt> object, i.e. the result of the <tt>_get</tt> method of 
+      collection. This is
+      a convenience method that can be used instead of <tt>AGetItem</tt> if
+      the index is a C integer. This method may return <tt>AError</tt>.
+@end
+
+@fun AValue ASetItemAt(AThread *t, AValue collection, Assize_t index, AValue object)
+@desc Assign object to <tt>collection[index]</tt> after converting index to an
+      <tt>Int</tt> object, i.e. call the <tt>_set</tt> method of collection. 
+      This is a convenience function that can be used instead of 
+      <tt>ASetItem</tt> if the index is a C integer. The return value is
+      ANil, if successful, or AError.
+@end
+
+@fun AValue AIterator(AThread *t, AValue object)
+@desc Return the result of calling the <tt>iterator()</tt> method of an object.
+      This is typically an iterator object. This function may return 
+      <tt>AError</tt>.
+@end
+
+@fun int ANext(AThread *t, AValue iter, AValue *next)
+@desc If iter is an iterator and it has items left, store the next
+      value in the iteration
+      in *next and return 1. If there are no items left, return 0. If there was
+      an error, return -1.
+@end
+
+@fun int AIn(AThread *t, AValue collection, AValue object)
+@desc Check if an object is contained in a collection, similar to using the
+      <tt>in</tt> operator. Return 1 for true, 0 for false and -1 for error.
+@end
+
+<!-- FIX AConcat? -->

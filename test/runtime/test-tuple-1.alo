@@ -1,0 +1,317 @@
+module runtime
+
+-- Tuple test cases
+
+import unittest
+import reflect
+
+
+class TupleSuite is Suite
+  def testBasics()
+    Assert(() is Tuple)
+    Assert((1,) is Tuple)
+    Assert((1, "x") is Tuple)
+    
+    AssertEqual(().length(), 0)
+    AssertEqual((1,).length(), 1)
+    AssertEqual((1, "x").length(), 2)
+  end
+  
+  def testStr()
+    AssertEqual(Str(()), "()")
+    AssertEqual(Str((1, "x", (2, True), [])), "(1, 'x', (2, True), [])")
+    AssertEqual(Str((1,)), "(1,)")
+  end
+
+  def testEquality()
+    AssertEqual((), ())
+    
+    AssertEqual((1,), (1,))
+    AssertNotEqual((1,), (2,))
+    
+    AssertEqual((1, 2), (1, 2))
+    AssertNotEqual((1, 2), (1, 3))
+    AssertNotEqual((1, 2), (3, 2))
+    
+    AssertNotEqual((1, 2), (1, "x"))
+    AssertNotEqual((1, 2), (1, 2, "x"))
+    AssertNotEqual((1, 2), (1,))
+  end
+  
+  def testRecursiveEquality()
+    var a = (((1, 2), 3), (4, 5))
+    var b = (((1, 2), 3), (4, 5))
+    var c = (((1, 0), 3), (4, 5))
+    var d = (((1,), 3), (4, 5))
+    var e = (((1, 2), 3), (4,))
+    var f = (((1, 2), 3), 4, 5)
+    Assert(a == a)
+    Assert(a == b)
+    Assert(a != c)
+    Assert(a != d)
+    Assert(a != e)
+    Assert(a != f)
+    
+    AssertRaises(ValueError, def ()
+                               var z = ()
+                               for i in 0 to 10
+                                 z = (z, z)
+                               end
+                               Assert(z == z)
+                             end)
+  end
+  
+  def testArrayEquality()
+    AssertEqual((), [])
+    AssertEqual((1, (2, "x")), [1, [2, "x"]])
+  end
+  
+  def testOrdering()
+    var a = ()
+    var b1 = (1,)
+    var b2 = (2,)
+    var c1 = (1, 1)
+    var c2 = (1, 2)
+    var c3 = (2, 1)
+    
+    Assert(a <= a)
+    VerifyNot(a > a)
+    Assert(a >= a)
+    VerifyNot(a < a)
+    
+    Assert(a <= b1)
+    Assert(a <= c1)
+    Assert(b1 <= b2)
+    Assert(b1 <= c1)
+    Assert(b1 <= c3)
+    Assert(c3 <= c3)
+    VerifyNot(c2 <= c1)
+    
+    Assert(b1 >= a)
+    Assert(b2 >= b1)
+    Assert(c1 >= b1)
+    Assert(c3 >= c3)
+    VerifyNot(c1 >= c2)
+    
+    Assert(a < b1)
+    Assert(b1 < b2)
+    Assert(b1 < c1)
+    Assert(c1 < c2)
+    VerifyNot(b2 < b1)
+    
+    Assert(b1 > a)
+    Assert(c1 > b1)
+    Assert(c2 > c1)
+    VerifyNot(c3 < c2)
+  end
+  
+  def testRecursiveOrdering()
+    var a = ((1, 2), ((3, 4), 5))
+    var b = ((2, 2), ((3, 4)))
+    var c = ((1, 2), ((4, 4), 5))
+    Assert(a < b)
+    Assert(a < c)
+    Assert(c < b)
+    VerifyNot(b < a)
+    
+    Assert(b > a)
+    Assert(c > a)
+    Assert(b > c)
+    VerifyNot(a > b)
+    
+    Assert(a <= a)
+    Assert(a <= b)
+    VerifyNot(b <= a)
+    
+    Assert(c >= c)
+    Assert(c >= a)
+    VerifyNot(c >= b)
+  end
+  
+  def testArrayOrdering()
+    Assert((1, 2) <= [1, 2])
+    Assert((1, 2) <= [1, 3])
+    Assert((1, 2) <= [2, 0])
+    VerifyNot((1, 2) <= [1, 1])
+    
+    Assert([1, 2] <= (1, 2))
+    Assert([1, 2] <= (1, 3))
+    Assert([1, 2] <= (2, 0))
+    VerifyNot([1, 2] <= (1, 1))
+    
+    Assert((1, 2) < [1, 3])
+    Assert((1, 2) < [2, 0])
+    VerifyNot((1, 2) < [1, 2])
+    
+    Assert([1, 2] < (1, 3))
+    Assert([1, 2] < (2, 0))
+    VerifyNot([1, 2] < (1, 2))
+  end
+  
+  def testErrors()
+    var t = (1, 2)
+    AssertRaises(MemberError, def (); t[0] = 2; end)
+    AssertRaises(MemberError, def (); t.remove(0); end)
+    AssertRaises(MemberError, def (); t.insertAt(0, 0); end)
+    AssertRaises(TypeError, def (); t[0:2]; end)
+  end
+  
+  def testInOperator()
+    var a = ()
+    var b = (3,)
+    var c = ("foo", "bar")
+    var d = (5, 6, 7, Comp())
+    
+    Assert(not (1 in a))
+    Assert(not a in a)
+    VerifyNot(1 in a)
+    VerifyNot(a in a)
+    
+    Assert(3 in b)
+    Assert(not 4 in b)
+    VerifyNot(4 in b)
+    VerifyNot(not 3 in b)
+    
+    Assert(Comp() in b)
+    Assert(not Comp() in a)
+    
+    Assert("foo" in c)
+    Assert("bar" in c)
+    Assert(not "zar" in c)
+    
+    Assert(7 in d)
+    Assert(3 in d)
+    VerifyNot(99 in d)
+  end
+  
+  -- Test some uses of creating arrays using parenthesised expressions.
+  def testComplexConstructor()
+    AssertEqual(((((1 + 2) * (2 + 3),),),), [[[15]]])
+    AssertEqual((1 + 2, (3 * 4,), ((1, 2))), (3, (12,), (1, 2)))
+  end
+  
+  -- Test multiple expression separated by commas as lvalues.
+  def testMultiAssignment()
+    var a, b = 1, 2
+    AssertEqual(a, 1)
+    AssertEqual(b, 2)
+  end
+  
+  -- Test parenthesised expressions as lvalues.
+  def testParenthesisedMultiAssignment()
+    var i, j
+    
+    (i,) = ["foo"]
+    AssertEqual(i, "foo")
+    
+    (i,) = ("bar",)
+    AssertEqual(i, "bar")
+    
+    (m,) = [12]
+    AssertEqual(m, 12)
+    
+    j = [nil]
+    (j[0],) = [5]
+    AssertEqual(j, [5])
+    
+    (j[2 * 3 - 1 * 6], i, m) = 2, 3, 4
+    AssertEqual(j, [2])
+    AssertEqual(i, 3)
+    AssertEqual(m, 4)
+  end
+
+  private var m
+    
+  -- Test raising exceptions on index errors.
+  def testIndexErrors()
+    var t
+  
+    t = ()
+    AssertTupleIndexError(t, -1)
+    AssertTupleIndexError(t, 0)
+    AssertTupleIndexError(t, 1)
+    
+    t = (1,)
+    AssertTupleIndexError(t, -100)
+    AssertTupleIndexError(t, -2)
+    AssertTupleIndexError(t, 1)
+    AssertTupleIndexError(t, 2)
+    AssertTupleIndexError(t, 200)
+  end
+  
+  -- Test iterating Tuple objects.
+  def testIteration()
+    var l = []
+    for i in ()
+      l.append(i)
+    end
+    Assert(l.length() == 0)
+    
+    for i in (22,)
+      l.append(i)
+    end
+    AssertEqual(l, [22])
+    
+    for i in 2, 3, 4, 5, 6, 7, 8, 9, 10
+      l.append(i)
+    end
+    AssertEqual(l, [22, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    
+    l = []
+    var t = (1, 2)
+    for i in t
+      for j in t
+        l.append((i, j))
+      end
+    end
+    AssertEqual(l, [(1, 1), (1, 2), (2, 1), (2, 2)])
+  end
+    
+  def testMembers()
+    var t = (2, 3)
+    for m in "length", "_get", "_eq", "_lt", "_gt", "_in", "_str", "_hash", 
+             "iterator"
+      AssertEqual(HasMember(t, m), True)
+    end
+    AssertEqual(HasMember(t, "_set"), False)
+    
+    AssertEqual(t.length(), 2)
+    
+    AssertEqual(t._get(1), 3)
+    AssertEqual(t._get(-1), 3)
+    AssertEqual(t._eq([2, 3]), True)
+    AssertEqual(t._eq((2, 3)), True)
+    AssertEqual(t._eq((2, 4)), False)
+    AssertEqual(t._lt((2, 4)), True)
+    AssertEqual(t._lt((2, 3)), False)
+    AssertEqual(t._gt((2, 3)), False)
+    AssertEqual(t._gt((2, 2)), True)
+    AssertEqual(t._in(3), True)
+    AssertEqual(t._in(4), False)
+    AssertEqual(t._str(), "(2, 3)")
+    AssertEqual(t._hash(), Hash(t))
+    var i = t.iterator()
+    AssertEqual(i.next(), 2)
+    AssertEqual(i.next(), 3)
+    AssertEqual(i.hasNext(), False)
+    
+    AssertRaises(IndexError, t._get, [2])
+    AssertRaises(IndexError, t._get, [-3])
+    
+    var m
+    m = t.length
+    AssertEqual(m(), 2)
+    AssertEqual(Repr(m), "length of Tuple")
+    m = t._get
+    AssertEqual(m(1), 3)
+    
+    m = GetMember(t, "length")
+    AssertEqual(m(), 2)
+  end
+end
+
+
+-- Perform indexed reads and verify that indexing errors are generated.
+def AssertTupleIndexError(l, i)
+  AssertRaises(IndexError, def (); l[i]; end)
+end

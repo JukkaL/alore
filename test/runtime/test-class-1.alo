@@ -1,0 +1,287 @@
+module runtime
+
+-- Classes and instances
+
+import unittest
+
+
+-- Test public and private member variables/consts
+class ClassSuite1 is Suite
+  def testMemberVars()
+    var i = MemberTest()
+  
+    Assert(i.puv == nil)  
+    i.WritePuv(3)
+    Assert(i.ReadPuv() == 3)
+  
+    Assert(i.ReadPrv() == nil)
+    i.WritePrv(5)
+    Assert(i.ReadPrv() == 5)
+  
+    var f = 0
+    try
+      var k = i.prv
+    except MemberError
+      f += 1
+    end
+    try
+      i.prv = 1
+    except MemberError
+      f += 1
+    end
+    Assert(f == 2)
+  
+    Assert(i.puc == 7)
+    Assert(i.ReadPuc() == 7)
+    try
+      i.puc = 2
+    except MemberError
+      f += 1
+    end
+    Assert(f == 3)
+  
+    Assert(i.ReadPrc() == 9)
+    try
+      var k = i.prc
+    except MemberError
+      f += 1
+    end
+    try
+      i.prc = 4
+    except MemberError
+      f += 1
+    end
+    Assert(f == 5)
+  
+    Ok()
+  end
+  
+  -- Test public/private methods
+  def testTestMethods()
+    var i = MethodTest()
+    Assert(i.Pm(5) == 6)
+    Assert(i.CallPv(7) == 9)
+  
+    var f = 0
+    try
+      i.Pv(3)
+    except MemberError
+      f += 1
+    end
+    Assert(f == 1)
+  
+    try
+      i.Pm = 8
+    except MemberError
+      f += 1
+    end
+    Assert(f == 2)
+  
+    try
+      i.Pv = 8
+    except MemberError
+      f += 1
+    end
+    Assert(f == 3)
+  
+    Ok()
+  end
+  
+  -- Test public getters / setters
+  def testGetterSetter()
+    var i = GetterSetterTestPublic()
+  
+    Assert(i.g1 == 3)
+  
+    Assert(i.g2 == nil)
+    i.g2 = 7
+    Assert(i.g2 == 7)
+  
+    Assert(i.Test() == 78)
+  
+    Ok()
+  end
+  
+  -- Test private getters / setters
+  def testPrivateGetterSetter()
+    var i = GetterSetterTestPrivate()
+  
+    Assert(i.Test() == 65)
+  
+    Ok()
+  end
+  
+  def testUndefinedSelfMember()
+    var i = UndefinedSelfTester()
+    i.test()
+  end
+end
+
+
+private class MemberTest
+  var puv
+  private var prv
+  
+  def create()
+  end
+
+  const puc = 7
+  private const prc = 9
+
+  def WritePuv(n)
+    puv = n
+  end
+
+  def ReadPuv()
+    return puv
+  end
+
+  def WritePrv(n)
+    prv = n
+  end
+
+  def ReadPrv()
+    return prv
+  end
+
+  def ReadPuc()
+    return puc
+  end
+
+  def ReadPrc()
+    return prc
+  end
+end
+
+
+private class MethodTest
+  var v
+  
+  def create()
+  end
+
+  def Pm(a)
+    return a + 1
+  end
+
+  def CallPv(a)
+    return Pv(a)
+  end
+
+  private def Pv(a)
+    return a + 2
+  end
+end
+
+
+private class GetterSetterTestPublic
+  -- Only getters / setters
+  
+  def create()
+  end
+  
+  def g1
+    return 3
+  end
+
+  private var g2value
+  def g2
+    return g2value
+  end
+  def g2 = n
+    g2value = n
+  end
+
+  -- FIX: what about const + setters??
+  -- FIX: what about const getter + assignment, eg. c1=x
+
+  def Test()
+    Assert(g1 == 3)
+
+    g2 = 7
+    Assert(g2 == 7)
+
+    return 78
+  end
+end
+
+
+private class GetterSetterTestPrivate
+  -- Only getters / setters
+  private def g1
+    return 3
+  end
+
+  private var g2value
+  private def g2
+    return g2value
+  end
+  private def g2 = n
+    g2value = n
+  end
+
+  -- FIX: what about const + setters??
+  -- FIX: what about const getter + assignment, eg. c1=x
+
+  def Test()
+    Assert(g1 == 3)
+
+    Assert(g2 == nil)
+    g2 = 7
+    Assert(g2 == 7)
+
+    return 65
+  end
+end
+
+
+private class SelfBase
+  def read()
+    return self.c
+  end
+  
+  def assign()
+    self.v = 2
+  end
+  
+  def read2()
+    return self.gs
+  end
+  
+  def assign2()
+    self.gs = 7
+  end
+  
+  def call()
+    return self.f(44)
+  end
+end
+
+
+private class UndefinedSelfTester is SelfBase
+  const c = 5
+  
+  var v
+  
+  def f(n)
+    return n + 1
+  end
+  
+  def gs
+    return v + 2
+  end
+  
+  def gs = n
+    v = n
+  end
+
+  def test()
+    AssertEqual(read(), 5)
+    assign()
+    AssertEqual(v, 2)
+    assign2()
+    AssertEqual(v, 7)
+    AssertEqual(read2(), 9)
+    AssertEqual(call(), 45)
+  end
+end

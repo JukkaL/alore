@@ -1,0 +1,64 @@
+-- misc.alo - String operations
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module string
+
+import __string
+
+
+def ExpandTabs(s, tabSize = 8)
+  -- Handle non-positive tab size as a special case - remove tabs.
+  if tabSize <= 0
+    return s.replace(Tab, "")
+  end
+  
+  var a = []
+  var i = 0
+  var column = 0
+  
+  -- Process string in chunks until encountering the end of string.
+  while True
+    var next = s.find(Tab, i)
+    if next < 0
+      -- No more tabs.
+      a.append(s[i:])
+      break
+    end
+    -- Process any line breaks before the tab (these affect the column).
+    var i0 = i
+    while True
+      var nextLF = s.find(LF, i)
+      var nextCR = s.find(CR, i)
+      if nextLF >= 0 and nextLF < next
+        i = nextLF + 1
+        column = 0
+      elif nextCR >= 0 and nextCR < next
+        i = nextCR + 1
+        column = 0
+      else
+        break
+      end
+    end
+    if next > i0
+      a.append(s[i0:next])
+    end
+    column += next - i
+    var n = tabSize - (column mod tabSize)
+    a.append(n * " ")
+    column += n
+    i = next + 1
+  end
+  
+  return "".join(a)
+end
+
+
+const IsLetter = __string::IsLetter
+const IsDigit = __string::IsDigit
+const IsWordChar = __string::IsWordChar
+const IsSpace = __string::IsSpace
+const IntToStr = __string::IntToStr

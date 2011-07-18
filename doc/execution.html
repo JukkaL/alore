@@ -1,0 +1,135 @@
+@head
+@title Execution
+
+<p>This section gives a detailed description of the program initialization and
+startup. Two important concepts related to execution, calling objects and
+raising exceptions, are briefly described.
+Other topics related to program execution are described later in sections
+@href{Statements} and @href{Expressions}.
+
+@h2 Initialization
+
+<p>At the start of the program execution, all modules (including the main
+module) will be initialized. During module initialization:
+
+<ol>
+  <li>All global variable and constant definitions with initializers, and
+   any statements in the module are evaluated.
+  <li>Initializers and statements in a single file will be evaluated in the
+    order they appear
+    in the file, from the start of the file to the end.
+    If a module contains multiple files, these files will be initialized in an 
+    arbitrary order.
+    @note It may therefore be helpful to collect all
+    initialized global variable and constant definitions in a module to a 
+    single source file to avoid problems with different evaluation orders.
+    @end
+  <li>After the initialization is complete, the <tt>Main</tt> function of the 
+    module is called, if it is defined. The <tt>Main</tt> function 
+    is not generally given any arguments.
+ </ol>
+ 
+<p>As an exception, the <tt>Main</tt> function of the main module may take a 
+single argument that will receive the command line arguments given to the 
+program as an array of strings. The <tt>Main</tt> function is always optional.
+
+@h2 Module dependencies
+
+<p>A module <i>x</i> depends on module <i>y</i> if
+
+<ol>
+  <li>module <i>x</i> imports module <i>y</i>, or
+  <li>any module imported by module <i>x</i> depends on module <i>y</i>.
+</ol>
+
+<p>This definition is used in the next section.
+
+@h2 Order of initialization
+
+<p>The order of module initialization is not fully specified, but it must
+follow these constraints:
+
+<ol>
+  <li>If module <i>x</i> depends on module <i>y</i> but module <i>y</i> does 
+    not depend on module <i>x</i>,
+    module <i>y</i> will be initialized before module <i>x</i>.
+  <li>Initialization of multiple modules cannot be interleaved, i.e. a single
+    module must first be fully initialized before another module can be 
+    initialized.
+</ol>
+
+<p>In practice, these rules mean that all imported modules will be initialized
+before the module that imports them, unless there are circular dependency 
+chains.
+The main module will be initialized last (and thus the <tt>Main</tt> function 
+of the main source file will be run last after all modules have been 
+initialized).
+
+@h2 Calling objects
+
+<p>Functions, methods and types may be called implicitly or explicitly.
+Explicit calls are performed using @hrefl{Call expressions}. Implicit calls
+include these:
+
+<ul>
+  <li>calling module <tt>Main</tt> functions during initialization
+  <li>calling methods when evaluating many operators in expressions
+  <li>calling a getter method when evaluating a member reference
+  <li>calling a setter method when assigning to a member
+  <li>calling the <tt>_set</tt> method when a subscript expression is used
+    as an lvalue in an assignment statement
+  <li>calling the <tt>create</tt> method during object construction
+  <li>calling the <tt>hasNext</tt> and <tt>next</tt> methods in for loops
+  <li>calling type constructors when built-in exceptions such as
+    @ref{std::TypeError} are raised implicitly during evaluation.  
+</ul>
+
+<p>Both implicit and explicit calls are evaluated in the same fashion.
+The rest of this section only deals with function calls, but the same rules
+apply to method and type calls.
+
+<p>A function call involves creating a new <i>invocation</i> of the
+function. The invocation contains instances of any local variables and
+other state needed during the evaluation of the function. Multiple invocations
+of the same function can be alive at the same time, and their contents are
+independent of each other.
+
+<p>Function invocations form a stack: as a function is called, the new
+invocation is pushed to the top of the stack and the previous function calls
+remain inactive in the stack below the new invocation and only become active
+when the new invocation returns or propagates an exception, causing that
+invocation to be destroyed. The implementation may limit the maximum depth of
+the call stack.
+
+<p>An invocation may return by finishing the evaluation of the function
+<i>body</i> or by evaluating a return statement within the body. In the
+latter case, the invocation may optionally return a value as the result of the
+function call. The caller may use or discard the return value.
+
+<p>The bottom of the call stack contains a special invocation that is not
+associated with any defined function. It is used
+to evaluate the initialization expressions of global variables and constants
+and to call the <tt>Main</tt> functions. After all the modules in a program
+have been initialized, this invocation causes the program execution to end.
+
+@h2 Raising exceptions
+
+<p>As their name implies, exceptions are raised in response to exceptional
+conditions. They may be raised by many operations in
+the language. The programmer can
+also raise them explicitly with the @hrefl{Raise statement}.
+
+<p>Each exception is associated with an exception object whose type must be
+@ref{std::Exception} or its subtype.
+
+<p>When an exception is raised, the evaluation of the current expression or
+statement is terminated. Any try blocks enclosing the current location in
+code are consulted, starting from the innermost one and proceeding outwards
+(see section @href{Try statement} for details).
+
+<p>If no try statement in the current function or method catches the exception,
+it is <i>propagated</i> to the next invocation in the call stack. The exception
+acts as if it was raised in the call statement that was being evaluated in the
+function. This process is continued until the exception is caught or until
+the call stack becomes empty, in which case the program is terminated due to
+an uncaught exception.

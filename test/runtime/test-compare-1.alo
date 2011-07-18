@@ -1,0 +1,103 @@
+module runtime
+
+import unittest
+import helpers
+import iohelpers --FIX remove
+
+
+class CompareSuite is Suite
+  def testBasicEquality()
+    var f = Foo()
+    var g = Foo()
+    Assert(f == f)
+    Assert(f != g)
+    Assert(Deriv() == 5)
+    Assert([f] == [f])
+    Assert( [Bar()] == [(1, 2)] )
+    Assert( [(1, 2)] != [Bar()] )
+    
+    Assert(1 != nil)
+    Assert("a" != nil)
+    Assert(f != nil)
+    Assert((1, 2) != nil)
+  end
+  
+  -- Test Alore class inheriting the _eq method from Object.
+  def testInheritingEqMethodInAloreType()
+    var f = Foo()
+    var g = Foo()
+    Assert(f._eq(f))
+    Assert(not f._eq(g))
+  end
+  
+  -- Test Alore class inheriting the _eq method from Object.
+  def testInheritingEqMethodInPrimitiveType()
+    Assert(Repr._eq(Repr))
+    Assert(not Repr._eq(Ord))
+  end
+  
+  def testEquality()
+    -- Verify that the ObjList array contains the correct values.
+    Assert(ObjList[9] == 1.0)
+    Assert(ObjList[10] is Range)
+    Assert(ObjList[11] == Ord)
+    Assert(ObjList[12] == VerifyArrays)
+    Assert(ObjList[13] is Function)
+    Assert(ObjList[14] == nil)
+    Assert(ObjList[15] == True)
+    Assert(ObjList[16].foo is Function)
+    
+    for i in 0 to ObjList.length()
+      for j in 0 to ObjList.length()
+        if ObjList[i] == ObjList[j]
+          Assert(i == j)
+        else
+          Assert(i != j)
+        end
+        if ObjList[i] != ObjList[j]
+          Assert(i != j)
+        else
+          Assert(i == j)
+        end
+        if (ObjList[i], ObjList[j]) == (ObjList[j], ObjList[i])
+          Assert(i == j)
+        else
+          Assert(i != j)
+        end
+        if (ObjList[i], ObjList[j]) != (ObjList[j], ObjList[i])
+          Assert(i != j)
+        else
+          Assert(i == j)
+        end
+        if ObjList[i] in (ObjList[j], ObjList[j])
+          Assert(i == j)
+        else
+          Assert(i != j)
+        end
+      end
+    end
+  end
+end
+
+
+private class Foo
+  var x = nil
+end
+
+
+private class Bar
+  def _eq(x)
+    return x == (1, 2)
+  end
+end
+
+
+private class CompareBase
+  def _eq(x)
+    return x == 5
+  end
+end
+
+
+private class Deriv is CompareBase
+end

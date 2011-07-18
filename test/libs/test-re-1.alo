@@ -1,0 +1,1155 @@
+encoding latin1
+
+module libs
+
+import unittest
+import re
+import string
+
+
+class MyRegExp is RegExp
+  def create(re, *more)
+    super.create(re, *more)
+    self.re = re
+  end
+  
+  def _str()
+    return re
+  end
+  
+  def _repr()
+    return Repr(re)
+  end
+  
+  const re
+end
+
+
+class ReSuite is Suite
+  def testBasicMatch()
+    AssertMatch("foobar", "fubar", False)
+    AssertMatch("foobar", "foobar", True)
+  end
+  
+  def testMatchString()
+    AssertMatch("", "", True)
+    AssertMatch("", "a", True)
+    AssertMatch("$", "a", False)
+    AssertMatch("a$", "a", True)
+    AssertMatch("a", "A", False)
+    AssertMatch("a", "", False)
+    AssertMatch("a", "aa", True)
+    AssertMatch("a$", "aa", False)
+    AssertMatch("a$", " a", False)
+  end
+  
+  def testMatchAt()
+    AssertMatchAt("a$", "a", 0, True)
+    
+    AssertMatchAt("a", "a", 0, True)
+    AssertMatchAt("a", "a", 1, False)
+    AssertMatchAt("a", "a", 100, False)
+    
+    AssertMatchAt("\u1234", "\u1234", 0, True)
+    AssertMatchAt("\u1234", "\u1234", 1, False)
+    AssertMatchAt("\u1234", "\u1234", 100, False)
+    
+    AssertMatchAt("", "", 0, True)
+    AssertMatchAt("", "", 1, False)
+    
+    AssertMatchAt("", "a", 0, True)
+    AssertMatchAt("", "a", 1, True)
+    AssertMatchAt("", "a", 2, False)
+  
+    AssertMatchAt("abc", ".abc.", 0, False)
+    AssertMatchAt("abc", ".abc.", 1, True)
+    AssertMatchAt("abc", ".abc.", 2, False)
+    
+    AssertMatchAt(MyRegExp("Abc", IgnoreCase), ".abC.", 0, False)
+    AssertMatchAt(MyRegExp("Abc", IgnoreCase), ".abC.", 1, True)
+  end
+  
+  def testMatchRepeatChar()
+    AssertMatch("a*$", "", True)
+    AssertMatch("a*$", "a", True)
+    AssertMatch("a*$", "aa", True)
+    AssertMatch("a*$", "aaaaaaaaaaaaaaaaaaaaaa", True)
+    AssertMatch("a*$", "A", False)
+    
+    AssertMatch("a+$", "a", True)
+    AssertMatch("a+$", "aaaaaaa", True)
+    AssertMatch("a+$", "", False)
+    AssertMatch("a+$", "A", False)
+    
+    AssertMatch("a?$", "", True)
+    AssertMatch("a?$", "a", True)
+    AssertMatch("a?$", "aa", False)
+    AssertMatch("a?$", "A", False)
+  end
+  
+  def testMatchAny()
+    AssertMatch(".", "a", True)
+    AssertMatch(".", " ", True)
+    AssertMatch(".", "%", True)
+    AssertMatch(".", "", False)
+    AssertMatch(".$", "aa", False)
+    
+    AssertMatch(".*", "", True)
+    AssertMatch(".*", "a", True)
+    AssertMatch(".*", "asdf080-aw3r0 ", True)
+    
+    AssertMatch(".+", "a", True)
+    AssertMatch(".+", "-+x0cgf", True)
+    AssertMatch(".+", "", False)
+    
+    AssertMatch(".?", "", True)
+    AssertMatch(".?", "#", True)
+    AssertMatch(".?$", "aa", False)
+  end
+  
+  def testMatchCharSet()
+    AssertMatch("[a]", "a", True)
+    AssertMatch("[a]", "b", False)
+    AssertMatch("[bc]", "b", True)
+    AssertMatch("[bc]", "c", True)
+    AssertMatch("[bc]", "B", False)
+    AssertMatch("[bc]", "", False)
+    AssertMatch("[bc]$", "bb", False)
+    
+    AssertMatch("[b-d]", "b", True)
+    AssertMatch("[b-d]", "c", True)
+    AssertMatch("[b-d]", "d", True)
+    AssertMatch("[b-d]", "a", False)
+    AssertMatch("[b-d]", "e", False)
+    
+    AssertMatch("[bf-h]", "b", True)
+    AssertMatch("[bf-h]", "c", False)
+    AssertMatch("[bf-h]", "f", True)
+    AssertMatch("[bf-h]", "g", True)
+    
+    AssertMatch("[^a]", "#", True)
+    AssertMatch("[^a]", "a", False)
+    AssertMatch("[^bf-h+]", "-", True)
+    AssertMatch("[^bf-h+]", "+", False)
+    AssertMatch("[^bf-h+]", "f", False) 
+    
+    AssertMatch("[a^]", "^", True) 
+    AssertMatch("[a[]", "[", True) 
+    AssertMatch("[a[]", "]", False) 
+    AssertMatch("[]a]", "]", True) 
+    AssertMatch("[]a]", "[", False) 
+    AssertMatch("[^]]", "[", True) 
+    AssertMatch("[^]]", "]", False) 
+    AssertMatch("[-a]", "-", True) 
+    AssertMatch("[-a]", "a", True) 
+    AssertMatch("[-b]", "a", False) 
+    AssertMatch("[-b]", "c", False) 
+    AssertMatch("[a-]x", "-x", True)
+    AssertMatch("[a-]", "]", False)
+    AssertMatch("[a-]", "a", True)
+    
+    AssertMatch("[a-c-]", "a", True)
+    AssertMatch("[a-c-]", "b", True)
+    AssertMatch("[a-c-]", "c", True)
+    AssertMatch("[a-c-]", "d", False)
+    AssertMatch("[a-c-]", "-", True)
+    
+    AssertMatch("[a-b-d]", "a", True)
+    AssertMatch("[a-b-d]", "b", True)
+    AssertMatch("[a-b-d]", "d", True)
+    AssertMatch("[a-b-d]", "c", False)
+    AssertMatch("[a-b-d]", "-", True)
+    
+    AssertMatch("[\w.]", "a", True)
+    AssertMatch("[\w.]", "0", True)
+    AssertMatch("[\w.]", "_", True)
+    AssertMatch("[\w.]", ".", True)
+    AssertMatch("[\w.]", ",", False)
+    
+    AssertMatch("[a\W]", "a", True)
+    AssertMatch("[a\W]", "A", False)
+    AssertMatch("[a\W]", "_", False)
+    
+    AssertMatch("[\s]", " ", True)
+    AssertMatch("[\s]", ".", False)
+    
+    AssertMatch("[\S]", " ", False)
+    AssertMatch("[\S]", ".", True)
+    
+    AssertMatch("[\d]", "0", True)
+    AssertMatch("[\d]", "a", False)
+    
+    AssertMatch("[\D]", "0", False)
+    AssertMatch("[\D]", "a", True)
+  end
+  
+  def testMatchRepeatCharSet()
+    AssertMatch("[bc]*$", "", True)
+    AssertMatch("[bc]*$", "b", True)
+    AssertMatch("[bc]*$", "c", True)
+    AssertMatch("[bc]*$", "bc", True)
+    AssertMatch("[bc]*$", "ccbbcbcbcbcbcbbc", True)
+    AssertMatch("[bc]*$", "B", False)
+    
+    AssertMatch("[bc]+$", "b", True)
+    AssertMatch("[bc]+$", "c", True)
+    AssertMatch("[bc]+$", "bcbccbcc", True)
+    AssertMatch("[bc]+$", "B", False)
+    AssertMatch("[bc]+$", "", False)
+    
+    AssertMatch("[bc]?$", "", True)
+    AssertMatch("[bc]?$", "b", True)
+    AssertMatch("[bc]?$", "c", True)
+    AssertMatch("[bc]?$", "bb", False)
+    AssertMatch("[bc]?$", "B", False)
+  end
+  
+  def testMatchRepeatNegatedCharSet()
+    AssertMatch("[^bc]*$", "", True)
+    AssertMatch("[^bc]*$", "a", True)
+    AssertMatch("[^bc]*$", "d", True)
+    AssertMatch("[^bc]*$", "ad", True)
+    AssertMatch("[^bc]*$", "3o65uj35iu6j3", True)
+    AssertMatch("[^bc]*$", "b", False)
+    AssertMatch("[^bc]*$", "xyzc", False)
+    
+    AssertMatch("[^bc]+$", "x", True)
+    AssertMatch("[^bc]+$", "xyz-.", True)
+    AssertMatch("[^bc]+$", "xyzb", False)
+    AssertMatch("[^bc]+$", "", False)
+    
+    AssertMatch("[^bc]?$", "", True)
+    AssertMatch("[^bc]?$", "x", True)
+    AssertMatch("[^bc]?$", "xy", False)
+    AssertMatch("[^bc]?$", "b", False)
+  end
+  
+  def testMatchAlternation()
+    AssertMatch("a|b", "a", True)
+    AssertMatch("a|b", "b", True)
+    AssertMatch("a|b", "c", False)
+    AssertMatch("a|b", "", False)
+    AssertMatch("a$|b$", "ab", False)
+    
+    AssertMatch("a+|b*|foobar", "aa", True)
+    AssertMatch("a+|b*|foobar", "", True)
+    AssertMatch("a+|b*|foobar", "bb", True)
+    AssertMatch("a+|b*|foobar", "foobar", True)
+    AssertMatch("a+|b*$|foobar", "fooba", False)
+    AssertMatch("a+|b*$|foobar", "xa", False)
+    
+    AssertMatch("a|", "a", True)
+    AssertMatch("a|", "", True)
+    AssertMatch("a|$", "b", False)
+    AssertMatch("|a", "a", True)
+    AssertMatch("|a", "", True)
+    AssertMatch("$|a", "b", False)
+    AssertMatch("a$|b", "ba", True)
+    AssertMatch("b|a$", "ba", True)
+  end
+  
+  def testMatchGrouping()
+    AssertMatch("(a)$", "a", True)
+    AssertMatch("(a)$", "b", False)
+    AssertMatch("(a)$", "", False)
+    
+    AssertMatch("(b|c)$", "b", True)
+    AssertMatch("(b|c)$", "c", True)
+    AssertMatch("(b|c)$", "", False)
+    AssertMatch("(b|c)$", "bb", False)
+  end
+  
+  def testMatchGroupRepeat()
+    AssertMatch("(a|bc)*$", "", True)
+    AssertMatch("(a|bc)*$", "a", True)
+    AssertMatch("(a|bc)*$", "bc", True)
+    AssertMatch("(a|bc)*$", "abcbca", True)
+    AssertMatch("(a|bc)*$", "ab", False)
+    AssertMatch("(a|bc)*$", "abcd", False)
+    
+    AssertMatch("(a|bc)+$", "a", True)
+    AssertMatch("(a|bc)+$", "bc", True)
+    AssertMatch("(a|bc)+$", "abcbca", True)
+    AssertMatch("(a|bc)+$", "abcd", False)
+    AssertMatch("(a|bc)+$", "", False)
+    
+    AssertMatch("(a|bc)?$", "a", True)
+    AssertMatch("(a|bc)?$", "bc", True)
+    AssertMatch("(a|bc)?$", "", True)
+    AssertMatch("(a|bc)?$", "abc", False)
+    AssertMatch("(a|bc)?$", "ad", False)
+  end
+  
+  def testMatchSequence()
+    AssertMatch("fo+(bar|zap)?$", "fo", True)
+    AssertMatch("fo+(bar|zap)?$", "foobar", True)
+    AssertMatch("fo+(bar|zap)?$", "fozap", True)
+    AssertMatch("fo+(bar|zap)?$", "fzap", False)
+    AssertMatch("fo+(bar|zap)?$", "fob", False)
+    AssertMatch("fo+(bar|zap)?$", "foobart", False)
+    
+    AssertMatch("a*b*c*$", "", True)
+    AssertMatch("a*b*c*$", "a", True)
+    AssertMatch("a*b*c*$", "b", True)
+    AssertMatch("a*b*c*$", "c", True)
+    AssertMatch("a*b*c*$", "ab", True)
+    AssertMatch("a*b*c*$", "aacccc", True)
+    AssertMatch("a*b*c*$", "acccc", True)
+    AssertMatch("a*b*c*$", "bc", True)
+    AssertMatch("a*b*c*$", "abc", True)
+    AssertMatch("a*b*c*$", "aaaabbbccc", True)
+    AssertMatch("a*b*c*$", "acb", False)
+    AssertMatch("a*b*c*$", "aabbccd", False)
+    AssertMatch("a*b*c*$", "aba", False)
+  end
+  
+  def testMatchCombined()
+    AssertMatch("[a-z]*([0-9]+|(xx)+)$", "foo123", True)
+    AssertMatch("[a-z]*([0-9]+|(xx)+)$", "7", True)
+    AssertMatch("[a-z]*([0-9]+|(xx)+)$", "xx", True)
+    AssertMatch("[a-z]*([0-9]+|(xx)+)$", "fxxxx", True)
+  end
+  
+  def testEscaping()
+    AssertMatch("a\*", "a*", True)
+    AssertMatch("a\*", "a+", False)
+    AssertMatch("a\+", "a+", True)
+    AssertMatch("a\+", "a*", False)
+    AssertMatch("a\?", "a?", True)
+    AssertMatch("a\?", "a+", False)
+    
+    AssertMatch("\(", "(", True)
+    AssertMatch("\(", ")", False)
+    AssertMatch("\)", ")", True)
+    AssertMatch("\)", "(", False)
+    AssertMatch("\[", "[", True)
+    AssertMatch("\[", "]", False)
+    AssertMatch("\]", "]", True)
+    AssertMatch("\]", "[", False)
+    AssertMatch("\|", "|", True)
+    AssertMatch("\|", "+", False)
+    AssertMatch("\{", "{", True)
+    AssertMatch("\{", "}", False)
+    AssertMatch("\}", "}", True)
+    AssertMatch("\}", "{", False)
+    
+    AssertMatch("\\", "\", True)
+    AssertMatch("\\", "/", False)
+    
+    AssertMatch("[a\-c]", "-", True)
+    AssertMatch("[a\-c]", "b", False)
+    AssertMatch("[a\[c]", "[", True)
+    AssertMatch("[a\[c]", "]", False)
+    AssertMatch("[a\]c]", "]", True)
+    AssertMatch("[a\]c]", "[", False)
+    AssertMatch("[\^a]", "^", True)
+    AssertMatch("[\^a]", "a", True)
+    AssertMatch("[\^a]", "b", False)
+  end
+  
+  def testMatchBoundedRepeat()
+    AssertMatch("a{2}$", "aa", True)
+    AssertMatch("a{2}$", "aaa", False)
+    AssertMatch("a{2}$", "a", False)
+    AssertMatch("a{2}$", "AA", False)
+    
+    AssertMatch("a{2,3}$", "aa", True)
+    AssertMatch("a{2,3}$", "aaa", True)
+    AssertMatch("a{2,3}$", "aaaa", False)
+    AssertMatch("a{2,3}$", "a", False)
+    
+    AssertMatch("a{2,}$", "aa", True)
+    AssertMatch("a{2,}$", "aaaaaaaaaaaaaaaa", True)
+    AssertMatch("a{2,}$", "a", False)
+    
+    AssertMatch("a{0}$", "", True)
+    AssertMatch("a{0}$", "a", False)
+    
+    AssertMatch("[ab]{2}$", "ab", True)
+    AssertMatch("[ab]{2}$", "a", False)
+    AssertMatch("[ab]{2}$", "abb", False)
+    AssertMatch("[ab]{2}$", "c", False)
+    
+    AssertMatch("[ab]{2,}$", "ab", True)
+    AssertMatch("[ab]{2,}$", "abbbabaababaabab", True)
+    AssertMatch("[ab]{2,}$", "b", False)
+    
+    AssertMatch(".{2}$", "xy", True)
+    AssertMatch(".{2}$", "x", False)
+    AssertMatch(".{2}$", "xyz", False)
+    
+    AssertMatch(".{1,2}$", "x", True)
+    AssertMatch(".{1,2}$", "  ", True)
+    AssertMatch(".{1,2}$", "", False)
+    AssertMatch(".{1,2}$", "---", False)
+  end
+  
+  def testMatchBoundedGroupRepeat()
+    AssertMatch("(a|bb){2}$", "abb", True)
+    AssertMatch("(a|bb){2}$", "bba", True)
+    AssertMatch("(a|bb){2}$", "bb", False)
+    AssertMatch("(a|bb){2}$", "aaa", False)
+    
+    AssertMatch("(a|bb){1,3}$", "a", True)
+    AssertMatch("(a|bb){1,3}$", "bbbb", True)
+    AssertMatch("(a|bb){1,3}$", "bbbba", True)
+    AssertMatch("(a|bb){1,3}$", "", False)
+    AssertMatch("(a|bb){1,3}$", "aaaa", False)
+    
+    AssertMatch("(a|bb){2,}$", "aa", True)
+    AssertMatch("(a|bb){2,}$", "aabbbbbbbbbb", True)
+    AssertMatch("(a|bb){2,}$", "a", False)
+    AssertMatch("(a|bb){2,}$", "aac", False)
+    
+    AssertMatch("((a|bb){1,2},){2}$", "aa,bbbb,", True)
+  end
+  
+  def testComplexExpressionWithinParentheses()
+    AssertMatch("(b?)*$", "", True)
+    AssertMatch("(b?)*$", "b", True)
+    AssertMatch("(b?)*$", "bb", True)
+    AssertMatch("(b?)*$", "ba", False)
+    AssertMatch("(b?)*", "ba", True)
+  end
+  
+  def testBasicSearch()
+    AssertSearch("", "", True)
+    AssertSearch("", "f", True)
+    AssertSearch("", "foo", True)
+    AssertSearch("a", "a", True)
+    AssertSearch("a", "ab", True)
+    AssertSearch("a", "ba", True)
+    AssertSearch("a", "bab", True)
+    AssertSearch("a", "", False)
+    AssertSearch("a", "bcd", False)
+    
+    AssertSearch("foo?bar", "fobar", True)
+    AssertSearch("foo?bar", "....foobar", True)
+    AssertSearch("foo?bar", "fobar....", True)
+    AssertSearch("foo?bar", "...fobar...foobar..", True)
+    
+    AssertSearch("a*", "", True)
+    AssertSearch(".a+b+c+", "------aaaabbc---", True)
+    AssertSearch(".a+b+c+", "abbbbc---", False)
+  end
+  
+  def testSearchAt()
+    AssertSearchAt("a", "abc", 0, True)
+    AssertSearchAt("a", "abc", 1, False)
+    AssertSearchAt("a", "abc", 2, False)
+    AssertSearchAt("a", "abc", 3, False)
+    AssertSearchAt("a", "abc", 300, False)
+    
+    AssertSearchAt("\u1234?", "\u1234", 0, True)
+    AssertSearchAt("\u1234?", "\u1234", 1, True)
+    AssertSearchAt("\u1234?", "\u1234", 2, False)
+    
+    AssertSearchAt("abc", "abc", 1, False)
+    AssertSearchAt("abc", "abc abc", 1, True)
+    AssertSearchAt("abc", "abc abc", 4, True)
+    AssertSearchAt("abc", "abc abc", 5, False)
+    
+    AssertSearchAt("", "", 0, True)
+    AssertSearchAt("", "", 1, False)
+  end
+  
+  def testWordBoundary()
+    AssertSearch("\<foo\>", "foo", True)
+    AssertSearch("\<foo\>", "..foo..", True)
+    AssertSearch("\<foo\>", ".afoo..", False)
+    AssertSearch("\<foo\>", "..fooa.", False)
+    
+    AssertSearch("a\<", "..a..", False)
+    AssertSearch("a\<a", "..aa..", False)
+    AssertSearch("\>a", "..a..", False)
+    AssertSearch("a\>a", "..aa..", False)
+    
+    AssertSearch(".\<", ".a", True)
+    AssertSearch(".\<", ".", False)
+    
+    AssertSearch("\>.", "a.", True)
+    AssertSearch("\>.", ".", False)
+    
+    AssertSearch("\<äh", "  äh", True)
+    AssertSearch("\<ah", " äah", False)
+    AssertSearch("hä\>", "  hä  ", True)
+    AssertSearch("ah\>", "ahä", False)
+  end
+  
+  def testLineBoundary()
+    AssertSearch("^foo", "foo", True)
+    AssertSearch("^foo", ".foo", False)
+    
+    AssertSearch("foo$", "foo", True)
+    AssertSearch("foo$", "foo.", False)
+  end
+  
+  def testBackReferences()
+    AssertMatch("(x)\1$", "xx", True)
+    AssertMatch("(x)\1$", "xy", False)
+    AssertMatch("(x)\1$", "x", False)
+    AssertMatch("(x)\1$", "xxx", False)
+    
+    AssertMatch("(foo|bar)\1\1$", "foofoofoo", True)
+    AssertMatch("(foo|bar)\1\1$", "foofoobar", False)
+    AssertMatch("(foo|bar)\1\1$", "foobarfoo", False)
+    
+    AssertMatch("(.)(.)\2\1$", "abba", True)
+    AssertMatch("(.)(.)\2\1$", "abab", False)
+    
+    AssertMatch("b(a*)\1$", "b", True)
+    AssertMatch("b(a*)\1$", "baaaaaa", True)
+    AssertMatch("b(a*)\1$", "baaaaa", False)
+    
+    AssertMatch("(|(x))\2$", "", False)
+    
+    AssertMatch("(a)\1*$", "a", True)
+    AssertMatch("(a)\1*$", "aaaaaaa", True)
+    
+    AssertSearch("(a)\1", "..aa..", True)
+    AssertSearch("(a)\1", "..aA..", False)
+  end
+  
+  def testEscapeSequences()
+    AssertMatch("\a", Chr(7), True)
+    AssertMatch("\b", Chr(8), True)
+    AssertMatch("\f", Chr(12), True)
+    AssertMatch("\n", LF, True) -- 10
+    AssertMatch("\r", CR, True) -- 13
+    AssertMatch("\t", Tab, True) -- 9
+    AssertMatch("\v", Chr(11), True)
+    AssertMatch("\t*$", "", True)
+    AssertMatch("\t*$", Tab, True)
+    AssertMatch("\t*$", Tab + Tab, True)
+    AssertMatch("\t*$", "a", False)
+    
+    AssertMatch("\d", "0", True)
+    AssertMatch("\d", "3", True)
+    AssertMatch("\d", "9", True)
+    AssertMatch("\d", "/", False)
+    AssertMatch("\d", ":", False)
+    AssertMatch("\d", "a", False)
+    AssertMatch("\d", "A", False)
+    AssertMatch("\d+$", "123456789", True)
+    AssertMatch("\d+$", "123456789.0", False)
+    AssertMatch("\d+$", "", False)
+    
+    AssertMatch("\s", " ", True)
+    AssertMatch("\s", Tab, True)
+    AssertMatch("\s", CR, True)
+    AssertMatch("\s", LF, True)
+    AssertMatch("\s", Chr(11), True)
+    AssertMatch("\s", Chr(12), True)
+    AssertMatch("\s", "0", False)
+    AssertMatch("\s", "-", False)
+    AssertMatch("\s", "a", False)
+    
+    AssertMatch("\w", "a", True)
+    AssertMatch("\w", "z", True)
+    AssertMatch("\w", "A", True)
+    AssertMatch("\w", "Z", True)
+    AssertMatch("\w", "_", True)
+    AssertMatch("\w+$", "09äÄ", True)
+    AssertSearch("\w", "- .,@#", False)
+    
+    AssertMatch("\D", "0", False)
+    AssertMatch("\D", "9", False)
+    AssertMatch("\D", "a", True)
+    AssertMatch("\D", " ", True)
+    AssertMatch("\D", "-", True)
+    AssertMatch("\D?$", "a", True)
+    AssertMatch("\D{3,5}$", "a-., ", True)
+    AssertMatch("\D{3,5}$", "a-8", False)
+    
+    AssertMatch("\S", " ", False)
+    AssertMatch("\S", Tab, False)
+    AssertMatch("\S", CR, False)
+    AssertMatch("\S", LF, False)
+    AssertMatch("\S", "9", True)
+    AssertMatch("\S", "a", True)
+    AssertMatch("\S", "-", True)
+    
+    AssertMatch("\W+$", "-., @#", True)
+    AssertSearch("\W", "abczxyzäöÄÖASDF1235590", False)
+    AssertMatch("\W", "_", False)
+  end
+  
+  def testIgnoringCase()
+    AssertMatch(MyRegExp("", IgnoreCase), "", True)
+    AssertMatch(MyRegExp("a", IgnoreCase), "a", True)
+    AssertMatch(MyRegExp("a", IgnoreCase), "A", True)
+    AssertMatch(MyRegExp("a", IgnoreCase), "b", False)
+    AssertMatch(MyRegExp("A", IgnoreCase), "a", True)
+    
+    AssertMatch(MyRegExp("ä", IgnoreCase), "ä", True)
+    AssertMatch(MyRegExp("ä", IgnoreCase), "Ä", True)
+    AssertMatch(MyRegExp("Ä", IgnoreCase), "ä", True)
+    AssertMatch(MyRegExp("Ä", IgnoreCase), "Ä", True)
+    AssertMatch(MyRegExp("Ä", IgnoreCase), "Ö", False)
+    
+    AssertMatch(MyRegExp("FooBar", IgnoreCase), "fOOBAR", True)
+    
+    AssertMatch(MyRegExp("a*$", IgnoreCase), "aAaAAa", True)
+    AssertMatch(MyRegExp("a*", IgnoreCase), "aAb", True)
+    AssertMatch(MyRegExp("a*$", IgnoreCase), "aAb", False)
+    AssertMatch(MyRegExp("ä*$", IgnoreCase), "äÄäÄ", True)
+    AssertMatch(MyRegExp("ä*?$", IgnoreCase), "äÄäÄ", True)
+    
+    AssertMatch(MyRegExp("[aB]", IgnoreCase), "a", True)
+    AssertMatch(MyRegExp("[aB]", IgnoreCase), "A", True)
+    AssertMatch(MyRegExp("[aB]", IgnoreCase), "b", True)
+    AssertMatch(MyRegExp("[aB]", IgnoreCase), "B", True)
+    AssertMatch(MyRegExp("[aB]", IgnoreCase), "c", False)
+    AssertMatch(MyRegExp("[aB]", IgnoreCase), "C", False)
+    
+    AssertMatch(MyRegExp("[äö]", IgnoreCase), "Ä", True)
+    AssertMatch(MyRegExp("[ÄÖ]", IgnoreCase), "ö", True)
+    
+    AssertMatch(MyRegExp("[a-c]+$", IgnoreCase), "aBcCA", True)
+    AssertMatch(MyRegExp("[A-C]+$", IgnoreCase), "aBcCA", True)
+    AssertMatch(MyRegExp("[äÖ]+$", IgnoreCase), "äÄöÖ", True)
+    AssertMatch(MyRegExp("[äÖ]??$", IgnoreCase), "ä", True)
+    
+    AssertMatch(MyRegExp("(FÄä)\1", IgnoreCase), "fääFÄÄ", True)
+    
+    AssertSearch(MyRegExp("Foo", IgnoreCase), "....fOO...", True)
+  end
+  
+  def testMatchResult()
+    AssertMatchResult("", "")
+    AssertMatchResult("foobar", "foobar")
+    AssertMatchResult("a*b*", "aaabbb")
+    AssertMatchResult("foo|bar", "foo")
+    
+    AssertMatchResult("(foo|bar)", "foo", "foo")
+    AssertMatchResult("(foo)bar", "foobar", "foo")
+    AssertMatchResult("(a*)(b*)", "aaaabb", "aaaa", "bb")
+    AssertMatchResult("a((c|d)e)(f)b", "adefb", "de", "d", "f")
+    
+    AssertMatchResult("(a|b)*", "aaaab", "b")
+    AssertMatchResult("a|(b)", "a", nil)
+  end
+  
+  def testMatchResultSpan()
+    var m = Match("(a*)(b|(c))x", "bx")
+    Assert(m is re::MatchResult)
+    Assert(m.span(0) == (0:2))
+    Assert(m.span(1) == (0:0))
+    Assert(m.span(2) == (0:1))
+    Assert(m.span(3) == nil)
+    
+    m = Match("", "")
+    Assert(m.span(0) == (0:0))
+  end
+  
+  def testMatchResultStartAndStop()
+    var m = Match("(a*)(b|(c))x", "bx")
+    Assert(m is re::MatchResult)
+    Assert((m.start(0), m.stop(0)) == (0, 2))
+    Assert((m.start(1), m.stop(1)) == (0, 0))
+    Assert((m.start(2), m.stop(2)) == (0, 1))
+    Assert((m.start(3), m.stop(3)) == (-1, -1))
+    
+    AssertRaises(ValueError, def (); m.start(4); end)
+    AssertRaises(ValueError, def (); m.stop(4); end)
+    
+    m = Match("", "")
+    Assert((m.start(0), m.stop(0)) == (0, 0))
+  end
+  
+  def testSearchResult()
+    AssertSearchResult("", "", "")
+    AssertSearchResult("a", "a", "a")
+    AssertSearchResult("a", "-a", "a")
+    AssertSearchResult("a", "a-", "a")
+    AssertSearchResult("a", "--xx-x-xa-x--x-xx", "a")
+    
+    AssertSearchResult("foobar", "foobar", "foobar")
+    AssertSearchResult("foobar", "this fooba foobar oobar stuff", "foobar")
+    
+    AssertSearchResult("a*", ".....aaaaaa......", "")
+    AssertSearchResult("a*a", "...aaa..", "aaa")
+    AssertSearchResult("a+", "...aaaaa..", "aaaaa")
+    
+    AssertSearchResult("-(.)-", ".....--...-x-...", "-x-", "x")
+    AssertSearchResult("(a+)(b+)", "....aabbb...ab..", "aabbb", "aa", "bbb")
+  end
+  
+  def testMatchMinimizingRepeat()
+    AssertMatch("a*?$", "", True)
+    AssertMatch("a*?$", "aaaaaaa", True)
+    AssertMatch("a*?$", "b", False)
+    AssertMatch("a+?$", "a", True)
+    AssertMatch("a+?$", "", False)
+    AssertMatch("a??$", "a", True)
+    AssertMatch("a{1,2}?$", "a", True)
+    AssertMatch("a{1,2}?$", "aa", True)
+    AssertMatch("a{1,2}?$", "", False)
+    AssertMatch("a{1,2}?$", "aaa", False)
+    
+    AssertMatch(".*?$", "", True)
+    AssertMatch(".*?$", "xyzzdsf", True)
+    AssertMatch(".+?$", "y", True)
+    AssertMatch(".+?$", "", False)
+    
+    AssertMatch("[ab]*?$", "", True)
+    AssertMatch("[ab]*?$", "aaaaaaa", True)
+    AssertMatch("[ab]*?$", "c", False)
+    AssertMatch("[ab]+?$", "a", True)
+    AssertMatch("[ab]+?$", "", False)
+    
+    AssertMatch("(a|bb){1,2}?$", "a", True)
+    AssertMatch("(a|bb){1,2}?$", "bbbb", True)
+    AssertMatch("(a|bb){1,2}?$", "", False)
+    AssertMatch("(a|bb){1,2}?$", "aaa", False)
+  end
+  
+  def testFindMinimizingRepeat()
+    AssertSearchResult("xa*?", "....xaaaa...", "x")
+    AssertSearchResult("xa*?a", "....xaaaa...", "xa")
+    AssertSearchResult("xa*?b", "....xaaaab...", "xaaaab")
+  
+    AssertSearchResult("xa??", "....xaaaa...", "x")
+    AssertSearchResult("xa+?", "....xaaaa...", "xa")
+    AssertSearchResult("xa{2,3}?", "....xaaaa...", "xaa")
+    
+    AssertSearchResult("x.*?", "....xaaaa...", "x")
+    AssertSearchResult("x.*?a", "....xaaaa...", "xa")
+    AssertSearchResult("x.*?b", "....xaaaab...", "xaaaab")
+  
+    AssertSearchResult("x.??", "....xaaaa...", "x")
+    AssertSearchResult("x.+?", "....xaaaa...", "xa")
+    AssertSearchResult("x.{2,3}?", "....xaaaa...", "xaa")
+    
+    AssertSearchResult("x[ab]*?", "....xabab...", "x")
+    AssertSearchResult("x[ab]*?a", "....xabab...", "xa")
+    AssertSearchResult("x[ab]*?c", "....xababc...", "xababc")
+  
+    AssertSearchResult("x[ab]??", "....xabaa...", "x")
+    AssertSearchResult("x[ab]+?", "....xabaa...", "xa")
+    AssertSearchResult("x[ab]{2,3}?", "....xabaa...", "xab")
+    
+    AssertSearchResult("x(a|bb)*?", "....xabbabb...", "x")
+    AssertSearchResult("x(a|bb)*?a", "....xabbabb...", "xa")
+    AssertSearchResult("x(a|bb)*?c", "....xabbabbc...", "xabbabbc")
+    
+    AssertSearchResult("x(a|bb)??", "....xabbabb...", "x")
+    AssertSearchResult("x(a|bb)+?", "....xabbabb...", "xa")
+    AssertSearchResult("x(a|bb){2,3}?", "....xabbabb...", "xabb")
+  end
+  
+  def testSearchsultSpan()
+    var m = Search("(foo)|(bar)t", "..bart..")
+    Assert(m.span(0) == (2:6))
+    Assert(m.span(1) == nil)
+    Assert(m.span(2) == (2:5))
+  end
+  
+  def testSubStrMatching()
+    AssertMatch("foobar123", SS("foobar123"), True)
+    Assert(Search("foobar123", SS("foobar123")).span(0) == (0:9))
+  end
+  
+  def testComplexExpressions()
+    AssertMatchResult("import[ \t]+(.*?)(--.*)?$", 
+                      "import foo::bar   -- xx", 
+                      "foo::bar   ", "-- xx")
+    AssertMatchResult("import[ \t]+(.*?)(--.*)?$", 
+                      "import foo::bar", "foo::bar", nil)
+  end
+  
+  def testSimpleSubst()
+    AssertEqual(Subst("foobar", "FOO", "x"), "foobar")
+    AssertEqual(Subst("a", "a", "b"), "b")
+    AssertEqual(Subst("foobar", "foo", "x"), "xbar")
+    AssertEqual(Subst("zarfoobar", "foo", "x"), "zarxbar")
+    AssertEqual(Subst(".aaaaaa-aa'", "aa", "bcd"), ".bcdbcdbcd-bcd'")
+    AssertEqual(Subst("-foo-", "foo", "\\0\a"), "-\0a-")
+    
+    AssertEqual(Subst("-Foo.fOO", RegExp("fOo", IgnoreCase), "!="), "-!=.!=")
+  end
+  
+  def testRegExpSubst()
+    AssertEqual(Subst(".a.bc.b.c", "a|bc", "xyz"), ".xyz.xyz.b.c")
+  end
+  
+  def testSubExprSubst()
+    AssertEqual(Subst(".abc.", "[a-c]{3}", "<\0>"), ".<abc>.")
+    AssertEqual(Subst(".ahUc.", "a(.)(.)c", "\2-\1"), ".U-h.")
+
+    -- Some test cases adapted from Henry Spencer's regex package.
+    AssertEqual(Subst("abc", "(ab|a)b*c", "\0-\1"), "abc-ab")
+    AssertEqual(Subst("abcd", "((a)(b)c)(d)", "\1-\2-\3-\4"), "abc-a-b-d")
+    AssertEqual(Subst("abh", "^a(bc+|b[eh])g|.h$", "\0-\1"), "abh-")
+    AssertEqual(Subst("effgz", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"), 
+                      "effgz-effgz-")
+    AssertEqual(Subst("ij", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"), "ij-ij-j")
+    AssertEqual(Subst("reffgz", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"), 
+                      "reffgz-effgz-")
+    AssertEqual(Subst("a", "(((((((((a)))))))))", "\0"), "a")
+  end
+  
+  def testUnicodeSubst()
+    AssertEqual(Subst("abc", "b", "\u1234\uffff"), "a\u1234\uffffc")
+    AssertEqual(Subst("a\u1234c\u1234d", "\u1234", "xyz"), "axyzcxyzd")
+    AssertEqual(Subst("12.a\u1234b.34", "a(([b\u1234]){2})", "<\0,\1>"),
+                      "12.<a\u1234b,\u1234b>.34")
+    AssertEqual(Subst("12.a\u1234b.34", "a([b\u1234]){2}", "<\0,\1>"),
+                      "12.<a\u1234b,b>.34")
+  end
+  
+  def testFunSubst()
+    AssertEqual(Subst("Abc<foo> bea<ZOOO>", "(\w+)<(\w+)>", SubstFun),
+                "ABC:foo BEA:ZOOO")
+  end
+  
+  def testSplit()
+    AssertEqual(Split("", "foo"), [""])
+    AssertEqual(Split("abc", "foo"), ["abc"])
+    AssertEqual(Split("a", "a"), ("", ""))
+    AssertEqual(Split("abc,d,,ef", ","), ("abc", "d", "", "ef"))
+    AssertEqual(Split("abc  d   ef", " +"), ("abc", "d", "ef"))
+    AssertEqual(Split("abc", ""), ["abc"])
+    AssertEqual(Split("Azabac", "a*"), ("Az", "b", "c"))
+    
+    AssertEqual(Split("123aB45", RegExp("Ab", IgnoreCase)), ("123", "45"))
+  end
+  
+  def testFindAll()
+    -- No match.
+    AssertFindAll("a", "", [])
+    AssertFindAll("a", "bb", [])
+    
+    -- Non-empty matches.
+    AssertFindAll("a", "a", ["a"])
+    AssertFindAll("a|b", "--a--ba--", ["a", "b", "a"])
+    AssertFindAll("aa|a", "--a--aaa--", ["a", "aa", "a"])
+  
+    -- Empty matches.
+    AssertFindAll("", "foo", ["", "", "", ""])
+    AssertFindAll("f?", "fooff", ["f", "", "", "f", "f", ""])
+    
+    -- Test groups.    
+    var a = FindAll("(a)|(b)", "-a-b-")    
+    AssertEqual(a.length(), 2)
+    
+    AssertEqual(a[0].group(0), "a")
+    AssertEqual(a[0].group(1), "a")
+    AssertEqual(a[0].group(2), nil)
+    
+    AssertEqual(a[1].group(0), "b")
+    AssertEqual(a[1].group(1), nil)
+    AssertEqual(a[1].group(2), "b")
+  end
+  
+  def testSimpleUnicodeMatch()
+    AssertMatch("\u0345", "\u0345", True)
+    AssertMatch("\u0345", "\u0045", False)
+    AssertMatch("\u0345", "\u0346", False)
+    AssertMatch("\u0345+$", "\u0345\u0345", True)
+    AssertMatch("\u0345+$", "\u0345\u0245", False)
+    
+    AssertMatch("\u0320", " ", False)
+    
+    AssertMatch("abcdefgh\u0200", "abcdefgh\u0200", True)
+    AssertMatch("abcdefgh\u0200", "abcdefgh\u0300", False)
+  end
+  
+  def testCaseInsensitiveUnicodeMatch()
+    AssertMatch(MyRegExp("\u24e9", IgnoreCase), "\u24cf", True)
+    AssertMatch(MyRegExp("\u24cf", IgnoreCase), "\u24e9", True)
+    AssertMatch(MyRegExp("\u24e9", IgnoreCase), "\u0202", False)
+    AssertMatch(MyRegExp("\u24cf", IgnoreCase), "\u0202", False)
+    
+    AssertMatch(MyRegExp("\u24e9+$", IgnoreCase), "\u24cf\u24e9", True)
+    AssertMatch(MyRegExp("\u24cf+$", IgnoreCase), "\u24e9\u24cf", True)
+    AssertMatch(MyRegExp("\u24cf+$", IgnoreCase), "\u24e9\u0202", False)
+    
+    AssertMatch(MyRegExp("a\u0200$", IgnoreCase), "A\u0201", True)
+    
+    AssertMatch(MyRegExp("(.)\1", IgnoreCase), "\u24e9\u24cf", True)
+    AssertMatch(MyRegExp("(.)\1", IgnoreCase), "\u24e9a", False)
+    
+    AssertSearch("(\u0200)\1", "\u0200\u0200", True)
+    AssertSearch("(\u0200)\1", "..\u0200\u0200..", True)
+    AssertSearch("(\u0200)\1", "..\u0200\u0201..", False)
+  end
+  
+  def testUnicodeCharSetMatch()
+    AssertMatch("[\u0210-\u0215]", "\u0210", True)
+    AssertMatch("[\u0210-\u0215]", "\u0213", True)
+    AssertMatch("[\u0210-\u0215]", "\u0215", True)
+    AssertMatch("[\u0210-\u0215]", "\u020f", False)
+    AssertMatch("[\u0210-\u0215]", "\u0216", False)
+    AssertMatch("[\u0210-\u0215]", "x", False)
+    
+    AssertMatch("[x\u0210-\u0215\u1234]+$", "\u1234x\u0213", True)
+    AssertMatch("[x\u0210-\u0215\u1234]+$", "\u1235x\u0213", False)
+    
+    AssertMatch("[\u0001-\ufffe]", "\u0000", False)
+    AssertMatch("[\u0001-\ufffe]", "\uffff", False)
+    AssertMatch("[\u0001-\ufffe]", "\u0001", True)
+    AssertMatch("[\u0001-\ufffe]", "\u00ff", True)
+    AssertMatch("[\u0001-\ufffe]", "\u0100", True)
+    AssertMatch("[\u0001-\ufffe]", "\ufffe", True)
+
+    var re = ""
+    for i in 0 to 256
+      re += Chr(256 + i)
+    end
+    re = "[" + re + "]"
+    AssertMatch(re, "\u00ff", False)
+    AssertMatch(re, "\u0100", True)
+    AssertMatch(re, "\u01ff", True)
+    AssertMatch(re, "\u0200", False)
+    
+    -- Case insensitive charsets    
+    AssertMatch(MyRegExp("[\u24e9]", IgnoreCase), "\u24cf", True)
+    AssertMatch(MyRegExp("[\u24e9]", IgnoreCase), "\u24e9", True)    
+    AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "\u24cf", True)
+    AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "\u24e9", True)
+    AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "\u24ea", False)
+    AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "x", False)
+    
+    -- Complements    
+    AssertMatch("[^x\u0210-\u0215\u1234]", "y", True)
+    AssertMatch("[^x\u0210-\u0215\u1234]", "\u0216", True)
+    AssertMatch("[^x\u0210-\u0215\u1234]", "\u1234", False)
+    AssertMatch("[^x\u0210-\u0215\u1234]", "\u0210", False)
+    AssertMatch("[^x\u0210-\u0215\u1234]", "\u0215", False)
+    AssertMatch("[^x\u0210-\u0215\u1234]", "x", False)
+    AssertMatch(MyRegExp("[^\u24cf]", IgnoreCase), "\u24e9", False)
+    AssertMatch(MyRegExp("[^\u24cf]", IgnoreCase), "\u24cf", False)
+    AssertMatch(MyRegExp("[^\u24cf]", IgnoreCase), "\u24ca", True)
+  end
+  
+  def testUnicodeSubStrMatch()
+    var s = "1234...abcd\u0200\u0200fg567"[4:15]
+    AssertMatch("...a", s, True)
+    AssertSearch("\u0200", s, True)
+    AssertSearch("3", s, False)
+    AssertSearch("5", s, False)
+    AssertMatch("^.", s, True)
+    AssertSearch("g$", s, True)
+    
+    var ss = "cd\u0200\u0200fg"
+    AssertSearch("(\u0200)\1", ss, True)
+    AssertSearch("(\u0200)\1", s, True)
+    
+    AssertMatch("^...ab.*\u0200.*fg$", s, True)
+  end
+  
+  def testUnicodeWordBoundary()
+    AssertSearch("\<\u0200\>", "\u0200", True)
+    AssertSearch("\<\u0200\>", "---\u0200 ", True)
+    AssertSearch("\<\u0200\>", "\uffff\u0200\uffff", True)
+    AssertSearch("\<\u0200\>", "\u5000\u0200\uffff", False)
+    AssertSearch("\<\u0200\>", "\uffff\u0200\u5000", False)
+  end
+  
+  def testUnicodeWordChar()
+    AssertMatch("\w", "\u0200", True)
+    AssertMatch("\w", "\uffff", False)
+    AssertMatch("\W", "\ufffe", True)
+    AssertMatch("\W", "\u5000", False)
+    AssertMatch("\W+$", ".-\uffff", True)
+    
+    AssertMatch("[.\w]+$", "\u5000.03a", True)
+    AssertMatch("[.\w]+$", "\u5000,03a", False)
+    
+    AssertMatch("[^.\w]", ",", True)
+    AssertMatch("[^.\w]", "a", False)
+    AssertMatch("[^.\w]", "\u5000", False)
+    AssertMatch("[^.\w]", ".", False)
+    
+    AssertMatch("[\Wa-c\u01ff-\u0210]", ".", True)
+    AssertMatch("[\Wa-c\u01ff-\u0210]", "b", True)
+    AssertMatch("[\Wa-c\u01ff-\u0210]", "\u0200", True)
+    AssertMatch("[\Wa-c\u01ff-\u0210]", "d", False)
+    AssertMatch("[\Wa-c\u01ff-\u0210]", "\u5000", False)
+  end
+  
+  def testUnicodeMatchObject()
+    var m = Match("x(\u1000+)(\u1002)y", "x\u1000\u1000\u1002y")
+    AssertEqual(m.group(1), "\u1000\u1000")
+    AssertEqual(m.group(2), "\u1002")
+    AssertEqual(m.span(1), 1:3)
+    AssertEqual(m.span(2), 3:4)
+    AssertEqual(m.span(0), 0:5)
+    
+    m = Match("\u1234|(x)", "\u1234")
+    AssertEqual(m.span(1), nil)
+  end
+  
+  def testHexExpressions()
+    AssertMatch("\x", "x", True)
+    AssertMatch("\x5",  "\u0005", True)
+    AssertMatch("\xff", "\u00ff", True)
+    AssertMatch("\xAB", "\u00ab", True)
+    AssertMatch("\x99", "\u0099", True)
+    
+    AssertMatch("[a\x99]", "\u0099", True)
+    AssertMatch("[\x99-\xbb]", "\u00a1", True)
+    AssertMatch("[\x99-\xbb]", "\u00bc", False)
+    AssertMatch("[\x99-\xbb]", "\u0098", False)
+  end
+  
+  def testInvalidExpressions()
+    AssertReError("[", "Unmatched [")
+    AssertReError("[^", "Unmatched [")
+    AssertReError("[a", "Unmatched [")
+    AssertReError("[^a", "Unmatched [")
+    AssertReError("[a-", "Unmatched [")
+    AssertReError("[^a-", "Unmatched [")
+    
+    AssertReError("[\w-a]", "Invalid character set")
+    AssertReError("[a-\W]", "Invalid character set")
+    AssertReError("[a-\d]", "Invalid character set")
+    AssertReError("[a-\D]", "Invalid character set")
+    AssertReError("[a-\s]", "Invalid character set")
+    AssertReError("[a-\S]", "Invalid character set")
+    
+    AssertReError("(", "Unmatched (")
+    AssertReError("(xx)(x()", "Unmatched (")
+    AssertReError(")", "Unmatched )")
+    AssertReError("(xyz))(y", "Unmatched )")
+    
+    AssertReError("*", "Invalid repeat")
+    AssertReError("a**", "Invalid repeat")
+    
+    AssertReError("+", "Invalid repeat")
+    AssertReError("a++", "Invalid repeat")
+    
+    AssertReError("?", "Invalid repeat")
+    AssertReError("a???", "Invalid repeat")
+    
+    AssertReError("{", "Invalid repeat")    
+    AssertReError("{1}", "Invalid repeat")
+    AssertReError("a{", "Invalid range")
+    AssertReError("a{1", "Invalid range")
+    AssertReError("a{1,", "Invalid range")
+    AssertReError("a{1,4", "Invalid range")
+    AssertReError("a{x", "Invalid range")
+    AssertReError("a{1;", "Invalid range")
+    AssertReError("a{1,x", "Invalid range")
+    
+    AssertReError("\", "Trailing backslash")
+    
+    AssertReError("\1", "Invalid back reference")
+    AssertReError("(a)\2", "Invalid back reference")
+    AssertReError("\1(a)", "Invalid back reference")
+    
+    AssertReError("x" * 100000, "Internal overflow")
+    AssertReError("(" * 1000, "Internal overflow")
+    AssertReError("a|" * 1000, "Internal overflow")
+  end
+  
+  def testDeepMatchStack()
+    -- This match operation will cause the default match stack to be grown.
+    var s = "xyz" * 20000 + "/"
+    var m = Match("(xyz)*?/", s)
+    AssertNotEqual(m, nil)
+    AssertEqual(m.group(0), s)
+  end
+end
+
+
+def AssertMatch(re, s, b)
+  if (Match(re, s) != nil) != b
+    raise AssertionFailure(Repr(re) + " against " + Repr(s))
+  end
+end
+
+
+def AssertMatchAt(re, s, pos, b)
+  if (Match(re, s, pos) != nil) != b
+    raise AssertionFailure("""" + Str(re) + """ against " + Repr(s))
+  end
+end
+
+
+def AssertSearch(re, s, b)
+  if (Search(re, s) != nil) != b
+    raise AssertionFailure(Repr(re) + " against " + Repr(s))
+  end
+end
+
+
+def AssertSearchAt(re, s, start, b)
+  var m = Search(re, s, start)
+  if (m != nil) != b
+    raise AssertionFailure("""" + Str(re) + """ against " + Repr(s))
+  elif m != nil
+    Assert(m.span(0).left >= start)
+  end
+end
+
+
+def AssertMatchResult(re, s, *groups)
+  var m = Match(re, s)
+  var ok = True
+  if m == nil
+    ok = False
+  else
+    if m.group(0) != s
+      ok = False
+    else
+      for i in 1 to groups.length() + 1
+        if m.group(i) != groups[i - 1]
+          WriteLn("Regexp {}".format(re))
+          WriteLn("String {}".format(s))
+          WriteLn("Group ", i, ": ", m.group(i), " != ", groups[i - 1])
+          ok = False
+        end
+      end
+    end
+  end
+  if not ok
+    raise AssertionFailure("""" + re + """ against " + Repr(s))
+  end  
+end
+
+
+def AssertSearchResult(re, s, g0, *groups)
+  var m = Search(re, s)
+  var ok = True
+  if m == nil
+    ok = False
+  else
+    if m.group(0) != g0
+      ok = False
+    else
+      for i in 1 to groups.length() + 1
+        if m.group(i) != groups[i - 1]
+          ok = False
+        end
+      end
+    end
+  end
+  if not ok
+    raise AssertionFailure("""" + re + """ against """ + s + """")
+  end  
+end
+
+
+private def SubstFun(m)
+  return m.group(1).upper() + ":" + m.group(2)
+end
+
+
+private def AssertReError(re, msg = nil)
+  if msg == nil
+    AssertRaises(RegExpError, Match, [re, "foo"])
+  else
+    AssertRaises(RegExpError, msg, Match, [re, "foo"])
+  end
+end
+
+
+private def AssertFindAll(re, str, a)
+  var r = []
+  for m in FindAll(re, str)
+    r.append(m.group(0))
+  end
+  AssertEqual(r, a)
+end

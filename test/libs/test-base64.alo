@@ -1,0 +1,67 @@
+module libs
+
+import unittest
+import base64
+import string
+
+
+private const Base64Pairs = [
+  "" : "",
+  "x" : "eA==",
+  "xy" : "eHk=",
+  "xyz" : "eHl6",
+  "xyz1" : "eHl6MQ==",
+  "\u0000\u00ff\u00ab" : "AP+r",
+  "\u00fc" : "/A==",
+  HexToBin("0010840c518720928b30d38f41149351559761969b71e75f8218a39259a7" +
+           "a29aabb2dbafc31cb3d35db7e39ebbf3dfbf") : 
+    "ABCEDFGHIJKLMNOPQRSTUVWXYZabcedfghijklmnopqrstuvwxyz0123456789+/",
+  "a" * 10000 : 3333 * "YWFh" + "YQ==",
+]
+
+
+class Base64Suite is Suite
+  def testEncode()
+    for origEnc in Base64Pairs
+      AssertEqual(Base64Encode(origEnc.left), origEnc.right)
+    end
+  end
+  
+  def testDecode()
+    for origEnc in Base64Pairs
+      AssertEqual(Base64Decode(origEnc.right), origEnc.left)
+    end
+  end
+  
+  def testDecodeErrors()
+    AssertRaises(ValueError, Base64Decode, ["!"])
+    AssertRaises(ValueError, Base64Decode, [" "])
+    AssertRaises(ValueError, Base64Decode, [LF])
+    AssertRaises(ValueError, Base64Decode, ["a"])
+    AssertRaises(ValueError, Base64Decode, ["ab"])
+    AssertRaises(ValueError, Base64Decode, ["abc"])
+    AssertRaises(ValueError, Base64Decode, ["!abc"])
+    AssertRaises(ValueError, Base64Decode, ["\u0000abc"])
+    AssertRaises(ValueError, Base64Decode, ["\u00ffabc"])
+    AssertRaises(ValueError, Base64Decode, ["\u1234abc"])
+    AssertRaises(ValueError, Base64Decode, ["a!bc"])
+    AssertRaises(ValueError, Base64Decode, ["ab!c"])
+    AssertRaises(ValueError, Base64Decode, ["abc!"])
+    AssertRaises(ValueError, Base64Decode, ["=abc"])
+    AssertRaises(ValueError, Base64Decode, ["a=bc"])
+    AssertRaises(ValueError, Base64Decode, ["ab=c"])
+    AssertRaises(ValueError, Base64Decode, ["ab=c"])
+    AssertRaises(ValueError, Base64Decode, ["abcdabc"])
+  end
+  
+  -- FIX error if try to encode wide string
+end
+
+
+private def HexToBin(x)
+  var s = ""
+  for i in 0 to x.length() div 2
+    s += Chr(Int(x[i * 2:i * 2 + 2], 16))
+  end
+  return s
+end

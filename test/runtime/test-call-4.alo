@@ -1,0 +1,197 @@
+module runtime
+
+-- Overloaded function calls.
+
+import unittest
+import calltest
+import helpers
+
+
+class CallSuite4 is Suite
+  def testT1()
+    CheckVarArgsFunc(C0_v())
+    Ok()
+  end
+  
+  
+  def testT2()
+    TestFixedArgsFunc0(C0_())
+    TestFixedArgsFuncFail0(C0_())
+    TestFixedArgsFunc1(C1_())
+    TestFixedArgsFuncFail1(C1_())
+    TestFixedArgsFunc2(C2_())
+    TestFixedArgsFunc7(C7_())
+    Ok()
+  end
+  
+  
+  def testT3()
+    TestDefArgsFunc01(C01_())
+    TestDefArgsFunc03(C03_())
+    TestDefArgsFunc11(C11_())
+    TestDefArgsFuncFail11(C11_())
+    TestDefArgsFunc34(C34_())
+    Ok()
+  end
+  
+  
+  def testT4()
+    TestVarArgFunc01(C01_v())
+    TestVarArgFunc03(C03_v())
+    TestVarArgFunc11(C11_v())
+    TestVarArgFunc34(C34_v())
+    TestVarArgFuncFail34(C34_v())
+    Ok()
+  end
+  
+  
+  -- Functions to test
+  
+end
+
+
+private class C0_
+  var hmm = 2
+
+  def _call()
+    Assert(hmm == 2)
+    return []
+  end
+end
+
+private class C1_
+  var hmm = 2
+
+  def _call(a1)
+    Assert(hmm == 2)
+    return [a1]
+  end
+end
+
+private class C2_
+  var hmm = 2
+
+  def _call(a1, a2)
+    Assert(hmm == 2)
+    return (a1, a2)
+  end
+end
+
+private class C7_
+  var hmm = 2
+
+  def _call(a1, a2, a3, a4, a5, a6, a7)
+    Assert(hmm == 2)
+    return (a1, a2, a3, a4, a5, a6, a7)
+  end
+end
+
+private class C01_
+  var hmm = 2
+
+  def _call(a1 = 1)
+    Assert(hmm == 2)
+    return [a1]
+  end
+end
+
+private class C03_
+  var hmm = 2
+
+  def _call(a1 = 1, a2 = 2, a3 = 3)
+    Assert(hmm == 2)
+    return (a1, a2, a3)
+  end
+end
+
+private class C11_
+  var hmm = 2
+
+  def _call(a1, a2 = 2)
+    Assert(hmm == 2)
+    return (a1, a2)
+  end
+end
+
+private class C34_
+  var hmm = 2
+
+  def _call(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7)
+    Assert(hmm == 2)
+    return (a1, a2, a3, a4, a5, a6, a7)
+  end
+end
+
+private class C0_v
+  var hmm = 2
+
+  def _call(*a)
+    Assert(hmm == 2)
+    return a
+  end
+end
+
+private class C1_v
+  var hmm = 2
+
+  def _call(a1, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, *a)
+  end
+end
+
+private class C2_v
+  var hmm = 2
+
+  def _call(a1, a2, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, *a)
+  end
+end
+
+private class C7_v
+  var hmm = 2
+
+  def _call(a1, a2, a3, a4, a5, a6, a7, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+  end
+end
+
+private class C01_v
+  var hmm = 2
+
+  def _call(a1 = 1, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, *a)
+  end
+end
+
+private class C03_v
+  var hmm = 2
+
+  def _call(a1 = 1, a2 = 2, a3 = 3, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, a3, *a)
+  end
+end
+
+private class C11_v
+  var hmm = 2
+
+  def _call(a1, a2 = 2, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, *a)
+  end
+end
+
+private class C34_v
+  var hmm = 2
+
+  def _call(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+  end
+end
+
+

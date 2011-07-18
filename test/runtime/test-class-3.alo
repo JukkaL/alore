@@ -1,0 +1,204 @@
+module runtime
+
+-- Test cases for class constructors.
+
+import unittest
+
+
+private class DerivedFromC is Exception
+end
+
+private class DerivedFromCInit is Exception
+  var x = 2
+end
+
+private class DerivedFromCWithCreate is Exception
+  def create(n1, n2)
+    super.create(n1 + n2)
+  end
+end
+
+private class DerivedFromCWithCreateInit is Exception
+  def create(n1, n2)
+    super.create(n1 + n2)
+  end
+  
+  var y = 3
+end
+
+
+class ClassSuite3 is Suite
+  def testTestDeriveFromC()
+    var o
+    
+    o = DerivedFromC("foo")
+    Assert(o.message == "foo")
+    
+    o = DerivedFromCInit("bar")
+    Assert(o.message == "bar")
+    Assert(o.x == 2)
+    
+    o = DerivedFromCWithCreate("foo", "bar")
+    Assert(o.message == "foobar")
+    
+    o = DerivedFromCWithCreateInit("bar", "foo")
+    Assert(o.message == "barfoo")
+    Assert(o.y == 3)
+  end
+  
+  def testTestDeriv()
+    var o
+    
+    Count = 0
+    o = Base1(1)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.z == 4)
+    
+    Count = 0
+    o = Deriv1(1)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.z == 4)
+    
+    Count = 0
+    o = Deriv2(1, 2)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.a == 3)
+    Assert(o.b == 4)
+    Assert(o.z == 8)
+    
+    Count = 0
+    o = Deriv3(1, 2)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.z == 6)
+    
+    Count = 0
+    o = Deriv4(6)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.a == 3)
+    Assert(o.b == 4)
+    Assert(o.z == 11)
+    
+    Count = 0
+    o = Base2(2)
+    Assert(o.z == -1)
+    
+    Count = 0
+    o = Deriv5(2)
+    Assert(o.a == 1)
+    Assert(o.z == 0)
+    
+    Count = 0
+    o = Deriv6(1, 2)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.a == 3)
+    Assert(o.b == 4)
+    Assert(o.c == 5)
+    Assert(o.z == 9)
+    
+    Count = 0
+    o = Deriv7(1)
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.c == 3)
+    Assert(o.z == 5)
+    
+    Count = 0
+    o = Deriv8()
+    Assert(o.x == 1)
+    Assert(o.y == 2)
+    Assert(o.z == 8)
+  end
+  
+  def testClassOrder()
+    Assert(InheritOrderC().foo == 3)
+  end
+end
+
+
+private var Count = 0
+private def Next()
+  Count += 1
+  return Count
+end
+
+
+private class Base1
+  var x = Next()
+  var y = Next()
+  var z
+  
+  def create(y)
+    z = y + Next()
+  end
+end
+
+private class Deriv1 is Base1
+end
+
+private class Deriv2 is Base1
+  var a = Next()
+  var b = Next()
+  
+  def create(a, b)
+    super.create(a + b)
+  end
+end
+
+private class Deriv3 is Base1
+  def create(a, b)
+    super.create(a + b)
+  end
+end
+
+private class Deriv4 is Base1
+  var a = Next()
+  var b = Next()
+end
+
+
+private class Base2
+  var z
+
+  def create(y)
+    z = Next() - y
+  end
+end
+
+private class Deriv5 is Base2
+  var a = Next()
+end
+
+
+private class Deriv6 is Deriv2
+  var c = Next()
+end
+
+private class Deriv7 is Deriv1
+  var c = Next()
+end
+
+private class Deriv8 is Deriv1
+  def create()
+    super.create(5)
+  end
+end
+
+
+class InheritOrderA
+  var foo = 1
+end
+
+class InheritOrderC is InheritOrderB
+  def create()
+    foo += 2
+  end
+end
+
+class InheritOrderB is InheritOrderA
+end

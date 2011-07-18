@@ -1,0 +1,120 @@
+module __os
+
+import os
+import re
+import sys
+import string
+
+
+-- Convenience shorthand for directory separator
+private const Sep = Separator
+
+
+-- Split a path into drive and path components. Return tuple (drive, path).
+-- If there is no drive in the path or if the current platform does not 
+-- use drive specifiers, return ''.
+def SplitDrive(path)
+  if Platform == 'windows' and path.length() >= 2 and path[1] == ':' and
+     path[0].lower() >= 'a' and path[0].lower() <= 'z'
+    return path[:2], path[2:]
+  else
+    return '', path
+  end
+end
+
+
+-- Normalize extra directory separators, '.' and '..' within a path.
+--
+-- Since symbolic links are ignored, the returned path may point to a 
+-- different target from the original.
+def NormPath(path)
+  -- Remember the drive portion of the path.
+  var drive
+  drive, path = SplitDrive(path)
+  if Platform == 'windows'
+    -- Normalize directory separators in Windows.
+    path = path.replace('/', '\')
+  end
+  var absolute = path.startsWith(Sep)
+  -- An UNC path has exactly 2 separators as a prefix.
+  var unc = drive == '' and path.startsWith(Sep + Sep) and 
+            not path.startsWith(Sep * 3)
+  var components = path.split(Sep)
+  var res = []
+  for c in components
+    if not c in ('.', '')
+      if c == '..' and res != []
+        res.removeAt(-1)
+      else
+        res.append(c)
+      end
+    end
+  end
+  if res == [] and not absolute
+    res.append('.')
+  end
+  path = Sep.join(res)
+  if unc
+    path = Sep + Sep + path
+  elif absolute
+    path = Sep + path
+  end
+  return drive + path
+end
+
+
+-- Return path as an absolute path.
+--
+-- Since symbolic links are ignored, the returned path may point to a 
+-- different target from the original.
+def AbsPath(path)
+  if Platform != 'windows'
+    return NormPath(Join(CurrentDir(), path))
+  else
+    return NormPath(__GetFullPathName(path))
+  end
+end
+
+
+-- Expand ~ or ~user prefix in the path; if none exists, return the original
+-- path.
+def ExpandUser(path)
+  if not path.startsWith('~')
+    return path
+  end
+  var home, user
+  var sep = path.find('/')
+  if sep < 0
+    sep = path.length()
+  end
+  if sep == 1
+    home = GetEnv('HOME')
+    user = User()
+  else
+    home = nil
+    user = path[1:sep]
+  end
+  if home == nil
+    try
+      home = __getpwnam(user)[5]
+    except KeyError
+      return path
+    end
+  end
+  return Subst(home, '/+$', '') + path[sep:]
+end
+
+
+-- Create a directory, also creating any needed parent directories. If the 
+-- path is already a directory, do nothing.
+def MakeDirs(path)
+  -- IDEA: There is a race condition if multiple threads/processes try to
+  --       create a different directory with a shared parent.
+  if path != '' and not IsDir(path)
+    var dir = DirName(path)
+    if dir != '' and not IsDir(dir)
+      MakeDirs(dir)
+    end
+    MakeDir(path)
+  end
+end

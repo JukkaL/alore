@@ -1,0 +1,31 @@
+-- Source file with some errors and multiple global definitions.
+
+def Func()
+end
+
+def Main()
+end
+
+def ErrFunc()
+  err
+end
+
+class FooClass
+  def xyss()
+    err2
+  end
+  
+  def fooxxxzd()
+  end
+  
+  var xytyt
+  
+  def x
+  end
+end
+
+class MooMoo
+end
+
+var FooFoo
+const BarBar

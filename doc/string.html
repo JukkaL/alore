@@ -1,0 +1,62 @@
+@head
+@module string
+@title <tt>string</tt>: String operations
+
+<p>This module provides operations dealing with string objects. The functions
+generally assume that strings are encoded in Unicode or a subset of Unicode
+such as ASCII or ISO Latin 1.
+
+@see The @ref{std::Str} type provides many useful string operations.
+     The @ref{std} module also contains
+     several basic operations and type constructors that can work with strings,
+     such as @ref{Int}, @ref{Chr} and @ref{Ord}.
+     The @ref{re} module supports pattern matching of strings using
+     regular expressions.
+@end
+
+<h2>Functions</h2>
+
+@fun IntToStr(int, base[, numFill])
+@desc Convert an integer to a string representation in the specified base.
+    If <i>numFill</i> is specified, pad the result with zeroes so that it
+    contains at least <i>numFill</i> digits. Digit values greater than 9 are
+    represented as letters from "a" to "z" such that "a" is 10, "b" is 11, etc.
+    Valid values for base are from 2 to 36, inclusive. Examples:
+    @example
+    IntToStr(6, 2)       -- Result: "110" (binary)
+    IntToStr(255, 16, 4) -- Result: "00ff" (hexadecimal)
+    @end
+    
+    @see @ref{std::Int}
+    @end
+@end
+
+@fun ExpandTabs(str[, tabSize])
+@desc Return a copy of the string with all tab characters expanded into spaces.
+      The default tab size is 8, and it can overridden by specifying the
+      optional argument <i>tabSize</i>.
+@end
+
+@fun IsLetter(char)
+@desc Return a boolean indicating whether the argument is a letter. The
+      argument must be a string of length 1. The function recognizes also
+      non-Latin characters, including (but not limited to) Cyrillic, Greek,
+      Chinese and Japanese characters used for representing words.
+@end
+  
+@fun IsDigit(char)
+@desc Return a boolean indicating whether the argument is a digit. The argument
+      must be a string of length 1. Only the characters 0, 1, ..., 9 are
+      recognized.
+@end
+  
+@fun IsWordChar(char)
+@desc Return a boolean indicating whether the argument is a word character,
+      i.e. a letter or a digit. The argument must be a string of length 1.
+@end
+  
+@fun IsSpace(char)
+@desc Return a boolean indicating whether the argument is a whitespace
+      character such as a space, a tab or a line feed character. The argument
+      must be a string of length 1.
+@end

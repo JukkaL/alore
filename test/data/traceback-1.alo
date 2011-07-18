@@ -1,0 +1,7 @@
+def Main()
+end
+
+
+def RaiseValueError()
+  raise ValueError()
+end

@@ -1,0 +1,218 @@
+-- url.alo - URL processing
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module url
+
+-- See RFC 2396 (http://www.ietf.org/rfc/rfc2396.txt) for additional 
+-- information.
+--
+-- Note: This module does not fully follow the spec to make the API simpler and
+-- more useful. In particular, there are the following issues:
+--  * Only a host name or a IPv4 address is supported as the host. Registry
+--    based naming is not supported.
+--  * Opaque URLs are not supported. In URLs that do not have a slash after the
+--    scheme, the portion after the scheme is usually taken as the path.
+--  * The URL parser does not accept some invalid URLs but may accept some. 
+--    Error reporting is not entirely consistent.
+--
+-- IPv6 addresses are not supported at all.
+
+import re
+import string
+
+
+class Url
+  const scheme
+  const host
+  const port   -- -1 if undefined
+  const username
+  const password
+  const path
+  const query
+  const fragment
+  
+  -- Call as:
+  --  (Str) or
+  --  ((scheme, netLocation, path, query, fragment))
+  def create(arg)
+    if arg is Str
+      var url = arg
+      var m = Match(
+                "([a-zA-Z][-a-zA-Z0-9+.]+:)?" +
+                "(//([-_.!~*'()a-zA-Z0-9;:&=+$,%]+@)?" +
+                 "([-a-zA-Z0-9.]*)(:[0-9]+)?)?" +
+                "([-_.!~*'()a-zA-Z0-9%:@&=+$,/;]*)" +
+                "(\?[-_.!~*'()a-zA-Z0-9%+&=;/?:@,$]*)?" +
+                "(#[-_.!~*'()a-zA-Z0-9%+&=;/?:@,$]*)?$", url)
+                
+      if m == nil
+        raise ValueError("Invalid URL")
+      end
+      scheme = ""
+      if m.group(1) != nil
+        scheme = m.group(1)[:-1]
+      end
+      username, password = "", ""
+      if m.group(3) != nil
+        var userpass = m.group(3)[:-1]
+        if ":" in userpass
+          username, password = userpass.split(":", 1)
+        else
+          username = userpass
+        end
+      end
+      host = ""
+      if m.group(4) != nil
+        host = m.group(4)
+      end
+      port = -1
+      if m.group(5) != nil
+        port = Int(m.group(5)[1:])
+      end
+      path = m.group(6)
+      if host != "" and path != "" and not path.startsWith("/")
+        raise ValueError("Invalid URL")
+      end
+      query = ""
+      if m.group(7) != nil
+        query = m.group(7)[1:]
+      end
+      fragment = ""
+      if m.group(8) != nil
+        fragment = m.group(8)[1:]
+      end
+    else
+      var loc
+      if nil in arg
+        raise ValueError("nil URL component (use """" instead)")
+      end
+      self.scheme, loc, self.path, self.query, self.fragment = arg
+      if "@" in loc
+        var userpass
+        userpass, loc = loc.split("@", 1)
+        if ":" in userpass
+          self.username, self.password = userpass.split(":")
+        else
+          self.username, self.password = userpass, ""
+        end
+      else
+        self.username, self.password = "", ""
+      end
+      if ":" in loc
+        var a = loc.split(":", 1)
+        self.host, self.port = a[0], Int(a[1])
+      else
+        self.host = loc
+        self.port = -1
+      end
+    end
+  end
+  
+  def netLocation
+    var loc = userpass()
+    loc += self.host
+    if self.port != -1
+      loc = "{}:{}".format(loc, self.port)
+    end
+    return loc
+  end
+  
+  private def userpass()
+    var up = ""
+    if username != ""
+      up = username
+      if password != ""
+        up += ":" + password
+      end
+      up += "@"
+    end
+    return up
+  end
+  
+  def url()
+    var s = ""
+    if self.host != ""
+      s = "//" + userpass() + self.host
+    end
+    s = str(scheme, ":") + s
+    if port != -1
+      s += ":{}".format(port)
+    end
+    s += path
+    if query != ""
+      s += "?" + query
+    end
+    if fragment != ""
+      s += "#" + fragment
+    end
+    return s
+  end
+  
+  def _str()
+    return "Url({})".format(Repr(url()))
+  end
+  
+  def _repr()
+    return "Url(scheme={}, netLocation={}, path={}, query={}, fragment={})".
+      format(Repr(scheme), Repr(netLocation), Repr(path), Repr(query), 
+             Repr(fragment))
+  end
+  
+  private def str(s, suffix = "")
+    if s == ""
+      return ""
+    else
+      return s + suffix
+    end
+  end
+end
+
+
+def UrlEncode(s)
+  return Subst(s, "[^a-zA-Z0-9\-._]", 
+               def (m)
+                 var ch = m.group(0)
+                 if ch == " "
+                   return "+"
+                 elif ch <= "\u00ff"
+                   return "%" + IntToStr(Ord(ch), 16, 2)
+                 else
+                   raise ValueError("Character code larger than 255")
+                 end    
+               end)
+end
+
+
+def UrlDecode(s)
+  s = s.replace("+", " ")
+  return Subst(s, "%[0-9a-fA-F]{2}", PercentRepl)
+end
+
+
+def RawUrlEncode(s, keep = "")
+  return Subst(s, "[^a-zA-Z0-9\-._]", 
+               def (m)
+                 var ch = m.group(0)
+                 if ch in keep
+                   return ch
+                 elif ch <= "\u00ff"
+                   return "%" + IntToStr(Ord(ch), 16, 2)
+                 else
+                   raise ValueError("Character code larger than 255")
+                 end
+               end)
+end
+
+
+def RawUrlDecode(s)
+  return Subst(s, "%[0-9a-fA-F]{2}", PercentRepl)
+end
+
+
+private def PercentRepl(m)
+  return Chr(Int(m.group(0)[1:], 16))
+end

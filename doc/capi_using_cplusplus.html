@@ -1,0 +1,29 @@
+@head
+@title Using C++ in modules
+
+<p>It is possible to implement modules in C++. The main difference between
+using C++ and C is that you have to define all your implementation functions
+as <tt>extern "C"</tt> and, of course, use a C++ compiler such as g++ to
+compile and link the module.
+
+<p>All the instructions in section
+@href{Using standard C libraries in modules} apply as well.
+
+<p>Here is a simple C++ example module:
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  extern "C" AValue Greeting(AThread *t, AValue *frame)
+  {
+      return AMakeStr(t, "hello, world");
+  }
+
+  A_MODULE(hellocpp, "hellocpp")
+      A_DEF("Greeting", 0, 0, Greeting)
+  A_END_MODULE()
+@end
+
+@note Implementing C++ modules has not received much testing and this
+      section does not mention many potential issues.
+@end

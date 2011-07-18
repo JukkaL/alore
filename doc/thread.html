@@ -1,0 +1,128 @@
+@head
+@module thread
+@title <tt>thread</tt>: Concurrent programming with threads
+
+<p>This module provides low-level facilities for using concurrent
+<i>threads</i> that are executed
+conceptually simultaneously. The <tt>Mutex</tt> and <tt>Condition</tt> classes 
+can be used to synchronize threads and implement communication between threads.
+
+<p>Program execution starts in a
+special <i>main</i> thread. The execution of a program ends after the main
+thread ends. If any other threads are executing at program exit, they will be
+forcibly terminated. It is recommended that programs explicitly end threads
+by calling <tt>join</tt> to avoid data loss due to terminated threads.
+
+<h2>Class <tt>Thread</tt></h2>
+
+@class Thread(function)
+@desc Construct a new thread. The thread calls the
+      function with no arguments. The 
+      function may be any callable object, and it is the
+      <i>thread function</i> of the new thread.
+@end
+
+<h3><tt>Thread</tt> methods</h3>
+
+@fun join()
+@desc Wait until the execution of the thread stops. Return the value returned
+      by the thread function. If the function raised an exception that was not
+      caught, this method will raise that exception. Join can be called only 
+      once for each thread object.
+@end
+
+<h2>Class <tt>Mutex</tt></h2>
+
+@class Mutex()
+@desc Construct a mutex.
+@end
+
+<h3><tt>Mutex</tt> methods</h3>
+
+@fun lock()
+@desc Lock the mutex. A mutex may be locked only once before calling
+      <tt>unlock()</tt>.
+      If the mutex is already locked by another thread while calling
+      <tt>lock()</tt>,
+      the calling thread waits until the mutex is unlocked and tries to lock
+      the mutex again until it succeeds.
+@end
+
+@fun unlock()
+@desc Unlock the mutex. The mutex must be locked. Only the same thread that
+      has locked the mutex may unlock the mutex.
+@end
+
+<h2>Class <tt>Condition</tt></h2>
+
+@class Condition()
+@desc Construct a condition variable.
+@end
+
+<h3><tt>Condition</tt> methods</h3>
+
+@fun wait(mutex)
+@desc Wait until another thread signals or broadcasts the condition variable. 
+      The mutex
+      must have been locked by the current thread before calling this method. 
+      This method
+      unlocks the mutex during the wait but locks it again before returning.
+@end
+
+@fun signal()
+@desc Signal one of the threads waiting for the condition variable. If no 
+      thread is
+      waiting for the condition variable, this method does nothing.
+@end
+
+@fun broadcast()
+@desc Signal all of the threads currently waiting for the condition variable. 
+      If no 
+      thread is waiting for the condition variable, this method does nothing.
+@end
+
+@end-class
+
+<h2>Locking policy</h2>
+
+<p><tt>Mutex</tt> objects are used for <i>mutual exclusion</i>, i.e. to make 
+sure that 
+only a single thread is accessing
+a resource such as an object, a variable or a file at the same time. Sometimes
+<tt>Mutex</tt> objects need to be used even though there is no obvious need 
+for mutual exclusion. Therefore the rules below must be followed very carefully
+in any code that uses threads.
+
+<p>Each time a thread accesses a variable or an object, if that variable or
+object may have been modified by another thread since the creation of that 
+thread, that access
+must be protected my a mutex. Likewise, the operations that actually modify
+the variable or the object must be protected by the same mutex.
+
+<p>For example, consider two simultaneous threads that call functions 
+<tt>F1</tt> and <tt>F2</tt>:
+
+@example
+var Shared = 1
+
+def F1()
+  Shared = 2 <span class="error">-- Error!</span>
+end
+
+def F2()
+  if Shared == 2 <span class="error">-- Error!</span>
+    DoSomething()
+  end 
+end 
+@end
+
+<p>The function <tt>F2</tt> accesses a variable that may have been modified by 
+<tt>F1</tt> in
+another thread. This in an error, and to remedy this, all the variable accesses
+must be protected by a mutex.
+
+@note As an exception, some classes may perform the required locking 
+automatically. Unless this is explicitly mentioned, however, the caller
+must take care of locking. Remember that @ref{Stream} objects and their 
+descendants do not typically perform any locking!
+@end

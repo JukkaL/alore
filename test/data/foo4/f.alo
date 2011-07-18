@@ -1,0 +1,3 @@
+module foo4
+
+var Global = 77

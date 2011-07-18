@@ -1,0 +1,158 @@
+@head
+@title Str operations
+
+<p>Several operations are provided for dealing with string objects. The 
+operations include creating string objects, converting between different 
+string encodings, reading the contents of strings and creating substrings.
+
+@see You can use the @ref{AAdd} function to concatenate strings. String methods
+     such as <tt>strip</tt> can be called using @ref{ACallMethod}.
+@end
+
+<h2>Creating</h2>
+
+@fun AValue AMakeStr(AThread *t, const char *str)
+@desc Create a <tt>std::Str</tt> object from a a zero-terminated 8-bit string. 
+      The character values in the argument are mapped to range 1 to 255 in the
+      result. @raise-direct
+@end
+
+@fun AValue AMakeStrW(AThread *t, const AWideChar *str)
+@desc Create a <tt>std::Str</tt> object from a zero-terminated 16-bit string.
+      @raise-direct
+@end
+
+@fun AValue AMakeStrUtf8(AThread *t, const char *str)
+@desc Create a <tt>std::Str</tt> object from a UTF-8 encoded string. The result
+      is a 16-bit string. @raise-direct
+@end
+
+@fun AValue AMakeCh(AThread *t, AWideChar ch)
+@desc Create a 1-element <tt>std::Str</tt> object from a character code. Any
+      character code in range 0 to 65535 is valid. @raise-direct
+@end
+
+@fun AValue AMakeEmptyStr(AThread *t, Assize_t len)
+@desc Create a uninitialized <tt>std::Str</tt> object with the specified 
+      length. You must initialize the entire contents of the string using 
+      @ref{ASetStrItem} or @ref{AStrPtr} before exposing the object to Alore
+      code. You must only use 8-bit character codes, i.e. character values 
+      between 0 and 255, when initializing the string.
+      @raise-direct
+@end
+
+@fun AValue AMakeEmptyStrW(AThread *t, Assize_t len)
+@desc Create a uninitialized <tt>std::Str</tt> object with the specified 
+      length. You must initialize the entire contents of the string using 
+      @ref{ASetStrItem} or @ref{AStrPtrW} before exposing the object to Alore
+      code.
+      @raise-direct
+@end
+
+@fun void ASetStrItem(AValue string, int index, AWideChar ch)
+@desc Initialize a character within a string at given index to value ch.
+      Only strings created using <tt>AMakeEmptyStr</tt> or 
+      <tt>AMakeEmptyStrW</tt> can be initialized using this function.
+      The index (0-based) must be non-negative and less than the length of 
+      the string. After a string has been initialized, its contents must not
+      be changed. This function performs no error checking.
+@end
+
+@fun unsigned char *AStrPtr(AValue string)
+@desc Return a pointer to the contents of a string object created using 
+      @ref{AMakeEmptyStr}. This pointer can be used to initialize the contents
+      of the string. Any operation that may cause the garbage collector to run
+      will invalidate the pointer. You must not store a zero terminator in the
+      string or write past the end of the buffer. The size of the buffer is
+      defined by the length of the string.
+@end
+
+@fun AWideChar *AStrPtrW(AValue string)
+@desc Return a pointer to the contents of a string object created using 
+      @ref{AMakeEmptyStrW}. This pointer can be used to initialize the contents
+      of the string. Any operation that may cause the garbage collector to run
+      will invalidate the pointer. You must not store a zero terminator in the
+      string or write past the end of the buffer. The size of the buffer is
+      defined by the length of the string.
+@end
+
+@fun AValue AToStr(AThread *t, AValue object)
+@desc Return the string value of an object, equivalent to the valued produced
+      by the call std::Str(object).
+@end
+
+<h2>Reading</h2>
+
+@fun Assize_t AStrLen(AValue string)
+@desc Return the length of a string. 
+      The argument must be a <tt>std::Str</tt> object, since this function 
+      performs no error checking.
+@end
+
+@fun AWideChar AStrItem(AValue string, Assize_t index)
+@desc Return the value of a character in a string. The argument must be a
+      <tt>std::Str</tt> object, and the index (0-based) must be non-negative
+      and less than the length of the string. This function performs no
+      error checking.
+@end
+
+@fun Assize_t AGetStr(AThread *t, AValue v, char *buf, Assize_t bufLen)
+@desc Store the contents of a <tt>Str</tt> object in a 8-bit buffer as a
+      zero-terminated string. The bufLen argument specifies the size of the
+      buffer. Return the length of the string, without the zero terminator.
+      Raise an exception if the value does not refer to a <tt>Str</tt>,
+      if the buffer is too small to contain the string contents and the
+      zero terminator, or if the string contains character values larger than
+      255. @raise-direct
+@end
+
+@fun Assize_t AGetStrW(AThread *t, AValue v, AWideChar *buf, Assize_t bufLen)
+@desc Store the contents of a <tt>Str</tt> object in a 16-bit buffer as a
+      zero-terminated string. The bufLen argument specifies the size of the
+      buffer. Return the length of the string, without the zero terminator.
+      Raise an exception if the value does not refer to a <tt>Str</tt>
+      or if the buffer is too small to contain the string contents and the
+      zero terminator. @raise-direct
+@end
+
+@fun Assize_t AGetStrUtf8(AThread *t, AValue v, char *buf, Assize_t bufLen)
+@desc Store the contents of a <tt>Str</tt> object in a 8-bit buffer as a
+      zero-terminated UTF-8 encoded string. The bufLen argument specifies the 
+      size of the buffer. Return the length of the encoded string, without the
+      zero terminator. Raise an exception if the value does not refer to a 
+      <tt>Str</tt> or if the buffer is too small to contain the encoded string 
+      contents and the zero terminator. @raise-direct
+@end
+
+@fun Assize_t AStrLenUtf8(AValue string)
+@desc Return the length of resulting string when a string is UTF-8 encoded,
+      without actually performing the encoding, not including the zero 
+      terminator.
+      The argument must be a <tt>std::Str</tt> object, since this function 
+      performs no error checking.
+@end
+
+@fun AValue ASubStr(AThread *t, AValue v, Assize_t i1, Assize_t i2)
+@desc Return the substring i1:i2 of a string. The rules for indices are
+      similar to when indexing substrings in Alore code, and
+      negative indices are supported. As an exception, the constant
+      <tt>A_SLICE_END</tt> as the end index
+      specifies a substring extending to the end of the string. @raise-direct
+@end
+
+@fun AWideChar AGetCh(AThread *t, AValue v)
+@desc If the argument is a <tt>Str</tt> object of length 1, return the 
+      character value of the string. Otherwise, raise an exception. 
+      @raise-direct
+@end
+
+<h2>Checking</h2>
+
+@fun ABool AIsStr(AValue v)
+@desc Return a boolean indicating whether v is a <tt>std::Str</tt> object.
+@end
+
+@fun void AExpectStr(AThread *t, AValue v)
+@desc Check if v is a <tt>Str</tt> object and raise a direct 
+      @ref{std::TypeError} exception if it is not.
+@end

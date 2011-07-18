@@ -1,0 +1,97 @@
+@head
+@module socket
+@title <tt>socket</tt>: Network connections
+
+<p>This module supports creating TCP clients that create stream-based network
+connections to other computers or processes. In this context, the term
+<i>socket</i> refers to IPv4 stream sockets only.
+
+@see Use the @ref{serversocket} module to create TCP servers.
+@end
+
+<h2>Class <tt>Socket</tt></h2>
+
+@class Socket(destination, port[, buffering])
+@desc Construct a TCP/IP connection stream to the specified port of the 
+      destination
+      host. The destination may be either a host name such as
+      "www.host.com" or a numeric IP address such as "100.50.200.5" 
+      (in decimal).
+      <p>The buffering parameter specifies the buffering mode. If omitted,
+      the connection is unbuffered. Valid values for the parameter are
+      @ref{io::Buffered}, @ref{io::LineBuffered} and @ref{io::Unbuffered}.
+      <p><tt>Socket</tt> is derived from @ref{io::Stream}. Like @ref{File}
+      objects, <tt>Socket</tt> objects are <i>narrow streams</i>.
+      <tt>Socket</tt> objects support both writing (sending) and reading
+      (receiving) data.
+@end
+
+<p><tt>Socket</tt> instances are also implicitly created by the 
+@ref{serversocket::ServerSocket} class.
+
+<h3><tt>Socket</tt> methods</h3>
+
+<p><tt>Socket</tt> inherits most of the @ref{Stream} operations unchanged,
+including:
+
+<ul>
+  <li><b>write</b>
+  <li><b>writeLn</b>
+  <li><b>read</b>
+  <li><b>readLn</b>
+  <li><b>readLines</b>
+  <li><b>flush</b>
+  <li><b>eof</b>
+</ul>
+
+<p>It also supports the following operations:
+
+@fun close()
+@desc Close the connection. Free any resources allocated to the connection.
+@end
+
+@fun localAddress()
+@desc Return the local IP address as a string
+      in dotted decimal format (e.g. "100.50.200.5").
+@end
+
+@fun localPort()
+@desc Return the local port number.
+@end
+
+@fun remoteAddress()
+@desc Return the remote IP address as a string in dotted decimal
+     format (e.g. "100.50.200.5").
+@end
+
+@fun remotePort()
+@desc Return the remote port number.
+@end
+
+@end-class
+
+<h2>Functions</h2>
+
+@fun GetHostByName(name)
+@desc Return the IP address of a host. The name argument may be a host name or
+      a numeric IP address in dotted decimal format. If the host has
+      multiple interfaces, only the address of the first interface is returned.
+@end
+
+@fun GetHostByAddress(address)
+@desc Return the primary host name of the machine with the given IP address.
+      The IP address must be a string in dotted decimal format.
+@end
+
+@fun GetHostName()
+@desc Return a string containing the hostname of the machine where the program
+      is running.
+@end
+
+<h2>Exceptions</h2>
+
+@class NameError([message])
+@desc This exception is raised for DNS name lookup related errors. In
+      particular, @ref{GetHostByName} and @ref{GetHostByAddress} may raise
+      this exception. Inherits from @ref{std::Exception}.
+@end

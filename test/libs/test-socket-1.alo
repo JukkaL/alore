@@ -1,0 +1,168 @@
+module libs
+
+import unittest
+import socket
+import serversocket
+import io
+import sys
+
+
+const Port = 5000
+
+
+class SocketSuite is Suite
+  -- Test connecting using an IP address and a hostname. Also test writing
+  -- and reading lines in both directions.
+  def testConnectMethodsAndCommunication()
+    for host in "127.0.0.1", "localhost"
+      var server = ServerSocket(Port)
+      var cliStream = Socket("127.0.0.1", Port)
+      var srvStream = server.accept()
+    
+      for i in 0 to 2
+        cliStream.writeLn("foo bar")
+        AssertEqual(srvStream.readLn(), "foo bar")
+    
+        srvStream.writeLn("bar zar")
+        AssertEqual(cliStream.readLn(), "bar zar")
+      end
+    
+      cliStream.close()
+      srvStream.close()
+      
+      -- Close again (should not fail).
+      cliStream.close()
+      srvStream.close()
+    
+      server.close()
+      
+      -- Close again (should not fail).
+      server.close()
+    end
+  end
+  
+  -- Test using read and write using sockets.
+  def testReadAndWrite()   
+    var server = ServerSocket(Port)
+    var cliStream = Socket("127.0.0.1", Port)
+    var srvStream = server.accept()
+    
+    cliStream.write("foo ")
+    cliStream.write("bar")
+    AssertEqual(srvStream.read(2), "fo")
+    AssertEqual(srvStream.read(5), "o bar")
+    
+    cliStream.close()
+    Assert(srvStream.eof())
+    srvStream.close()
+     
+    server.close()
+  end
+  
+  -- Test eof with sockets.
+  def testEof()
+    var server = ServerSocket(Port)
+    var cliStream = Socket("127.0.0.1", Port)
+    var srvStream = server.accept()
+    
+    cliStream.write("foo")
+    Assert(not srvStream.eof())
+    AssertEqual(srvStream.read(3), "foo")
+    
+    cliStream.close()
+    Assert(srvStream.eof())
+    srvStream.close()
+     
+    server.close()
+  end
+
+  -- Test querying the addresses and ports related to connections.  
+  def testAddressAndPortInfo()
+    var server = ServerSocket(Port)
+    var cliStream = Socket("127.0.0.1", Port)
+    var srvStream = server.accept()
+    
+    AssertEqual(cliStream.remoteAddress(), "127.0.0.1")
+    AssertEqual(cliStream.remotePort(), Port)
+    AssertEqual(cliStream.localAddress(), "127.0.0.1")
+    Assert(cliStream.localPort() is Int)
+    Assert(cliStream.localPort() != Port)
+    AssertEqual(cliStream.localPort(), srvStream.remotePort())
+    
+    AssertEqual(srvStream.remoteAddress(), "127.0.0.1")
+    AssertEqual(srvStream.localPort(), Port)
+    AssertEqual(srvStream.localAddress(), "127.0.0.1")
+    
+    cliStream.close()
+    srvStream.close()
+    
+    server.close()
+  end
+  
+  -- Test a few errors related to sockets.
+  def testSocketErrors()
+    var server = ServerSocket(Port)
+    if Platform != "windows"
+      AssertRaises(IoError, ServerSocket, [Port])
+    end
+    -- This is commented since it may cause a long delay.
+    --AssertRaises(NameError, Socket, ["xxx.yyy.zzz", Port])
+    server.close()
+  end
+  
+  -- Test superficially different buffering modes. 
+  def testBufferingModes()
+    for buf in Buffered, LineBuffered, Unbuffered
+      var server = ServerSocket(Port)
+      var cliStream = Socket("127.0.0.1", Port)--, buf)
+      var srvStream = server.accept()--buf)
+      srvStream.writeLn("hello")
+      srvStream.close()
+      AssertEqual(cliStream.readLn(), "hello")
+      cliStream.close()
+      server.close()
+    end
+  end
+  
+  -- Test listening to a specific interface.
+  def testListeningToSpecificInterface()
+    -- IDEA: Test that only the single interface can be used to access the
+    --       socket.
+    var server = ServerSocket(Port, "127.0.0.1")
+    var cliStream = Socket("127.0.0.1", Port)
+    var srvStream = server.accept()
+    
+    cliStream.writeLn("foo")
+    AssertEqual(srvStream.readLn(), "foo")
+    
+    cliStream.close()
+    srvStream.close()
+     
+    server.close()
+  end
+  
+  def testGetHostByName()
+    AssertEqual(GetHostByName("localhost"), "127.0.0.1")
+    if Platform != "windows"
+      -- FIX: This sometimes hangs in Windows 2000.
+      AssertRaises(NameError, GetHostByName, ["xxx.yyy"])
+    end
+  end
+  
+  def testGetHostByAddress()
+    var h = GetHostByAddress("127.0.0.1")
+    Assert(h is Str and h.length() > 0)
+    AssertRaises(ValueError, GetHostByAddress, ["localhost"])
+  end
+  
+  def testGetHostByAddressWithInvalidHost()
+    -- This is skipped because it may cause a delay.
+    skip()
+    AssertRaises(NameError, GetHostByAddress, ["1.2.3.4"])
+  end
+  
+  def testGetHostName()
+    var h = GetHostName()
+    Assert(h is Str and h.length() > 0)
+  end
+end

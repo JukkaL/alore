@@ -1,0 +1,181 @@
+module runtime
+
+-- Constructor calls.
+
+import unittest
+import calltest
+import helpers
+
+
+class CallSuite3 is Suite
+  def testT1()
+    CheckVarArgsFunc(C0v)
+    Ok()
+  end
+  
+  
+  def testT2()
+    TestFixedArgsFunc0(C0)
+    TestFixedArgsFuncFail0(C0)
+    TestFixedArgsFunc1(C1)
+    TestFixedArgsFuncFail1(C1)
+    TestFixedArgsFunc2(C2)
+    TestFixedArgsFunc7(C7)
+    Ok()
+  end
+  
+  
+  def testT3()
+    TestDefArgsFunc01(C01)
+    TestDefArgsFunc03(C03)
+    TestDefArgsFunc11(C11)
+    TestDefArgsFuncFail11(C11)
+    TestDefArgsFunc34(C34)
+    Ok()
+  end
+  
+  
+  def testT4()
+    TestVarArgFunc01(C01v)
+    TestVarArgFunc03(C03v)
+    TestVarArgFunc11(C11v)
+    TestVarArgFunc34(C34v)
+    TestVarArgFuncFail34(C34v)
+    Ok()
+  end
+  
+  
+  -- Classes to test.
+  
+end
+
+
+private class C0
+  var inst
+
+  def create()
+    inst = []
+  end
+end
+
+private class C1
+  var inst
+
+  def create(a1)
+    inst = [a1]
+  end
+end
+
+private class C2
+  var inst
+
+  def create(a1, a2)
+    inst = (a1, a2)
+  end
+end
+
+private class C7
+  var inst
+
+  def create(a1, a2, a3, a4, a5, a6, a7)
+    inst = (a1, a2, a3, a4, a5, a6, a7)
+  end
+end
+
+private class C01
+  var inst
+
+  def create(a1 = 1)
+    inst = [a1]
+  end
+end
+
+private class C03
+  var inst
+
+  def create(a1 = 1, a2 = 2, a3 = 3)
+    inst = (a1, a2, a3)
+  end
+end
+
+private class C11
+  var inst
+
+  def create(a1, a2 = 2)
+    inst = (a1, a2)
+  end
+end
+
+private class C34
+  var inst
+
+  def create(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7)
+    inst = (a1, a2, a3, a4, a5, a6, a7)
+  end
+end
+
+private class C0v
+  var inst
+
+  def create(*a)
+    inst = a
+  end
+end
+
+private class C1v
+  var inst
+
+  def create(a1, *a)
+    inst = CreateArray(a1, *a)
+  end
+end
+
+private class C2v
+  var inst
+
+  def create(a1, a2, *a)
+    inst = CreateArray(a1, a2, *a)
+  end
+end
+
+private class C7v
+  var inst
+
+  def create(a1, a2, a3, a4, a5, a6, a7, *a)
+    inst = CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+  end
+end
+
+private class C01v
+  var inst
+
+  def create(a1 = 1, *a)
+    inst = CreateArray(a1, *a)
+  end
+end
+
+private class C03v
+  var inst
+
+  def create(a1 = 1, a2 = 2, a3 = 3, *a)
+    inst = CreateArray(a1, a2, a3, *a)
+  end
+end
+
+private class C11v
+  var inst
+
+  def create(a1, a2 = 2, *a)
+    inst = CreateArray(a1, a2, *a)
+  end
+end
+
+private class C34v
+  var inst
+
+  def create(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7, *a)
+    inst = CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+  end
+end
+
+

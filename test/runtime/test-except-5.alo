@@ -1,0 +1,230 @@
+module runtime
+
+-- Direct exception raising and catching.
+
+import unittest
+import thread
+import sys
+import __testc
+
+
+class DirectExceptionSuite is Suite
+  -- Catch direct TypeError.
+  def testSimpleCatchTypeError()
+    var n = 0
+    try
+      RaiseDirectTypeError()
+      Fail()
+    except TypeError
+      n += 1
+    end
+    try
+      RaiseDirectTypeError()
+      Fail()
+    except ValueError
+      n += 1
+    end
+    try
+      RaiseDirectTypeError()
+    except Exception
+      n += 1
+    end
+    Assert(n == 3)
+  end
+  
+  -- Test a try statement that has several non-empty except blocks.
+  def testTryWithMultipleExceptBlocks()
+    var n = 0
+    try
+      if True
+        while True
+          repeat
+            for x in 1, 2
+              switch 1
+              case 1
+                RaiseDirectTypeError()
+              end
+            end
+          until False
+        end
+      end
+      if False
+        var y = 2
+      elif True
+        var z = 3
+      end
+    except NonDirect
+      Fail()
+      if True
+        while True
+          repeat
+            switch 1
+            case 1
+              for x in 1, 2
+              end
+            end
+          until False
+        end
+      end
+    except ResourceError
+      Fail()
+    except TypeError
+      n += 1
+    end
+    Assert(n == 1)
+  end
+
+  -- Catch direct MemoryError.  
+  def testSimpleCatchMemoryError()
+    var n = 0
+    try
+      RaiseDirectMemoryError()
+      Fail()
+    except MemoryError
+      n += 1
+    end
+    try
+      RaiseDirectMemoryError()
+      Fail()
+    except ResourceError
+      n += 1
+    end
+    try
+      RaiseDirectMemoryError()
+    except Exception
+      n += 1
+    end
+    Assert(n == 3)
+  end
+
+  -- Perform finally with a direct exception.  
+  def testSimpleFinally()
+    var n = 0
+    try
+      try
+        RaiseDirectTypeError()
+        Fail()
+      finally
+        n += 1
+      end
+      Fail()
+    except TypeError
+      n += 2
+    end
+    Assert(n == 3)        
+  end
+  
+  -- Catch a direct exception raised many calls deep in the call stack.
+  def testRecursiveCatch()
+    var n = 0
+    try
+      RaiseRecursiveTypeError(1000)
+      Fail()
+    except TypeError
+      n += 1
+    end
+    Assert(n == 1)
+  end
+  
+  -- Catch a direct exception raised below a C function in the call stack.
+  def testRaiseOverCFunction()
+    var n = 0
+    try
+      Call(RaiseRecursiveTypeError, [100])
+    except TypeError
+      n += 1
+    end
+    Assert(n == 1)
+  end
+  
+  -- Test CallTrace with a direct exception.
+  def testCallTrace()
+    var e, tb = CallTrace(RaiseRecursiveTypeError, 30)
+    Assert(e is TypeError)
+  end
+  
+  -- Test direct exceptions across Thread join.
+  def testThreads()
+    if Platform != "windows"
+      var n = 0
+      try
+        Thread(def (); RaiseRecursiveTypeError(100); end).join()
+        Fail()
+      except ResourceError
+        Fail()
+      except TypeError
+        n += 1
+      end
+      Assert(n == 1)
+    end
+  end
+  
+  -- Test multiple nested except statements.
+  def testMultipleExcept()
+    var n = 0
+    try
+      try
+        RaiseDirectTypeError()
+        Fail()
+      except ResourceError
+        Fail()
+      end
+      Fail()
+    except TypeError
+      n += 1
+    end
+    Assert(n == 1)    
+        
+    try
+      try
+        RaiseDirectTypeError()
+        Fail()
+      except NonDirect
+        Fail()
+      end
+      Fail()
+    except TypeError
+      n += 1
+    end
+    Assert(n == 2)
+  end
+
+  -- Test raising and catching an exception within a finally block.  
+  def testExceptionWithinFinally()
+    var n = 0
+    try
+      try
+        RaiseDirectTypeError()
+        Fail()
+      finally
+        try
+          RaiseDirectTypeError()
+          Fail()
+        except TypeError
+          n += 1
+        end
+      end
+      Fail()
+    except TypeError
+      n += 2
+    end
+    Assert(n == 3)
+  end
+  
+  -- FIX: Test traceback generation.
+  -- FIX: Test uncaught exceptions.
+end
+
+
+private def RaiseRecursiveTypeError(depth)
+  if depth == 0
+    RaiseDirectTypeError()
+    Fail()
+  else
+    RaiseRecursiveTypeError(depth - 1)
+  end
+end
+
+
+private class NonDirect is Exception
+end

@@ -1,0 +1,199 @@
+module runtime
+
+import unittest
+import libs
+import os, string
+
+
+class ExceptionMessagesSuite is Suite
+  def testIf()
+    AssertRaises(TypeError, "Invalid type for boolean (Int)",
+                 def ()
+                   if 1
+                   end
+                 end)
+    AssertRaises(TypeError, "Invalid type for boolean (Str)",
+                 def ()
+                   if 1 < 0
+                   elif "x"
+                   end
+                 end)
+  end
+  
+  def testWhile()
+    AssertRaises(TypeError, "Invalid type for boolean (Int)",
+                 def ()
+                   while 1
+                   end
+                 end)
+  end
+  
+  def testRepeat()
+    AssertRaises(TypeError, "Invalid type for boolean (Int)",
+                 def ()
+                   repeat
+                   until 1
+                 end)
+  end
+  
+  def testInvalidStrMethod()
+    AssertRaises(TypeError, 
+                 "_str of runtime::InvalidStr returned non-string (nil)", 
+                 def ()
+                   Str(InvalidStr(nil))
+                 end)
+    AssertRaises(TypeError, 
+                 "_str of runtime::InvalidStr returned non-string (Int)", 
+                 def ()
+                   Str(InvalidStr(1))
+                 end)
+  end
+  
+  def testInvalidReprMethod()
+    AssertRaises(TypeError, 
+                 "_repr of runtime::InvalidStr returned non-string (nil)", 
+                 def ()
+                   Repr(InvalidStr(nil))
+                 end)
+    AssertRaises(TypeError, 
+                 "_repr of runtime::InvalidStr returned non-string (Int)", 
+                 def ()
+                   Repr(InvalidStr(1))
+                 end)
+  end
+  
+  def testChr()
+    AssertRaises(TypeError, "Chr() expects an Int (Str given)",
+                 def ()
+                   Chr("x")
+                 end)
+  end
+  
+  def testOrd()
+    AssertRaises(TypeError, "Ord() expects a character (Int given)",
+                 def ()
+                   Ord(1)
+                 end)
+    AssertRaises(ValueError, "Ord() expects a character (string with " +
+                 "length 2 given)",
+                 def ()
+                   Ord("xy")
+                 end)
+    AssertRaises(ValueError, "Ord() expects a character (string with " +
+                 "length 11 given)",
+                 def ()
+                   Ord(SS("foo bar bar"))
+                 end)
+  end
+  
+  def testStrExpected()
+    AssertRaises(TypeError, "Str expected (but Int found)",
+                 def ()
+                   "x".count(1)
+                 end)
+  end
+  
+  def testStrExpected2()
+    AssertRaises(TypeError, "Str expected (but nil found)",
+                 def ()
+                   IsAbs(nil)
+                 end)
+  end
+  
+  def testCharacterExpected()
+    AssertRaises(TypeError, "Character expected (but nil found)",
+                 def ()
+                   IsLetter(nil)
+                 end)
+    AssertRaises(ValueError, 
+                 "Character expected (but string of length 2 found)",
+                 def ()
+                   IsLetter("xy")
+                 end)
+    AssertRaises(ValueError, 
+                 "Character expected (but string of length 3 found)",
+                 def ()
+                   IsLetter("xy\u1234")
+                 end)
+    AssertRaises(ValueError, 
+                 "Character expected (but string of length 9 found)",
+                 def ()
+                   IsLetter(SS("foo123bar"))
+                 end)
+  end
+  
+  def testInvalidRvalue()
+    AssertRaises(TypeError, "Array or Tuple expected (but Int found)",
+                 def ()
+                   var a, b = 1
+                 end)
+    AssertRaises(ValueError, "Too many values to assign",
+                 def ()
+                   var t = 1, 2, 3
+                   var a, b = t
+                 end)
+    AssertRaises(ValueError, "Too many values to assign",
+                 def ()
+                   var t = [1, 2, 3]
+                   var a, b = t
+                 end)
+    AssertRaises(ValueError, "Too few values to assign",
+                 def ()
+                   var t = (1,)
+                   var a, b = t
+                 end)
+    AssertRaises(ValueError, "Too few values to assign",
+                 def ()
+                   var t = [1]
+                   var a, b = t
+                 end)
+  end
+  
+  def testInvalidRaisedValue()
+    AssertRaises(TypeError, 
+      "Exception must be derived from std::Exception (not nil)",
+      def ()
+        raise nil
+      end)
+    AssertRaises(TypeError, 
+      "Exception must be derived from std::Exception (not Int)",
+      def ()
+        raise 1
+      end)
+  end
+  
+  def testInvalidForIterable()
+    AssertRaises(MemberError, "Invalid iterable (True)",
+      def ()
+        for a in True
+        end
+      end)
+    AssertRaises(MemberError, "Invalid iterable (nil)",
+      def ()
+        for a in nil
+        end
+      end)
+    AssertRaises(MemberError, "Invalid iterable (Int)",
+      def ()
+        for a in 1
+        end
+      end)
+    AssertRaises(MemberError, "Float has no member ""iterator""",
+      def ()
+        var it = 1.2.iterator()
+      end)
+  end
+end
+
+
+class InvalidStr
+  var val
+  
+  def _str()
+    return self.val
+  end
+  
+  def _repr()
+    return self.val
+  end
+end

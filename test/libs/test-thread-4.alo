@@ -1,0 +1,55 @@
+module libs
+
+-- Thread tests
+
+import unittest
+import thread
+
+
+private var gvar = 0
+private var Mut = Mutex()
+
+private const nthr4 = 10
+private const ninc = 10000
+
+
+class ThreadSuite4 is Suite
+  -- Multiple threads access a global variable that is protected by a mutex.
+  def testT1()
+    var t = [nil] * nthr4
+  
+    -- Create threads.
+    var i = 0
+    while i < nthr4
+      t[i] = Thread(IncGvar)
+      i += 1
+    end
+  
+    -- Wait until all threads are done.
+    i = 0
+    while i < nthr4
+      t[i].join()
+      i += 1
+    end
+  
+    Assert(gvar == nthr4 * ninc)
+  
+    Ok()
+  end
+end
+
+
+private def IncGvar()
+  var i = 0
+  while i < ninc
+    Mut.lock()
+    var t = gvar
+    var j = 0
+    while j < 10
+      j += 1
+    end
+    gvar = t + 1
+    Mut.unlock()
+    i += 1
+  end
+end

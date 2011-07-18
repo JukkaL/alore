@@ -1,0 +1,14 @@
+-- Source file with some errors that loads a dynamic C module
+
+import __dummy
+
+def Func()
+  Dummy()
+end
+
+class FooPosadf
+  def mexasdf()
+  end
+end
+
+var Foo,

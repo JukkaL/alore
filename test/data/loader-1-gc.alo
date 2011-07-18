@@ -1,0 +1,4 @@
+var Foo = 55
+
+def Main()
+end

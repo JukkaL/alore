@@ -1,0 +1,45 @@
+module parser
+
+import unittest
+
+
+class StrLiteralsSuite is Suite
+  def testSingleChar()
+    AssertEqual(Ord(' '), 32)
+    AssertEqual(Ord('A'), 65)
+    AssertEqual(Ord(" "), 32)
+    AssertEqual(Ord("A"), 65)
+  end
+  
+  def testSingleUnicodeChar()  
+    AssertEqual(Ord('\u0102'), 258)
+    AssertEqual(Ord("\u0201"), 513)
+  end
+  
+  def testQuotesAsCharacters()
+    AssertEqual(Ord('"'), 34)
+    AssertEqual(Ord("'"), 39)
+    
+    AssertEqual("""", '"')
+    AssertEqual('''', "'")
+  end
+  
+  def testEmptyStrings()
+    AssertEqual('a' + '', 'a')
+    AssertEqual('a' + "", 'a')
+  end
+  
+  def testBasicStrings()
+    AssertEqual('hello', ''.join(['h', 'e', 'l', 'l', 'o']))
+    AssertEqual("hello", 'hello')
+  end
+  
+  def testMixedStrings()
+    AssertEqual('"f"" \u1234''\u5678-''''-',
+                ''.join(['"', 'f', '"', '"', ' ', '\u1234', "'", '\u5678',
+                         '-', "'", "'", '-']))
+    AssertEqual("""f"""" \u1234'\u5678-''-",
+                ''.join(['"', 'f', '"', '"', ' ', '\u1234', "'", '\u5678',
+                         '-', "'", "'", '-']))
+  end
+end

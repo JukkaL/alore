@@ -1,0 +1,218 @@
+module calltest
+
+-- Tests of function calling
+
+import unittest
+import helpers
+
+
+def CheckVarArgsFunc(fn)
+  TestFixedArgsFunc0(fn)
+  TestFixedArgsFunc1(fn)
+  TestFixedArgsFunc3(fn)
+  TestFixedArgsFunc7(fn)
+
+  TestLotsOfArgs(fn)
+end
+
+
+def TestFixedArgsFunc0(fn, a = [])
+  VerifyArrays(fn(), a)
+  VerifyArrays(fn(*[]), a)
+end
+
+
+def TestFixedArgsFuncFail0(fn)
+  var i = 0
+  try
+    fn(1)
+  except ValueError
+    i += 1
+  end
+  try
+    fn(*[1])
+  except ValueError
+    i += 1
+  end
+  Assert(i == 2)
+end
+
+
+def TestFixedArgsFunc1(fn, a = [2])
+  VerifyArrays(fn(2), a)
+  VerifyArrays(fn(*[2]), a)
+  VerifyArrays(fn(2, *[]), a)
+end
+
+
+def TestFixedArgsFuncFail1(fn, a = [2])
+  var i = 0
+  try
+    fn()
+  except ValueError
+    i += 1
+  end
+  try
+    fn(*(1,2))
+  except ValueError
+    i += 1
+  end
+  Assert(i == 2)
+end
+
+
+def TestFixedArgsFunc2(fn, a = (2, 3))
+  VerifyArrays(fn(2, 3), a)
+  VerifyArrays(fn(2, 3, *[]), a)
+  VerifyArrays(fn(2, *[3]), a)
+  VerifyArrays(fn(*(2, 3)), a)
+end
+
+
+def TestFixedArgsFunc3(fn, a = (2, 3, 4))
+  VerifyArrays(fn(2, 3, 4), a)
+  VerifyArrays(fn(2, 3, 4, *[]), a)
+  VerifyArrays(fn(2, 3, *[4]), a)
+  VerifyArrays(fn(2, *(3, 4)), a)
+  VerifyArrays(fn(*(2, 3, 4)), a)
+end
+
+
+def TestFixedArgsFunc7(fn, a = (2, 3, 4, 5, 6, 7, 8))
+  VerifyArrays(fn(2, 3, 4, 5, 6, 7, 8), a)
+  VerifyArrays(fn(2, 3, 4, 5, 6, 7, 8, *[]), a)
+  VerifyArrays(fn(2, 3, 4, 5, 6, 7, *[8]), a)
+  VerifyArrays(fn(2, 3, 4, 5, *(6, 7, 8)), a)
+  VerifyArrays(fn(2, 3, 4, *(5, 6, 7, 8)), a)
+  VerifyArrays(fn(2, 3, *(4, 5, 6, 7, 8)), a)
+  VerifyArrays(fn(2, *(3, 4, 5, 6, 7, 8)), a)
+  VerifyArrays(fn(*(2, 3, 4, 5, 6, 7, 8)), a)
+end
+
+
+def TestDefArgsFunc01(fn)
+  TestFixedArgsFunc0(fn, [1])
+  TestFixedArgsFunc1(fn)
+end
+
+
+def TestDefArgsFunc03(fn)
+  TestFixedArgsFunc0(fn, (1, 2, 3))
+  TestFixedArgsFunc1(fn, (2, 2, 3))
+  TestFixedArgsFunc2(fn, (2, 3, 3))
+  TestFixedArgsFunc3(fn)
+end
+
+
+def TestDefArgsFunc11(fn)
+  TestFixedArgsFunc1(fn, (2, 2))
+  TestFixedArgsFunc2(fn)
+end
+
+
+def TestDefArgsFuncFail11(fn)
+  var i = 0
+  try
+    fn()
+  except ValueError
+    i += 1
+  end
+  try
+    fn(1, 2, 3)
+  except ValueError
+    i += 1
+  end
+  Assert(i == 2)
+end
+
+
+def TestDefArgsFunc34(fn)
+  TestFixedArgsFunc3(fn, (2, 3, 4, 4, 5, 6, 7))
+  TestFixedArgsFunc7(fn)
+  VerifyArrays(fn(2, 3, 4, 5), (2, 3, 4, 5, 5, 6, 7))
+  VerifyArrays(fn(2, 3, 4, *[5]), (2, 3, 4, 5, 5, 6, 7))
+  VerifyArrays(fn(2, 3, *(4, 5)), (2, 3, 4, 5, 5, 6, 7))
+end
+
+
+def TestLotsOfArgs(fn)
+  VerifyArrays(fn(*Long), Long)
+  VerifyArrays(fn(1, *DropFirst(Long, 1)), Long)
+  VerifyArrays(fn(1, 2, 3, *DropFirst(Long, 3)), Long)
+  VerifyArrays(fn(1, 2, 3, 4, 5, 6, 7, 8, *DropFirst(Long, 8)), Long)
+end
+
+
+def TestVarArgFunc01(fn)
+  TestDefArgsFunc01(fn)
+  TestVarArgs(fn, 1)
+end
+
+
+def TestVarArgFunc03(fn)
+  TestDefArgsFunc03(fn)
+  TestVarArgs(fn, 3)
+end
+
+
+def TestVarArgFunc11(fn)
+  TestDefArgsFunc11(fn)
+  TestVarArgs(fn, 2)
+end
+
+
+def TestVarArgFunc34(fn)
+  TestDefArgsFunc34(fn)
+  TestVarArgs(fn, 7)
+end
+
+
+def TestVarArgFuncFail34(fn)
+  var i = 0
+  try
+    fn(1)
+  except ValueError
+    i += 1
+  end
+  try
+    fn(*(1, 2))
+  except ValueError
+    i += 1
+  end
+  Assert(i == 2)
+end
+
+
+def TestVarArgs(fn, min)
+  if min <= 0
+  end
+  if min <= 1
+    VerifyArrays(fn(1, 2), (1, 2))
+    VerifyArrays(fn(1, 2, *[]), (1, 2))
+    VerifyArrays(fn(1, *[2]), (1, 2))
+    VerifyArrays(fn(*(1, 2)), (1, 2))
+  end
+  if min <= 2
+    VerifyArrays(fn(1, 2, 3), (1, 2, 3))
+    VerifyArrays(fn(1, 2, 3, *[]), (1, 2, 3))
+    VerifyArrays(fn(1, 2, *[3]), (1, 2, 3))
+    VerifyArrays(fn(1, *(2, 3)), (1, 2, 3))
+    VerifyArrays(fn(*(1, 2, 3)), (1, 2, 3))
+  end
+  if min <= 3
+    VerifyArrays(fn(1, 2, 3, 4), (1, 2, 3, 4))
+    VerifyArrays(fn(1, 2, 3, 4, *[]), (1, 2, 3, 4))
+    VerifyArrays(fn(1, 2, 3, *[4]), (1, 2, 3, 4))
+    VerifyArrays(fn(1, 2, *(3, 4)), (1, 2, 3, 4))
+    VerifyArrays(fn(1, *(2, 3, 4)), (1, 2, 3, 4))
+    VerifyArrays(fn(*(1, 2, 3, 4)), (1, 2, 3, 4))
+  end
+  if min <= 7
+    VerifyArrays(fn(1, 2, 3, 4, 5, 6, 7, 8), (1, 2, 3, 4, 5, 6, 7, 8))
+    VerifyArrays(fn(1, 2, 3, 4, 5, *(6, 7, 8)), (1, 2, 3, 4, 5, 6, 7, 8))
+    VerifyArrays(fn(1, 2, *(3, 4, 5, 6, 7, 8)), (1, 2, 3, 4, 5, 6, 7, 8))
+    VerifyArrays(fn(*(1, 2, 3, 4, 5, 6, 7, 8)), (1, 2, 3, 4, 5, 6, 7, 8))
+  end
+
+  TestLotsOfArgs(fn)
+end

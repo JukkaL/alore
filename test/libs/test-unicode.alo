@@ -1,0 +1,45 @@
+module libs
+
+import unittest
+import unicode
+
+
+class UnicodeSuite is Suite
+  def testUnicodeName()
+    AssertEqual(UnicodeName(" "), "SPACE")
+    AssertEqual(UnicodeName("A"), "LATIN CAPITAL LETTER A")
+    AssertEqual(UnicodeName("&"), "AMPERSAND")
+    AssertEqual(UnicodeName(Chr(771)), "COMBINING TILDE")
+    AssertEqual(UnicodeName(Chr(25000)), "CJK UNIFIED IDEOGRAPH-61A8")
+    AssertEqual(UnicodeName(Chr(48000)), "HANGUL SYLLABLE MWESS")
+    AssertEqual(UnicodeName(Chr(65533)), "REPLACEMENT CHARACTER")
+  end
+  
+  def testUnicodeNameErrors()
+    AssertRaises(ValueError, UnicodeName, [Chr(0)])
+    AssertRaises(ValueError, UnicodeName, [Chr(31)])
+    AssertRaises(ValueError, UnicodeName, [Chr(1806)])
+    AssertRaises(ValueError, UnicodeName, [Chr(65535)])
+  end
+  
+  def testLookupChr()
+    AssertEqual(LookupChr("SPACE"), " ")
+    AssertEqual(LookupChr("LATIN CAPITAL LETTER A"), "A")
+    AssertEqual(LookupChr("AMPERSAND"), "&")
+    AssertEqual(LookupChr("COMBINING TILDE"), Chr(771))
+    AssertEqual(LookupChr("CJK UNIFIED IDEOGRAPH-61A8"), Chr(25000))
+    AssertEqual(LookupChr("HANGUL SYLLABLE MWESS"), Chr(48000))
+    AssertEqual(LookupChr("REPLACEMENT CHARACTER"), Chr(65533))
+  end
+  
+  def testLookupChrErrors()
+    AssertRaises(ValueError, LookupChr, ["LATIN FOO"])
+    AssertRaises(ValueError, LookupChr, ["CJK UNIFIED IDEOGRAPH-"])
+    AssertRaises(ValueError, LookupChr, ["CJK UNIFIED IDEOGRAPH-61A"])
+    AssertRaises(ValueError, LookupChr, ["CJK UNIFIED IDEOGRAPH-1234"])
+    AssertRaises(ValueError, LookupChr, ["CJK UNIFIED IDEOGRAPH-61A8x"])
+    AssertRaises(ValueError, LookupChr, ["HANGUL SYLLABLE "])
+    AssertRaises(ValueError, LookupChr, ["HANGUL SYLLABLE FOO"])
+    AssertRaises(ValueError, LookupChr, ["HANGUL SYLLABLE MWESSx"])
+  end
+end

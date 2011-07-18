@@ -1,0 +1,177 @@
+@head
+@title Defining classes
+
+<p>C modules may define classes and their members using a variety of macros
+described in this section and the following sections.
+<p>All named members are public by default. Section
+@href{Private definitions} describes how to define private members.
+
+@h2 Basics
+
+<p>A class definition starts with the macro A_CLASS (or one of its variants),
+and ends with A_END_CLASS(). The structure of the class, including its members
+and inheritance relationships, is defined within these macros using the macros
+described later in this section and in the following sections.
+
+@fun A_CLASS(name)
+@desc Define a C class with the given name. The definition of the class follows
+      this macro, and is terminated with the A_END_CLASS macro. Class
+      definitions cannot be nested.
+@end
+
+@fun A_CLASS_PRIV(name, numPrivate)
+@desc This behaves like the A_CLASS macro described above, but also define
+      numPrivate unnamed slots for private variables. These slots can be
+      accessed only by using @ref{AMemberDirect} and @ref{ASetMemberDirect}.
+@end
+
+@fun A_END_CLASS()
+@desc Mark the end of a class definition.
+@end
+
+@h2 Implementing methods
+
+<p>The type signature of the C function that implements a method in a class
+is the same as in a C function that implements and ordinary function, i.e.
+AValue &lt;func&gt;(AThread *, AValue *). The structure of the frame is
+also similar, but there is an additional self argument at index 0, and
+all other values in the frame are displaced by one item:
+
+@example
+  frame[0]: self
+  frame[1]: Arg 1 (first argument, may be ADefault if optional and not provided by the caller)
+  frame[2]: Arg 2 (second argument, may be ADefault if optional and not provided by the caller)
+  ...
+  frame[n]: Arg n (last argument, may be ADefault if optional not provided by the caller)
+  frame[n+1]: VarArgs (optionally an Array containing the rest of the arguments)
+  frame[n+2]: Temp 1 (first temporary location)
+  ...
+  frame[n+m+1]: Temp m (last temporary location)
+@end
+
+<p>There are more details available in section
+@ref{Implementing C functions} that deals with global functions, but remember
+that methods have the additional implicit self argument.
+
+@h2 Defining methods
+
+<p>Method definition macros are mostly identical to function definition macros,
+but the frames of the C functions will have the self argument as an additional
+item at the start of the frame.
+
+@fun A_METHOD(name, numArgs, numTemps, cFunc)
+@desc Define a method with a fixed number of arguments. This macro is used
+      like @ref{A_DEF}, but an additional self argument is stored at the
+      start of the frame as described above. The self argument is not included
+      in the number of arguments, i.e. numArgs only refers to visible
+      arguments.
+@end
+
+@fun A_METHOD_OPT(name, minArgs, maxArgs, numTemps, cFunc)
+@desc Define a method with optional arguments. This is similar to
+      @ref{A_DEF_OPT}, except for the implicit self argument.
+@end
+
+@fun A_METHOD_VARARG(name, minArgs, maxOrdinary, numTemps, cFunc)
+@desc Define a method with an arbitrary number of arguments. This is similar to
+      @ref{A_DEF_VARARG}, except for the implicit self argument.
+@end
+
+<h3>The create method</h3>
+
+<p>You can define a create method that is called during object construction
+in a C class, but unlike a create method implemented in Alore (that does not
+return a value), a C create method must always return self, i.e. frame[0],
+unless an uncaught exception was raised.
+
+<p>The create method must be used to initialize all member variables and
+constants defined in a C class since member initialization expressions cannot
+be defined using the C API. Inherited member initializers from an Alore
+superclass are executed normally, though.
+
+@h2 Defining member variables
+
+<p>The macros A_VAR and A_EMPTY_CONST can be used within classes to
+define member variables and constants. Each member variable and constant is
+associated with a single (member variable) slot.
+
+@fun A_VAR(name)
+@desc Define a member variable with the specified name. The member variable
+      will be initialized to nil during object construction, before calling
+      create.
+@end
+
+@fun A_EMPTY_CONST(name)
+@desc Define a constant initialized to nil with the specified name. You should
+      initialize the constant in the create method using
+      @ref{ASetMemberDirect}. You must not change the value of a member
+      constant after leaving the constructor.
+@end
+
+@h2 Defining accessors
+
+<p>Accessors (getters and setters) can be defined for C classes using the
+A_GETTER and A_SETTER macros. The ordinary rules for defining accessors apply,
+including these:
+
+<ul>
+  <li>You cannot define an accessor for a member that has been defined as a
+    member variable or constant in the same class.
+  <li>You cannot define a setter unless there is also a getter defined for the
+     same member.
+</ul>
+
+@fun A_GETTER(name, numTemps, cFunc)
+@desc Define a getter method for the member with the specified name.
+      The C function should be
+      implemented like a method that receives no arguments except self.
+@end
+
+@fun A_SETTER(name, numTemps, cFunc)
+@desc Define a setter method for the member with the specified name.
+      The C function should be
+      implemented like a method that receives a single argument (the assigned
+      value) in addition to the self argument. A setter must always return
+      ANil.
+@end
+
+@h2 Inheritance
+
+<p>C classes inherit from @ref{std::Object} by default, but they can
+optionally inherit from another class. The superclass can
+be any non-primitive type, implemented in C or Alore. Subclasses implemented in
+C can override methods and accessors. They can also access the original
+definitions in the superclass by using C API functions @ref{ASuperMember} and
+@ref{ASetSuperMember}.
+
+@fun A_INHERIT(superName)
+@desc Make the current class inherit from another class. The name should the
+      fully qualified name of the superclass as a string. Use the
+      form ::A if the
+      superclass is defined in the current module. If the superclass
+      is defined in another module than the current module or @ref{std}, that
+      module must also be imported in the current module using @ref{A_IMPORT}.
+      You cannot define more than a single superclass for a class using
+      A_INHERIT.
+
+      @note The A_INHERIT macro, if present, must always be the first A_ macro
+            after the A_CLASS* macro that begins the class definition.
+      @end
+@end
+
+@h2 Accessing member variable slots directly
+
+<p>The most efficient way of accessing member variables or constants is by 
+accessing the member variable slots directly using a <i>slot index</i>.
+The first member variable or constant receives the slot index 0, the next 1,
+etc. Member variables defined in the superclasses always receive the smallest 
+slot indices. Direct access can typically used to access only private members 
+variables, since any member which might have an overridden accessor has to
+be accessed using other means.
+
+<p>Member slots can also be allocated implicitly for internal purposes. The
+macro @ref{A_EXTERNAL_DATA} allocates an additional slot just like an
+@ref{A_VAR} macro. If the @ref{#f} method is defined in a class, a new slot
+is allocated, and the slot 0 is reserved for internal use.
+These slots are used internally by the Alore implementation
+and your code must never access them.

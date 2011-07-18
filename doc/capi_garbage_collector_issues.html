@@ -1,0 +1,203 @@
+@head
+@title Coexisting with the garbage collector
+
+<p>The Alore runtime includes a garbage collector that frees unused memory
+automatically by periodically scanning the heap to find unreferenced memory
+blocks. It can also perform <i>copying garbage collection</i> which involves
+moving blocks to different memory locations behind the scenes.
+
+<p>A garbage collection cycle may be triggered by any memory allocation
+operation. Due to the presence of the garbage collector, some operations that
+normally would never require memory allocation, for example setting an array
+item or a member variable, may actually cause memory allocation. This is due
+to the <i>write barrier</i> employed by the garbage collector that requires
+most heap modification operations to be checked and potentially recorded.
+
+<p>Modules implemented using the Alore C API must cooperate with the garbage
+collector, or otherwise heap corruption may occur. In particular, the following
+issues must be addressed:
+
+<ul>
+  <li>All object references must be visible to the garbage collector. Most
+    notably, C local variables are not visible, and therefore their use must
+    be controlled. Local values stored in the function frame may be used
+    instead.
+  <li>Memory blocks may be moved as a side effect of any memory allocation
+    operation. Therefore keeping C pointers to
+    blocks in the garbage collected heap is, in general, not possible.
+</ul>
+
+<p>Code using the Alore C API typically does not need to worry
+about freeing memory
+when it is no longer being used. However, it is possible to also use normal C
+memory management functions such as malloc and free, but they do not use the
+garbage collected heap and thus are not automatically freed by the garbage
+collector. Although using C memory management functions is generally
+discouraged, wrapping existing C code typically requires dealing with data
+allocated in the C heap.
+
+<p>The rest of this section deals with these issues in more detail.
+
+@h2 Operations that trigger garbage collection
+
+<p>We previously mentioned that any operations that may cause memory to be
+allocated may trigger a garbage collection operations that, in turn, may
+free any unreferenced objects and move others around the heap. Here we define
+in detail which operations may and which may not allocate memory.
+
+<p>These conditions may trigger a garbage collection cycle:
+
+<ul>
+  <li>Calling any Alore C API function that takes AThread * argument, unless
+    the description of the function mentions otherwise.
+  <li>Code implemented in Alore may cause garbage collection at any time.
+  <li>Garbage collection may also be initiated asynchronously at any time after
+    calling @ref{AAllowBlocking} and before calling @ref{AEndBlocking} in the
+    same thread.
+</ul>
+
+<p>Garbage collection may <b>not</b> be performed at any other point in program
+execution, for example at these points:
+
+<ol>
+  <li>Ordinary C code statements such as assignment expressions, if statements
+    and return statements when they do not involve calls to Alore C API
+    functions.
+  <li>Calls to ordinary C functions such as strlen or malloc.
+  <li>Calls to Alore C API functions that do not take an AThread *
+    argument, such as AIsInt.
+  <li>Certain calls to Alore C API functions whose description mentions that
+    no memory is allocated if certain conditions hold.
+  <li>When evaluating the arguments to an Alore C API function, if the arguments
+    themselves do not involve any operations that may trigger garbage
+    collection.
+  <li>Assigning the value returned by a Alore C API function.
+</ol>
+
+@h2 Keeping values visible to the garbage collector
+
+<p>The main rule to follow in order to properly cooperate with the garbage
+collector is this: All references to Alore objects must be visible to the
+garbage collector during any operation that may trigger garbage collection.
+
+<p>These values are visible to the garbage collector:
+
+<ul>
+  <li>values stored in the function frame, for example function arguments
+  <li>values stored in other Alore objects (e.g. array items and member
+    variables) if the other Alore object is visible
+  <li>values stored in Alore-level global values, e.g. Alore constants or
+    global variables (defined in Alore code or using macros such as A_VAR)
+  <li>values stored in temporary locations allocated using AAllocTemp or
+    AAllocTemps (these functions are described later in section
+    @href{Low-level operations}).
+</ul>
+
+<p>Since the Alore garbage collector is <i>precise</i>, it cannot see
+references stored in arbitrary locations in the C stack, C global variables or
+C heap. So these references are not visible to the garbage collector, for
+example:
+
+<ul>
+  <li>C global variables
+  <li>C local variables
+  <li>C function arguments
+  <li>C struct members
+  <li>temporary values generated during C expression evaluation
+  <li>references in blocks allocated using malloc/realloc
+  <li>AValue items stored as binary data, e.g. in blocks allocated using
+    AAllocMem
+</ul>
+
+<p>Is it often necessary to have <i>hidden references</i>, i.e. references
+that are not visible to the garbage collector, but this should be temporary and
+you must remember that <i>all</i> hidden references become invalid after any
+operation that may cause a garbage collection.
+
+<p>Consider this code, for example:
+
+@example
+  frame[3] = AMakePair(t, frame[4], frame[5]);
+@end
+
+<p>The values of expressions frame[4] and frame[5] are hidden, since they are
+temporarily values, but this is valid since they are not used after the call to
+AMakePair, which makes them invalid. Also, the return value may be stored in
+a temporary location before
+assigning to frame[3], but in this case, no garbage collection may be triggered
+since the call to AMakePair has already finished.
+
+<p>The code below is invalid, however, since the order of evaluation of
+function arguments in unspecified in C, and thus the value of expression
+frame[4] may be made invalid by the call to AMakeInt:
+
+@example
+  frame[3] = AMakePair(t, AMakeInt(t, 1), frame[4]);  <span class="error">-- Error!</span>
+@end
+
+<p>Here is another invalid example. The value of expression frame[1] or
+frame[0] may become invalid by one of the ALen calls:
+
+@example
+  frame[2] = ALen(t, frame[0]) + ALen(t, frame[1]);  <span class="error">-- Error!</span>
+@end
+
+<p>If you are unsure about the expression evaluation order rules of C, it
+may be safest to only perform at most a single C API function call in a single
+C expression, making the order of operations explicit.
+
+@h2 Dealing with malloc and similar functions
+
+<p>Often C modules will access data structures or resources that must be
+manually allocated using C functions. A typical example is memory blocks
+allocated using malloc that must be freed with free. The Alore garbage
+collector cannot automatically free these kinds of resources, but there are
+facilities available for instructing it how to clean up C resources.
+
+<p>If a resource is needed only briefly during a single function call, it
+might be easiest to simply free the resource before leaving the function.
+This might be complicated by the presence of exceptions, as detailed in
+section @href{Direct exceptions and freeing resources}.
+
+<p>If a resource needs to remain allocated across several function calls, it is
+often easiest to define a class that wraps the resource and manages the freeing
+of the resource. This was detailed in section
+@href{Storing binary data in instances}.
+
+<p>Finally, you could define a C-level global variable that contains a
+reference to the data structure. Separate functions for allocating, accessing
+and freeing the resource can be provided. This might be the easiest approach to
+implement, but users will have to manually free the allocated resources.
+
+@h2 Performing long-running operations
+
+<p>Garbage collection in Alore happens synchronously in the presence
+of threads: each thread must notify the thread executing the garbage collection
+cycle that they are ready for garbage collection. This is ordinarily performed
+transparently by the Alore runtime.
+
+<p>However, long-running operations that do not call any API functions that
+allocate memory may prevent other threads from performing garbage collection,
+causing them to stall. In these cases, the functions @ref{AAllowBlocking} and
+@ref{AEndBlocking} must be called to enable garbage collection.
+
+<p>In particular, if you call a C function not part of Alore C API that
+may take more than, say, 10 milliseconds to execute, you should surround the
+call with calls to the previously mentioned functions. If you perform
+calculations that do not involve a single long-running function call but
+that perform lengthy calculations in a loop without allocating any memory,
+for example, you should call @ref{AAllowBlocking} immediately followed by
+a call to @ref{AEndBlocking} at least once every 10 milliseconds or so. A
+simple example:
+
+@example
+  int i;
+  for (i = 0; i < 1000000000; i++) {
+      /* do something */
+      if (i % 1000000 == 0) {
+          /* Call these functions periodically. */
+          AAllowBlocking();
+          AEndBlocking();
+      }      
+  }
+@end

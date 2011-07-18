@@ -1,0 +1,35 @@
+module libs
+
+import unittest
+import email
+
+
+private const BR = CR + LF
+
+
+class EmailSuite is Suite
+  def testEmptyMessage()
+    var m = Message()
+    AssertEqual(m.keys(), [])
+    AssertEqual(m.body, nil)
+  end
+  
+  def testSimpleMessage()
+    var m = Message("To: foo@bar.com" + BR + BR + "the body")
+    AssertEqual(m.keys(), ["To"])
+    AssertEqual(m["To"], "foo@bar.com")
+    AssertEqual(m.body, "the body")
+  end
+  
+  def testMultipleHeaders()
+    var m = Message("To: foo@bar.com" + BR + "From:a@b.c" + BR + BR + 
+                    "the body" + BR + BR + "more...")
+    AssertEqual(m.keys(), ["From", "To"])
+    AssertEqual(m["to"], "foo@bar.com")
+    AssertEqual(m["from"], "a@b.c")
+    AssertEqual(m.body, "the body" + BR + BR + "more...")
+  end
+  
+  -- FIX line continuation
+  -- FIX modifying headers
+end

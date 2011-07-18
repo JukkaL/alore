@@ -1,0 +1,31 @@
+@head
+@module std
+@title Class <tt>std::Constant</tt>
+@index Constant
+
+<p>Instances of the <tt>Constant</tt> type are symbolic constants. They can
+only be constructed by defining global constants without initialization
+expressions.
+
+<p>This example defines two <tt>Constant</tt> objects:
+
+@example
+  const Blue, Red
+  
+  Print(Blue)     -- Print "Blue"
+@end
+
+@class Constant
+@desc The <tt>Constant</tt> type. This type object cannot be used to create
+  instances of the type (see above).
+@end
+
+<h2>Operations</h2>
+
+@op Str(constant)
+@desc Return a string containing the fully qualified name of the constant.
+@end
+
+@op constant == x
+@desc A constant object is equal only to itself.
+@end

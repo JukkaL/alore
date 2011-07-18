@@ -1,0 +1,398 @@
+# DO NOT EDIT -- generated automatically by "make depend"
+src/lex.o: src/lex.c src/lex.h src/symtable.h src/common.h src/aconfig.h \
+ config.h src/token.h src/value.h src/runtime.h src/thread.h \
+ src/operator.h src/globals.h src/strtonum.h src/compile.h src/mem.h \
+ src/gc.h src/heapalloc.h src/debug_params.h src/internal.h src/str.h
+src/strtonum.o: src/strtonum.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/int.h src/float.h \
+ src/internal.h
+src/symtable.o: src/symtable.c src/symtable.h src/common.h src/aconfig.h \
+ config.h src/memberid.h src/class.h src/value.h src/thread.h src/parse.h \
+ src/compile.h src/lex.h src/token.h src/operator.h src/cutil.h \
+ src/globals.h src/mem.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/internal.h
+src/common.o: src/common.c src/common.h src/aconfig.h config.h src/runtime.h \
+ src/value.h src/thread.h src/operator.h src/globals.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/internal.h
+src/compile.o: src/compile.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/compile.h src/lex.h src/symtable.h src/token.h \
+ src/runtime.h src/operator.h src/memberid.h src/error.h src/parse.h \
+ src/cutil.h src/output.h src/opcode.h src/cmodules.h src/files.h \
+ src/dynaload.h src/class.h src/mem.h src/gc.h src/heapalloc.h \
+ src/debug_params.h src/internal.h src/debug_runtime.h src/std_module.h \
+ src/util.h
+src/error.o: src/error.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/error.h src/lex.h src/symtable.h src/token.h src/compile.h \
+ src/parse.h src/operator.h src/cutil.h src/ident.h src/class.h \
+ src/util.h src/memberid.h src/std_module.h
+src/file.o: src/file.c src/compile.h src/common.h src/aconfig.h config.h \
+ src/lex.h src/symtable.h src/token.h src/value.h src/error.h src/parse.h \
+ src/operator.h src/cutil.h src/globals.h src/thread.h src/files.h \
+ src/gc.h src/heapalloc.h src/debug_params.h src/internal.h
+src/parse.o: src/parse.c src/parse.h src/common.h src/aconfig.h config.h \
+ src/compile.h src/lex.h src/symtable.h src/token.h src/value.h \
+ src/operator.h src/cutil.h src/globals.h src/thread.h src/class.h \
+ src/memberid.h src/error.h src/ident.h src/output.h src/opcode.h \
+ src/gc_internal.h src/mem.h src/heap.h src/debug_runtime.h \
+ src/debug_params.h src/internal.h src/gc_float.h src/dynaload.h src/gc.h \
+ src/heapalloc.h
+src/scan.o: src/scan.c src/compile.h src/common.h src/aconfig.h config.h \
+ src/lex.h src/symtable.h src/token.h src/value.h src/error.h src/parse.h \
+ src/operator.h src/cutil.h src/globals.h src/thread.h src/class.h \
+ src/ident.h src/memberid.h src/internal.h src/debug_runtime.h \
+ src/debug_params.h src/std_module.h src/output.h src/opcode.h src/gc.h \
+ src/heapalloc.h
+src/list.o: src/list.c src/common.h src/aconfig.h config.h src/cutil.h \
+ src/error.h src/lex.h src/symtable.h src/token.h src/value.h \
+ src/compile.h src/parse.h src/operator.h src/globals.h src/thread.h
+src/cmem.o: src/cmem.c src/cutil.h src/symtable.h src/common.h src/aconfig.h \
+ config.h src/gc.h src/thread.h src/value.h src/heapalloc.h \
+ src/debug_params.h src/internal.h
+src/ident.o: src/ident.c src/ident.h src/symtable.h src/common.h \
+ src/aconfig.h config.h src/token.h src/error.h src/lex.h src/value.h \
+ src/compile.h src/parse.h src/operator.h src/cutil.h src/globals.h \
+ src/thread.h src/internal.h
+src/display.o: src/display.c src/aconfig.h config.h src/error.h src/lex.h \
+ src/symtable.h src/common.h src/token.h src/value.h src/compile.h \
+ src/parse.h src/operator.h src/cutil.h src/globals.h src/thread.h
+src/output.o: src/output.c src/output.h src/opcode.h src/common.h \
+ src/aconfig.h config.h src/value.h src/parse.h src/compile.h src/lex.h \
+ src/symtable.h src/token.h src/operator.h src/cutil.h src/globals.h \
+ src/thread.h src/error.h src/mem.h src/gc.h src/heapalloc.h \
+ src/debug_params.h src/internal.h
+src/parseexpr.o: src/parseexpr.c src/parse.h src/common.h src/aconfig.h \
+ config.h src/compile.h src/lex.h src/symtable.h src/token.h src/value.h \
+ src/operator.h src/cutil.h src/globals.h src/thread.h src/class.h \
+ src/error.h src/output.h src/opcode.h src/memberid.h src/internal.h \
+ src/std_module.h
+src/opcodesize.o: src/opcodesize.c src/opcode.h src/common.h src/aconfig.h \
+ config.h src/internal.h
+src/class.o: src/class.c src/class.h src/symtable.h src/common.h \
+ src/aconfig.h config.h src/value.h src/thread.h src/memberid.h \
+ src/error.h src/lex.h src/token.h src/compile.h src/parse.h \
+ src/operator.h src/cutil.h src/globals.h src/ident.h src/mem.h \
+ src/internal.h src/util.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/debug_runtime.h
+src/globals.o: src/globals.c src/runtime.h src/common.h src/aconfig.h \
+ config.h src/value.h src/thread.h src/operator.h src/globals.h \
+ src/compile.h src/lex.h src/symtable.h src/token.h src/mem.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/debug_runtime.h
+src/module.o: src/module.c src/module.h src/value.h src/common.h \
+ src/aconfig.h config.h src/parse.h src/compile.h src/lex.h \
+ src/symtable.h src/token.h src/operator.h src/cutil.h src/globals.h \
+ src/thread.h src/class.h src/ident.h src/memberid.h src/mem.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/dynaload.h src/internal.h \
+ src/std_module.h src/debug_runtime.h src/error.h
+src/dynaload.o: src/dynaload.c src/dynaload.h src/value.h src/common.h \
+ src/aconfig.h config.h src/mem.h src/gc.h src/thread.h src/heapalloc.h \
+ src/debug_params.h src/symtable.h src/compile.h src/lex.h src/token.h \
+ src/parse.h src/operator.h src/cutil.h src/globals.h src/ident.h \
+ src/internal.h
+src/files.o: src/files.c src/files.h src/common.h src/aconfig.h config.h \
+ src/symtable.h src/mem.h src/value.h src/gc.h src/thread.h \
+ src/heapalloc.h src/debug_params.h src/compile.h src/lex.h src/token.h \
+ src/ident.h src/internal.h
+src/strtables.o: src/strtables.c src/re.h src/value.h src/common.h \
+ src/aconfig.h config.h src/thread.h src/re_internal.h src/str_internal.h \
+ src/internal.h
+src/dynload.o: src/dynload.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/compile.h src/lex.h src/symtable.h src/token.h
+src/interp.o: src/interp.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/runtime.h src/operator.h src/interp.h src/debug_params.h \
+ src/gccinterp.h src/class.h src/symtable.h src/opcode.h src/memberid.h \
+ src/mem.h src/array.h src/tuple.h src/int.h src/float.h src/str.h \
+ src/internal.h src/debug_runtime.h src/gc.h src/heapalloc.h
+src/runtime.o: src/runtime.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/class.h src/symtable.h \
+ src/memberid.h src/gc.h src/heapalloc.h src/debug_params.h src/int.h \
+ src/float.h src/str.h src/mem.h src/array.h src/std_module.h src/token.h
+src/call.o: src/call.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/runtime.h src/operator.h src/class.h src/symtable.h src/memberid.h \
+ src/array.h src/mem.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/internal.h src/debug_runtime.h
+src/keyint.o: src/keyint.c src/thread_athread.h src/common.h src/aconfig.h \
+ config.h src/athread.h src/internal.h
+src/aloreapi.o: src/aloreapi.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/class.h src/symtable.h \
+ src/memberid.h src/int.h src/float.h src/str.h src/mem.h src/array.h \
+ src/parse.h src/compile.h src/lex.h src/token.h src/cutil.h \
+ src/std_module.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/internal.h src/thread_athread.h src/athread.h
+src/memapi.o: src/memapi.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/std_module.h src/gc.h src/heapalloc.h src/debug_params.h src/mem.h \
+ src/internal.h
+src/thread.o: src/thread.c src/thread.h src/aconfig.h config.h src/value.h \
+ src/common.h src/alore.h src/module.h src/globals.h src/errmsg.h \
+ src/runtime.h src/operator.h src/thread_athread.h src/athread.h \
+ src/heap.h src/mem.h src/debug_runtime.h src/debug_params.h src/gc.h \
+ src/heapalloc.h src/internal.h src/opcode.h
+src/exception.o: src/exception.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/opcode.h src/runtime.h src/operator.h src/class.h \
+ src/symtable.h src/array.h src/str.h src/mem.h src/gc.h src/heapalloc.h \
+ src/debug_params.h src/error.h src/lex.h src/token.h src/compile.h \
+ src/parse.h src/cutil.h src/files.h src/std_module.h src/internal.h \
+ src/util.h src/memberid.h
+src/exit.o: src/exit.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/runtime.h src/operator.h src/gc.h src/heapalloc.h src/debug_params.h
+src/util.o: src/util.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h src/util.h \
+ src/str.h src/mem.h
+src/errmsg.o: src/errmsg.c src/errmsg.h src/aconfig.h config.h src/internal.h
+src/win32_exception.o: src/win32_exception.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/runtime.h src/operator.h
+src/gc.o: src/gc.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/runtime.h src/operator.h src/class.h src/symtable.h src/memberid.h \
+ src/gc.h src/heapalloc.h src/debug_params.h src/thread_athread.h \
+ src/athread.h src/internal.h src/gc_internal.h src/mem.h src/heap.h \
+ src/debug_runtime.h src/gc_float.h src/dynaload.h src/std_module.h
+src/heap.o: src/heap.c src/runtime.h src/common.h src/aconfig.h config.h \
+ src/value.h src/thread.h src/operator.h src/globals.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/gc_internal.h src/mem.h \
+ src/heap.h src/debug_runtime.h src/internal.h src/gc_float.h
+src/heapalloc.o: src/heapalloc.c src/aconfig.h config.h src/runtime.h \
+ src/common.h src/value.h src/thread.h src/operator.h src/globals.h \
+ src/heap.h src/mem.h src/debug_runtime.h src/debug_params.h \
+ src/internal.h src/gc_internal.h src/gc_float.h
+src/debug_memory.o: src/debug_memory.c src/aconfig.h config.h src/runtime.h \
+ src/common.h src/value.h src/thread.h src/operator.h src/globals.h \
+ src/debug_runtime.h src/debug_params.h src/heap.h src/mem.h \
+ src/internal.h src/gc.h src/heapalloc.h src/gc_internal.h src/gc_float.h \
+ src/util.h src/symtable.h src/thread_athread.h src/athread.h \
+ src/opcode.h src/class.h src/memberid.h
+src/debug_runtime.o: src/debug_runtime.c src/aconfig.h config.h src/alore.h \
+ src/value.h src/common.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/debug_runtime.h \
+ src/debug_params.h src/internal.h src/array.h src/token.h src/util.h \
+ src/heap.h src/mem.h src/str.h src/gc.h src/heapalloc.h \
+ src/gc_internal.h src/gc_float.h
+src/displaycode.o: src/displaycode.c src/common.h src/aconfig.h config.h \
+ src/debug_params.h
+src/std_module.o: src/std_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/memberid.h \
+ src/std_module.h src/io_module.h src/errno_module.h src/errno_info.h \
+ src/mem.h src/array.h src/tuple.h src/str.h src/int.h src/float.h \
+ src/internal.h src/gc.h src/heapalloc.h src/debug_params.h src/class.h \
+ src/symtable.h src/util.h src/wrappers.h
+src/std_float.o: src/std_float.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/memberid.h src/float.h src/int.h src/mem.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/internal.h src/str.h src/util.h
+src/std_str.o: src/std_str.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/memberid.h src/mem.h \
+ src/str.h src/int.h src/str_internal.h src/internal.h \
+ src/debug_runtime.h src/debug_params.h src/wrappers.h src/gc.h \
+ src/heapalloc.h src/util.h src/symtable.h src/std_module.h \
+ src/encodings_module.h
+src/std_map.o: src/std_map.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/std_module.h src/array.h src/operator.h src/tuple.h \
+ src/int.h src/str.h src/mem.h src/gc.h src/heapalloc.h \
+ src/debug_params.h src/internal.h
+src/std_sort.o: src/std_sort.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/std_module.h
+src/std_str_format.o: src/std_str_format.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/std_module.h src/str.h src/mem.h \
+ src/internal.h
+src/std_array.o: src/std_array.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/array.h src/operator.h src/tuple.h src/int.h src/str.h \
+ src/mem.h src/std_module.h src/runtime.h src/memberid.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/internal.h
+src/std_type.o: src/std_type.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/std_module.h src/wrappers.h src/runtime.h \
+ src/operator.h
+src/std_int.o: src/std_int.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/memberid.h src/int.h \
+ src/str.h src/mem.h src/internal.h
+src/std_int_long.o: src/std_int_long.c src/int.h src/thread.h src/aconfig.h \
+ config.h src/value.h src/common.h src/gc.h src/heapalloc.h \
+ src/debug_params.h src/globals.h src/mem.h src/float.h src/internal.h \
+ src/alore.h src/module.h src/errmsg.h src/runtime.h src/operator.h
+src/std_hashvalue.o: src/std_hashvalue.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/thread_athread.h src/athread.h src/gc.h src/heapalloc.h \
+ src/debug_params.h src/gc_internal.h src/mem.h src/heap.h \
+ src/debug_runtime.h src/internal.h src/gc_float.h
+src/std_wrappers.o: src/std_wrappers.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/wrappers.h src/memberid.h \
+ src/std_module.h src/int.h src/str.h src/mem.h src/float.h
+src/io_module.o: src/io_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/memberid.h src/str.h src/mem.h src/array.h \
+ src/operator.h src/io_module.h src/internal.h src/thread_athread.h \
+ src/athread.h src/gc.h src/heapalloc.h src/debug_params.h
+src/io_posix.o: src/io_posix.c src/aconfig.h config.h src/alore.h src/value.h \
+ src/common.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/runtime.h src/operator.h src/memberid.h src/io_module.h \
+ src/encodings_module.h src/str.h src/mem.h src/int.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/thread_athread.h src/athread.h \
+ src/internal.h
+src/io_text.o: src/io_text.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/io_module.h src/encodings_module.h src/internal.h
+src/encodings_module.o: src/encodings_module.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/encodings_module.h src/str.h src/mem.h \
+ src/gc.h src/heapalloc.h src/debug_params.h
+src/encodings_tables.o: src/encodings_tables.c src/encodings_module.h
+src/errno_module.o: src/errno_module.c src/aconfig.h config.h src/alore.h \
+ src/value.h src/common.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/symtable.h src/errno_module.h src/errno_info.h \
+ src/util.h
+src/errno_info.o: src/errno_info.c src/aconfig.h config.h src/errno_module.h \
+ src/alore.h src/value.h src/common.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/errno_info.h
+src/loader_module.o: src/loader_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/compile.h src/lex.h src/symtable.h src/token.h \
+ src/mem.h src/gc.h src/heapalloc.h src/debug_params.h src/str.h \
+ src/array.h src/operator.h src/error.h src/parse.h src/cutil.h \
+ src/std_module.h src/dynaload.h src/internal.h src/runtime.h \
+ src/debug_runtime.h
+src/thread_module.o: src/thread_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/thread_module.h src/thread_athread.h src/athread.h
+src/thread_athread.o: src/thread_athread.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/runtime.h src/operator.h \
+ src/thread_module.h src/thread_athread.h src/athread.h src/mem.h \
+ src/gc.h src/heapalloc.h src/debug_params.h src/internal.h \
+ src/debug_runtime.h
+src/athread_pthread.o: src/athread_pthread.c src/athread.h src/aconfig.h \
+ config.h
+src/athread_win32.o: src/athread_win32.c src/athread.h src/aconfig.h config.h
+src/reflect_module.o: src/reflect_module.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/runtime.h src/operator.h src/memberid.h \
+ src/class.h src/symtable.h src/std_module.h src/str.h src/mem.h \
+ src/internal.h src/gc.h src/heapalloc.h src/debug_params.h
+src/re_module.o: src/re_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/re.h src/debug_params.h
+src/re_comp.o: src/re_comp.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/str.h src/mem.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/re_internal.h src/re.h \
+ src/internal.h src/str_internal.h src/gc_internal.h src/heap.h \
+ src/debug_runtime.h src/gc_float.h
+src/re_match.o: src/re_match.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/re_internal.h src/re.h \
+ src/str_internal.h src/internal.h src/str.h src/mem.h src/gc.h \
+ src/heapalloc.h src/debug_params.h src/re_match_inc.c
+src/re_disp.o: src/re_disp.c src/re.h src/value.h src/common.h src/aconfig.h \
+ config.h src/thread.h src/re_internal.h src/internal.h \
+ src/debug_params.h
+src/string_module.o: src/string_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/str.h src/mem.h src/str_internal.h src/int.h src/re.h
+src/os_module.o: src/os_module.c src/aconfig.h config.h src/alore.h \
+ src/value.h src/common.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/util.h src/os_module.h src/internal.h
+src/os_posix.o: src/os_posix.c src/aconfig.h config.h src/alore.h src/value.h \
+ src/common.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/os_module.h src/util.h src/io_module.h src/str.h src/mem.h \
+ src/array.h src/operator.h src/internal.h
+src/os_win32.o: src/os_win32.c src/aconfig.h config.h src/str_internal.h \
+ src/value.h src/common.h
+src/set_module.o: src/set_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/std_module.h src/internal.h src/array.h src/operator.h \
+ src/str.h src/mem.h src/int.h src/gc.h src/heapalloc.h \
+ src/debug_params.h
+src/random_module.o: src/random_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h
+src/math_module.o: src/math_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/int.h
+src/time_module.o: src/time_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h
+src/bitop_module.o: src/bitop_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/int.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/mem.h src/internal.h src/runtime.h src/operator.h
+src/sys_module.o: src/sys_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/compile.h src/lex.h src/symtable.h src/token.h
+src/pack_module.o: src/pack_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h
+src/testc_module.o: src/testc_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/class.h src/symtable.h \
+ src/memberid.h src/mem.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/array.h src/internal.h src/str.h src/error.h src/lex.h src/token.h \
+ src/compile.h src/parse.h src/cutil.h src/util.h src/debug_runtime.h \
+ src/thread_athread.h src/athread.h src/ident.h src/dynaload.h \
+ src/version.h src/io_module.h
+src/unicode_module.o: src/unicode_module.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/unicode_module.h src/internal.h
+src/unicode_names.o: src/unicode_names.c src/unicode_module.h
+src/socket_module.o: src/socket_module.c src/aconfig.h config.h src/alore.h \
+ src/value.h src/common.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/thread_athread.h src/athread.h src/io_module.h \
+ src/runtime.h src/operator.h
+src/serversocket_module.o: src/serversocket_module.c src/aconfig.h config.h \
+ src/alore.h src/value.h src/common.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/thread_athread.h src/athread.h \
+ src/runtime.h src/operator.h src/io_module.h
+src/base64_module.o: src/base64_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h
+src/main.o: src/main.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/compile.h src/lex.h src/symtable.h src/token.h src/debug_runtime.h \
+ src/debug_params.h src/version.h
+src/cmodules.o: src/cmodules.c src/cmodules.h src/module.h src/value.h \
+ src/common.h src/aconfig.h config.h
+src/version.o: src/version.c src/version.h src/aconfig.h config.h build.h
+src/stub.o: src/stub.c src/alore.h src/value.h src/common.h src/aconfig.h \
+ config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
+ src/compile.h src/lex.h src/symtable.h src/token.h src/internal.h \
+ src/debug_runtime.h src/debug_params.h
+src/testc_module_dyn.o: src/testc_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/runtime.h src/operator.h src/class.h src/symtable.h \
+ src/memberid.h src/mem.h src/gc.h src/heapalloc.h src/debug_params.h \
+ src/array.h src/internal.h src/str.h src/error.h src/lex.h src/token.h \
+ src/compile.h src/parse.h src/cutil.h src/util.h src/debug_runtime.h \
+ src/thread_athread.h src/athread.h src/ident.h src/dynaload.h \
+ src/version.h src/io_module.h
+src/unicode_module_dyn.o: src/unicode_module.c src/alore.h src/value.h \
+ src/common.h src/aconfig.h config.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/unicode_module.h src/internal.h
+src/unicode_names_dyn.o: src/unicode_names.c src/unicode_module.h
+src/socket_module_dyn.o: src/socket_module.c src/aconfig.h config.h src/alore.h \
+ src/value.h src/common.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h src/thread_athread.h src/athread.h src/io_module.h \
+ src/runtime.h src/operator.h
+src/serversocket_module_dyn.o: src/serversocket_module.c src/aconfig.h config.h \
+ src/alore.h src/value.h src/common.h src/module.h src/thread.h \
+ src/globals.h src/errmsg.h src/thread_athread.h src/athread.h \
+ src/runtime.h src/operator.h src/io_module.h
+src/base64_module_dyn.o: src/base64_module.c src/alore.h src/value.h src/common.h \
+ src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
+ src/errmsg.h

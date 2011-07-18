@@ -1,0 +1,47 @@
+@head
+@module io
+@title Class <tt>io::TextStream</tt>
+@index TextStream
+
+<p>The <tt>TextStream</tt> class represents an encoded text stream.
+
+@see The @ref{encodings} module defines several encoding classes.
+@end
+
+@class TextStream(stream[, encoding], ...)
+@desc Construct an encoded text stream. The stream argument should conform to
+      the @ref{Stream} interface. It is used for reading and writing the
+      encoded (narrow) text data, i.e. the <tt>TextStream</tt>
+      object <i>wraps</i> this
+      stream. This class is typically used for reading and
+      writing Unicode text using narrow (8-bit) streams.
+      If the encoding is not specified, the
+      encoding will be @ref{DefaultEncoding}.
+      <p>The optional arguments may include a buffering argument that defines
+      the buffering mode (@ref{Buffered}, @ref{LineBuffered} or
+      @ref{Unbuffered}) and either @ref{encodings::Strict} or
+      @ref{encodings::Unstrict}.
+      The default options are <tt>Buffered</tt> and <tt>Strict</tt>.
+      <p><tt>TextStream</tt> inherits from @ref{Stream}. All
+      input and output operations return and expect Unicode encoded strings.
+      If an attempt is made to write a character that cannot be represented by
+      the stream encoding, an @ref{encodings::EncodeError} exception will be
+      raised.
+      @note When using buffering, reporting of encoding errors may be
+            delayed. Errors are reported only when the buffer is actually
+            written to the wrapped stream.
+      @end
+@end
+
+@h2 <tt>TextStream</tt> methods
+
+<p><tt>TextStream</tt> does not define any additional methods over those
+inherited
+from @ref{Stream}. A single method has a significantly different behavior in
+<tt>TextStream</tt> than in <tt>Stream</tt>:
+
+@fun close()
+@desc Close the stream by flushing the output buffers and closing the wrapped
+      stream. Any stream operations other than <tt>close</tt> made to a closed
+      <tt>TextStream</tt> object will fail.
+@end

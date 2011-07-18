@@ -1,0 +1,38 @@
+@head
+@module bitop
+@title <tt>bitop</tt>: Bitwise operations
+
+<p>This module provides basic bitwise operations. All operations expect
+integer arguments, and all operations are performed assuming signed 2's
+complement binary representations of integers. In the 2's complement
+representation negative integers have an infinite number of leading 1 bits,
+i.e. -1 is "...11111111" in binary, -2 is "...1111110", and so on.
+
+@see @ref{std::Int}, @ref{string::IntToStr}
+@end
+     
+<h2>Functions</h2>
+
+@fun And(x, y)
+@desc Return the bitwise <i>and</i> of two integers.
+@end
+  
+@fun Or(x, y)
+@desc Return the bitwise <i>or</i> of two integers.
+@end
+  
+@fun Xor(x, y)
+@desc Return the bitwise <i>xor</i> of two integers.
+@end
+  
+@fun Neg(x)
+@desc Return the bitwise complement of an integer.
+@end
+  
+@fun Shl(x, y)
+@desc Return the integer <tt>x</tt> shifted left bitwise <tt>y</tt> positions.
+@end
+  
+@fun Shr(x, y)
+@desc Return the integer <tt>x</tt> shifted right bitwise <tt>y</tt> positions.
+@end

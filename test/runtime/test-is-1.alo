@@ -1,0 +1,417 @@
+module runtime
+
+import unittest
+import iohelpers
+import io
+
+
+private const obj = Object()
+private const int1 = 55
+private const int2 = 1000000000000
+private const array1 = []
+private const array2 = [1, 2, 3, 4]
+private const str1 = ""
+private const str2 = "foo"
+private const str3 = Chr(3000)
+private const str4 = NarrowSubStr()
+private const str5 = WideSubStr()
+private const type1 = Base
+private const type2 = Int
+private const type3 = Array
+private const float1 = 1.0
+private const range1 = 1 to 4
+private const range2 = 1 to -3
+private const function1 = Ord
+private const function2 = Func
+private const function3 = Base().foo
+--private const pair1 = 1 : 3
+private const constant1 = Append
+private const constant2
+private const base1 = Base()
+private const derived1 = Derived3()
+private const pair1 = ("a" : 2)
+
+
+class IsSuite is Suite
+  def testIsObject()
+    Assert(obj is Object)
+    Assert(int1 is Object)
+    Assert(int2 is Object)
+    Assert(array1 is Object)
+    Assert(array2 is Object)
+    Assert(str1 is Object)
+    Assert(str2 is Object)
+    Assert(str3 is Object)
+    Assert(str4 is Object)
+    Assert(str5 is Object)
+    Assert(type1 is Object)
+    Assert(type2 is Object)
+    Assert(type3 is Object)
+    Assert(float1 is Object)
+    Assert(range1 is Object)
+    Assert(range2 is Object)
+    Assert(function1 is Object)
+    Assert(function2 is Object)
+    Assert(function3 is Object)
+    Assert(constant1 is Object)
+    Assert(constant2 is Object)
+    Assert(base1 is Object)
+    Assert(derived1 is Object)
+    Assert(pair1 is Object)
+
+    Assert(not nil is Object)
+    VerifyNot(nil is Object)
+  end
+
+  def testIsInt()
+    Assert(not obj is Int)
+    Assert(int1 is Int)
+    Assert(int2 is Int)
+    Assert(not array1 is Int)
+    Assert(not array2 is Int)
+    Assert(not str1 is Int)
+    Assert(not str2 is Int)
+    Assert(not str3 is Int)
+    Assert(not str4 is Int)
+    Assert(not str5 is Int)
+    Assert(not type1 is Int)
+    Assert(not type2 is Int)
+    Assert(not float1 is Int)
+    Assert(not range1 is Int)
+    Assert(not range2 is Int)
+    Assert(not function1 is Int)
+    Assert(not function2 is Int)
+    Assert(not function3 is Int)
+    Assert(not constant1 is Int)
+    Assert(not constant2 is Int)
+    Assert(not base1 is Int)
+    Assert(not derived1 is Int)
+    Assert(not pair1 is Int)
+    Assert(not nil is Int)
+    
+    VerifyNot(array1 is Int)
+    VerifyNot(nil is Int)
+    VerifyNot(not int1 is Int)
+  end
+  
+  
+  def testIsArray()
+    Assert(not obj is Array)
+    Assert(not int1 is Array)
+    Assert(not int2 is Array)
+    Assert(array1 is Array)
+    Assert(array2 is Array)
+    Assert(not str1 is Array)
+    Assert(not str2 is Array)
+    Assert(not str3 is Array)
+    Assert(not str4 is Array)
+    Assert(not str5 is Array)
+    Assert(not type1 is Array)
+    Assert(not type2 is Array)
+    Assert(not float1 is Array)
+    Assert(not range1 is Array)
+    Assert(not range2 is Array)
+    Assert(not function1 is Array)
+    Assert(not function2 is Array)
+    Assert(not function3 is Array)
+    Assert(not constant1 is Array)
+    Assert(not constant2 is Array)
+    Assert(not base1 is Array)
+    Assert(not derived1 is Array)
+    Assert(not pair1 is Array)
+    Assert(not nil is Array)
+  end
+  
+  
+  def testIsStr()
+    Assert(not int1 is Str)
+    Assert(not int2 is Str)
+    Assert(not array1 is Str)
+    Assert(not array2 is Str)
+    Assert(str1 is Str)
+    Assert(str2 is Str)
+    Assert(str3 is Str)
+    Assert(str4 is Str)
+    Assert(str5 is Str)
+    Assert(not type1 is Str)
+    Assert(not type2 is Str)
+    Assert(not float1 is Str)
+    Assert(not range1 is Str)
+    Assert(not range2 is Str)
+    Assert(not function1 is Str)
+    Assert(not function2 is Str)
+    Assert(not function3 is Str)
+    Assert(not constant1 is Str)
+    Assert(not constant2 is Str)
+    Assert(not base1 is Str)
+    Assert(not derived1 is Str)
+    Assert(not pair1 is Str)
+    Assert(not nil is Str)
+  end
+  
+  
+  def testIsType()
+    Assert(not int1 is Type)
+    Assert(not int2 is Type)
+    Assert(not array1 is Type)
+    Assert(not array2 is Type)
+    Assert(not str1 is Type)
+    Assert(not str2 is Type)
+    Assert(not str3 is Type)
+    Assert(not str4 is Type)
+    Assert(not str5 is Type)
+    Assert(type1 is Type)
+    Assert(type2 is Type)
+    Assert(type3 is Type)
+    Assert(not float1 is Type)
+    Assert(not range1 is Type)
+    Assert(not range2 is Type)
+    Assert(not function1 is Type)
+    Assert(not function2 is Type)
+    Assert(not function3 is Type)
+    Assert(not constant1 is Type)
+    Assert(not constant2 is Type)
+    Assert(not base1 is Type)
+    Assert(not derived1 is Type)
+    Assert(not pair1 is Type)
+    Assert(not nil is Type)
+  end
+  
+  
+  def testIsFloat()
+    Assert(not int1 is Float)
+    Assert(not int2 is Float)
+    Assert(not array1 is Float)
+    Assert(not array2 is Float)
+    Assert(not str1 is Float)
+    Assert(not str2 is Float)
+    Assert(not str3 is Float)
+    Assert(not str4 is Float)
+    Assert(not str5 is Float)
+    Assert(not type1 is Float)
+    Assert(not type2 is Float)
+    Assert(float1 is Float)
+    Assert(not range1 is Float)
+    Assert(not range2 is Float)
+    Assert(not function1 is Float)
+    Assert(not function2 is Float)
+    Assert(not function3 is Float)
+    Assert(not constant1 is Float)
+    Assert(not constant2 is Float)
+    Assert(not base1 is Float)
+    Assert(not derived1 is Float)
+    Assert(not pair1 is Float)
+    Assert(not nil is Float)
+  end
+  
+  
+  def testIsRange()
+    Assert(not int1 is Range)
+    Assert(not int2 is Range)
+    Assert(not array1 is Range)
+    Assert(not array2 is Range)
+    Assert(not str1 is Range)
+    Assert(not str2 is Range)
+    Assert(not str3 is Range)
+    Assert(not str4 is Range)
+    Assert(not str5 is Range)
+    Assert(not type1 is Range)
+    Assert(not type2 is Range)
+    Assert(not float1 is Range)
+    Assert(range1 is Range)
+    Assert(range2 is Range)
+    Assert(not function1 is Range)
+    Assert(not function2 is Range)
+    Assert(not function3 is Range)
+    Assert(not constant1 is Range)
+    Assert(not constant2 is Range)
+    Assert(not base1 is Range)
+    Assert(not derived1 is Range)
+    Assert(not pair1 is Range)
+    Assert(not nil is Range)
+  end
+  
+  
+  def testIsFunction()
+    Assert(not int1 is Function)
+    Assert(not int2 is Function)
+    Assert(not array1 is Function)
+    Assert(not array2 is Function)
+    Assert(not str1 is Function)
+    Assert(not str2 is Function)
+    Assert(not str3 is Function)
+    Assert(not str4 is Function)
+    Assert(not str5 is Function)
+    Assert(not type1 is Function)
+    Assert(not type2 is Function)
+    Assert(not float1 is Function)
+    Assert(not range1 is Function)
+    Assert(not range2 is Function)
+    Assert(function1 is Function)
+    Assert(function2 is Function)
+    Assert(function3 is Function)
+    Assert(not constant1 is Function)
+    Assert(not constant2 is Function)
+    Assert(not base1 is Function)
+    Assert(not derived1 is Function)
+    Assert(not pair1 is Function)
+    Assert(not nil is Function)
+  end
+  
+  
+  def testIsPair()
+    Assert(not int1 is Pair)
+    Assert(not int2 is Pair)
+    Assert(not array1 is Pair)
+    Assert(not array2 is Pair)
+    Assert(not str1 is Pair)
+    Assert(not str2 is Pair)
+    Assert(not str3 is Pair)
+    Assert(not str4 is Pair)
+    Assert(not str5 is Pair)
+    Assert(not type1 is Pair)
+    Assert(not type2 is Pair)
+    Assert(not float1 is Pair)
+    Assert(not range1 is Pair)
+    Assert(not range2 is Pair)
+    Assert(not function1 is Pair)
+    Assert(not function2 is Pair)
+    Assert(not function3 is Pair)
+    Assert(not constant1 is Pair)
+    Assert(not constant2 is Pair)
+    Assert(not base1 is Pair)
+    Assert(not derived1 is Pair)
+    Assert(pair1 is Pair)
+    Assert(not nil is Pair)
+  end
+  
+  
+  def testIsConstant()
+    Assert(not int1 is Constant)
+    Assert(not int2 is Constant)
+    Assert(not array1 is Constant)
+    Assert(not array2 is Constant)
+    Assert(not str1 is Constant)
+    Assert(not str2 is Constant)
+    Assert(not str3 is Constant)
+    Assert(not str4 is Constant)
+    Assert(not str5 is Constant)
+    Assert(not type1 is Constant)
+    Assert(not type2 is Constant)
+    Assert(not float1 is Constant)
+    Assert(not range1 is Constant)
+    Assert(not range2 is Constant)
+    Assert(not function1 is Constant)
+    Assert(not function2 is Constant)
+    Assert(not function3 is Constant)
+    Assert(constant1 is Constant)
+    Assert(constant2 is Constant)
+    Assert(not base1 is Constant)
+    Assert(not derived1 is Constant)
+    Assert(not pair1 is Constant)
+    Assert(not nil is Constant)
+  end
+  
+  
+  def testIsBase()
+    Assert(not obj is Base)
+    Assert(not int1 is Base)
+    Assert(not int2 is Base)
+    Assert(not array1 is Base)
+    Assert(not array2 is Base)
+    Assert(not str1 is Base)
+    Assert(not str2 is Base)
+    Assert(not str3 is Base)
+    Assert(not str4 is Base)
+    Assert(not str5 is Base)
+    Assert(not type1 is Base)
+    Assert(not type2 is Base)
+    Assert(not float1 is Base)
+    Assert(not range1 is Base)
+    Assert(not range2 is Base)
+    Assert(not function1 is Base)
+    Assert(not function2 is Base)
+    Assert(not function3 is Base)
+    Assert(not constant1 is Base)
+    Assert(not constant2 is Base)
+    Assert(base1 is Base)
+    Assert(derived1 is Base)
+    Assert(not pair1 is Base)
+    Assert(not nil is Base)
+  end
+  
+  
+  def testIsDerived()
+    Assert(not int1 is Derived3)
+    Assert(not int2 is Derived3)
+    Assert(not array1 is Derived3)
+    Assert(not array2 is Derived3)
+    Assert(not str1 is Derived3)
+    Assert(not str2 is Derived3)
+    Assert(not str3 is Derived3)
+    Assert(not str4 is Derived3)
+    Assert(not str5 is Derived3)
+    Assert(not type1 is Derived3)
+    Assert(not type2 is Derived3)
+    Assert(not float1 is Derived3)
+    Assert(not range1 is Derived3)
+    Assert(not range2 is Derived3)
+    Assert(not function1 is Derived3)
+    Assert(not function2 is Derived3)
+    Assert(not function3 is Derived3)
+    Assert(not constant1 is Derived3)
+    Assert(not constant2 is Derived3)
+    Assert(not base1 is Derived3)
+    Assert(derived1 is Derived3)
+    Assert(not pair1 is Derived3)
+    Assert(not nil is Derived3)
+    
+    -- A few additional test cases
+    Assert(Derived2() is Base)
+    Assert(not Derived2() is Derived1)
+    Assert(not Derived3() is Derived1)
+    Assert(not base1 is Stream)
+    Assert(not derived1 is Stream)
+    Assert(not Derived1 is Base)
+    Assert(not Base is Base)
+  end
+  
+  
+  def testErrors()
+    var nerr = 0
+    try
+      var b = 1 is 1
+    except TypeError
+      nerr += 1
+    end
+    Assert(nerr == 1)
+    try
+      var b = 1 is Ord
+    except TypeError
+      nerr += 1
+    end
+    Assert(nerr == 2)
+  end
+end
+
+
+private class Base
+  def foo()
+  end
+end
+
+
+private class Derived1 is Base
+end
+
+
+private class Derived2 is Base
+end
+
+
+private class Derived3 is Derived2
+end
+
+
+private def Func()
+end

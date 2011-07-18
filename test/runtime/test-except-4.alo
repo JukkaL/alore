@@ -1,0 +1,212 @@
+module runtime
+
+-- Try / finally / except statements
+
+import unittest
+import __testc
+
+
+private class B is Exception
+end
+
+
+-- Raising an exception in finally statement
+class ExceptSuite4 is Suite
+  def testT1()
+    var i = 0
+    var j = 0
+    while i < 10000
+      try
+        try
+          raise A()
+        finally
+          raise B()
+        end
+        Fail()
+      except B
+        j += 1
+      end
+      i += 1
+    end
+  
+    Assert(j == 10000)
+  
+    Ok()
+  end
+  
+  -- Return statement in finally
+  def testT2()
+    var depth = ContextDepth()
+    var i = FuncRetInFinally()
+    Assert(i == 13)
+  
+    i = FuncRetInFinally2()
+    Assert(i == 19)
+    Assert(ContextDepth() == depth)
+  
+    Ok()
+  end
+  
+  -- Exception stress test
+  def testT3()
+    var i = 1
+    g = 0
+  
+    while i < 1000 -- FIX: was 4000
+      var j = 0
+      try
+        RecurseFinally(i)
+        Fail()
+      except A
+        j = 1
+      end
+      Assert(j == 1)
+  
+      j = 0
+      try
+        RecurseExcept(i)
+      except A
+        j = 1
+      end
+      Assert(j == 1)
+  
+      j = 0
+      try
+        MultipleExcept(i)
+      except A
+        j = 1
+      end
+      Assert(j == 1)
+  
+      i += i + 3
+    end
+  
+    -- FIX: Is the number ok?
+    AssertEqual(g, 3984) -- Note: was 16248 and 524092
+  
+    Ok()
+  end
+  
+  -- Test returning from finally statement to C code.
+  def testReturnToCFromFinally()
+    CallTrace(returnFromFinally)
+  end
+
+  -- Helper method.
+  private def returnFromFinally()
+    try
+      try
+        1 / 0
+      except Exception
+        return 2
+      end
+    finally
+    end
+  end
+end
+
+
+private def FuncRetInFinally()
+  try
+    raise A()
+  finally
+    return 13
+  end
+  Fail()
+end
+
+private def FuncRetInFinally2()
+  try
+    try
+      raise A()
+    finally
+      return 13
+    end
+    Fail()
+  finally
+    return 19
+  end
+  Fail()
+end
+
+
+private def RecurseFinally(i)
+  if i > 0
+    try
+      try
+        try
+          RecurseFinally(i - 1)
+          Fail()
+        except B
+          Fail()
+        end
+      finally
+        g += 1
+      end
+      Fail()
+    finally
+      g += 1
+    end
+    Fail()
+  else
+    raise A()
+  end
+end
+
+private def RecurseExcept(i)
+  if i > 0
+    try
+      RecurseExcept(i - 1)
+      Fail()
+      try
+        try
+          Fail()
+        except A
+          Fail()
+        end
+      finally
+        Fail()
+      end
+    except B
+      Fail()
+      try
+        try
+          Fail()
+        except A
+          Fail()
+        end
+      finally
+        Fail()
+      end
+    end
+  else
+    raise A()
+  end
+end
+
+private def MultipleExcept(i)
+  if i > 0
+    try
+      try
+        try
+          try
+            MultipleExcept(i - 1)
+            Fail()
+          except B
+            Fail()
+          end
+        finally
+          g += 1
+        end
+        Fail()
+      except A
+        g += 1
+      end
+    finally
+      raise A()
+    end
+    Fail()
+  else
+    raise A()
+  end
+end

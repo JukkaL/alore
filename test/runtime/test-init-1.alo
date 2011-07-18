@@ -1,0 +1,100 @@
+-- Test cases for statements at top level.
+
+module runtime
+
+import unittest
+
+
+-- This variables are initilized by top-level statements (V1 to 1, V2 to 2, 
+-- etc.).
+private var V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11
+
+V1 = 1
+
+if True
+  V2 = 2
+end
+
+while True
+  V3 = 3
+  break
+end
+
+-- A few expressions with no side effects
+-1
+1 + 2
+[2, 3, 4]
+
+def (x)
+  V4 = x
+end(4)
+
+private const Tmp = 5
+V5 = Tmp
+
+for i in 5 to 7
+  V6 = i
+end
+
+switch Tmp
+  case 5
+    var V8 = "x" -- Local variable shadowing a global
+    V7 = 7
+end
+
+try
+  1 / 0
+except e is ArithmeticError
+  if e is ArithmeticError
+    V8 = 8
+  end
+end
+
+repeat
+  V9 = 9
+until True
+
+if True
+  var tmp
+  def ()
+    tmp = 11
+  end()
+  V11 = tmp
+end
+
+def ()
+  var a = 5 + 5
+  V10 = a
+end()
+
+
+class InitSuite is Suite
+  def testAssignment()
+    AssertEqual(V1, 1)
+  end
+  
+  def testBasics()
+    AssertEqual(V2, 2)
+    AssertEqual(V3, 3)
+    AssertEqual(V4, 4)
+    AssertEqual(V5, 5)
+    AssertEqual(V6, 6)
+    AssertEqual(V7, 7)
+  end
+  
+  def testTryExcept()
+    AssertEqual(V8, 8)
+  end
+  
+  def testRepeatUntil()
+    AssertEqual(V9, 9)
+  end
+  
+  def testAnonymousFunction()
+    AssertEqual(V10, 10)
+  end
+  
+  def testExposedVariable()
+    AssertEqual(V11, 11)
+  end
+end

@@ -1,0 +1,98 @@
+module runtime
+
+import unittest
+
+
+class SwitchSuite is Suite
+  def testSimpleSwitch()
+    var ok = False
+    switch 1 + 2
+      case 2
+        Assert(False)
+      case 3
+        ok = True
+      case 4
+        Assert(False)
+    end
+    Assert(ok)
+  end
+  
+  def testSwitchWithElse()
+    var ok = False
+    switch 5
+      case 1
+        Assert(False)
+      case 4
+        Assert(False)
+      else
+        ok = True
+    end
+    Assert(ok)
+  end
+  
+  def testSwitchWithMultipleCase()
+    var count1 = 0
+    var count2 = 0
+    for i in 1 to 6
+      switch i
+        case 12, 2, 4, 5
+          count1 += 1
+        else
+          count2 += 1
+      end
+    end
+    Assert(count1 == 3)
+    Assert(count2 == 2)
+  end
+  
+  def testSwitchOrder()
+    var ok = False
+    switch 5
+      case 1, 5
+        ok = True
+      case 3
+        Assert(False)
+      case 5
+        Assert(False)
+      case 3
+        Assert(False)
+      case 5, 5, 5
+        Assert(False)
+      else
+        Assert(False)
+    end
+    Assert(ok)
+  end
+  
+  def testSwitchWithComplexCaseExpressions()
+    var two = 2
+    var three = 3
+    var ok = False
+    switch inc(three) + two
+      case 5
+        Assert(False)
+      case inc(2 * two) - three + 4
+        ok = True
+    end
+    Assert(ok)
+  end
+  
+  def testSwitchWithDifferentTypes()
+    var ok = False
+    switch "foo"
+      case "Foo"
+        Assert(False)
+      case ("foo", "bar")
+        Assert(False)
+      case "fo"
+        Assert(False)
+      case "f" + "oo"
+        ok = True
+    end
+    Assert(ok)
+  end
+  
+  private def inc(i)
+    return i + 1
+  end
+end

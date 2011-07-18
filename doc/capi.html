@@ -1,0 +1,122 @@
+@head
+@scope capi
+
+<div id="header">
+  @title Alore C API Reference
+
+  <div class="author">Jukka Lehtosalo</div>
+  <div class="email">@email</div>
+  <div class="release-id">@release</div>
+</div>
+
+<h2><a name="introduction"></a>Introduction</h2>
+
+<p>The Alore C API enables you to
+use the C programming language (and C++) to implement modules that can be
+accessed in Alore programs. C modules are often used to provide
+access to existing C libraries and APIs. They are also often more efficient
+than pure Alore implementations. The need for using C modules
+should always be carefully
+evaluated, since developing C code usually takes more effort than comparable
+Alore code, and the portability of compiled C modules to different operating
+systems is limited.
+
+<p>This document first presents some background information,
+explains in detail a few introductory examples and describes important
+basic concepts. 
+The following sections contain a reference of macros and API functions.
+The final sections give an overview of some specific technical issues.
+
+<h2>Contents</h2>
+
+<ul>
+<li>
+  @link capi_overview.html
+<li>
+  @link capi_getting_started.html
+<li>
+  @link capi_defining_modules.html
+  <ul>
+  <li>
+    @link capi_module_basics.html
+  <li>
+    @link capi_defining_functions.html
+  <li>
+    @link capi_defining_globals.html
+  <li>
+    @link capi_defining_classes.html
+  <li>
+    @link capi_instance_binary_data.html
+  <li>
+    @link capi_variant_macros.html
+  <li>
+    @link capi_private_definitions.html
+  <li>
+    @link capi_mixing_alore_and_c.html
+  </ul>
+<li>
+  @link capi_garbage_collector_issues.html
+<li>
+  @link capi_exception_handling.html
+  <ul>
+  <li>@href{Normal exceptions}
+  <li>@href{Direct exceptions}
+  <li>@href{Raising exceptions}
+  <li>@href{Propagating exceptions}
+  <li>@href{Catching exceptions}
+  <li>@href{Direct exceptions and freeing resources}
+  <li>@href{Exception handling examples}
+  </ul>
+<li>
+  @link capi_common_operations.html
+  <ul>
+  <li>
+    @link capi_arithmetic_operations.html
+  <li>
+    @link capi_comparison_operations.html
+  <li>
+    @link capi_call_operations.html
+  <li>
+    @link capi_member_operations.html
+  <li>
+    @link capi_collection_operations.html
+  <li>
+    @link capi_global_operations.html
+  <li>
+    @link capi_misc_common_operations.html
+  </ul>
+</li>
+<li>
+  @link capi_type_specific_operations.html
+  <ul>
+  <li>
+    @link capi_int_operations.html
+  <li>
+    @link capi_float_operations.html
+  <li>
+    @link capi_str_operations.html
+  <li>
+    @link capi_array_operations.html
+  <li>
+    @link capi_tuple_operations.html
+  <li>
+    @link capi_misc_operations.html
+  </ul>
+<li>
+  @link capi_lowlevel_operations.html
+  <ul>
+  <li>@href{Temporary locations}
+  <li>@href{Instance binary data manipulation}
+  <li>@href{Object construction}
+  <li>@href{Memory management}
+  <li>@href{Value containers}
+  <li>@href{Thread support}
+  <li>@href{Miscellaneous functions}
+  </ul>    
+<li>
+  @link capi_using_std_c_libs.html
+<li>
+  @link capi_using_cplusplus.html
+<li>
+  @link capi_index.html
+</ul>

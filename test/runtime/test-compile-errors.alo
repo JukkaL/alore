@@ -1,0 +1,87 @@
+module runtime
+
+import unittest
+import helpers
+import loader
+import io
+import os
+
+
+const InputFileName = "file.alo"
+
+
+class CompileErrorSuite is Suite
+  def cases()
+    var path = "data/compile-errors.txt"
+    var l = File(path).readLines()
+    var p = ParseTestData(l)
+    var out = []
+    
+    var i = 0
+    while i < p.length()
+      if p[i].id == "case" and p[i + 1].id == "out"
+        out.append(CompileErrorTestCase(p[i].arg, p[i].data, p[i + 1].data,
+                                        path, p[i].line))
+      else
+        raise ValueError("Error in test case description")
+      end
+      i += 2
+    end
+    return out
+  end
+end
+
+
+class CompileErrorTestCase is TestCase
+  var input
+  var output
+  private var file
+  private var line
+  private var tempFiles
+
+  def create(name, input, output, file, line)
+    super.create(name)
+    self.input = input
+    self.output = output
+    self.file = file
+    self.line = line
+    
+    tempFiles = []
+  end
+
+  def run()
+    -- Store input in a temporary file.
+    addTempFile(InputFileName, input)
+    
+    try
+      try
+        -- Compile temporary file.
+        var m = Load(InputFileName)
+        raise AssertionFailure("No errors reported")
+      except e is CompileError
+        -- Verify that there was a compile error and that the error messages 
+        -- are equivalent.
+        AssertStringArraysEqual(output, e.errorMessages, 
+                                "Invalid compiler output")
+      end
+    finally
+      -- Remove temporary file.
+      for f in tempFiles
+        try
+          Remove(f)
+        except IoError
+          -- Ignore errors.
+        end
+      end
+    end
+  end
+  
+  private def addTempFile(name, data)
+    tempFiles.append(name)
+    var f = File(name, Output)
+    for s in data
+      f.writeLn(s)
+    end
+    f.close()
+  end
+end

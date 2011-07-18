@@ -1,0 +1,50 @@
+@head
+@module sys
+@title <tt>sys</tt>: Alore system information
+
+<p>This module provides basic information related to the Alore virtual machine
+and its environment.
+
+<h2>Constants</h2>
+
+@var Args
+@desc Command line arguments given to current program as a string array.
+      These do not include the path to the current program. Consider this
+      example:
+      @example
+        $ alore program.alo arg1 arg2
+      @end
+      Now the value of <tt>sys::Args</tt> in <tt>program.alo</tt> would be
+      <tt>["arg1", "arg2"]</tt>.
+@end
+
+@var ProgramPath
+@desc Path to current program. It can be a relative or an absolute path, and it
+      can refer to an Alore source file or a compiled binary executable file.
+@end
+
+@var InterpreterPath
+@desc Path to the Alore interpreter. It can be a relative or an absolute path.
+      Multiple versions of the Alore interpreter may be installed at the same
+      time, and the path always refers to the one that is running the current
+      program. This constant is <tt>nil</tt> if <tt>IsStandalone</tt>
+      is <tt>True</tt>.
+@end
+
+@var Platform
+@desc String identifying the current platform, in lower case. Currently
+      supported values are
+      <tt>"windows"</tt> (for all desktop and server variants of Microsoft
+      Windows), <tt>"linux"</tt> (for all variants of Linux),
+      <tt>"osx"</tt> (for Mac OS X),
+      <tt>"solaris"</tt> (for all variants of Solaris) and
+      <tt>"freebsd"</tt> (for FreeBSD). Additional values will be defined as
+      the Alore runtime is ported to new operating systems.
+      <!-- "mac os" for Mac OS X? -->
+@end
+
+@var IsStandalone
+@desc Boolean indicating whether the current program is a standalore executable
+      (compiled binary file instead of an Alore source file).
+@end
+

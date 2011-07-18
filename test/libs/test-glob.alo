@@ -1,0 +1,373 @@
+module libs
+
+-- Test cases for the glob module.
+
+import unittest, sys
+import glob
+import os, io
+
+
+class GlobSuite is Suite
+  -- Constants used by test cases.
+  private const tmpDir = "GLOBTMP"
+  private const caseInsensitive = Platform == "windows"
+
+
+  -- FnMatch test cases
+  ---------------------
+  
+
+  def testTrivialMatch()
+    assertMatch("", "")
+    assertMatch("a", "a")
+    assertMatch("foo.bar", "foo.bar")
+    
+    assertNotMatch("", "a")
+    assertNotMatch("a", "")
+    assertNotMatch("x", "y")
+    assertNotMatch("foo.ba", "foo.bar")
+    assertNotMatch("foo.bar", "foo.ba")
+    assertNotMatch("xyz", "yyz")
+    assertNotMatch("xyz", "xyy")
+  end
+  
+  def testUnicodeMatch()
+    assertMatch("\u1234", "\u1234")
+    assertNotMatch("\u1020", "\u0020")
+  end
+  
+  def testLongMatch()
+    assertMatch("xy " * 10000, "xy " * 10000)
+  end
+  
+  def testAsteriskMatch()
+    assertMatch("*", "")
+    assertMatch("*", "a")
+    assertMatch("*", "ab/d.y")
+    
+    assertMatch("a*", "a")
+    assertMatch("a*", "ab/d.y")
+    assertNotMatch("a*", "ba")
+    assertNotMatch("a*", "")
+    
+    assertMatch("*y", "y")
+    assertMatch("*y", "ab/d.y")
+    assertNotMatch("*y", "ya")
+    assertNotMatch("*y", "")
+    
+    assertMatch("a*b", "ab")
+    assertMatch("a*b", "a-b")
+    assertMatch("a*b", "ab/d.b")
+    assertNotMatch("a*b", "ba")
+    assertNotMatch("a*b", "abc")
+    assertNotMatch("a*b", "cab")
+    
+    assertMatch("foo*bar*zar", "foobarzar")
+    assertMatch("foo*bar*zar", "foo.bar.zar")
+    assertMatch("foo*bar*zar", "fooXYZbarGGYzar")
+    
+    assertNotMatch("foo*bar*zar", "fobarzar")
+    assertNotMatch("foo*bar*zar", "fooarzar")
+    assertNotMatch("foo*bar*zar", "foobarza")
+    assertNotMatch("foo*bar*zar", "foozarbar")
+    assertNotMatch("foo*bar*zar", "foobarzarr")
+    assertNotMatch("foo*bar*zar", "ffoobarzar")
+    assertNotMatch("foo*bar*zar", "fo0barzar")
+    assertNotMatch("foo*bar*zar", "foobarz4r")
+    
+    assertMatch("a**b", "ab")
+    assertMatch("a**b", "a--b")
+    assertNotMatch("a**b", "a--")
+  end
+  
+  def testQuestionMarkMatch()
+    assertMatch("?", "a")
+    assertMatch("?", ".")
+    assertMatch("?", "?")
+    assertNotMatch("?", "")
+    assertNotMatch("?", "aa")
+    
+    assertMatch("ab???cd", "ab---cd")
+    assertMatch("ab???cd", "ab123cd")
+    assertNotMatch("ab???cd", "ab---.cd")
+    assertNotMatch("ab???cd", "a---cd")
+    assertNotMatch("ab???cd", "ac---cd")
+    assertNotMatch("ab???cd", "ac---cd.")
+  end
+  
+  def testCaseMatching()
+    if self.caseInsensitive
+      assertMatch("a", "A")
+      assertMatch("FOO", "foo")
+      assertMatch("Fo", "fO")
+    else
+      assertNotMatch("a", "A")
+      assertNotMatch("foo", "FOO")
+      assertNotMatch("Foo", "foo")
+      assertNotMatch("foo", "foO")
+    end
+  end
+
+    
+  -- Glob tests cases
+  -------------------
+  
+  
+  def testGlobSimpleFile()
+    setup("foo")
+    assertGlob("foo", ["foo"])
+    assertGlob("foo/", [])
+    assertGlob("foob", [])
+  end
+  
+  def testGlobSimpleDirectory()
+    setup("foo/")
+    assertGlob("foo", ["foo"])
+    assertGlob("foo/", ["foo/"])
+    
+    assertGlob("foob", [])
+    assertGlob("foob/", [])
+  end
+  
+  def testEmptyGlob()
+    setup()
+    assertGlob("", [])
+  end
+  
+  def testGlobNestedFile()
+    setup("foo/", "foo/bar")
+    assertGlob("foo/bar", ["foo/bar"])
+  end
+  
+  def testGlobNestedDirectory()
+    setup("foo/", "foo/bar/", "foo/bar/zar")
+    assertGlob("foo/bar", ["foo/bar"])
+    assertGlob("foo/bar/", ["foo/bar/"])
+    
+    assertGlob("foo/zar", [])
+  end
+  
+  def testGlobAbsolutePath()
+    setup()
+    assertGlob("/", ["/"])
+    if Platform != "windows"
+      assertGlob("/usr", ["/usr"])
+      assertGlob("/usr/", ["/usr/"])
+      assertGlob("/usr/bin", ["/usr/bin"])
+      assertGlob("/usr/bin/", ["/usr/bin/"])
+      assertGlob("/bin/sh", ["/bin/sh"])
+    end
+  end
+  
+  def testDotPrefix()
+    setup("foo/", "foo/bar")
+    assertGlob("./foo", ["./foo"])
+    assertGlob("./foo/", ["./foo/"])
+    assertGlob("./foo/bar", ["./foo/bar"])
+  end
+  
+  def testDotDot()
+    setup("foo/", "foo/bar/", "foo/z")
+    assertGlob("foo/bar/..", ["foo/bar/.."])
+    assertGlob("foo/bar/../", ["foo/bar/../"])
+    assertGlob("foo/bar/../z", ["foo/bar/../z"])
+    assertGlob("foo/bar/../y", [])
+  end
+  
+  def testPatternInOnlyComponent()
+    setup("a.c", "a.d", "foo.c", "a.cc", "dir.c/")
+    assertGlob("*.c", ["a.c", "dir.c", "foo.c"])
+    assertGlob("*.d", ["a.d"])
+    assertGlob("a.?", ["a.c", "a.d"])
+    assertGlob("*.x", [])
+  end
+  
+  def testPatternInLastComponent()
+    setup("foo/", "foo/a,c", "foo/a,d", "foo/foo,c", "foo/a,cc", "foo/,c")
+    assertGlob("foo/*,c", ["foo/a,c", "foo/foo,c", "foo/,c"])
+  end
+  
+  def testPatternInInitialComponent()
+    setup("foo/", "x/", "zy.x", "foo/a", "x/a", "foo/b")
+    assertGlob("*/a", ["foo/a", "x/a"])
+    assertGlob("*/?", ["foo/a", "x/a", "foo/b"])
+  end
+  
+  def testRepeatedDirectorySeparators()
+    -- foo//bar etc. file names
+    setup("foo/", "foo/bar")
+    assertGlob(".//foo", [".//foo"])
+    assertGlob(".///foo", [".///foo"])
+    assertGlob("foo////", ["foo////"])
+    assertGlob("foo//bar", ["foo//bar"])
+    if Platform != "windows"
+      assertGlob("//usr", ["//usr"])
+    end
+    assertGlob("*//bar", ["foo//bar"])
+  end
+  
+  def testDoubleAsterisk()
+    setup("a/", "b/", "a/b/", "a/b/c/", "a/f", "b/f", "a/b/f", "a/b/c/f")
+    assertGlob("**/f", ["a/f", "b/f", "a/b/f", "a/b/c/f"])
+    assertGlob("a/**/f", ["a/f", "a/b/f", "a/b/c/f"])
+    assertGlob("a//**//f", ["a//f", "a//b//f", "a//b//c//f"])
+  end
+  
+  def testDoubleAsteriskAtEnd()
+    setup("a.txt", "a/", "a/b/", "a/x", "a/b/y")
+    assertGlob("**", ["a", "a.txt", Join("a", "b"), Join("a", "b", "y"), 
+                      Join("a", "x")])
+    assertGlob("a/**", ["a/b", Join("a/b", "y"), "a/x"])
+  end
+  
+  def testTryingToAccessFileAsDirectory()
+    setup("a")
+    assertGlob("a/b", [])
+    assertGlob("*a/b", [])
+  end
+  
+  def testFilesStartingWithDot()
+    setup(".xy", "xy")
+    assertGlob(".xy", [".xy"])
+    assertGlob("*", ["xy"])
+    assertGlob("*x*", ["xy"])
+    assertGlob("**", ["xy"])
+    assertGlob("*y", ["xy"])
+    assertGlob(".*", [".xy"])
+    assertGlob("?*", ["xy"])
+  end
+  
+  def testDirectoriesStartingWithDot()
+    setup(".d/", "a/", ".d/x", "a/y")
+    assertGlob(".d/*", [".d/x"])
+    assertGlob(".*/*", [".d/x"])
+    assertGlob("*/*", ["a/y"])
+    assertGlob("*d/*", [])
+    assertGlob("*a/*", ["a/y"])
+    assertGlob("**", ["a", Join("a", "y")])
+  end
+  
+  def testCase()
+    setup("d/", "F", "d/Fo")
+    if self.caseInsensitive
+      assertGlob("D", ["D"])
+      assertGlob("f", ["f"])
+      assertGlob("f*", ["F"])
+      assertGlob("*/fo", ["d/fo"])
+    else
+      assertGlob("D", [])
+      assertGlob("f", [])
+      assertGlob("*/fo", [])
+    end
+  end
+  
+  def testAltSeparators()
+    if AltSeparator != nil
+      setup("d/", "d/a.x", "d/b.x")
+      -- / is mapped to AltSeparator, \ to separator.
+      assertGlobA('d/*', ['d/a.x', 'd/b.x'])
+      assertGlobA('d\*', ['d\a.x', 'd\b.x'])
+      assertGlobA('d//*', ['d//a.x', 'd//b.x'])
+      assertGlobA('d/.\a.x', ['d/.\a.x'])
+    end
+  end
+
+
+  -- Ideas for additional unit tests:  
+  --  * symbolic links
+  --  * complex patterns
+  --  * Windows specific things:
+  --    * c:\foo and c:foo paths in windows
+  --    * UNC paths: \\server\share ...
+  --  * other special files
+  --  * more ** test cases
+  --  * error conditions (no permissions etc.)
+
+
+  -- Helpers
+  ----------
+  
+  
+  private def assertMatch(pattern, path)
+    Assert(FnMatch(pattern, path))
+  end
+  
+  private def assertNotMatch(pattern, path)
+    Assert(not FnMatch(pattern, path))
+  end
+  
+  private def assertGlob(pattern, result)
+    var d = CurrentDir()
+    ChangeDir(self.tmpDir)
+    try
+      AssertEqual(Sort(Glob(pattern)), Sort(result))
+    finally
+      ChangeDir(d)
+    end
+  end
+  
+  private def assertGlobA(pattern, result)
+    var d = CurrentDir()
+    ChangeDir(self.tmpDir)
+    try
+      AssertEqual(Sort(Glob(translate(pattern))), Sort(translateAll(result)))
+    finally
+      ChangeDir(d)
+    end
+  end
+  
+  private def translate(path)
+    var np = ""
+    for ch in path
+      if ch == '/'
+        np += AltSeparator
+      elif ch == '\'
+        np += Separator
+      else
+        np += ch
+      end
+    end
+    return np
+  end
+  
+  private def translateAll(a)
+    var r = []
+    for s in a
+      r.append(translate(s))
+    end
+    return r
+  end
+
+  private def setup(*paths)
+    if not IsDir(self.tmpDir)
+      MakeDir(self.tmpDir)
+      self.tempDirs.append(self.tmpDir)
+    end
+    for pp in paths
+      var p = Join(self.tmpDir, pp)
+      if p.endsWith("/")
+        MakeDir(p)
+        self.tempDirs.append(p)
+      else
+        var f = File(p, Output)
+        f.write("x")
+        f.close()
+        self.tempFiles.append(p)
+      end
+    end
+  end
+      
+  def tearDown()
+    for f in self.tempFiles
+      Remove(f)
+    end
+    for d in Reversed(self.tempDirs)
+      Remove(d)
+    end
+    self.tempDirs = []
+    self.tempFiles = []
+  end
+  
+  private var tempDirs = []
+  private var tempFiles = []
+end

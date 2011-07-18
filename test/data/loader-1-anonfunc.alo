@@ -1,0 +1,11 @@
+def Main()
+end
+
+def AnonFunc()
+  var x = 5
+  var y = 1
+  return def ()
+    x += y
+    return x
+  end
+end

@@ -1,0 +1,111 @@
+module runtime
+
+import unittest
+import reflect
+
+
+class BooleanSuite is Suite
+  def testComparisons()
+    Assert(False != nil)
+    Assert(True != nil)
+    Assert(True != False)
+    Assert(True == True)
+    Assert(False == False)
+    var t = 1 < 2
+    var f = 1 > 2
+    Assert(t)
+    Assert(t == True)
+    Assert(not f)
+    Assert(f == False)
+  end
+    
+  def testInvalidBooleans()
+    var nerr = 0
+    try
+      if nil
+        nerr = -11
+      else
+        nerr = -22
+      end
+    except TypeError
+      nerr = 1
+    end
+    Assert(nerr == 1)
+    
+    var o = OpOverloadTest()
+    try
+      if o == 2
+        nerr = -11
+      else
+        nerr = -22
+      end
+    except TypeError
+      nerr = 2
+    end
+    Assert(nerr == 2)
+    
+    try
+      if 2 in o
+        nerr = -11
+      else
+        nerr = -22
+      end
+    except TypeError
+      nerr = 3
+    end
+    Assert(nerr == 3)
+    
+    try
+      while nil
+        nerr = -11
+      end
+    except TypeError
+      nerr = 4
+    end
+    Assert(nerr == 4)
+    
+    try
+      repeat
+        nerr += 1
+      until nil
+    except TypeError
+      nerr += 10
+    end
+    Assert(nerr == 15)
+  end
+  
+  def testBooleanStr()
+    AssertEqual(Str(True), "True")
+    AssertEqual(Str(False), "False")
+  end
+  
+  def testConstructor()
+    AssertRaises(ValueError, def (); Boolean(); end)
+  end
+  
+  def testType()
+    Assert(True is Boolean)
+    Assert(False is Boolean)
+  end
+  
+  def testBooleanMembers()
+    Assert(HasMember(True, "_eq"))
+    Assert(HasMember(True, "_str"))
+    Assert(not HasMember(True, "_repr"))
+    Assert(True._eq(True))
+    Assert(False._eq(False))
+    Assert(not True._eq(False))
+    Assert(not False._eq(True))
+  end
+end
+
+
+private class OpOverloadTest
+  def _eq(x)
+    return nil
+  end
+  
+  def _in(x)
+    return nil
+  end
+end

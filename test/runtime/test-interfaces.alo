@@ -1,0 +1,163 @@
+module runtime
+
+import unittest
+import helpers
+import __testc
+
+
+class InterfacesSuite is Suite
+  def testEmptyInterface()
+    AssertType(Type, If1)
+  end
+  
+  def testImplementingEmptyInterface()
+    AssertType(Cif1, Cif1())
+    Assert(Cif1() is If1)
+    Assert(not Cif1() is If2)
+  end
+  
+  def testInheritingInterfaceFromSuperclass()
+    AssertType(Cif2, Cif2())
+    Assert(Cif2() is Cif1)
+    Assert(Cif2() is If1)
+    Assert(not Cif2() is If2)
+  end
+  
+  def testImplementingEmptyInterfaceAndExtending()
+    AssertType(Cif3, Cif3())
+    Assert(Cif3() is Cif1)
+    Assert(Cif3() is If1)
+    Assert(Cif3() is If2)
+  end
+  
+  def testImplementingMultipleEmptyInterfaces()
+    AssertType(Cif4, Cif4())
+    Assert(Cif4() is If1)
+    Assert(Cif4() is If2)
+  end
+  
+  def testImplementingWithQualifiedNames()
+    AssertType(Cif5, Cif5())
+    Assert(Cif5() is If1)
+    Assert(Cif5() is HelperInterface)
+  end
+  
+  def testDuplicateImplementsTarget()
+    AssertType(Cif6, Cif6())
+    Assert(Cif6() is If2)
+    Assert(Cif6() is HelperInterface)
+  end
+  
+  def testExtendingEmptyInterface()
+    AssertType(Cif7, Cif7())
+    Assert(Cif7() is If3)
+    Assert(Cif7() is If1)
+  end
+  
+  def testInterfaceSupertype()
+    AssertEqual(If1.supertype(), nil)
+    AssertEqual(If3.supertype(), If1)
+  end
+  
+  def testCallingInterface()
+    AssertRaises(ValueError, def (); If1(); end)
+    AssertRaises(ValueError, def (); IfCreate(1, 2); end)
+    AssertRaises(ValueError, def (); IfCreate(*[1, 2]); end)
+  end
+  
+  def testCallingInterfaceViaApi()
+    AssertRaises(ValueError, def (); ACallValue(IfCreate, 1); end)
+  end
+  
+  def testCheckingTypeOfNil()
+    Assert(not nil is If1)
+    Assert(not nil is If3)
+  end
+  
+  def testSimpleBinding()
+    Assert(CBind1() is Bind1)
+    Assert(not Object() is Bind1)
+    Assert(not CBind2() is Bind1)
+  end
+  
+  def testTwoBindings()
+    Assert(CBind1() is Bind2)
+    Assert(CBind2() is Bind2)
+    Assert(not Object() is Bind1)
+  end
+  
+  def testBindingCType()
+    Assert(RuntimeError() is Bind3)
+  end
+  
+  def testMultipleBinding()
+    Assert(CBind4() is Bind4)
+  end
+end
+
+
+interface If1
+end
+
+interface If2
+end
+
+class Cif1 implements If1
+end
+
+class Cif2 is Cif1
+end
+
+class Cif3 is Cif1 implements If2
+end
+
+class Cif4 implements If1, If2
+end
+
+class Cif5 implements ::If1, helpers::HelperInterface
+end
+
+class Cif6 implements HelperInterface, helpers::HelperInterface, 
+                      HelperInterface, If2, ::If2, If2, If2, If2
+end
+
+interface If3 is If1
+end
+
+class Cif7 implements If3
+end
+
+interface IfCreate
+  def create(x, y=)
+end
+
+
+class CBind1
+end
+
+interface Bind1
+  bind CBind1
+end
+
+
+class CBind2
+end
+
+interface Bind2
+  bind ::CBind1
+  bind CBind2
+end
+
+
+interface Bind3
+  bind std::RuntimeError
+end
+
+
+class CBind4 implements Bind4
+end
+
+interface Bind4
+  bind CBind4
+  bind CBind4
+end

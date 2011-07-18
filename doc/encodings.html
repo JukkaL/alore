@@ -1,0 +1,174 @@
+@head
+@module encodings
+@title <tt>encodings</tt>: Character encodings
+
+<p>This module contains functions and classes for dealing with text data in
+different character encodings.
+Its main use is converting strings between 16-bit Unicode and 8-bit (narrow)
+representations. <!-- Narrow strings must be used when dealing with narrow
+streams and other narrow data sources.-->
+Conversions between 8-bit narrow strings and 16-bit Unicode strings
+are often needed, since many standard library
+functions expect strings to be encoded in 16-bit Unicode, whereas many stream
+classes (including @ref{File} and @ref{Socket}) and some functions
+only support 8-bit strings.
+
+<p>In addition to 8-bit Unicode encodings, this module also defines several
+locale-specific encodings that only support a subset of Unicode.
+
+@see <tt>Str</tt> provides the @ref{encode} and @ref{decode} methods for
+     encoding and decoding strings.
+@end
+@see The classes @ref{io::TextFile} and @ref{io::TextStream} provide a simple
+     way of accessing encoded text streams.
+@end
+
+<h2>Constants</h2>
+
+@var Strict
+@desc Option for character set classes indicating strict encoding and decoding.
+      Invalid input causes an @ref{EncodeError} or a @ref{DecodeError}
+      exception to be raised. This is the default behavior.
+@end
+
+@var Unstrict
+@desc Option for character set classes indicating unstrict encoding and
+      decoding. Invalid characters are replaced with question marks
+      (<tt>"?"</tt>, when encoding) or with replacement
+      characters (<tt>"\ufffd"</tt>, when decoding).
+@end
+
+@var Bom
+@desc The byte order mark character (<tt>"\ufeff"</tt>).
+@end
+
+<h2>Character encodings</h2>
+
+<p>The following character encoding classes are defined. They all conform to
+the @href{Character encoding interface}.
+
+@var Ascii
+@desc The 7-bit ASCII encoding.
+@end
+
+@var Utf8
+@desc The UTF-8 Unicode encoding.
+@end
+
+@var Uft16
+@var Utf16Le
+@var Utf16Be
+@desc The UTF-16 Unicode encoding. The different variants stand for native,
+      little endian and big endian byte orders.
+@end
+
+@var Iso8859_1 (Latin1)
+@var Iso8859_2 (Latin2)
+@var Iso8859_3 (Latin3)
+@var Iso8859_4 (Latin4)
+@var Iso8859_5
+@var Iso8859_6
+@var Iso8859_7
+@var Iso8859_8
+@var Iso8859_9 (Latin5)
+@var Iso8859_10 (Latin6)
+@var Iso8859_11
+@var Iso8859_13 (Latin7)
+@var Iso8859_14 (Latin8)
+@var Iso8859_15 (Latin9)
+@var Iso8859_16 (Latin10)
+@desc The ISO 8859 8-bit encodings, with alias constants in parentheses.
+@end
+
+@var Windows1250
+@var Windows1251
+@var Windows1252
+@desc These Windows encodings are also known as Windows code pages.
+@end
+
+@var Cp437
+@var Cp850
+@desc Legacy encodings that match MS-DOS code pages. Note that encoded
+      characters in the range 0 to 31 and character 127 are decoded as the
+      corresponding ASCII characters instead of the legacy graphical
+      characters.
+@end
+
+@var Koi8R
+@desc The KOI8-R encoding for Russian.
+@end
+  
+@var Koi8U
+@desc The KOI8-U encoding for Ukrainian.
+@end
+
+@h2 Character encoding interface
+
+<p>The character encoding classes can be instantiated without
+arguments or with an optional strictness argument (@ref{Strict} or
+@ref{Unstrict}). Each of their instances keeps
+track of the state of a single encoded / decoded text stream.
+
+@fun encode(s)
+@desc Encode the argument string and return the encoded string. The entire
+      string is always encoded.
+@end
+
+@fun decode(s)
+@desc Decode as many characters as possible from the argument string and
+      return them. If any partial characters remain at the end of the string,
+      remember them and prepend them to the next argument to decode. Use
+      <tt>unprocessed</tt> to have a peek at them.
+@end
+
+@fun unprocessed()
+@desc Return the current buffer of partial characters or an empty string if
+      there are none.
+@end
+
+<h2>Exceptions</h2>
+
+@class EncodeError
+@desc Raised when encoding is not successful due to invalid input. Inherits
+      from @ref{std::ValueError}.
+@end
+
+@class DecodeError
+@desc Raised when decoding is not successful due to invalid input. Inherits
+      from @ref{std::ValueError}.
+@end
+
+@end-class
+
+<h2>Functions</h2>
+
+@fun Decode(string, encoding[, strictness])
+@desc @deprecated
+      Decode a string. The strictness argument may be @ref{Strict}
+      (this is the default if the argument is omitted) or @ref{Unstrict}.
+      Example:
+      @example
+        Decode(s, Utf8)         -- Decode UTF-8 string to 16-bit Unicode
+      @end
+      @note Use the @ref{decode} method of <tt>Str</tt> objects instead.
+      @end
+@end
+
+@fun Encode(string, encoding[, strictness])
+@desc @deprecated
+      Encode a string. Identical to <tt>encoding([strictness]).encode(s)</tt>.
+      The strictness argument may be @ref{Strict} (this is the default if
+      the argument is omitted) or @ref{Unstrict}. Example:
+      @example
+        Encode("\u20ac", Utf8)  -- Encode the Euro sign in UTF-8
+      @end
+      @note Use the @ref{encode} method of <tt>Str</tt> objects instead.
+      @end
+@end
+
+<h2>About supported character encodings</h2>
+
+<p>This module supports only a small and somewhat arbitrary set of
+locale-specific encodings, with a bias towards encodings for European
+languages. New encodings are likely to be added to this module (or to separate,
+additional modules) in future Alore releases.

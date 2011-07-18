@@ -1,0 +1,41 @@
+@head
+@title Private definitions
+
+<p>
+@indexitem A_PRIVATE
+Global definitions (function, class, variable and constant definitions)
+are public by default, i.e. they are visible when the module is imported.
+These definitions may be marked private by replacing the definition name with
+a A_PRIVATE macro like this:
+
+@example
+  A_VAR(A_PRIVATE("MyPrivateVariable"))
+@end
+
+<p>The only exception is the Main function, which is always
+private, even if the A_PRIVATE macro is not used.
+
+<p>Member variables can also be made private using the A_PRIVATE macro,
+but methods and accessors must be
+public. More or less the same result as using a private method can
+be achieved by defining C-level functions that are not included in the module
+definition, and by calling them directly in the C code.
+
+@example
+  /* This function is internal to the module and thus the calling convention
+     may be arbitrary. The frame parameter can be used to access self. */
+  static AValue MyPrivateMethod(AThread *t, AValue *frame, AValue arg)
+  {
+      /* do something */
+      return ...;
+  }
+
+  static AValue MyPublicMethod(AThread *t, AValue *frame)
+  {
+      frame[...]  = MyPrivateMethod(t, frame, ...);
+      return ...;
+  }
+@end
+
+<p>Alternatively, you can define private global functions instead of private
+methods.

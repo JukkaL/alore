@@ -1,0 +1,145 @@
+-- datetime.alo - DateTime class
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module time
+
+import __time
+
+
+class DateTime
+  -- Supported calling conventions:
+  --   create()
+  --   create(year, month, day, hour, minute, second)
+  --   create(str)
+  --   create(str, format)
+  def create(arg1 = nil, arg2 = nil, arg3 = nil, arg4 = nil, arg5 = nil,
+             arg6 = nil)
+    -- FIX proper argument count checks
+    if arg1 is Int
+      if arg2 is Int
+        date, time = NormalizeDateTime(Date(arg1, arg2, arg3),
+                                       Time(0, arg4, arg5, arg6))
+      else
+        raise TypeError("Invalid argument type")
+      end
+    elif arg1 is Str
+      var tuple
+      if arg2 == nil
+        tuple = ParseDateTime(DateTime, arg1, "YYYY-MM-DD hh:mm:ss.s")
+      elif arg2 is Str
+        tuple = ParseDateTime(DateTime, arg1, arg2)
+      else
+        raise TypeError("Invalid argument type")
+      end
+      self.date = Date(tuple[0], tuple[1], tuple[2])
+      self.time = Time(0, tuple[4], tuple[5], tuple[6])
+    elif arg1 == nil
+      var a = Now()
+      date = Date(a[0], a[1], a[2])
+      time = Time(0, a[3], a[4], a[5] + a[6] / 1000000)
+    else
+      raise ValueError("Invalid number of arguments")
+    end
+  end
+  
+  def _str()
+    return format("YYYY-MM-DD hh:mm:ss")
+  end
+  
+  def format(f)
+    return FormatDateTime(DateTime, self, f)
+  end
+  
+  def year
+    return date.year
+  end
+  
+  def month
+    return date.month
+  end
+  
+  def day
+    return date.day
+  end
+  
+  def hour
+    return time.hour
+  end
+  
+  def minute
+    return time.minute
+  end
+  
+  def second
+    return time.second
+  end
+  
+  def weekday
+    return date.weekday
+  end
+  
+  def week(rule = FirstFourDayWeek)
+    return date.week(rule)
+  end
+  
+  def _eq(x)
+    if x is DateTime 
+      return x.year == year and x.month == month and 
+             x.day == day and x.hour == hour and x.minute == minute and 
+             x.second == second
+    else
+      return False
+    end
+  end
+  
+  def _lt(x)
+    return (year, month, day, hour, minute, second) < 
+           (x.year, x.month, x.day, x.hour, x.minute, x.second)
+  end
+  
+  def _gt(x)
+    return (year, month, day, hour, minute, second) > 
+           (x.year, x.month, x.day, x.hour, x.minute, x.second)
+  end
+  
+  def _add(x)
+    if not x is DateTime
+      return DateTime(year, month, day + x.day, hour + x.hour, 
+                      minute + x.minute, second + x.second)
+    else
+      raise TypeError("Time value expected")
+    end
+  end
+  
+  def _sub(x)
+    if x is DateTime
+      return Time(date - Date(x.year, x.month, x.day), hour - x.hour, 
+                  minute - x.minute, second - x.second)
+    else
+      return self + -x
+    end
+  end
+  
+  def _hash()
+    return Hash((date, time))
+  end
+  
+  private const date
+  private const time
+end
+
+
+private def NormalizeDateTime(d, t)
+  if t.day >= 1
+    d += t.day
+    t = Time(0, t.hour, t.minute, t.second)
+  elif t < Time(0)
+    d = d - 1 + t.day
+    t = Time(1, t.hour, t.minute, t.second)
+  end
+  return d, t
+end

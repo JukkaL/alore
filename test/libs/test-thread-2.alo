@@ -1,0 +1,12 @@
+module libs
+
+-- Thread tests
+
+import unittest
+import thread
+import __testc
+
+
+-- FIX: Remove this or add a test case.
+class ThreadSuite2 is Suite
+end

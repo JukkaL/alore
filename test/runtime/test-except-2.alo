@@ -1,0 +1,255 @@
+module runtime
+
+-- Exception raising and catching, finally statements
+
+import unittest
+
+
+-- Try statements in different orders
+class ExceptSuite2 is Suite
+  def testT1()
+    var i = 0
+    try
+      try
+        i = 1
+      except A
+        Fail()
+      end
+  
+      raise A()
+  
+      try
+        i = 2
+      except A
+        Fail()
+      end
+    except A
+      Assert(i == 1)
+      i = 3
+    end
+  
+    Assert(i == 3)
+  
+    Ok()
+  end
+  
+  -- Check that return value exceptions work
+  def testT2()
+    var i = FuncRet()
+    Assert(i == 7)
+  
+    FuncNoRet()
+    
+    AssertEqual(FuncNoRet(), nil)
+  
+    Ok()
+  end
+  
+  
+  -- Finally statement if no exceptions are raised
+  def testT3()
+    var i = 0
+  
+    try
+      i += 1
+    finally
+      i += 1
+    end
+  
+    Assert(i == 2)
+  
+    i = 0
+    try
+      i += 1
+      try
+        i += 1
+      finally
+        i += 1
+      end
+    finally
+      i += 1
+    end
+  
+    Assert(i == 4)
+  
+    Ok()
+  end
+  
+  
+  -- Finally statement with raised exception
+  def testT4()
+    var i = 0
+  
+    try
+      i += 1
+      try
+        i += 1
+        try
+          i += 1
+          raise A()
+          Fail()
+        finally
+          i += 1
+        end
+        Fail()
+      finally
+        i += 1
+      end
+      Fail()
+    except A
+      i += 1
+    end
+  
+    Assert(i == 6)
+  
+    Ok()
+  end
+  
+  
+  -- Finally statement + except.
+  def testT5()
+    var i = 0
+  
+    try
+      try
+        i += 1
+        try
+          try
+            i += 1
+            raise A()
+            Fail()
+          except ASubClass
+            Fail()
+          end
+        finally
+          i += 1
+        end
+      except A
+        i += 1
+      end
+    finally
+      i += 1
+    end
+  
+    Assert(i == 5)
+  
+    Ok()
+  end
+  
+  
+  -- Finally statement and stack unwinding
+  def testT6()
+    try
+      try
+        try
+          Recurse(100)
+          Fail()
+        except ASubClass
+          Fail()
+        end
+      finally
+        g += 1
+      end
+      Fail()
+    except A
+      g += 1
+    end
+  
+    AssertEqual(g, 202)
+  
+    Ok()
+  end
+  
+  
+  -- Empty try / except statement
+  def testT7()
+    try
+    except A
+    except ASubClass
+    end
+  
+    try
+    except A
+      Fail()
+    except ASubClass
+    end
+  
+    try
+      raise A()
+      Fail()
+    except A
+    end
+  
+    try
+      raise A()
+      Fail()
+    except ASubClass
+    except A
+    end
+  
+    Ok()
+  end
+  
+  
+  -- Empty finally statement
+  def testT8()
+    try
+    finally
+    end
+  
+    try
+      var i = 2
+    finally
+    end
+  
+    var i = 0
+  
+    try
+      try
+        i +=1
+        try
+          i += 1
+          raise A()
+          Fail()
+        finally
+        end
+      finally
+      end
+    except A
+      i = i+ 1
+    end
+  
+    Assert(i == 3)
+  
+    Ok()
+  end
+end
+
+
+private var g = 0
+  
+      
+private def Recurse(n)
+  if n > 0
+    try
+      try
+        Recurse(n - 1)
+        Fail()
+      finally
+        g += 1
+      end
+      try
+        Fail()
+      finally
+        Fail()
+      end
+      Fail()
+    finally
+      g += 1
+    end
+  else
+    raise A()
+  end
+end
+
+

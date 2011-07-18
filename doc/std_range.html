@@ -1,0 +1,64 @@
+@head
+@module std
+@title Class <tt>std::Range</tt>
+@index Range
+
+<p>Instances of the <tt>Range</tt> class represent ascending sequences of
+integer values.
+A range is defined by two objects, the start (lower bound) and the stop
+(upper bound). The range includes integers from start up to, but not including,
+the stop.
+
+@class Range
+@desc The <tt>Range</tt> type. Range objects can be constructed using the
+    <tt>to</tt> operator.
+@end
+
+<h2>Member constants</h2>
+
+@var start
+@desc The lower bound of the range (included in the range).
+@end
+
+@var stop
+@desc The upper bound of the range (not included in the range).
+@end
+
+<h2>Methods</h2>
+
+@fun iterator()
+@desc Return an iterator object that returns all integer values between the
+  lower bound and the upper bound, in ascending order and not including the
+  upper bound.
+@end
+
+<h2>Operations</h2>
+
+@op x to y
+@desc Construct a range object representing a range <tt>x</tt>, <tt>x</tt> + 1,
+      ..., <tt>y</tt> - 1. Both <tt>x</tt> and <tt>y</tt> must be integers.
+@end
+
+@op for x in range
+@desc A range can be enumerated in ascending order
+  with a for loop, starting with the lower bound and ending with one less than
+  the upper bound.
+@end
+
+@op range == x
+@desc Range objects can be compared for equality. Two range objects are equal
+  if and only if both their lower and upper bounds are equal.
+@end
+
+@op x in range
+@desc Return a boolean indicating whether <tt>x</tt> &gt;= <tt>start</tt> and
+  <tt>x</tt> &lt; <tt>stop</tt>.
+@end
+
+@op Str(range)
+@desc Return a string representation a range.
+@end
+
+@op Hash(range)
+@desc Return the hash value of a range.
+@end

@@ -1,0 +1,82 @@
+@head
+@title Miscellaneous type-specific operations
+
+<p>This section contains several operations specific to various primitive
+types that were not covered in previous sections.
+
+<h2>Boolean operations</h2>
+
+@fun ABool AIsTrue(AValue v)
+@desc Return a (C) boolean value indicating whether the argument refers to the
+      (Alore) <tt>True</tt> object.
+      @see @ref{ATrue}
+      @end
+@end
+
+@fun ABool AIsFalse(AValue v)
+@desc Return a (C) boolean value indicating whether the argument refers to the
+      (Alore) <tt>False</tt> object.
+      @see @ref{AFalse}
+      @end
+@end
+
+<h2>Type operations</h2>
+
+@fun ABool AIsType(AValue v)
+@desc Return a boolean indicating whether the argument is a @ref{std::Type}
+      object, i.e. a primitive type such as @ref{std::Int} or an ordinary
+      type such as @ref{io::File}.
+      @see @ref{AIsValue}
+      @end
+@end
+
+<h2>Function operations</h2>
+
+@fun ABool AIsFunction(AValue v)
+@desc Return a boolean indicating whether the argument is a
+      @ref{std::Function} object, i.e. a global function object such as
+      @ref{std::Sort} or a bound method.
+@end
+
+<h2>Constant operations</h2>
+
+@fun ABool AIsConstant(AValue v)
+@desc Return a boolean indicating whether the argument is a
+      @ref{std::Constant} object.
+@end
+
+<h2>Pair operations</h2>
+
+@fun AValue AMakePair(AThread *t, AValue left, AValue right)
+@desc Create a @ref{std::Pair} object <tt>left : right</tt>. @raise-direct
+@end
+
+@fun void AGetPair(AThread *t, AValue v, AValue *left, AValue *right)
+@desc If the argument is a <tt>Pair</tt> object, store its left and right
+      values in the locations pointed to by the left and right arguments. Raise
+      @ref{TypeError} if the argument is not a <tt>Pair</tt> object.
+      @raise-direct
+@end
+
+@fun ABool AIsPair(AValue v)
+@desc Return a boolean indicating whether the argument is a @ref{std::Pair}
+      object.
+@end
+
+<h2>Range operations</h2>
+
+@fun AValue AMakeRange(AThread *t, AValue start, AValue stop)
+@desc Create a @ref{std::Range} object <tt>start to stop</tt>. @raise-direct
+@end
+
+@fun void AGetRange(AThread *t, AValue v, AValue *start, AValue *stop)
+@desc If the argument is a <tt>Range</tt> object, store its start and stop
+      values in the locations pointed to by the start and stop arguments. Raise
+      @ref{TypeError} if the argument is not a <tt>Range</tt> object.
+      @raise-direct
+@end
+
+@fun ABool AIsRange(AValue v)
+@desc Return a boolean indicating whether the argument is a @ref{std::Range}
+      object.
+@end

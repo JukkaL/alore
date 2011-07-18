@@ -1,0 +1,238 @@
+module glob
+
+import os, io, sys
+
+
+-- Does our platform have case insensitive path name matching?
+private const CaseInsensitive = Platform == "windows"
+
+
+-- Expand a pattern into an array of matching paths.
+def Glob(pattern as Str) as Array<Str>
+  -- FIX drive names, unc paths
+  
+  var components = SplitPattern(pattern)
+  
+  if components != [] and components[-1] == "**"
+    components[-1] += Separator
+    components.append("*")
+  end
+  
+  return GlobRecurse("", components)
+end
+
+
+-- Split a pattern into an array of components. Components are separated by 
+-- the path separator in the patter.
+--
+--   SplitPattern("a/*.txt") == ["a/", "*.txt"]
+--   SplitPattern("/x") == ["/", "x"]
+--   SplitPattern("") == []
+private def SplitPattern(pattern as Str) as Array<Str>
+  if pattern == ""
+    return []
+  end
+  
+  var components = [] as <Str>
+  var i = 0
+  while Separator in pattern[i:] or (AltSeparator != nil and 
+                                     AltSeparator in pattern[i:])
+    var j = pattern.find(Separator, i) + 1
+    if AltSeparator != nil
+      var k = pattern.find(AltSeparator, i) + 1
+      if j > 0 and k > 0
+        j = Min(j, k)
+      elif j <= 0
+        j = k
+      end
+    end
+    while j < pattern.length() and IsSeparator(pattern[j])
+      j += 1
+    end
+    components.append(pattern[i:j])
+    i = j
+  end
+  if pattern[i:] != ""
+    components.append(pattern[i:])
+  end
+  
+  return components
+end
+
+
+-- Perform pattern expansion recursively. Return an array of matching paths.
+--
+-- Arguments:
+--   base        The path currently being processed. Initially it is "", but
+--               recursive calls add additional components to this path.
+--   components  The remaining path components in the pattern to process.
+--   dirEntries  If not nil, the directory entries of the next component to
+--               process. The caller may provide this (when available) to avoid
+--               repeatedly reading directory contents.
+private def GlobRecurse(base as Str, components as Array<Str>, 
+                        dirEntries = nil as Array<Str>) as Array<Str>
+  -- Have we already processed all components?
+  if components == []
+    return []
+  end
+  
+  var c = components[0]  -- The component to process next
+  var isLast = components.length() == 1  -- Last component?
+  
+  -- Handle components with wildcards differently from simple components.
+  if HasWildcards(c)
+    -- The next component has wildcards.
+    
+    var dir = base
+    if dir == ""
+      dir = "."
+    end
+    var pattern, sep = RemoveTrailingSeparator(c)
+    
+    -- Use the pattern to filter the entries. Reuse previously read entries
+    -- if they are available.
+    var entries as Array<Str>
+    if dirEntries == nil
+      try
+        entries = ListDir(dir, pattern)
+      except e is IoError
+        -- IDEA: Should we pass on certain errors?
+        entries = []
+      end
+      if not c.startsWith(".")
+        -- Filter out entries starting with '.'.
+        var new = [] as <Str>
+        for e in entries
+          if not e.startsWith(".")
+            new.append(e)
+          end
+        end
+        entries = new
+      end
+    else
+      entries = Filter(dirEntries, pattern)
+    end
+    
+    -- Build an array that has entries which include the base path.
+    var entries2 = [nil] * entries.length() as Array<Str>
+    for i in 0 to entries.length()
+      entries2[i] = base + entries[i]
+    end
+    
+    if isLast
+      -- We're done for this recursive call.
+      return entries2
+    else
+      var ret = [] as <Str>
+      -- Process entries, recursively descending into directories.
+      for e in entries2
+        if pattern != "**"
+          -- Process all directories (including symlinks to directories) 
+          -- recursively if not using **.
+          if IsDir(e)
+            ret.extend(GlobRecurse(e + sep, components[1:]))
+          end
+        else
+          -- ** does not descend into linked directories.
+          if IsNonLinkDir(e)
+            ret.extend(GlobRecurse(e + sep, components))
+          end
+        end
+      end
+      -- ** also matches an empty directory sequence. To handle this case, 
+      -- call recursively and reuse the current entries.
+      if pattern == "**"
+        ret.extend(GlobRecurse(base, components[1:], entries))
+      end
+      return ret
+    end
+  else
+    -- The next component has no wildcards.
+  
+    -- Optimize the case where we have already the entries available.
+    if isLast and dirEntries != nil and not HasEntry(dirEntries, c)
+      return []
+    end
+    
+    var next = Join(base, c)
+    if isLast and Exists(next)
+      -- The last component exists.
+      return [next]
+    elif not isLast and IsNonLinkDir(next)
+      -- The next component matches a non-link directory. Recurse into it.
+      return GlobRecurse(next, components[1:])
+    else
+      -- No match (either the component does not exist or it exists but is of
+      -- wrong kind).
+      return []
+    end
+  end
+end
+
+
+-- Does a pattern have wildcards (* or ?)?
+private def HasWildcards(pattern as Str) as Boolean
+  return "*" in pattern or "?" in pattern
+end
+
+
+-- Strip any trailing directory separators from a path. Return tuple
+-- (stripped path, removed separators). Do not strip the initial separator.
+private def RemoveTrailingSeparator(p as Str) as (Str, Str)
+  if p.length() > 1 and IsSeparator(p[-1])
+    -- Include all path separators at the end of the path component.
+    var n = 1
+    while n < p.length() - 1 and IsSeparator(p[-n - 1])
+      n += 1
+    end
+    return p[:-n], p[-n:]
+  else
+    return p, ""
+  end
+end
+
+
+-- Is ch a directory separator? ch must not be nil.
+private def IsSeparator(ch as Str) as Boolean
+  return ch == Separator or ch == AltSeparator
+end
+
+
+-- Does the path d refer to a directory that is not a symbolic link?
+private def IsNonLinkDir(d as Str) as Boolean
+  try
+    var s = Stat(d)
+    return not s.isLink and s.isDir
+  except IoError
+    return False
+  end
+end
+
+
+-- Filter entries matching the pattern from an array of directory entries.
+private def Filter(a as Array<Str>, pattern as Str) as Array<Str>
+  var aa = [] as <Str>
+  for p in a
+    if FnMatch(pattern, p)
+      aa.append(p)
+    end
+  end
+  return aa
+end
+
+
+-- Does an array of directory entries have an entry matching name? Perform
+-- case insensitive matching for platforms with case insensitive file names.
+private def HasEntry(entries as Array<Str>, name as Str) as Boolean
+  if not CaseInsensitive
+    return name in entries
+  else
+    name = name.lower()
+    for n in entries
+      if n.lower() == name
+        return True
+      end
+    end
+    return False
+  end
+end

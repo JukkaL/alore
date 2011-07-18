@@ -1,0 +1,57 @@
+@head
+@title Accessing global variables and definitions
+
+<p>These functions can be used to access or modify the values of global 
+definitions. Global definitions include global functions, classes, variables 
+and constants. Some of these functions refer to the definition using
+the fully qualified name of the definitions, such as <tt>io::File</tt>, and
+some refer using a numeric id. Numeric ids can be obtained using the
+@ref{AGlobalByNum} function as described below, or by using a _P variant macro
+when defining the global definition, described in  section 
+@href{Variant macros}.
+
+@fun AValue AGlobal(AThread *t, const char *name)
+@desc Return the value of a global definition. The name must be the fully
+      qualified name of the definition. All available definitions, including
+      private ones, can be 
+      accessed using this function without having to respect the ordinary Alore
+      visibility rules. The only requirement
+      is that the module containing the definition has been imported at least 
+      once and it has not been freed by the garbage collector. @raise-direct
+      Example:      
+      @example
+        AValue intType = AGlobal(t, "std::Int");
+      @end
+@end
+
+@fun int AGetGlobalNum(AThread *t, const char *name)
+@desc Get the internal numeric id of a global definition. The valid argument
+      values are the same as for the <tt>AGlobal</tt> function above. The 
+      numeric id can be used as an argument for the functions described
+      below and some additional functions such as @ref{ARaiseByNum}.
+      @raise-direct
+@end
+
+@fun AValue AGlobalByNum(int num)
+@desc Return the value of a global definition using a numeric id to refer to
+      the definition.
+@end
+
+@fun void ASetGlobalByNum(int num, AValue v)
+@desc Set the value of a global variable using a numeric id to refer to the
+      variable. The num argument must refer to a global variable. No error
+      checking is performed: num must refer to a global variable, not
+      a constant or another type of definition.
+@end
+
+@fun void ASetConstGlobalByNum(AThread *t, int num, AValue v)
+@desc Set the value of an empty global constant using a numeric id to refer to
+      the constant. The num argument must refer to an empty global constant
+      defined using @ref{A_EMPTY_CONST} or @ref{A_EMPTY_CONST_P}.
+      @note You must use ASetConstGlobalByNum only in the Main function of
+        a module, and only for initializing empty global constants defined in
+        that module.
+      @end
+@end
+
+<!-- FIX: Add ASetGlobal... -->

@@ -1,0 +1,366 @@
+module runtime
+
+-- Float tests
+
+import unittest
+import __testc
+import math
+import sys
+import reflect
+
+
+-- NOTE: Additional test cases in libs::StdSuite
+class FloatSuite is Suite
+  -- Some basic tests to verify overall sanity of the lexical analyzer and some
+  -- integer operations.
+  def testFloatBasics()
+    Assert(1e2 == 100.0)
+    VerifyNot(1.0 == 2.0)
+    Assert(2.3e-2 == 0.023)
+    Assert(1.0 + -3.5 == -2.5)
+    Assert(2.0 < 5.0)
+    VerifyNot(2.0 > 5.0)
+    Assert(1.0 > -6.2)
+    VerifyNot(1.0 < -6.2)
+  end
+
+  -- Test the Float constructor with floats.
+  def testFloatFloat()
+    Assert(Float(0.0) == 0.0)
+    Assert(Float(1.23) == 1.23)
+    Assert(Float(-1e20) == -1e20)
+  end
+  
+  -- Test the Float constructor with integers.
+  def testIntFloat()
+    Assert(Float(0) == 0.0)
+    Assert(Float(0) is Float)
+    Assert(Float(-1234) == -1234.0)
+    Assert(Float( 12345678901234567890) ==  12345678901234567890.0)
+    Assert(Float(-12345678901234567890) == -12345678901234567890.0)
+  end
+  
+  -- Test the Float constructor with strings.
+  def testStrFloat()
+    Assert(Float("1") == 1.0)
+    Assert(Float(" 1") == 1.0)
+    Assert(Float("1 ") == 1.0)
+    Assert(Float("1") is Float)
+    Assert(Float("-1.29") == -1.29)
+    Assert(Float(".1") == .1)
+    VerifyFloats(Float("1e-2"), 0.01)
+    VerifyFloats(Float("+1e10"), 1e10, 1e-2)
+    VerifyFloats(Float("1e+02"), 100.0)
+
+    -- Underflow to zero
+    AssertEqual(Float("1e-30000000000"), 0.0)
+
+    -- Denormalized number
+    var d = Float("1.25e-315")
+    Assert(d > 1.24e-315)
+    Assert(d < 1.26e-315)
+  end
+  
+  def testFloatLiterals()
+    var large = 1e300000000000000000000000000000000000000000
+    Assert(large > 0)
+    Assert(IsInf(large))
+    
+    var minusLarge = -1e300000000000000000000000000000000000000000
+    Assert(minusLarge < 0)
+    Assert(IsInf(minusLarge))
+    
+    AssertEqual(1e-30000000000, 0.0)
+
+    -- Denormalized number.
+    var d = 1.25e-315
+    Assert(d > 1.24e-315)
+    Assert(d < 1.26e-315)
+    VerifyFloats(d * 1e300, 1.25e-15, 1e-5)
+    
+    -- Underflow to zero.
+    AssertEqual(1.25e-500, 0.0)
+    AssertEqual(-1e-500, 0.0)
+    
+    -- Long fraction
+    var long = 1.234560000111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+    VerifyFloats(long, 1.23456, 1e-8)
+    -- Long exponent
+    var long2 = 1e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005
+    VerifyFloats(long2, 1e5, 1e-6)
+    -- Long integer part
+    var long3 = 12343200000000000000044444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+    Assert(long3 > 0.0)
+    Assert(IsInf(long3))
+  end
+  
+  -- Test floating point comparisons
+  def testComparison()
+    Assert(0 == 0.0)
+    Assert(2 == 2.0)
+    Assert(-3.0 == -3)
+    Assert(12345678912345 == 12345678912345.0)
+    Assert(-12345678912345.0 == -12345678912345)
+
+    Assert(6 < 6.00000000001)
+    Assert(6 > 5.99999999999)
+
+    Assert(2 <= 2.0)
+    VerifyNot(2 <= 1.9)
+    Assert(-7.0 >= -7)
+    VerifyNot(-7.0 >= -6.9)
+
+    Assert(0.00001 > 0)
+    Assert(0.999 < 1)
+
+    Assert(2.2222222 != 2.2222223)
+
+    VerifyFloats(1.1 + 1.1 + 1.1 + 1.1, 4.4)
+
+    VerifyFloats(593478, 593478.00000000001, 1e-5, False)
+  end
+
+  -- Test addition, subtraction and negation
+  def testAddSubNeg()
+    VerifyFloats(1.333 + -2.333, -1.0)
+    VerifyFloats(-1.333 + -2.333, -3.666)
+    VerifyFloats(1e10 + 2e10, 3e10, 1e-2)
+    VerifyFloats(1e-10 + 2e-10, 3e-10, 1e-20)
+
+    VerifyFloats(123456.123 - 6.123, 123450.0, 1e-7)
+
+    VerifyFloats(987654321987654321, 987654321980000000.0 + 7654321.0, 1e5, 
+                 False)
+
+    Assert(0 == -0)
+
+    var i = 1.2
+    i += 1
+    VerifyFloats(i, 2.2)
+
+    i -= 1
+    i -= 1
+    VerifyFloats(i, 0.2)
+  end
+
+  -- Test multiplies
+  def testMultiplication()
+    VerifyFloats(16.0 * 0.5, 8.0)
+    VerifyFloats(-0.0005432 * 0.001, -0.0000005432, 1e-15)
+    VerifyFloats(17 * 2.0, 34.0)
+    VerifyFloats(-3.0 * -15, 45.0)
+    VerifyFloats(1.0, 6.123456734, 6.123456734)
+    VerifyFloats(1.0 * 1e200, 1e200, 1e190)
+    VerifyFloats(0.0 * -1e200, 0.0)
+  end
+
+  -- Test division
+  def testDivision()
+    VerifyFloats(1 / 3, 0.33333333333333333333333333333)
+    VerifyFloats(7.0 / 2.0, 3.5)
+    VerifyFloats(-2 / 5.0, -0.4)
+    VerifyFloats(1 / 0.1, 10.0)
+    VerifyFloats(1e100 / 1e200, 1e-100, 1e-110)
+
+    var i = 0
+    try
+      var k = 0 / 0
+    except ArithmeticError
+      i += 1
+    end
+    Assert(i == 1)
+
+    try
+      var k = -937645962539623569235 / 0.0
+    except ArithmeticError
+      i += 1
+    end
+    Assert(i == 2)
+  end
+
+  -- Test div and mod
+  def testDivMod()
+    Assert(3.99999999 div 2.0 == 1.0)
+    Assert(5.0 div 2.5 == 2.0)
+    AssertType(Float, 5.0 div 2.5)
+    AssertType(Float, 5.0 div 2)
+    Assert(-6.5 div 3.0 == -3.0)
+    Assert(8.5 div -4.0 == -3.0)
+    Assert(-9.0 div -3.6 == 2.0)
+
+    VerifyFloats(6.2 mod 2.5, 1.2)
+    VerifyFloats(-5.7 mod 5.0, 4.3)
+    VerifyFloats(3.0 mod -2.5, -2.0)
+    VerifyFloats(-8.0 mod -3.0, -2.0)
+
+    var i = 0
+    try
+      var k = -1.0 / 0.0
+    except ArithmeticError
+      i += 1
+    end
+    try
+      var k = 2.3 mod 0.0
+    except ArithmeticError
+      i += 1
+    end
+
+    Assert(i == 2)
+  end
+
+  -- Test exponentiation
+  def testExponentiation()
+    VerifyFloats(4.0**2.5, 32.0)
+    VerifyFloats(16.0**0.25, 2.0)
+    VerifyFloats(2.0**-4, 0.0625)
+    VerifyFloats(2.0**-2.0, 0.25)
+    VerifyFloats(0.0**1e100, 0.0)
+    VerifyFloats(8.6198234678961234**1.0, 8.6198234678961234)
+    VerifyFloats(1.0**123234876.0, 1.0)
+    VerifyFloats(1.438276e200**0.0, 1.0)
+    VerifyFloats(0.0**0.0, 1.0)
+    VerifyFloats(0.0**0, 1.0)
+
+    AssertRaises(ArithmeticError, def (); (-1.0)**2.0; end)
+  end
+  
+  def testMembers()
+    var f = 1.5
+    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow", "_eq", 
+             "_lt", "_gt", "_hash", "_int", "_str", "_repr"
+      AssertEqual(HasMember(f, m), True)
+    end
+    AssertEqual(HasMember(f, "foo"), False)
+    
+    AssertEqual(f._add(2), 3.5)
+    AssertEqual(f._add(2.0), 3.5)
+    AssertEqual(f._sub(2), -0.5)
+    AssertEqual(f._neg(), -1.5)
+    AssertEqual(f._mul(3), 4.5)
+    AssertEqual(f._div(2), 0.75)
+    AssertEqual(f._idiv(2), 0)
+    AssertEqual(5.5._mod(3), 2.5)
+    AssertEqual(2.0._pow(3), 8)
+    AssertEqual(1.0._eq(1), True)
+    AssertEqual(1.0._eq(1.0), True)
+    AssertEqual(1.0._eq(2), False)
+    AssertEqual(1.0._lt(2), True)
+    AssertEqual(1.0._lt(0.5), False)
+    AssertEqual(1.0._gt(0.5), True)
+    AssertEqual(1.0._gt(2), False)
+    AssertEqual(1.0._hash(), Hash(1.0))
+    
+    AssertEqual(f._int(), 1)
+    Assert(f._int() is Int)
+    
+    AssertEqual((1 / 3)._str(), "0.3333333333")
+    AssertEqual((1 / 3)._repr(), "0.33333333333333331")
+    
+    var m
+    m = f._add
+    AssertEqual(m(2), 3.5)
+    AssertEqual(Repr(m), "_add of Float")
+    m = f._neg
+    AssertEqual(m(), -1.5)
+    
+    m = GetMember(f, "_neg")
+    AssertEqual(m(), -1.5)
+  end
+  
+  def testInfinities()
+    AssertEqual(Str(Inf()), "inf")
+    AssertEqual(Str(-Inf()), "-inf")
+    
+    AssertEqual(Repr(Inf()), "inf")
+    AssertEqual(Repr(-Inf()), "-inf")
+    
+    Assert(IsInf(Float("inf")))
+    Assert(Float("inf") > 0)
+    Assert(IsInf(Float("  inf  ")))
+    Assert(Float("  inf  ") > 0)
+    
+    Assert(IsInf(Float("-inf")))
+    Assert(Float("-inf") < 0)
+    Assert(IsInf(Float("  -inf  ")))
+    Assert(Float("  -inf  ") < 0)
+    
+    AssertEqual(Inf(), Inf())
+    AssertEqual(-Inf(), -Inf())
+    Assert(Inf() != -Inf())
+    Assert(Inf() > -Inf())
+    Assert(Inf() != 1e30)
+    Assert(-Inf() != 1e30)
+    
+    Assert(Inf() > 1e30)
+    Assert(Inf() > -1e30)
+    Assert(-Inf() < 1e30)
+    Assert(-Inf() < -1e30)
+    
+    AssertEqual(Inf() - 1e30, Inf())
+    AssertEqual(Inf() + 1e30, Inf())
+    AssertEqual(Inf() * 1e30, Inf())
+    AssertEqual(Inf() * -1e-10, -Inf())
+    AssertEqual(Inf() / 1e10, Inf())
+    AssertEqual(Inf() / -1e10, -Inf())
+    AssertEqual(Inf() div 2, Inf())
+    AssertEqual(-Inf() div 2, -Inf())
+    
+    Assert(IsNaN(Inf() / Inf()))
+    
+    AssertRaises(ValueError, Int, [Inf()])
+    AssertRaises(ValueError, Int, [-Inf()])
+  end
+  
+  def testNaNs()
+    AssertEqual(Str(NaN()), "nan")
+    AssertEqual(Repr(NaN()), "nan")
+    
+    Assert(IsNaN(Float("nan")))
+    Assert(IsNaN(Float("  nan  ")))
+    
+    var cond = NaN() != NaN()
+    Assert(cond)
+    cond = NaN() == NaN()
+    Assert(not cond)
+    
+    cond = NaN() < NaN()
+    Assert(cond)
+    cond = NaN() < Inf() -- IDEA: Illogical?
+    Assert(cond)
+    cond = NaN() < 1.0
+    Assert(cond) -- IDEA: Illogical?
+    cond = NaN() > 1.0
+    Assert(not cond)
+    
+    Assert(IsNaN(1.0 + NaN()))
+    Assert(IsNaN(1.0 - NaN()))
+    Assert(IsNaN(1.0 * NaN()))
+    Assert(IsNaN(1.0 / NaN()))
+    
+    AssertRaises(ValueError, Int, [NaN()])
+  end
+
+  def testFloatFromLongStr()
+    var long1 = " " * 10000 + "0" * 10000 + "1.0" + "0" * 8000 + " " * 4000
+    AssertEqual(Float(long1), Float("1.0"))
+  end
+end
+
+
+private def VerifyFloats(a, b, eps = 1e-12, verifyType = True)
+  if verifyType
+    AssertType(Float, a)
+    AssertType(Float, b)
+  end
+  Assert(a - eps < b and a + eps > b)
+end
+
+
+private def Inf()
+  return 1e3000
+end
+
+
+private def NaN()
+  return Inf() - Inf()
+end

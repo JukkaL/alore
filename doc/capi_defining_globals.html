@@ -1,0 +1,55 @@
+@head
+@title Defining global variables and constants
+
+<p>C modules may define global variables and constants. There are two different
+kinds of constants (symbolic and empty) that are useful in different contexts.
+The initialization of the value of an empty constant must happen in the
+Main function of the module, as described below.
+
+@h2 Defining global variables
+
+@fun A_VAR(name)
+@desc Define a global variable with the specified name in the module. Its value
+      will be initialized to nil.
+      @see You may use the API functions
+         @ref{AGetGlobalNum}, @ref{ASetGlobalByNum}, @ref{AGlobal} and
+        @ref{AGlobalByNum} to set and query the value of the variable.
+      @end
+@end
+
+@h2 Defining constants
+
+@fun A_EMPTY_CONST(name)
+@desc Define a global constant with the specified name in the module. Its value
+      will be initialized to nil. A constant with a nil value is mostly
+      useless, so you can set the value of the constant using the two API
+      functions @ref{ASetConstGlobalByNum} and @ref{AGetGlobalNum}.
+      @note You must set the value of a constant only once in the Main function
+            of the module that defined the constant.
+      @end
+
+      <p>Here is an example of defining a constant named Three with value 3:
+
+      @example
+        static AValue Main(AThread *t, AValue *frame)
+        {
+            int threeNum = AGetGlobalNum(t, "example::Three");
+            frame[0] = AMakeInt(t, 3);
+            ASetConstGlobalByNum(t, threeNum, frame[0]);
+            return ANil;
+        }
+
+        A_MODULE(example, "example")
+            A_EMPTY_CONST("Three")
+            A_DEF("Main", 0, 1, Main)
+        A_END_MODULE()
+      @end
+@end
+
+@fun A_SYMBOLIC_CONST(name)
+@desc Define a symbolic constant with the specified name in the module. Its
+      value will be initialized to a @ref{std::Constant} value, similar to
+      using a global uninitialized const definition in Alore code. You must
+      not try to change the value of a symbolic constant using
+      @ref{ASetGlobalByNum} or other means.
+@end

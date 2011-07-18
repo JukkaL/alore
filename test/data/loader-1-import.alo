@@ -1,0 +1,11 @@
+import foo
+import bar::zar
+import io
+
+
+var FooVar = foo::Global
+var ZarVar = bar::zar::Global + AnotherGlobal
+
+
+def Main()
+end

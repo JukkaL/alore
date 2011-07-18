@@ -1,0 +1,6 @@
+module invalid
+
+-- No header!
+xx
+var Global = 2
+-- XXX test also empty file..

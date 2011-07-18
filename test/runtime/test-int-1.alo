@@ -1,0 +1,547 @@
+module runtime
+
+-- Integer test cases
+-- FIX: doesn't work with 32-bit digits?
+
+import unittest
+import reflect
+import __testc
+
+
+const Is64BitArch = Check64BitArch()
+
+const maxInt = GetMaxShortInt()
+const minPosLong = GetMinPosLong()
+
+const minInt = GetMinInt()
+const maxNegLong = GetMaxNegLong()
+
+
+class IntSuite is Suite
+  def create()
+    super.create()
+  end
+
+  -- Some basic tests to verify the overall sanity of the lexical analyzer and
+  -- some integer operations.
+  def testBasic()
+    Assert(not AIsLongInt(maxInt))
+    Assert(AIsLongInt(minPosLong))
+    Assert(maxInt + 1 == minPosLong)
+    Assert(minPosLong - 1 == maxInt)
+
+    Assert(not AIsLongInt(minInt))
+    Assert(AIsLongInt(maxNegLong))
+    Assert(minInt - 1 == maxNegLong)
+    Assert(maxNegLong + 1 == minInt)
+
+    Assert(ShortIntMax == maxInt)
+    Assert(ShortIntMin == minInt)
+
+    -- Some random tests
+    Assert(1 == 3 - 2)
+    Assert(8191 == 4000 + 4191)
+    Assert(8192 == 3000 + 5192)
+    Assert(42345367 == 42 * 1000000 + 345367)
+    Assert(700000000 == 1400 * 500000)
+
+    Assert(123456123456123456 == 123456 * 1000000 * 1000000 + 
+           123456 * 1000000 + 123456)
+
+    Ok()
+  end
+
+  -- Test addition and subtraction, especially short->long expansion.
+  def testAddSub()
+    -- Test short op short->short
+    VerifyAdd(1234, 5678, 6912)
+    VerifySub(29348, 12389, 16959)
+    VerifyAdd(999666, 0, 999666)
+    VerifyAdd(0, 999656, 999656)
+    VerifySub(3334444, 0, 3334444)
+    if Is64BitArch
+      VerifyAdd( 1000000000000000001, 1305843009213693950, maxInt)
+      VerifySub(-1000000000000000002, 1305843009213693950, minInt)
+    else
+      VerifyAdd( 100000001, 436870910, maxInt)
+      VerifySub(-100000002, 436870910, minInt)
+    end
+    VerifyAdd(5, -100, -95)
+    VerifyAdd(-1234, 2234, 1000)
+    VerifySub(10, 99, -89)
+    VerifySub(-60, -130, 70)
+    VerifyAdd(maxInt, minInt, -1)
+    VerifySub(minInt, -maxInt, -1)
+    VerifySub(0, maxInt, -maxInt)
+    VerifyAdd(0, 0, 0)
+    VerifySub(0, 0, 0)
+
+    -- Test short op short->long
+    if Is64BitArch
+      VerifyAdd( 1000000000000000001, 1305843009213693951, minPosLong)
+      VerifySub(-1000000000000000002, 1305843009213693951, maxNegLong)
+    else
+      VerifyAdd(100000001, 436870911, minPosLong)
+      VerifySub(-100000002, 436870911, maxNegLong)
+    end
+    VerifySub(0, minInt, minPosLong)
+    VerifyAdd(-1, minInt, maxNegLong)
+
+    -- Test long op short -> short
+    if Is64BitArch
+      VerifyAdd( 5000000000000000000, -2694156990786306049, maxInt)
+      VerifySub(-5000000000000000000, -2694156990786306048, minInt)
+    else
+      VerifyAdd(600000000, -63129089, maxInt)
+      VerifySub(-700000000, -163129088, minInt)
+    end
+    VerifySub(minPosLong, maxInt, 1)
+    VerifySub(maxNegLong, minInt, -1)
+
+    -- Test long op long -> short
+    if Is64BitArch
+      VerifyAdd(5394659835689346583906405936566053,
+                -5394659835689344278063396722872102, maxInt)
+      VerifySub(-339467983769837469837469837469083346346,
+                -339467983769837469835163994459869652394, minInt)
+    else
+      VerifyAdd(7536870911, -7000000000, maxInt)
+      VerifySub(-8536870912, -8000000007, minInt + 7)
+    end
+
+    -- Test long op short -> long
+    VerifyAdd(18446744073709551615, 1, 18446744073709551616)
+    VerifySub(18446744073709551616, 1, 18446744073709551615)
+
+    -- Test long op long -> long
+    VerifyAdd(234568792364578234659836, 9345728569876587932648576,
+	      9580297362241166167308412)
+    VerifySub(85698762986598793576, 2345709327485973890265872634795698,
+	      -2345709327485888191502886036002122)
+
+    -- Test subtracting x - x
+    var x = minInt - 1
+    VerifySub(x, x, 0)
+
+    -- Test inc/dec
+
+    var i = maxInt
+    i += 1
+    VerifyInt(i)
+    Assert(i == minPosLong)
+
+    i = maxNegLong
+    i += 1
+    VerifyInt(i)
+    Assert(i == minInt)
+
+    i = -23459872386876
+    i += 1
+    Assert(i == -23459872386875)
+
+    i = -234598723868762834762347302745
+    i += 1
+    Assert(i == -234598723868762834762347302744)
+
+    i = minPosLong
+    i -= 1
+    VerifyInt(i)
+    Assert(i == maxInt)
+
+    i = minInt
+    i -= 1
+    VerifyInt(i)
+    Assert(i == maxNegLong)
+
+    i = 523475689763476
+    i -= 1
+    Assert(i == 523475689763475)
+
+    i = 5234756897634768127635198273658219356872365
+    i -= 1
+    Assert(i == 5234756897634768127635198273658219356872364)
+
+    Ok()
+  end
+
+  -- Test negation.
+  def testNegation()
+    VerifyNeg(0)
+    VerifyNeg(1)
+    VerifyNeg(-1)
+    VerifyNeg(-234423)
+    VerifyNeg(maxInt)
+    VerifyNeg(minInt)
+    VerifyNeg(minPosLong)
+    VerifyNeg(maxNegLong)
+    VerifyNeg(507230497598070987435097)
+    VerifyNeg(-3425973249057092347509832745098234750987)
+
+    Ok()
+  end
+
+  -- Test multiplies, especially short->long expansion.
+  def testMultiplication()
+    -- short * short -> short
+    if Is64BitArch
+      VerifyMul(29, 79511827903920481, maxInt - 2)
+      VerifyMul(79511827903920481, 29, maxInt - 2)
+      VerifyMul(1518500249, 1518500249, 2305843006213062001)
+      VerifyMul(-1518500249, 1518500249, -2305843006213062001)
+      VerifyMul(1518500249, -1518500249, -2305843006213062001)
+      VerifyMul(-1518500249, -1518500249, 2305843006213062001)
+    else
+      VerifyMul(233*1103, 2089, maxInt)
+      VerifyMul(2089, 233*1103, maxInt)
+      VerifyMul(-16384, 32768, minInt)
+      VerifyMul(32768, -16384, minInt)
+    end
+    VerifyMul(minInt, 1, minInt)
+    VerifyMul(1, minInt, minInt)
+    VerifyMul(maxInt, 1, maxInt)
+    VerifyMul(minInt, 0, 0)
+    VerifyMul(0, minInt, 0)
+
+    -- short * short -> long
+    if Is64BitArch
+      VerifyMul(1048576, 2199023255552, minPosLong)
+      VerifyMul(82634763746, 1873645871635, 154828283946226467744710)
+      VerifyMul(1873645871635, 82634763746, 154828283946226467744710)
+      VerifyMul(-1873645871635, 82634763746, -154828283946226467744710)
+    else
+      VerifyMul(16384, 32768, minPosLong)
+      VerifyMul(3 * 59, 3033169, minPosLong + 1)
+      VerifyMul(3033169, 3 * 59, minPosLong + 1)
+      VerifyMul(-3033169, 3 * 59, maxNegLong);
+    end
+    VerifyMul(1234567, 1234576, 1524166788592)
+    VerifyMul(minInt, -1, minPosLong)
+    VerifyMul(-1, minInt, minPosLong)
+
+    -- long * short -> short
+    VerifyMul(minPosLong, -1, minInt)
+    VerifyMul(-1, minPosLong, minInt)
+
+    -- long * short -> long
+    VerifyMul(minPosLong, 1, minPosLong)
+    VerifyMul(maxNegLong, 1, maxNegLong)
+
+    -- long * long -> long
+    VerifyMul(91827498712634987123498618274, 12390401928374912709384791234,
+	      1137779617126877358753634866062924844893687387988947410116)
+    Ok()
+  end
+
+  -- Test div and mod, especially short->long expansion
+  def testDivMod()
+    -- short div short -> short
+    VerifyDivMod(10, -3, -4, -2)
+    VerifyDivMod(12345, 321, 38, 147)
+    VerifyDivMod(543827, 1, 543827, 0)
+    VerifyDivMod(6342345, -1, -6342345, 0)
+    VerifyDivMod(-6543234, 1, -6543234, 0)
+    VerifyDivMod(654356, -1, -654356, 0)
+    VerifyDivMod(-9875843, -1, 9875843, 0)
+    VerifyDivMod(98753, -234, -423, -229)
+    VerifyDivMod(-598437, 2765, -217, 1568)
+    VerifyDivMod(-9857432, -4367, 2257, -1113)
+
+    VerifyDivMod(minInt, 1, minInt, 0)
+    VerifyDivMod(minInt, minInt, 1, 0)
+    VerifyDivMod(minInt, minInt + 1, 1, -1)
+    VerifyDivMod(minInt, maxInt, -2, maxInt - 1)
+    VerifyDivMod(maxInt, 1, maxInt, 0)
+    VerifyDivMod(maxInt, maxInt, 1, 0)
+    VerifyDivMod(maxInt, minInt, -1, -1)
+
+    -- short div short -> long
+    VerifyDivMod(minInt, -1, minPosLong, 0)
+
+    -- long div short -> short
+    VerifyDivMod(maxInt * 123456 + 1234, 123456, maxInt, 1234)
+
+    -- long div short -> long
+    VerifyDivMod(minPosLong * 1234567 + 123456, 1234567, minPosLong, 123456)
+    VerifyDivMod(573294759802374598372495723947509 * 2 + 1, 2,
+		 573294759802374598372495723947509, 1)
+
+    -- long div long -> long
+    VerifyDivMod(65487652347509834725098237450987 * 896747863746987534975753 +
+		 598437879876533455, 896747863746987534975753,
+		 65487652347509834725098237450987, 598437879876533455)
+    VerifyDivMod(-572930847509837249850734905734095, 123463864983566987,
+		 -4640473936127743, 66137411723886246)
+    VerifyDivMod(986737689465287654362298765389658, -875362865982364876587,
+		 -1127232748625, -271016250524153553217)
+    VerifyDivMod(-5892450982374820956347830650340360, -59823748576234563586587,
+		 98496853216, -30556160773952404926568)
+
+    var i = 0
+    try
+      var k = 12 div 0
+    except ArithmeticError
+      i += 1
+    end
+    try
+      var k = 128579283659873246598736498 div 0
+    except ArithmeticError
+      i += 1
+    end
+    try
+      var k = 3452 mod 0
+    except ArithmeticError
+      i += 1
+    end
+    try
+      var k = 3452523865982376589723653987698 mod 0
+    except ArithmeticError
+      i += 1
+    end
+    Assert(i == 4)
+
+    Ok()
+  end
+
+  -- Test comparisons.
+  def testComparison()
+    Assert(0 < 1)
+    VerifyNot(1 < 0)
+    Assert(1 > 0)
+    VerifyNot(0 > 1)
+    Assert(0 <= 1)
+    Assert(1 <= 1)
+    VerifyNot(1 <= 0)
+    Assert(1 >= 0)
+    Assert(1 >= 1)
+    VerifyNot(0 >= 1)
+    Assert(0 != 1)
+    Assert(1 != 0)
+    VerifyNot(1 != 1)
+    Assert(1 == 1)
+    VerifyNot(0 == 1)
+
+    Assert(maxNegLong <= minInt)
+    VerifyNot(maxNegLong > minInt)
+    Assert(maxNegLong < minInt)
+    VerifyNot(maxNegLong >= minInt)
+    Assert(maxNegLong != minInt)
+    VerifyNot(maxNegLong == minInt)
+    Assert(minInt > maxNegLong)
+    VerifyNot(minInt <= maxNegLong)
+    Assert(minInt >= maxNegLong)
+    VerifyNot(minInt < maxNegLong)
+    Assert(minPosLong > maxInt)
+    VerifyNot(minPosLong <= maxInt)
+    Assert(minPosLong >= maxInt)
+    VerifyNot(minPosLong < maxInt)
+    Assert(minPosLong != maxInt)
+    VerifyNot(minPosLong == maxInt)
+    Assert(maxInt < minPosLong)
+    VerifyNot(maxInt >= minPosLong)
+    Assert(maxInt <= minPosLong)
+    VerifyNot(maxInt > minPosLong)
+
+    Assert(maxNegLong < minPosLong)
+    VerifyNot(maxNegLong >= minPosLong)
+
+    Assert(12345678901234567890 < 12345678901234567891)
+    VerifyNot(12345678901234567890 > 12345678901234567891)
+
+    Assert(12345678901234567890 <= 12345678901234567891)
+    Assert(12345678901234567891 <= 12345678901234567891)
+    VerifyNot(12345678901234567892 <= 12345678901234567891)
+
+    Assert(12345678901234567891 >= 12345678901234567890)
+    Assert(12345678901234567891 >= 12345678901234567891)
+    VerifyNot(12345678901234567891 >= 12345678901234567892)
+
+    Assert(-12341234123412341234 > -12341234123412341235)
+    VerifyNot(-12341234123412341234 < -12341234123412341235)
+
+    Assert(123471092865103846508736140587134056135 ==
+	   123471092865103846508736140587134056135)
+    VerifyNot(123471092865103846508736140587134056135 !=
+	      123471092865103846508736140587134056135)
+
+    Ok()
+  end
+
+  -- Test exponentiation.
+  def testExponentiation()
+    Assert(0**6819762893746189726349871628796 == 0)
+    Assert(1**9857324098750893470973590273905 == 1)
+    Assert(0**0 == 1)
+    Assert(18**0 == 1)
+    Assert(82765987623789569237846589324698546398**0 == 1)
+    Assert(17**1 == 17)
+    Assert(17**5 == 1419857)
+    Assert(17**6 == 24137569)
+    Assert(17**10 == 2015993900449)
+    Assert(17**11 == 34271896307633)
+    Assert(987654321**12 == 861508600553764107516604524815329239229214608986558372761076945901621692767523127709024362137076275526130241)
+
+    Assert((-1)**0 == 1)
+    Assert((-1)**8976529873465987236457898964 == 1)
+    Assert((-1)**8976529873465987236457898963 == -1)
+    Assert((-109274098172098470291872070987019)**2 ==
+	   11940828531325414246266118053799315658108025344111458292866506361)
+    Assert((-12412)**9 == -6991589189946005394737403944391933952)
+
+    for base in 2, 1, 0, -1, 123947829347928374932878, -1289374892734891273433
+      for exp in -1, -19872489172489172894789274
+        AssertRaises(ArithmeticError, def (); base**exp; end)
+      end
+    end
+    
+    AssertRaises(ArithmeticError, def (); (-1)**2.0; end)
+
+    VerifyFloats(2**-2.0, 0.25)
+    VerifyFloats(2**-98726985769283746592783649875.0, 0.0)
+    VerifyFloats(0**0.0, 1.0)
+  end
+  
+  def testMembers()
+    var i = 1
+    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow", 
+             "_eq", "_lt", "_gt", "_hash", "_float"
+      AssertEqual(HasMember(i, m), True)
+    end
+    AssertEqual(HasMember(i, "foo"), False)
+    
+    AssertEqual(i._add(2), 3)
+    AssertEqual(i._add(2.0), 3)
+    AssertEqual(i._add(OpOverload()), 0)
+    AssertEqual(i._sub(2), -1)
+    AssertRaises(TypeError, def (); i._sub(OpOverload()); end)
+    AssertEqual(i._neg(), -1)
+    AssertEqual(i._mul(3), 3)
+    AssertEqual(i._mul(OpOverload()), 2)
+    AssertEqual(i._div(2), 1 / 2)
+    AssertEqual(i._idiv(2), 0)
+    AssertEqual(5._mod(3), 2)
+    AssertEqual(2._pow(3), 8)
+    AssertEqual(1._eq(1), True)
+    AssertEqual(1._eq(1.0), True)
+    AssertEqual(1._eq(2), False)
+    AssertEqual(1._eq("x"), False)
+    AssertEqual(2._eq(OpOverload()), True)
+    AssertEqual(3._eq(OpOverload()), False)
+    AssertEqual(1._lt(2), True)
+    AssertEqual(1._lt(0.5), False)
+    AssertEqual(1._gt(0.5), True)
+    AssertEqual(1._gt(2), False)
+    AssertEqual(1._hash(), Hash(1))
+    
+    AssertEqual(12._float(), 12)
+    Assert(12._float() is Float)
+    
+    AssertEqual(12._str(), "12")
+    
+    var m
+    m = i._add
+    AssertEqual(m(2), 3)
+    AssertEqual(Repr(m), "_add of Int")
+    m = i._neg
+    AssertEqual(m(), -1)
+    
+    m = GetMember(i, "_neg")
+    AssertEqual(m(), -1)
+  end
+  
+  def testInterface()
+    Assert(1 is Comparable)
+  end
+end
+
+
+private def VerifyInt(i)
+  if i <= maxInt and i >= minInt
+    Assert(not AIsLongInt(i))
+  else
+    Assert(AIsLongInt(i))
+  end
+end
+
+private def VerifyNeg(a)
+  VerifyInt(a)
+  var n = -a  
+  VerifyInt(n)
+  Assert(n + a == 0)
+end
+
+private def VerifyAdd(a, b, sum)
+  VerifyInt(a)
+  VerifyInt(b)
+  var s = a + b
+  VerifyInt(s)
+  AssertEqual(s, sum)
+end
+
+private def VerifySub(a, b, dif)
+  VerifyInt(a)
+  VerifyInt(b)
+  var d = a - b
+  VerifyInt(d)
+  AssertEqual(d, dif)
+end
+
+private def VerifyMul(a, b, prod)
+  VerifyInt(a)
+  VerifyInt(b)
+  var p = a * b
+  VerifyInt(p)
+  AssertEqual(p, prod)
+end
+
+private def VerifyDivMod(a, b, quot, modul)
+  VerifyInt(a)
+  VerifyInt(b)
+  var q = a div b
+  var m = a mod b
+  VerifyInt(q)
+  VerifyInt(m)
+  AssertEqual(q, quot)
+  AssertEqual(m, modul)
+  AssertEqual(a, b * quot + modul)
+end
+
+
+private def Check64BitArch()
+  return not AIsLongInt(8000000000)
+end
+
+
+private def GetMaxShortInt()
+  if Is64BitArch
+    return 2305843009213693951
+  else
+    return 536870911
+  end
+end
+
+
+private def GetMinPosLong()
+  if Is64BitArch
+    return 2305843009213693952
+  else
+    return 536870912
+  end
+end
+
+
+private def GetMinInt()
+  if Is64BitArch
+    return -2305843009213693952
+  else
+    return -536870912
+  end
+end
+
+
+private def GetMaxNegLong()
+  if Is64BitArch
+    return -2305843009213693953
+  else
+    return -536870913
+  end
+end

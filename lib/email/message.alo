@@ -1,0 +1,79 @@
+-- message.alo - Email-like message parser (not fully functional)
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module email
+
+import string
+import re
+
+
+-- TODO:
+--  - what if there are multiple headers with the same name?
+--  - parsing header contents
+--  - mime extensions
+--  - remember header order
+--  - implement message output
+--  ? remember the exact original formatting
+
+
+class Message is Map
+  def create(data = "")
+    super.create()
+    
+    if data == ""
+      return
+    end
+    
+    var headers, body = data.split(CR + LF + CR + LF, 1)
+    
+    var a = headers.split(CR + LF)
+    var i = 0
+    while i < a.length()
+      -- Field names may include all character codes between 33 and 126 
+      -- (inclusive) except colon.
+      if Match("[\x21-\x39\x3b-\x7e]+:", a[i]) != nil
+        var name, rest = a[i].split(":", 1)
+        while i + 1 < a.length() and Match("[ \t]", a[i + 1]) != nil
+          i += 1
+          rest += a[i]
+        end
+        self[name] = rest.strip()
+      else
+      end
+      i += 1
+    end
+    
+    self.body = body
+  end
+  
+  def _get(name)
+    return super._get(altMap[name.lower()])
+  end
+  
+  def _set(name, value)
+    var l = name.lower()
+    if altMap.hasKey(l)
+      name = altMap[l]
+    end
+    super._set(name, value)
+    altMap[l] = name
+  end
+  
+  def remove(name)
+    var l = name.lower()
+    super.remove(altMap[l])
+    altMap.remove(l)
+  end
+  
+  def hasKey(name)
+    return altMap.hasKey(name.lower())
+  end
+  
+  var body
+  
+  private var altMap = Map()
+end

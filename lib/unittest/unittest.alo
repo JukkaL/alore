@@ -1,0 +1,361 @@
+-- unittest.alo - Unit testing framework
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module unittest
+
+import io
+import string
+import reflect
+import __testc
+import time
+
+
+class AssertionFailure is Exception
+  def create(s = nil)
+    if s != nil
+      super.create(s)
+    else
+      super.create()
+    end
+  end
+end
+
+
+-- Exception used to signal skipped test cases.
+class SkipTestCaseException is Exception
+end
+
+
+def Assert(b, msg = nil)
+  if not b
+    raise AssertionFailure(msg)
+  end
+end
+
+
+def AssertEqual(a, b, fmt = "{} != {}")
+  if a != b
+    raise AssertionFailure(fmt.format(Repr(a), Repr(b)))
+  end
+end
+
+
+def AssertNotEqual(a, b, fmt = "{} == {}")
+  if a == b
+    raise AssertionFailure(fmt.format(Repr(a), Repr(b)))
+  end
+end
+
+
+-- Usage: AssertRaises(exception class[, message], function[, args])
+--
+-- Call function with the given arguments and expect an exception of the given
+-- type.
+def AssertRaises(type, *rest)
+  -- Parse arguments.
+  var msg = nil
+  if rest[0] is Str
+    msg = rest[0]
+    rest = rest[1:]
+  end  
+  var f = rest[0]
+  var args = []
+  if rest.length() > 1
+    args = rest[1]
+    if rest.length() > 2
+      raise ValueError("Too many arguments")
+    end
+  end
+  
+  -- Perform call and verify the exception.
+  try
+    f(*args)
+  except e is Exception
+    AssertType(type, e)
+    if msg != nil
+      AssertEqual(e.message, msg, "Invalid message {}, expected {}")
+    end
+    return
+  end
+  Assert(False, "No exception raised")
+end
+
+
+def AssertType(type, value)
+  if TypeOf(value) != type
+    raise AssertionFailure("Invalid type {}, expected {}".format(TypeOf(value), type))
+  end
+end
+
+
+def Fail()
+  raise AssertionFailure()
+end
+
+
+class TestCase
+  def create(name, suite = nil, func = nil)
+    self.func = func
+    self.name = name
+    self.suite = suite
+  end
+  
+  def run()
+    if func != nil
+      func()
+    end
+  end
+  
+  def setUp()
+    if suite != nil
+      suite.setUp()
+    end
+  end
+  
+  def tearDown()
+    if suite != nil
+      suite.tearDown()
+    end
+  end
+  
+  var name
+  
+  private const func
+  private const suite
+end
+
+
+class Suite
+  private var testCases = []
+  
+  def create()
+    init()
+  end
+  
+  def setUp()
+  end
+  
+  def tearDown()
+  end
+
+  def init()
+    for m in Members(self)
+      if m.startsWith("test")
+        var t = GetMember(self, m)
+        if t is Suite
+          addTest((m + ".", t))
+        else
+          addTest(TestCase(m, self, GetMember(self, m)))
+        end
+      end
+    end
+  end
+  
+  def addTest(test)
+    self.testCases.append(test)
+  end
+  
+  def cases()
+    return self.testCases[:]
+  end
+  
+  const prefix = UnqualifyName(Str(TypeOf(self))) + "."
+  
+  def skip()
+    raise SkipTestCaseException()
+  end
+end
+
+
+private var IsVerbose
+private var IsQuiet
+private var Patterns
+
+
+def RunTest(t, args = [])
+  IsVerbose = False
+  IsQuiet = False
+  Patterns = []
+  var i = 0
+  while i < args.length()
+    var a = args[i]
+    if a == "-v"
+      IsVerbose = True
+    elif a == "-q"
+      IsQuiet = True
+    elif a.length() > 0 and a[0] != "-"
+      Patterns.append(a)
+    else
+      raise ValueError("Invalid arguments")
+    end
+    i += 1
+  end
+  if Patterns.length() == 0
+    Patterns.append("*")
+  end
+
+  var numTotal, numFail, numSkip = RunTestRecursive(t, 0, 0, 0, "", 0)
+  
+  var skipMsg = ""
+  if numSkip > 0
+    skipMsg = ", {} skipped".format(numSkip)
+  end
+  
+  if numFail == 0
+    if not IsQuiet
+      WriteLn(numTotal, " test cases run", skipMsg, ", all passed.")
+      WriteLn("*** OK ***")
+    end
+  else
+    WriteLn(numFail, "/", numTotal, " test cases failed", skipMsg, ".")
+    WriteLn("*** FAILURE ***")
+  end
+  
+  --for x, y in Sort(Times)[-20:]
+  --  WriteLn("{-40:} {}".format(y, x))
+  --end
+end
+
+
+def RunTestRecursive(t, numTotal, numFail, numSkip, prefix, depth)
+  if t is TestCase
+    var name = prefix + t.name
+    
+    var match = False
+    for p in Patterns
+      if MatchPattern(name, p)
+        match = True
+        break
+      end
+    end
+    
+    if match
+      if IsVerbose
+	StdErr.write(name)
+      end
+      
+      var t1 = DateTime()
+      
+      t.setUp() -- FIX: check exceptions
+      var traceback = CallTrace(t.run)
+      t.tearDown() -- FIX: check exceptions
+      
+      Times.append([DateTime() - t1, name])
+      
+      if traceback[1] != nil
+        var e = traceback[0]
+        if e is SkipTestCaseException
+          numSkip += 1
+          if IsVerbose
+            StdErr.writeLn(" (skipped)")
+          end
+        else
+          -- Propagate keyboard interrupts.
+          if e is InterruptException
+            raise e
+          elif e is Exception
+            -- Failed test case.
+            if IsVerbose
+              StdErr.writeLn()
+              StdErr.writeLn()
+            end
+            var msg
+            if e.message != nil
+              msg = ": " + e.message
+            else
+              msg = ""
+            end
+            WriteLn("Traceback (most recent call last):")
+            var tb = CleanTraceback(traceback[1])
+            for s in Reversed(tb)
+              WriteLn("  ", s)
+            end
+            WriteLn("{}{}".format(TypeOf(e), msg))
+            WriteLn()
+            WriteLn("{} failed".format(name))
+            WriteLn()
+            numFail += 1
+          end
+        end
+      elif IsVerbose
+        StdErr.writeLn()
+      end
+      numTotal += 1
+    end
+  else
+    var suite
+    var suitePrefix
+    if t is Array or t is Tuple
+      suite = t[1]
+      suitePrefix = t[0]
+    else
+      suite = t
+      suitePrefix = t.prefix
+    end
+  
+    for tt in suite.cases()
+      var newPrefix = prefix
+      if depth > 0
+        newPrefix = prefix + suitePrefix
+      end
+      numTotal, numFail, numSkip = RunTestRecursive(
+        tt, numTotal, numFail, numSkip, newPrefix, depth + 1)
+    end
+  end
+  return numTotal, numFail, numSkip
+end
+
+
+private def UnqualifyName(s)
+  var begIndex = 0
+  for i in 0 to s.length()
+    if s[i] == ":"
+      begIndex = i + 1
+    end
+  end
+  return s[begIndex:]
+end
+
+
+private def MatchPattern(s, p)
+  if p.length() == 0
+    return s.length() == 0
+  elif p[0] == "*"
+    if p.length() == 1
+      return True
+    else
+      for i in 0 to s.length() + 1
+        if MatchPattern(s[i:], p[1:])
+          return True
+        end
+      end
+      return False
+    end      
+  elif s.length() == 0
+    return False
+  else
+    return s[0] == p[0] and MatchPattern(s[1:], p[1:])
+  end
+end
+
+
+private def CleanTraceback(tb)
+  -- Remove clutter from the traceback.
+  if tb != [] and tb[-1].find("run of unittest::TestCase") >= 0
+    tb = tb[:-1]
+  end
+  for f in "Assert", "AssertEqual", "AssertNotEqual", "AssertRaises", 
+           "AssertType"
+    if tb != [] and tb[0].find("unittest::{}".format(f)) >= 0
+      tb = tb[1:]
+    end
+  end
+  return tb 
+end
+
+
+private var Times = []

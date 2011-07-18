@@ -1,0 +1,248 @@
+@head
+@title Storing binary data in instances
+
+<p>The most common way of storing data in class instances is by defining
+member variables or constants that refer to the data. When dealing with
+existing C frameworks, however, it is often desirable to store C level
+data structures or pointers inside Alore objects. This section gives an
+overview of including arbitrary C level binary data within Alore objects.
+
+@see You can also use functions described in section @href{Memory management}
+     for the same purpose.
+@end
+
+@h2 Using per instance binary data
+
+<p>These macros can be used to allocate fixed size data blocks in each
+instance of the class. These blocks can be used to store any C level data
+such as pointers, structs or floating point numbers. Binary data is always
+initialized to zero early during object construction, even before create or
+@ref{#i} is called. See section
+@href{Accessing binary data} below for information on accessing and modifying
+the binary data.
+
+@fun A_BINARY_DATA(size)
+@desc Include a data block of the given size, in bytes, in each instance of
+      the class.
+@end
+
+@fun A_BINARY_DATA_P(size, intPtr)
+@desc Include a data block of the given size, in bytes, in each instance of
+      the class. Store the offset of the data block in *intPtr (intPtr should
+      have type int *). This offset
+      can be used to access the data.
+@end
+
+@h2 Using external data
+
+@fun A_EXTERNAL_DATA()
+@desc If this definition is present in a class definition, you can use
+      the function @ref{ASetExternalDataSize} to set the amount of external
+      data not visible to the garbage collector that is attached to an object
+      of the class. If this definition is included, you must also include the
+      @ref{#f} method in the class. A_EXTERNAL_DATA() can only be used in
+      classes that do not inherit another class (other than std::Object).
+      This macro also creates
+      a single member slot in the class.
+@end
+
+@h2 Defining initialization and finalization methods
+
+<p>The following special method names can be used for controlling the
+life cycle of objects:
+
+<h3>
+@indexitem #i
+#i</h3>
+
+<p>The method "#i", if defined, will be called during object construction,
+before calling create, at least when both of these conditions are satisfied:
+
+<ul>
+  <li>An object of a subclass of the original class (that defined #i) is
+   being constructed (note that it is not called when an object of the original
+   class is being constructed).
+  <li>The subclass (or one of its superclasses) has overridden the create
+    method defined in the original class.
+</ul>
+
+<p>This method should be used to initialize any binary data attached
+to the object. Note that both the #i method and the original create
+method can be called during object construction: the create method defined
+in the subclass may call the original create method using the <tt>super</tt>
+keyword.
+
+<h3>
+@indexitem #f
+#f</h3>
+
+<p>The method "#f", if defined, is called just before an object is freed by
+the garbage collector. This method, also called the <i>finalizer</i>, is
+special in several ways, including these:
+
+<ul>
+  <li>The AThread *t argument is always NULL when this method is called.
+    Any API functions that require an AThread *t argument cannot
+    be used within a finalizer method.
+  <li>The function frame only has the self value (frame[0]) defined. The
+    function should not accept any arguments or allocate temporary values in
+    the frame.
+</ul>
+
+<p>Note also that when #f is called, the object might already be partially
+freed, and the heap might be in an inconsistent state. This means that:
+
+<ul>
+  <li>The method #f must not allocate garbage-collected memory.
+  <li>The method #f must not access the contents of any object in the garbage
+    collected heap, except for the binary data stored in self and
+    blocks allocated using @ref{AAllocMemFixed} that are directly referenced
+    by self.
+</ul>
+
+<p>In practice, the only thing that should be done in a #f method is to free
+any external resources (e.g. operating system resources, memory allocated
+using malloc) so that they will not be leaked when the object is freed.
+The method should check if any data has been left uninitialized, since it is
+possible that #f is called before the object has been fully constructed.
+
+<p>As a side effect of defining #f, the member slot 0 is reserved by the
+implementation for internal use. See
+@href{Accessing member variable slots directly} for additional information.
+
+@note You can only define #f in a class if the class inherits from
+      std::Object
+      or if one of the superclasses also defines #f.
+@end
+
+@h2 Accessing binary data
+
+<p>The following API functions can be used to access binary data in instances.
+They are described in the API function reference, linked below.
+
+<ul>
+  <li>@href{ADataPtr}
+  <li>@href{ASetData_M}
+  <li>@href{AGetData_M}
+</ul>
+
+<p>All of these functions require the offset of the data to be accessed.
+This first A_BINARY_DATA definition in a class gets the offset 0, and
+additional A_BINARY_DATA definitions get larger offsets. Binary data defined in
+subclasses always gets larger offsets that data defined in superclasses.
+
+<p>For example, consider class X that inherits from Y. Y defines a single
+binary data block of 8 bytes and X defines two blocks sized 4 and 16 bytes.
+The following table lists the offsets and sizes of these blocks in objects
+of class X:
+
+<table class="with-border" summary="">
+  <tr>
+    <th>Offset
+    <th>Size
+  <tr>
+    <td>0
+    <td>8
+  <tr>
+    <td>8 (0 + 8)
+    <td>4
+  <tr>
+    <td>12 (0 + 8 + 4)
+    <td>16
+</table>
+
+@h2 Alignment of binary data
+
+<p>Binary data at offset 0 is aligned to a 32-bit boundary (if using a 32-bit
+AValue type) or to a 64-bit boundary (if using a 64-bit AValue type). If
+there is more than a single A_BINARY_DATA declaration in in a class hierarchy,
+the offset of a binary data declaration other than the first declaration (which
+always has offset 0)
+is simply the sum of the data sizes in previous declarations. Alignment is thus
+enforced only for the first binary data declaration in a class hierarchy.
+Example of unaligned binary data:
+
+@example
+  A_MODULE(...)
+      A_CLASS("Example")
+          A_BINARY_DATA(1)    /* Offset 0 (32/64-bit aligned) */
+          A_BINARY_DATA(2)    /* Offset 1 */
+          A_BINARY_DATA(8)    /* Offset 3 */
+          ...
+      A_END_CLASS()
+  A_END_MODULE()
+@end
+
+<p>Since some architectures do not allow accessing unaligned data items
+directly, you either have to enforce the alignment manually by rounding the
+sizes of data blocks up, for example, or by copying the data to/from another
+properly aligned location using @ref{ADataPtr} and memcpy.
+
+@indexitem A_VALUE_BITS
+<p>You can use the macro A_VALUE_BITS to query the current size of the AValue
+type. Its value is currently either 32 or 64.
+
+@h2 Example
+
+<p>This example defines a simple class that is a wrapper for data allocated
+using malloc. Very little error checking is performed to highlight the key
+issues. A more robust implementation would at least check that method
+parameters are in a valid range to avoid memory corruption.
+
+<!-- FIX int size below should probably be size_t size... -->
+
+@example
+  #include &lt;alore/alore.h&gt;
+  #include &lt;stdlib.h&gt;
+  #include &lt;stdio.h&gt;
+  #include &lt;string.h&gt;
+
+  static AValue Create(AThread *t, AValue *frame)
+  {
+      int size;
+      char *ptr;
+
+      size = AGetInt(t, frame[1]);
+      ptr = malloc(size);
+      if (ptr == NULL)
+          return ARaiseMemoryError(t);
+      memset(ptr, 0, size);
+      ASetData_M(frame[0], 0, char *, ptr);
+      ASetExternalDataSize(t, frame[0], size);
+      return frame[0];
+  }
+
+  static AValue Finalize(AThread *t, AValue *frame)
+  {
+      char *ptr = AGetData_M(frame[0], 0, char *);
+      free(ptr); /* Note that ptr may be 0. */
+      return ANil;
+  }
+
+  static AValue Set(AThread *t, AValue *frame)
+  {
+      int index = AGetInt(t, frame[1]);
+      int value = AGetInt(t, frame[2]);
+      char *ptr = AGetData_M(frame[0], 0, char *);
+      ptr[index] = value;
+      return ANil;
+  }
+
+  static AValue Get(AThread *t, AValue *frame)
+  {
+      int index = AGetInt(t, frame[1]);
+      char *ptr = AGetData_M(frame[0], 0, char *);
+      return AMakeInt(t, ptr[index]);
+  }
+
+  A_MODULE(malloc, "malloc")
+      A_CLASS("Malloc")
+          A_EXTERNAL_DATA()
+          A_BINARY_DATA(sizeof(char *))
+          A_METHOD("create", 1, 0, Create)
+          A_METHOD("#f", 0, 0, Finalize)
+          A_METHOD("set", 2, 0, Set)
+          A_METHOD("get", 1, 0, Get)
+      A_END_CLASS()
+  A_END_MODULE()
+@end

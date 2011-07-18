@@ -1,0 +1,56 @@
+@head
+@module time
+@title <tt>time</tt>: Time and date
+
+<p>This module contains classes and a utility functions for dealing with times
+and dates. Date calculations assume the Gregorian calendar that is used 
+everywhere in the Western world. Dates before the initiation of
+the Gregorian calendar can be used, but they are extrapolated and not
+historically accurate.
+
+<p><b>Note:</b> These classes are not aware of time zones and leap seconds.
+
+<h2>Classes</h2>
+
+<dl>
+  <dt><b>
+    @link time_date.html
+    </b>
+  <dd>This class represents a date or a day, for example April 17, 2010.
+
+  <dt><b>
+    @link time_time.html
+    </b>
+  <dd>This class represents elapsed time, for example 3 days, 4 hours and
+    2.6 seconds.
+  
+  <dt><b>
+    @link time_datetime.html
+    </b>
+  <dd>This class represents a specific point in time, for example April 17,
+    2010, 11:25:03.5.
+</dl>
+
+<h2>Constants</h2>
+
+<p>These constants can be used to specify how the week number of a date is
+calculated.
+
+@var FirstWeek
+@desc The week with January 1 is the first week of a year.
+@end
+
+@var FirstFourDayWeek
+@desc The first week with at least four days (the first week with a Wednesday)
+      is the first week of the year.
+@end
+
+@var FirstFullWeek
+@desc The first week with 7 days is the first week of the year.
+@end
+
+<h2>Functions</h2>
+
+@fun DaysInMonth(year, month)
+@desc Return the number of days in a specific month.
+@end

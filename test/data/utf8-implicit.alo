@@ -1,0 +1,9 @@
+-- This is a source file with UTF-8 encoding but no encoding declaration.
+-- Some characters: äö
+
+def Main()
+  -- Include an UTF-8 string literal.
+  "axy︫z", "a\u0080xy\ufe2bz"
+end
+
+const Ss = ""

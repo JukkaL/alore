@@ -1,0 +1,66 @@
+@head
+@module implicit_interfaces
+@title Implicit interfaces
+
+<p>A few implicit interfaces are referred to in Alore documentation. They are
+described in this section. Note that an object (or type) may support multiple
+implicit interfaces. Note that implicit interfaces are often called simply
+interfaces.
+
+<h2>Sequence</h2>
+
+@class-hidden Sequence
+
+<p>An object supports the read-only sequence interface if it supports
+the following operations:
+
+@fun length()
+@desc Return the length of the sequence.
+@end
+
+@op sequence[n]
+@desc Return the element at the specified index. The first element has index 0,
+      the second 1, etc.
+      @note Negative index values need not be supported.
+      @end
+@end
+
+<p>Mutable sequences support assigning to an index as well. It is valid to
+refer to the sequence interface without specifying whether the sequence is
+read-only or mutable. The exact kind should, however, be obvious from context.
+
+<p>@ref{Array} objects are mutable sequences and @ref{Str} objects are
+immutable sequences.
+
+<h2>Iterable</h2>
+
+@class-hidden Iterable
+
+<p>Iterable objects provide the <tt>iterator</tt> method:
+
+@fun iterator()
+@desc Return an iterator that iterates over all the objects in a composite
+      object.
+@end
+
+<p>@ref{Str}, @ref{Range}, @ref{Array}, @ref{Map}, @ref{Set} and @ref{Stream}
+objects are iterable.
+
+<h2>Iterator</h2>
+
+@class-hidden Iterator
+
+<p>An object that supports the iterator interface allows iterating over the
+items of a composite object. It provides these methods:
+
+@fun hasNext()
+@desc Return a boolean indicating whether there are additional objects in the
+      iteration.
+@end
+
+@fun next()
+@desc Return the next object in the iteration. The iterator interface
+      does not specify the order in which objects are returned, but many
+      iterable types, such as @ref{Array}, guarantee a specific iteration
+      order.
+@end

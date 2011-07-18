@@ -1,0 +1,6 @@
+ ﻿
+
+-- File with a BOM not at the start of a file.
+
+def Main()
+end

@@ -1,0 +1,3 @@
+module foo
+
+var Global = 99

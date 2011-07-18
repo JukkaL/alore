@@ -1,0 +1,353 @@
+@head
+@module errno
+@title <tt>errno</tt>: Operating system error codes
+
+<p>This module defines symbolic constants that represent different operating
+system error conditions. The constant names (such as <tt>ENOENT</tt>) are
+equivalent to C <tt>errno</tt> symbolic error names.
+These constants can be mapped to integer <tt>errno</tt> values using
+@ref{CodeToErrno}.
+
+@see The error values defined in this module are commonly encountered
+     together with @ref{std::IoError} objects.
+@end
+
+<h2>Functions</h2>
+
+@fun CodeToErrno(code)
+@desc Return the integer <tt>errno</tt> matching a symbolic constant from
+      the below list. Return 0
+      if the <tt>errno</tt> value is not defined for the current operating
+      system. Example:
+      @example
+        CodeToErrno(ENOENT)  -- 2 (exact value may vary across operating systems)
+      @end
+@end
+
+@fun ErrnoToCode(errno)
+@desc Return a symbolic constant matching an integer <tt>errno</tt> value.
+      Raise @ref{ValueError} if no constant is defined for the current
+      operating system, or if the constant is not in the below list.
+      Example:
+      @example
+        ErrnoToCode(2)   -- errno::ENOENT
+      @end
+@end
+
+@fun ErrorStr(code)
+@desc Return an error message describing a symbolic error code (in English).
+      Return <tt>nil</tt> if no message is available for the code. Example:
+      @example
+        ErrorStr(ENOENT)   -- "No such file or directory"
+      @end
+@end      
+
+<h2>Symbolic constants</h2>
+
+<p>Each of these symbolic constants represents a potential <tt>errno</tt>
+value. All of these are defined even if the corresponding <tt>errno</tt> value
+is not defined for the current operating system.
+
+@var E2BIG
+@desc Argument list too long
+@end
+
+@var EACCES
+@desc Permission denied
+@end
+
+@var EADDRINUSE
+@desc Address in use
+@end
+
+@var EADDRNOTAVAIL
+@desc Local address not available
+@end
+
+@var EAFNOSUPPORT
+@desc Address family not supported
+@end
+
+@var EAGAIN
+@desc Resource temporarily unavailable
+@end
+
+@var EBADF
+@desc Bad file descriptor
+@end
+
+@var EBADFD
+@desc File descriptor in bad state
+@end
+
+@var EBUSY
+@desc Resource busy
+@end
+
+@var ECANCELED
+@desc Operation canceled
+@end
+
+@var ECHILD
+@desc No child processes
+@end
+
+@var ECOMM
+@desc Communication error on send
+@end
+
+@var ECONNABORTED
+@desc Connection aborted
+@end
+
+@var ECONNREFUSED
+@desc Connection refused
+@end
+
+@var EDEADLK
+@desc Resource deadlock avoided
+@end
+
+@var EDOM
+@desc Domain error
+@end
+
+@var EEXIST
+@desc File exists
+@end
+
+@var EFAULT
+@desc Bad address
+@end
+
+@var EFBIG
+@desc File too large
+@end
+
+@var EHOSTDOWN
+@desc Host is down
+@end
+
+@var EHOSTUNREACH
+@desc Host in unreachable
+@end
+
+@var EIDRM
+@desc Identifier removed
+@end
+
+@var EILSEQ
+@desc Illegal byte sequence
+@end
+
+@var EINPROGRESS
+@desc Operation in progress
+@end
+
+@var EINTR
+@desc Interrupted function call
+@end
+
+@var EINVAL
+@desc Invalid argument
+@end
+
+@var EIO
+@desc Input/output error
+@end
+
+@var EISCONN
+@desc Socket is connected
+@end
+
+@var EISDIR
+@desc Is a directory
+@end
+
+@var ELOOP
+@desc Too many levels of symbolic links
+@end
+
+@var EMFILE
+@desc Too many open files
+@end
+
+@var EMLINK
+@desc Too many links
+@end
+
+@var EMSGSIZE
+@desc Message too long
+@end
+
+@var ENAMETOOLONG
+@desc Filename too long
+@end
+
+@var ENETDOWN
+@desc Network is down
+@end
+
+@var ENETUNREACH
+@desc Network unreachable
+@end
+
+@var ENFILE
+@desc Too many open files
+@end
+
+@var ENODEV
+@desc No such device
+@end
+
+@var ENOENT
+@desc No such file or directory
+@end
+
+@var ENOEXEC
+@desc Exec format error
+@end
+
+@var ENOLCK
+@desc No locks available
+@end
+
+@var ENOLINK
+@desc Link has been severed
+@end
+
+@var ENOMEM
+@desc Not enough space
+@end
+
+@var ENOMSG
+@desc No message of the desired type
+@end
+
+@var ENONET
+@desc Machine is not on the network
+@end
+
+@var ENOPROTOOPT
+@desc Protocol not available
+@end
+
+@var ENOSPC
+@desc No space left on device
+@end
+
+@var ENOSR
+@desc No STREAM resources
+@end
+
+@var ENOSTR
+@desc Not a STREAM
+@end
+
+@var ENOSYS
+@desc Function not implemented
+@end
+
+@var ENOTCONN
+@desc Socket is not connected
+@end
+
+@var ENOTDIR
+@desc Not a directory
+@end
+
+@var ENOTEMPTY
+@desc Directory not empty
+@end
+
+@var ENOTSOCK
+@desc Not a socket
+@end
+
+@var ENOTSUP
+@desc Operation not supported
+@end
+
+@var ENOTTY
+@desc Inappropriate I/O control operation
+@end
+
+@var ENOTUNIQ
+@desc Name not unique on network
+@end
+
+@var ENXIO
+@desc No such device or address
+@end
+
+@var EOPNOTSUPP
+@desc Operation not supported
+@end
+
+@var EOVERFLOW
+@desc Value too large to be stored in data type
+@end
+
+@var EPERM
+@desc Operation not permitted
+@end
+
+@var EPIPE
+@desc Broken pipe
+@end
+
+@var EPROTO
+@desc Protocol error
+@end
+
+@var EPROTONOSUPPORT
+@desc Protocol not supported
+@end
+
+@var EPROTOTYPE
+@desc Protocol wrong type for socket
+@end
+
+@var ERANGE
+@desc Result too large
+@end
+
+@var ERESTART
+@desc Interrupted system call should be restarted
+@end
+
+@var EROFS
+@desc Read-only file system
+@end
+
+@var ESPIPE
+@desc Invalid seek
+@end
+
+@var ESRCH
+@desc No such process
+@end
+
+@var ESTALE
+@desc Stale file handle
+@end
+
+@var ETIME
+@desc Timer expired
+@end
+
+@var ETIMEDOUT
+@desc Operation timed out
+@end
+
+@var ETXTBSY
+@desc Text file busy
+@end
+
+@var EWOULDBLOCK
+@desc Operation would block
+@end
+
+@var EXDEV
+@desc Improper link
+@end

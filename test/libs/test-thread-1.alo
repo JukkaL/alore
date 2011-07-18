@@ -1,0 +1,59 @@
+module libs
+
+-- Thread tests
+
+import unittest
+import thread
+import helpers
+
+
+class ThreadSuite1 is Suite
+  -- Test thread creation and joining with a return value.
+  def testThreadCreateAndJoin()
+    var i = 0
+    while i < 4000
+      var t = Thread(ThreadFunc0)
+      Assert(t.join() == 7)
+  
+      t = Thread(def (); ThreadFuncNoRet01v(2, 3, 4); end)
+      t.join()
+  
+      t = Thread(def (); ThreadFuncExcept3(1, 2, 3); end)
+      var k = 0
+      try
+        var a = t.join()
+      except MyError
+        k = 1
+      end
+      Assert(k == 1)
+  
+      i += 1
+    end
+  
+    Ok()
+  end
+end
+
+
+private def ThreadFunc0()
+  return 7
+end
+
+private def ThreadFuncNoRet01v(a = 3, *b)
+  Assert(a == 2)
+  VerifyArrays(b, (3, 4))
+end
+
+private def ThreadFuncExcept3(a, b, c)
+  Assert(a == 1 and b == 2 and c == 3)
+  raise MyError()
+end
+
+
+private class MyError is Exception
+end
+
+
+private def Ok()
+  -- FIX: implement
+end

@@ -1,0 +1,307 @@
+@head
+@module std
+@title Class <tt>std::Str</tt>
+@index Str
+
+<p>Instances of the <tt>Str</tt> class are immutable strings. A string is a
+potentially empty sequence of characters. A character is logically
+represented by an integer code between 0 and 65535, inclusive. Alore has no
+special data type for characters &#8212; characters are represented as strings 
+of length 1.
+Character codes can be queried using the @ref{Ord} function, and strings
+with specific character codes can be created using the @ref{Chr} function.
+
+<p>String objects may contain data in various encodings. String methods that
+interpret string contents (e.g. <tt>upper</tt>)
+assume that strings are encoded in the 16-bit Unicode encoding or any subset
+of Unicode, such as ASCII or Latin 1. Some other modules can work with
+arbitrary <i>narrow strings</i>, i.e. string objects with only 8-bit characters
+(character codes between 0 and 255, inclusive).
+
+<p>Characters in a string can be accessed using integer indices starting from 0
+(the first character). Alternatively, negative indices can used to refer to
+characters from the end of the string: -1 refers to the last character, -2 to
+the second to last character, etc.
+
+@see The @ref{string} and @ref{re} modules contain useful functions for
+  dealing with strings. The @ref{encodings} module provides conversions between
+  different character encodings.
+@end
+
+@class Str(x)
+@desc Construct an object of the <tt>Str</tt> type. Call the <tt>_str()</tt>
+    method of the argument and return a value equal to the result, provided
+    that it is a string. Objects of all primitive types (except <tt>Str</tt>)
+    and the standard
+    collection types provide a <tt>_str</tt> method.
+    @see The function @ref{string::IntToStr} and the method @ref{Str.format}
+         are alternative ways of converting objects to strings.
+    @end
+@end
+
+<h2>Methods</h2>
+
+@fun length()
+@desc Return the length of the string.
+@end
+
+@fun lower()
+@desc Return a copy of the string with upper case characters converted into
+    lower case.
+@end
+
+@fun upper()
+@desc Return a copy of the string with lower case characters converted into
+    upper case.
+@end
+
+@fun find(substring[, start])
+@desc Return the index of the first occurrence of a substring in the
+    string, or -1 if the substring cannot be found. The
+    returned index is the index of the start of the match. If the argument
+    <tt>start</tt> is present, only occurrences at index <tt>start</tt> or
+    higher are considered.
+@end
+
+@fun index(substring)
+@desc Return the index of the first occurrence of a substring in the
+    string, or raise @ref{ValueError} if the substring cannot be found. The
+    returned index is the index of the start of the match.
+@end
+
+@fun replace(old, new[, max])
+@desc Return a copy of the string with occurrences of <tt>old</tt> replaced
+      with <tt>new</tt>, starting from the beginning of the string. If the
+      <tt>max</tt> argument is present, only replace up to <tt>max</tt>
+      instances of <tt>old</tt>. Examples:
+      @example
+      "x..x.".replace("x", "yy")    -- Result: "yy..yy."
+      "x..x.".replace("x", "yy", 1) -- Result: "yy..x."
+      @end
+@end
+
+@fun split([separator[, max]])
+@desc Split the string into fields separated by the separator or by a run of
+    whitespace characters, if the separator is not specified or it is
+    <tt>nil</tt>. In the latter case, whitespace characters at the start and
+    the end of string are not included in the fields.
+    <p>Return an array 
+    containing the fields. If the separator is given, the result contains
+    always at least a single
+    field, which may be empty. The optional <tt>max</tt> parameter specifies
+    the maximum number of
+    splits. The rest of the string will be returned as the last element in
+    the array. Examples:
+    @example
+    " a    black cat  ".split()  -- Result: ["a", "black", "cat"]
+    "a,black, cat".split(",")    -- Result: ["a", "black", " cat"]
+    "a,b,c".split(",", 1)        -- Result: ["a", "b,c"]
+    @end
+@end
+
+@fun join(sequence)
+@desc Concatenate the strings in a sequence. Use the string as the separator.
+      @example
+        " ".join(["a", "black", "cat"])  -- Result: "a black cat"
+        "".join(["a", "b", "cd"])        -- Result: "abcd"
+        ", ".join(["cat"])               -- Result: "cat"
+      @end
+@end
+
+@fun count(substring)
+@desc Return the number of times a substring occurs in the string (without
+      overlapping).
+@end
+
+@fun iterator()
+@desc Return an iterator object that can be used to sequentially iterate over
+  the characters in the string, starting from the first character.
+@end
+
+@fun strip()
+@desc Return a copy of the string with leading and trailing whitespace
+    characters removed. Only ASCII space, tab, CR and LF characters are 
+    removed.
+@end
+
+@fun format(...)
+@desc When this method is called on a format string object, return a string
+    constructed according to the format string
+    and the optional arguments. Most characters in the format string are
+    returned unmodified:
+
+    @example
+      "foo bar".format()  -- Result: "foo bar"
+    @end
+
+    Empty brace expressions are replaced with method arguments converted to
+    strings:
+
+    @example
+      "{} and {}".format(1, "2")  -- Result: "1 and 2"
+    @end
+    
+    Brace characters can be added to the result by duplicating them in the
+    format:
+    
+    @example
+      "{{ and }}".format() -- Result: "{ and }"
+    @end
+    
+    The contents of brace expressions may optionally be prefixed with a field 
+    width specifier,
+    an integer followed by a colon. The replacement is padded with spaces to
+    have at least as many characters as the absolute value of the width. If 
+    the width is positive, the result is aligned to right, otherwise to left:
+
+    @example
+      "{4:}/{-3:}".format("ab", "c")  -- Result: "  ab/c  "
+    @end
+
+    Brace expression for numeric arguments may contain an additional format
+    template that specifies the format of the result. A fractional format
+    template contains one or more zeroes, optionally followed by a dot, a
+    (potentially empty) run of zeroes and a (potentially empty) run of hash (#)
+    characters. The zeroes specify the minimum number of digits in the
+    integer part and the fraction, and the hash characters specify optional
+    fraction digits that are only included if they are non-zero:
+
+    @example
+      "{0000}".format(12)      -- Result: "0012"
+      "{0.00}".format(12.345)  -- Result: "12.35"
+      "{0.0####}".format(1.23) -- Result: "1.23"
+      "{5:0.0}".format(1.2)    -- Result: "  1.2"
+    @end
+
+    A scientific format template contains a zero, optionally followed by a
+    dot and a run of zeroes and a run of hash characters; and an exponent
+    template. The exponent template contains 'e' or 'E', an optional '+' and
+    a non-empty run of zeroes. The dot and the following zeroes and hash
+    characters specify the number of decimals shown in the <i>coefficient</i>;
+    the exponent template specifies the minimum number of digits and the type
+    of the <i>exponent</i>:
+
+    @example
+      "{0.0e0}".format(1234)     -- Result: "1.2e3"
+      "{0.0E0}".format(1234)     -- Result: "1.2E3"
+      "{0.###e+00}".format(1000) -- Result: "1e+03"
+      "{0.###e+00}".format(1200) -- Result: "1.2e+03"
+      "{0.00##e0}".format(0.1)   -- Result: "1.00e-1"
+      "{0e0}".format(15)         -- Result: "2e1"
+    @end
+@end
+  
+@fun startsWith(prefix)
+@desc Return a boolean indicating whether the string starts with the prefix.
+@end
+
+@fun endsWith(suffix)
+@desc Return a boolean indicating whether the string ends with the suffix.
+@end
+
+@fun decode(encoding[, strictness])
+@desc Decode the string to 16-bit Unicode using the given character encoding.
+      The strictness argument may be @ref{encodings::Strict}
+      (the default) or @ref{encodings::Unstrict}. Use this to
+      convert strings in 8-bit binary encodings to Unicode so that you can
+      use them with operations such as @ref{lower}() that expect Unicode
+      strings.
+      
+      <p>Example:
+      @example
+        "\u00c3\u00a4".decode(encodings::Utf8)  -- Decode "&#228;" in UTF-8 to 16-bit Unicode
+      @end
+      @see Module @ref{encodings}
+      @end
+@end
+
+@fun encode(encoding[, strictness])
+@desc Encode the string (interpreted as 16-bit Unicode) using the given
+      character encoding. 
+      The strictness argument may be @ref{encodings::Strict} (the
+      default) or @ref{encodings::Unstrict}.
+      Calling this method is
+      equivalent to <tt>encoding([strictness]).encode(str)</tt>.
+      
+      <p>Example:
+      @example
+        "\u20ac".encode(encodings::Utf8)        -- Encode the Euro sign using UTF-8
+      @end
+      @see Module @ref{encodings}
+      @end
+@end
+
+<h2>Operations</h2>
+
+<p><tt>Str</tt> objects support the following operations:
+
+@op str[n]
+@desc If the index <tt>n</tt> is an integer, return the character at the 
+  specified index as a string of length 1.
+  If the index value is out of bounds, raise an @ref{IndexError} exception.
+  <p>If the index is a pair <tt>x</tt> <tt>:</tt> <tt>y</tt>, return a
+  slice containing the indices <tt>x</tt>, <tt>x + 1</tt>, ...,
+  <tt>y - 1</tt>.
+  If the left value of the pair is omitted or <tt>nil</tt>, it is assumed to
+  be 0. If the right value is omitted or <tt>nil</tt>, the result is a
+  substring extending to the end of the string.
+  Invalid indices in range bounds are clipped to lie within the string.
+  @example
+    "hello"[2]       -- "e"
+    "hello"[1:3]     -- "el"
+    "hello"[3:]      -- "lo"
+    "hello"[:-1]     -- "hell"
+  @end
+@end
+
+@op substr in str
+@desc Test whether a string contains a substring. Return a boolean
+  value.
+@end
+
+@op for ch in str
+@desc The characters in a string can be iterated with a for loop, starting
+      from the first character.
+@end
+
+@op x + y
+@desc Return the concatenation of two strings.
+@end
+
+@op str * n
+@op n * str
+@desc A string can be repeated any number of times by multiplying it with an
+  integer. The integer must not be negative. Multiplying a string with zero
+  results in an empty string.
+  @example
+  "foo" * 3    -- "foofoofoo"
+  "x" * 0      -- ""
+  @end
+@end
+
+@op x == y, x &lt; y, x &gt; y
+@desc Strings can be compared for equality and lexicographic order. Order
+  comparisons are based on the numeric values of characters.
+@end
+
+@op Repr(str)
+@desc Return a string representing the string using Alore string literal
+  syntax, and only using printable ASCII characters. Characters other than
+  printable ASCII character are represented using the <tt>\uNNNN</tt> escape
+  sequences.
+  @example
+  WriteLn(Repr("""foo" + Tab + "\uffff"))   -- Print """foo\u0009\uffff"
+  @end
+@end
+
+@op Int(str)
+@desc Convert a string to an integer.
+@end
+
+@op Float(str)
+@desc Convert a string to a float.
+@end
+
+@op Hash(str)
+@desc Return the hash value of a string.
+@end

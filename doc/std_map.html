@@ -1,0 +1,96 @@
+@head
+@module std
+@title Class <tt>std::Map</tt>
+@index Map
+
+<p>The <tt>Map</tt> class implements a mapping from <i>keys</i> to 
+<i>values</i>. Keys may be any objects that provide a hash value 
+using the @ref{std::Hash} function and 
+support the == operator, while values may be arbitrary objects.
+At most a single object can be associated with a specific key. If several
+values are assigned to a key, the later assignments replace the earlier values.
+
+@class Map(...)
+@desc Construct a <tt>Map</tt> object.  The constructor accepts
+    an arbitrary number of <tt>Pair</tt> objects that define the initial 
+    (key, value) pairs to be added to the map. The left item of each
+    pair is the key, and the right item is the value. Example:
+
+    @example
+      var m = Map("one": 1, "three": 33)
+      m["one"]   -- Result: 1
+    @end
+@end
+
+<h2><tt>Map</tt> methods</h2>
+
+@fun get(key, default)
+@desc Return the value associated with <tt>key</tt> if the key is in the map.
+      Otherwise, return <tt>default</tt>.
+@end
+
+@fun length()
+@desc Return the number of keys in a map.
+@end
+
+@fun hasKey(key)
+@desc Return <tt>True</tt> if the key is in the map, or <tt>False</tt>
+      otherwise.
+@end
+  
+@fun remove(key)
+@desc Remove a key and the corresponding value from the map.
+      Raise @ref{KeyError} if the key is not in the map.
+@end
+
+@fun keys()
+@desc Return an array of all the keys in the map. The keys are returned in an
+      arbitrary order.
+@end
+
+@fun values()
+@desc Return an array of all the values in the map (one per key).
+      The values are returned in an arbitrary order.
+@end
+
+@fun items()
+@desc Return an array of all the <tt>(key, value)</tt> pairs in the map.
+      Each pair is represented as a tuple. The items are returned in an
+      arbitrary order.
+@end
+
+@fun iterator()
+@desc Return an iterator object that returns all the (key, value) pairs
+      in the map, in an arbitrary order. Each item in the iteration is a
+      tuple with two items, key and value.
+      @note You should not modify the map object during iteration, as the
+            iterator assumes that the items in the map remain fixed.
+      @end
+@end
+
+<h2><tt>Map</tt> operations</h2>
+
+<p><tt>Map</tt> objects support the following operations:
+
+@op map[key]
+@desc Return the value associated with a key, or raise 
+      @ref{KeyError} if the key is not in the map.
+@end
+
+@op map[key] = value
+@desc Add a new association to the map, or replace an existing association, if
+      the key already exists.
+@end
+
+@op for key, value in map
+@desc Map contents can be iterated with a for loop. Each item in the 
+      iteration is a tuple (key, value). The items are iterated
+      in an arbitrary order.
+      @note You should not modify the map object during iteration, as the
+            iterator assumes that the items in the map remain fixed.
+      @end
+@end
+
+@op Str(map)
+@desc Return a string representation of a map.
+@end

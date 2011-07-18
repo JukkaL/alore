@@ -1,0 +1,140 @@
+#!/usr/local/bin/alore
+
+-- test.alo - Alore test suite
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+import unittest
+import io
+import parser
+import codegen
+import runtime
+import libs
+
+
+class FullSuite is Suite
+  -- Parser test cases
+
+  const testParserSuite = ParserSuite()
+  const testAnnotationsSuite = AnnotationsSuite()
+  const testLineContinuationSuite = LineContinuationSuite()
+  const testInterfaceParserSuite = InterfaceParserSuite()
+  const testParseRegressionsSuite = ParserRegressionsSuite()
+  const testStrLiteralsSuite = StrLiteralsSuite()
+  const testParseCastsSuite = ParseCastsSuite()
+  
+  -- Code generation test cases
+  
+  const testCodeGenRegressionsSuite = CodeGenRegressionsSuite()
+  
+  -- Runtime test cases
+
+  const testObjectSuite = ObjectSuite()
+  const testNilSuite = NilSuite()
+  const testIntSuite = IntSuite()
+  const testStrSuite = StrSuite()
+  const testFloatSuite = FloatSuite()
+  const testClassSuite1 = ClassSuite1()
+  const testClassSuite2 = ClassSuite2()
+  const testClassSuite3 = ClassSuite3()
+  const testClassSuite4 = ClassSuite4()
+  const testClassSuite5 = ClassSuite5()
+  const testCallSuite1 = CallSuite1()
+  const testCallSuite2 = CallSuite2()
+  const testCallSuite3 = CallSuite3()
+  const testCallSuite4 = CallSuite4()
+  const testCallSuite5 = CallSuite5()
+  const testCallSuite6 = CallSuite6()
+  const testCallSuite7 = CallSuite7()
+  const testAnonFuncSuite = AnonFuncSuite()
+  const testAnonFuncSuite2 = AnonFuncSuite2()
+  const testExceptSuite1 = ExceptSuite1()
+  const testExceptSuite2 = ExceptSuite2()
+  const testExceptSuite3 = ExceptSuite3()
+  const testExceptSuite4 = ExceptSuite4()
+  const testDirectExceptionSuite = DirectExceptionSuite()
+  const testGCSuite1 = GCSuite1()
+  const testForSuite = ForSuite()
+  const testOperatorAssignmentSuite = OperatorAssignmentSuite()
+  const testOperatorOverloadingSuite = OperatorOverloadingSuite()
+  const testExceptionMessagesSuite = ExceptionMessagesSuite()
+  const testArraySuite = ArraySuite()
+  const testTupleSuite = TupleSuite()
+  const testRangeSuite = RangeSuite()
+  const testIsSuite = IsSuite()
+  const testCompareSuite = CompareSuite()
+  const testBooleanSuite = BooleanSuite()
+  const testPairSuite = PairSuite()
+  const testSymbolSuite = SymbolSuite()
+  const testOperatorExceptionsSuite = OperatorExceptionsSuite()
+  const testOperatorExceptionMessagesSuite = OperatorExceptionMessagesSuite()
+  const testTracebackSuite = TracebackSuite()
+  const testSwitchSuite = SwitchSuite()
+  const testCApiSuite = CApiSuite()
+  const testTestMessageSuite = TestMessageSuite()
+  const testCompileErrorSuite = CompileErrorSuite()
+  const testAscii = AsciiSuite()
+  const testUtf8 = Utf8Suite()
+  const testLatin1 = Latin1Suite()
+  const testSpecial = SpecialSuite()
+  const testInit = InitSuite()
+  const testInterfaces = InterfacesSuite()
+  const testCasts = CastsSuite()
+  
+  -- Library test cases
+  
+  const testStdSuite = StdSuite()
+  const testStdMapSuite = StdMapSuite()
+  const testSetSuite = SetSuite()
+  const testIOSuite1 = IOSuite1()
+  const testIOSuite2 = IOSuite2()
+  const testIOSuite3 = IOSuite3()
+  const testLoaderSuite = LoaderSuite()
+  const testReflectionSuite = ReflectionSuite()
+  const testTestCSuite = TestCSuite()
+  const testStringSuite1 = StringSuite1()
+  const testFormatSuite = FormatSuite()
+  const testOSSuite = OSSuite()
+  const testErrnoSuite = ErrnoSuite()
+  const testRandomSuite = RandomSuite()
+  const testMathSuite = MathSuite()
+  const testReSuite = ReSuite()
+  const testTimeSuite = TimeSuite()
+  const testBitopSuite = BitopSuite()
+  const testCodecsSuite = CodecsSuite()
+  const testPackSuite = PackSuite()
+  const testUnicodeSuite = UnicodeSuite()
+  const testSocketSuite = SocketSuite()
+  const testTempFileSuite = TempFileSuite()
+  const testUrlClassSuite = UrlClassSuite()
+  const testUrlFuncsSuite = UrlFuncsSuite()
+  const testCgiSuite = CgiSuite()
+  const testBase64Suite = Base64Suite()
+  const testEmailSuite = EmailSuite()
+  const testHttpSuite = HttpSuite()
+  const testMemoryStreamSuite = MemoryStreamSuite()
+  const testGlob = GlobSuite()
+  
+  const testArgparseParse = ArgparseParseSuite()
+  const testArgparseWrap = ArgparseWrapSuite()
+  const testArgparseArguments = ArgparseArgumentsSuite()
+  const testArgparseUsage = ArgparseUsageSuite()
+  const testArgparseHelp = ArgparseHelpSuite()
+
+  -- Thread test cases
+
+  const testThreadSuite1 = ThreadSuite1()
+  const testThreadSuite2 = ThreadSuite2()
+  const testThreadSuite3 = ThreadSuite3()
+  const testThreadSuite4 = ThreadSuite4()
+  const testThreadSuite5 = ThreadSuite5()
+  const testThreadSuite6 = ThreadSuite6()
+end
+
+
+def Main(args)
+  RunTest(FullSuite(), args)
+end

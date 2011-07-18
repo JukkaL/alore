@@ -1,0 +1,43 @@
+@head
+@title Overview
+
+<p>The Alore C API can be used to implement modules accessible to
+Alore programs in C or C++. By implementing modules in C you can access
+existing C libraries. This is the most common reason for using C modules,
+but a C module can also be used to improve the execution speed of many
+operations compared to a pure Alore implementation.
+
+<p>The Alore C API allows doing essentially everything that is possible in
+Alore code. You could also do many things that have no direct equivalents in
+Alore, but some of these are disallowed and are only a result of the less
+strict error checking performed by the C API.
+
+<p>You should, however, be aware the following issues before beginning to write
+a module in C:
+
+<ul>
+  <li>Implementing the same functionality in Alore C API typically requires
+    much more work than writing similar functionality in Alore. Of course,
+    sometimes it is not possible to implement some piece of code using only
+    Alore code. In a case like that, you should consider writing the simplest
+    possible C extension module and an Alore wrapper module that provides a
+    simplified or higher level interface to the C module, and implementing all
+    the functionality that is not strictly required to be implemented in C
+    in Alore.
+  <li>C modules have less protection from programming errors. They can
+    easily leak memory, cause memory corruption or break Alore language
+    semantics, if not used with care.
+  <li>C modules typically have to be compiled separately for each supported
+    platform. In addition, writing portable C code can be difficult.
+  <li>Besides requiring more work, writing C extension modules is usually
+    simply much more difficult than writing comparable Alore code. To do
+    anything non-trivial, you need to have pretty good C skills and be very
+    careful.
+  <li>Some things might be slower in C than in Alore code, for example
+    performing Alore arithmetic operations.
+    Try to do as much as possible using standard low-level C operations,
+    since Alore C API functions might be slow.
+</ul>
+
+<p>In a nutshell, always consider if Alore code might be good enough: write it
+in Alore unless there is a very compelling reason to do otherwise.

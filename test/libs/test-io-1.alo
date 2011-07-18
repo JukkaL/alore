@@ -1,0 +1,216 @@
+module libs
+
+-- io module test cases
+
+import unittest
+import io
+import __testc
+import iohelpers
+import errno
+
+
+class IOSuite1 is Suite
+  -- Test missing _write and _read methods with Stream objects using unbuffered
+  -- and buffered streams
+  def testStreamObjects()
+    var f = TestStreamMethods
+    var a = 1
+  
+    -- Calling convention of f:
+    --   f((numMemberErrors, numIoErrors), *flags)
+    f((1, 3), Output)
+    f((2, 3), Output, LineBuffered)
+    f((2, 3), Output, Unbuffered)
+    f((3, 3), Input)
+    f((3, 3), Input, LineBuffered)
+    f((3, 3), Input, Unbuffered)
+    f((4, 0), Input, Output)
+    f((5, 0), Input, Output, LineBuffered)
+    f((5, 0), Input, Output, Unbuffered)
+    
+    -- FIX: unicode strings, substrings
+  end
+  
+  -- Construct a stream object with given params and try to call all Stream
+  -- methods. Keep track of numbers and kinds of exceptions raised, and verify
+  -- that the correct exceptions were raised.
+  --
+  -- Test invalid parameters for reads/writes with Input / Output file 
+  -- streams (both unbuffered and unbuffered streams).
+  def testInvalidCalls()
+    TryInvalidCalls(Buffered)
+    TryInvalidCalls(LineBuffered)
+    TryInvalidCalls(Unbuffered)
+  end
+  
+  -- Test closing a stream.
+  def testClose()
+    var s = Stream(Input)
+    s.close()
+    AssertRaises(IoError, s.readLn, [])
+    AssertRaises(IoError, s.read, [1])
+    AssertRaises(IoError, s.readLines, [])
+    AssertRaises(IoError, s.writeLn, [])
+    AssertRaises(IoError, s.write, [])
+    AssertRaises(IoError, s.eof, [])
+    AssertRaises(IoError, s.flush, [])
+    -- Can call close multiple times.
+    s.close()
+    s.close()
+    s.close()
+    -- There is still an error after additional close operations.
+    AssertRaises(IoError, s.readLn, [])
+    
+    s = Stream(Output)
+    s.close()
+    AssertRaises(IoError, s.readLn, [])
+    AssertRaises(IoError, s.read, [1])
+    AssertRaises(IoError, s.readLines, [])
+    AssertRaises(IoError, s.writeLn, [])
+    AssertRaises(IoError, s.write, [])
+    AssertRaises(IoError, s.eof, [])
+    AssertRaises(IoError, s.flush, [])
+    -- Can call close multiple times.
+    s.close()
+    s.close()
+    s.close()
+    -- There is still an error after additional close operations.
+    AssertRaises(IoError, s.writeLn, [])
+  end
+  
+  def testInterfaces()
+    Assert(Stream() is Iterable)
+    Assert(StdIn is Iterable)
+    var iter = Stream().iterator()
+    Assert(iter is Iterator)
+  end
+  
+  def testIoErrorInstance()
+    try
+      File("saiodf")
+    except e is IoError
+      AssertEqual(e.message, "saiodf: No such file or directory [ENOENT]")
+      AssertEqual(e.code, ENOENT)
+      AssertEqual(e.errno, CodeToErrno(ENOENT))
+      return
+    end
+    Assert(False)
+  end
+end
+
+
+private def TestStreamMethods(a, *params)
+  var s = Stream(*params)
+  var n1 = 0
+  var n2 = 0
+  try 
+    s.read()
+  except MemberError
+    n1 += 1
+  except IoError
+    n2 += 1
+  end
+  try
+    s.read(1)
+  except MemberError
+    n1 += 1
+  except IoError
+    n2 += 1
+  end
+  try
+    s.readLn()
+  except MemberError
+    n1 += 1
+  except IoError
+    n2 += 1
+  end
+  try
+    s.write("foo")
+  except MemberError
+    n1 += 1
+  except IoError
+    n2 += 1
+  end
+  try
+    s.writeLn()
+  except MemberError
+    n1 += 1
+  except IoError
+    n2 += 1
+  end
+  try
+    s.flush()
+  except MemberError
+    n1 += 1
+  except IoError
+    n2 += 1
+  end
+  AssertEqual(n1, a[0])
+  AssertEqual(n2, a[1])
+end
+
+
+private def TryInvalidCalls(*bufferOpts)
+  var f = File(FileName, Output, *bufferOpts)
+  var n = 0
+  try
+    -- Write an object that can't be converted to a string.
+    f.write("aa", Dummy())
+  except TypeError
+    n += 1
+  end
+  Assert(n == 1)
+  if Unbuffered in bufferOpts
+    -- Write a unicode string.
+    try
+      f.write(Chr(256))
+    except ValueError
+      n += 1
+    end
+    try
+      f.write(WSS("foo bar\uff00!"))
+    except ValueError
+      n += 1
+    end
+    try
+      f.write(StrObj("foo bar\uff00!"))
+    except ValueError
+      n += 1
+      f.close()
+    end
+  else
+    -- Write a unicode string.
+    try
+      f.write(Chr(256))
+    except ValueError
+      n += 1
+    end
+    try
+      f.write(WSS("foo bar\uff00!"))
+    except ValueError
+      n += 1
+    end
+    try
+      f.write(StrObj("foo bar\uff00!"))
+    except ValueError
+      n += 1
+      f.close()
+    end
+  end
+  AssertEqual(n, 4)
+  f = File(FileName, Output)
+  f.write("foo bar" + Newline + "tsurp")
+  f.close()
+  f = File(FileName, *bufferOpts)
+  AssertEqual(f.read(0), "")
+  AssertRaises(ValueError, f.read, [-1])
+  AssertRaises(TypeError, f.read, ["foo"])
+  f.close()
+end
+
+
+private class Dummy
+  def _str()
+    return 1
+  end
+end

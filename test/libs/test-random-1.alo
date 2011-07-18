@@ -1,0 +1,55 @@
+module libs
+
+import unittest
+import random
+
+
+class RandomSuite is Suite
+  -- Test the Random function. 
+  -- NOTE: The distribution of the return values is not tested for randomness.
+  def testRandom()
+    Assert(Random(1) == 0)
+    Assert(Random(1) == 0)
+    for i in 0 to 200
+      var r = Random(10)
+      Assert(r is Int)
+      Assert(r >= 0)
+      Assert(r < 10)
+    end
+  end
+  
+  -- Test invalid arguments for the Random function.
+  def testRandomErrors()
+    AssertRaises(ValueError, Random, [0])
+    AssertRaises(ValueError, Random, [-1])
+    AssertRaises(TypeError, Random, [2.0])
+  end
+  
+  -- Test the RandomFloat function.
+  -- NOTE: The distribution of the return values is not tested for randomness.
+  def testRandomFloat()
+    for i in 0 to 100
+      var r = RandomFloat()
+      Assert(r is Float)
+      Assert(r >= 0)
+      Assert(r < 1)
+    end
+  end
+  
+  -- Test the Seed function.
+  def testSeed()
+    Seed()
+    Assert(Random(5) in 0 to 5)
+    var a = [nil] * 10
+    Seed(1000)
+    for i in 0 to 10
+      a[i] = RandomFloat()
+    end
+    Seed(1000)
+    for i in 0 to 10
+      Assert(a[i] == RandomFloat())
+    end
+  end
+  
+  -- IDEA: Test Random with very large ranges.
+end

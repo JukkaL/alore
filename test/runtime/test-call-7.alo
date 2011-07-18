@@ -1,0 +1,105 @@
+module runtime
+
+-- Calling Alore functions from C functions (callbacks).
+
+import unittest
+import __testc
+
+
+private var Flag
+
+private const StackOverflowMessage = "Too many recursive calls"
+
+
+class CallSuite7 is Suite
+  def testCallFunctionFromC()
+    Assert(Call(Sum2, [3, 4]) == 7)
+    Flag = 0
+    Call(VarArg, [1, 2, 3], [4, 5])
+    Assert(Flag == 1)
+    AssertEqual(nil, Call(VarArg, [1, 2]))
+  end
+  
+  def testCallFunctionFromCDifferentStackBlock()
+    -- Allocate enough stack variables that the current stack block will 
+    -- overflow.
+    var a1
+    var a2
+    var a3
+    var a4
+    var a5
+    var a6
+    var a7
+    var a8
+    var a9
+    var a10
+    var a11
+    var a12
+    var a13
+    var a14
+    var a15
+    var a16
+    var a17
+    Assert(Call(Sum2, [3, 4]) == 7)
+  end
+  
+  def testStackOverflow()
+    AssertRaises(RuntimeError, StackOverflowMessage, InfiniteRecursion, [0])
+    var o = RecursionClass()
+    AssertRaises(RuntimeError, StackOverflowMessage, o.infiniteRecursion, [0])
+    AssertRaises(RuntimeError, StackOverflowMessage, InfiniteRecursionC, [])
+    var o2 = RecursionClassC()
+    AssertRaises(RuntimeError, StackOverflowMessage, o2.infiniteRecursion, [])
+  end
+  
+  def testStackOverflowTraceback()
+    var e, tb = CallTrace(InfiniteRecursion, 0)
+    tb = tb[0:]
+    var e2, tb2 = CallTrace(InfiniteRecursion, 0)
+    AssertEqual(tb.length(), tb2.length())
+    Assert(e != e2)
+  end
+  
+  def testCallMethodFromC()
+    -- FIX implement
+  end
+  
+  def testCallClassFromC()
+    -- FIX implement
+  end
+  
+  -- FIX test a long chain of c->alore->c calls
+  -- FIX test changing stack blocks and returning stuff and raising ReturnError
+end
+
+
+private def Sum2(a, b)
+  return a + b
+end
+
+
+private def VarArg(a, b = 2, *c)
+  Assert(a == 1)
+  Assert(b == 2)
+  for i in 0 to c.length()
+    Assert(c[i] == 3 + i)
+  end
+  Flag = 1
+end
+
+
+private def InfiniteRecursion(x)
+  var y = x + 1
+  InfiniteRecursion(y)
+end
+
+
+private class RecursionClass
+  var z = 0
+
+  def infiniteRecursion(x)
+    var y = x + 1
+    z += 1
+    infiniteRecursion(y)
+  end
+end

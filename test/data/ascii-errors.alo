@@ -1,0 +1,14 @@
+encoding ascii -- Source file with ASCII encoding errors
+
+-- Invalid comments
+--   €
+--   xxxÿyyy
+--
+--   äöäöäö
+
+def Main()
+  -- Invalid string literals.
+  "€"
+  "ÿ"
+  "aaaaäöoiuoiuoiu"
+end

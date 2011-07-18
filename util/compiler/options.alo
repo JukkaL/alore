@@ -1,0 +1,41 @@
+-- options.alo - Alore-to-C compiler options
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module compiler
+
+import set
+
+
+var Debug = False
+var KeepTemps = False
+var Verbose = False
+
+var ModuleSearchPaths = GetBaseModuleSearchPaths()
+
+var CCompiler = GetCCompiler()
+
+var LinkOpts = []
+var LinkDirOpts = []
+
+var COpts = []
+
+var DynLinkOpts = Set()
+
+
+-- Add an additional library path to the linker options (LinkDirOpts).
+def AddLibPath(path)
+  -- /lib and /usr/lib are searched anyway and Solaris cc disallows using them
+  -- with the -L option, so ignore them.
+  if path == "/usr/lib" or path == "/lib"
+    return
+  end
+  
+  var opt = "-L{}".format(path)
+  if not opt in LinkDirOpts
+    LinkDirOpts.append(opt)
+  end
+end

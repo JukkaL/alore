@@ -1,0 +1,6 @@
+-- Import module with invalid header
+
+import invalid
+
+def Main()
+end

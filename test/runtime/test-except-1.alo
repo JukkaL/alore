@@ -1,0 +1,274 @@
+module runtime
+
+-- Exception raising and catching.
+
+import unittest
+import helpers
+
+
+private class A is ResourceError
+end
+
+private class ASubClass is A
+end
+
+private class BEx is ResourceError
+  var i
+
+  def create(i_)
+    i = i_
+  end
+end
+
+private class BSub is BEx
+end
+
+
+-- Simple raising / catching and not raising
+class ExceptSuite1 is Suite
+  def testT1()
+    var i = 0
+  
+    try
+      if 2 > 1
+        raise A()
+        Fail()
+      end
+    except A
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    try
+      if 2 > 1
+        i -= 1
+      end
+    except A
+      Fail()
+    end
+  
+    Ok()
+  end
+  
+  
+  -- Simple catching, exception raised by interpreter
+  def testT2()
+    var i = 0
+  
+    try
+      if 2 > 1
+        -- Cannot call an integer
+        2()
+        Fail()
+      end
+    except TypeError
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    Ok()
+  end
+  
+  
+  -- Catching and subclasses
+  def testT3()
+    var i = 0
+  
+    try
+      if 2 > 1
+        raise ASubClass()
+        Fail()
+      end
+    except A
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    try
+      try
+        if 2 > 1
+          raise A()
+          Fail()
+        end
+      except ASubClass
+        Fail()
+      end
+    except A
+      i = 2
+    end
+  
+    Assert(i == 2)
+  
+    Ok()
+  end
+  
+  
+  -- Multiple excepts
+  def testT4()
+    var i = 0
+  
+    try
+      raise A()
+    except ASubClass
+      Fail()
+    except A
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    try
+      raise ASubClass()
+    except A
+      i = 2
+    except ASubClass
+      Fail()
+    end
+  
+    Assert(i == 2)
+  
+    Ok()
+  end
+  
+  
+  -- Stack unwinding
+  def testT5()
+    var i = 0
+  
+    try
+      if 2 > 1
+        RecurseNoTry(10000)
+        Fail()
+      end
+    except A
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    try
+      if 2 > 1
+        RecurseTry(1000)
+        Fail()
+      end
+    except A
+      i = 2
+    end
+  
+    Assert(i == 2)
+  
+    Ok()
+  end
+  
+  
+  -- Exception object
+  def testT6()
+    var i = 0
+   
+    try
+      try
+        raise BEx(3)
+      except hmm is BSub
+        Fail()
+      end
+    except bInst is BEx
+      Assert(bInst.i == 3)
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    Ok()
+  end
+  
+  
+  -- Test raising an exception in an except block.
+  def testT7()
+    var i = 0
+  
+    try
+      try
+        raise A()
+      except A
+        raise ASubClass()
+      except ASubClass
+        Fail()
+      end
+    except A
+      i = 1
+    end
+  
+    Assert(i == 1)
+  
+    try
+      try
+        raise A()
+      except aInst is A
+        raise aInst
+      except A
+        Fail()
+      end
+    except A
+      i = 2
+    end
+  
+    Assert(i == 2)
+  
+    Ok()
+  end
+  
+  
+  -- Test raising an exception that is not an instance of a subclass of 
+  -- std::Exception.
+  def testT8()
+    var i = 0
+  
+    try
+      raise 8
+      Fail()
+    except TypeError
+      i += 1
+    end
+  
+    try
+      raise NotError()
+      Fail()
+    except TypeError
+      i += 1
+    end
+  
+    Assert(i == 2)
+  
+    Ok()
+  end
+end
+
+
+private def RecurseNoTry(n)
+  if n > 0
+    RecurseNoTry(n - 1)
+  else
+    [nil] * 1000
+    raise A()
+  end
+end
+
+private def RecurseTry(n)
+  if n > 0
+    try
+      RecurseTry(n - 1)
+    except ASubClass
+      Fail()
+    end
+  else
+    [nil] * 1000
+    raise A()
+  end
+end
+
+
+private class NotError
+end

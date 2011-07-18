@@ -1,0 +1,18 @@
+-- A module with errors in it.
+
+module errmodule
+
+class Foo
+  def asdfasdfxxx()
+    err
+  end
+  
+  const x
+end
+
+def MyFuncPoopopo()
+end
+
+var Foo
+
+const Zap

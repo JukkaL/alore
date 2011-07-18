@@ -1,0 +1,175 @@
+@head
+@module cgi
+@title <tt>cgi</tt>: Common Gateway Interface
+
+<p>This module implements the Common Gateway Interface (CGI). CGI scripts are
+called in response to HTTP requests by a web server. They can access the
+request parameters and HTTP headers, perform any computation and generate a
+reply in HTML or in any other data format supported by HTTP.
+
+<p>The @ref{Request} class can be used for processing form parameters and other
+information related to the HTTP request. This module also includes a number
+of useful helper functions.
+
+<p>A CGI script writes to the standard output stream the following data:
+
+<ol>
+  <li>some HTTP headers (at least Content-Type), each on a separate line
+  <li>an empty line
+  <li>the response data, in the content type specified by the headers.
+</ol>
+
+<p>Here is a minimal CGI script:
+
+@example
+  WriteLn("Content-Type: text/plain")
+  WriteLn()
+  WriteLn("response data...")
+@end
+
+<p>Refer to the <a href="http://tools.ietf.org/html/rfc3875">CGI
+specification</a> (RFC 3875) for a detailed description of CGI.
+
+<h2>Class <tt>Request</tt></h2>
+
+@class Request()
+@desc Construct an object that holds form parameter information, file
+      uploads, HTTP headers and other miscellaneous data related to a HTTP
+      request.
+@end
+
+<p><tt>Request</tt> objects support the @ref{Map} interface and additional
+operations. Refer to the <tt>Map</tt> documentation for additional supported
+operations and methods.
+
+<h3><tt>Request</tt> operations</h3>
+
+@op request[name]
+@desc Return the first value for the named form control.
+      Raise @ref{IndexError} if no such control is defined.
+@end
+
+<h3><tt>Request</tt> methods</h3>
+
+@fun hasKey(name)
+@desc Return a boolean indicating whether there are any values for the named
+      form control.
+@end
+
+@fun valueList(name)
+@desc Return an array containing all the values for the named form control.
+      The array may empty.
+@end
+
+@fun hasUpload(name)
+@desc Return a boolean indicating whether there is at least a single uploaded
+      file for the named control.
+@end
+
+@fun uploadList(name)
+@desc Return a list of @ref{UploadInfo} objects related to the named form
+      control.
+@end
+
+@fun uploads()
+@desc Return an array of names of controls that have at least a single file
+      upload associated with them.
+@end
+
+<h3><tt>Request</tt> constants</h3>
+
+@var method
+@desc The method of the HTTP request. Valid values include "GET", "POST" and
+      "HEAD".
+@end
+
+@var contentType
+@desc The HTTP content type of a post request, or <tt>nil</tt> if undefined.
+@end
+
+@var contentLength
+@desc The content length of a post request, in bytes, or <tt>nil</tt> if
+      undefined.
+@end
+
+@var pathInfo
+@desc Additional path information provided after the base URL of the CGI
+      script, or <tt>nil</tt> if exactly the base URL was used.
+      <p>For example, if the base URL for the script is
+      http://host/script.cgi and the actual URL is
+      http://host/script.cgi/path, <tt>pathInfo</tt> contains
+      <tt>"/path"</tt>.
+@end
+
+@var userAgent
+@desc The value of the User-Agent request header.
+@end
+
+@var remoteAddr
+@desc The IP address of the remote host as a string, or <tt>nil</tt> if it is
+      undefined.
+@end
+
+@var remoteHost
+@desc The hostname of the remote host as a string, or <tt>nil</tt> if it is
+      undefined.
+@end
+
+@end-class
+
+<h2>Functions</h2>
+
+@fun HtmlEncode(str)
+@desc Return the input string encoded as HTML. HTML special characters &lt;,
+      &gt;, &amp; and &quot; are replaced with the corresponding
+      character entities.
+@end
+
+@fun HtmlEncodeQuotes(str)
+@desc Return the input string encoded as HTML. Like <tt>HtmlEncode</tt>,
+      but also replace the single quote ' with a character entity.
+@end
+
+@fun SetMaxPostSize(n)
+@desc Set the maximum post size (in bytes). Raise @ref{RuntimeError} when
+      constructing a <tt>Request</tt> object if the value of the
+      Content-Length header is larger than this limit. Set the limit to -1 
+      to enable an unlimited post size.
+      @note The default maximum post size is 10 megabytes.
+      @end
+@end
+
+@fun ParseQuery(query)
+@desc Parse an URL encoded query string into an array of key/value pairs.
+      Example:
+      @example
+        ParseQuery("foo=1&amp;bar=x+y")   -- Result: ["foo" : "1", "bar" : "x y"]
+      @end
+@end
+
+@fun DumpEnv()
+@desc Write the contents of all defined environment variables to standard
+      output formatted in HTML. This can be useful when debugging CGI scripts.
+@end
+
+<h2>Class <tt>UploadInfo</tt></h2>
+
+@class-hidden UploadInfo
+
+<p>Instances of <tt>UploadInfo</tt> represent uploaded files and contain the
+the following constant members:
+
+@var fileName
+@desc The original file name of the uploaded file, provided by the client.
+@end
+  
+@var contentType
+@desc The value of the Content-Type header for the uploaded file, or
+      <tt>nil</tt> if undefined.
+@end
+
+@var data
+@desc A narrow binary string containing the contents of the uploaded file.
+@end
+
+

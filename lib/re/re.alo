@@ -1,0 +1,136 @@
+-- re.alo - Regular expressions
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module re
+
+import __re
+import string
+
+
+class RegExp is __re::RegExp
+end
+
+
+class RegExpError is ValueError
+end
+
+
+class MatchResult
+  def group(n)
+  end
+  def span(n)
+  end
+end
+
+
+const Match = __re::Match
+const Search = __re::Search
+const IgnoreCase = __re::IgnoreCase
+
+
+def Subst(str, re, repl)
+  var a = []
+  
+  var rr = []
+  if repl is Str and "\" in repl
+    var i = 0
+    while i < repl.length() - 1
+      if repl[i] == "\"
+        var c = repl[i + 1]
+        if IsDigit(c)
+          rr.append((i, Int(c)))
+        else
+          rr.append((i, c))
+        end
+        i += 2
+      else
+        i += 1
+      end
+    end
+  end
+  
+  var i = 0
+  while i < str.length()
+    var m = Search(re, str, i)
+    if m == nil
+      break
+    end
+    var span = m.span(0)
+    a.append(str[i:span.left])
+    if repl is Str
+      var rs = repl
+      var j = rr.length() - 1
+      while j >= 0
+        var aa, b = rr[j]
+        if b is Int
+          var g = m.group(b)
+          if g == nil
+            g = ""
+          end
+          rs = rs[:aa] + g + rs[aa + 2:]
+        else
+          rs = rs[:aa] + rs[aa + 1:]
+        end
+        j -= 1
+      end
+      a.append(rs)
+    else
+      a.append(repl(m))
+    end
+    i = span.right
+  end
+  a.append(str[i:])
+
+  return "".join(a)
+end
+
+
+def Split(str, re)
+  var res = []
+  
+  var i = 0
+  var j = 0
+  while j < str.length()
+    var m = Search(re, str, j)
+    if m == nil
+      break
+    end
+    var span = m.span(0)
+    var lo = span.left
+    var hi = span.right
+    if hi <= lo
+      j += 1
+    else
+      res.append(str[i:lo])
+      i = hi
+      j = i
+    end
+  end
+  res.append(str[i:])
+  
+  return res
+end
+
+
+def FindAll(re, str)
+  var res = []
+  var i = 0
+  while True
+    var m = Search(re, str, i)
+    if m == nil
+      break
+    end
+    res.append(m)
+    var ii = m.span(0).right
+    if ii == i
+      i += 1
+    else
+      i = ii
+    end
+  end
+  return res
+end

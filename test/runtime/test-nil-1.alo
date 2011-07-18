@@ -1,0 +1,36 @@
+module runtime
+
+-- Test cases for the nil value
+
+import unittest
+import reflect
+
+
+class NilSuite is Suite
+  -- Test Object creation and equality comparison.
+  def testEquality()
+    Assert(nil == nil)
+    AssertNotEqual(nil, False)
+    AssertNotEqual(False, nil)
+    AssertNotEqual(nil, Object())
+    AssertNotEqual(Object(), nil)
+  end
+  
+  def testStr()
+    AssertEqual(Str(nil), "nil")
+  end
+  
+  def testRepr()
+    AssertEqual(Repr(nil), "nil")
+  end
+  
+  -- Test Object members.
+  def testMembers()
+    Assert(HasMember(nil, "_eq"))
+    Assert(HasMember(nil, "_str"))
+    Assert(not HasMember(nil, "_repr"))
+    Assert(nil._eq(nil))
+    Assert(not nil._eq(False))
+    AssertEqual(nil._str(), "nil")
+  end
+end

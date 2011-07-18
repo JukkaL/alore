@@ -1,0 +1,131 @@
+-- textwrapper.alo - Text wrapping
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module argparse
+
+import re
+import string
+
+
+private const DefaultSeparator = RegExp("[ \t\r\n]+") as RegExp
+
+
+class __TextWrapper
+  var separator = DefaultSeparator as RegExp
+  var splitLongWords = True        as Boolean
+  var initialIndent = ""           as Str
+  var subsequentIndent = ""        as Str
+
+  def wrap(s as Str, maxWidth = 70 as Int) as Array<Str>
+    var a = [] as <Str>
+    var i0 = 0  -- Start of the current line
+    var i = 0   -- Latest location after whitespace within current line
+    var i2 = 0  -- Latest location after word within current line
+    var initSpace = 0 -- Length of space at the start of the current line
+    var subsequentIndent = ExpandTabs(self.subsequentIndent)
+        
+    if subsequentIndent.length() >= maxWidth
+      raise ValueError("subsequentIndent too long")
+    end
+    
+    -- Prepend first line indent. Also expand tabs; otherwise row lengths 
+    -- would be be arbitrary.
+    s = ExpandTabs(self.initialIndent) + ExpandTabs(s)
+    
+    while i < s.length()
+      -- Find the next separator.
+      var m = Search(self.separator, s, i)
+      var lo, hi as (Int, Int)
+      if m == nil
+        lo = s.length()
+        hi = lo
+      else
+        lo, hi = m.span(0).left, m.span(0).right
+      end
+      
+      -- Record the occurrance of space at the start of a line.
+      if lo == i0
+        -- Ignore space if it's more than two thirds of the line length (this 
+        -- is somewhat arbitrary).
+        if hi - lo > 2 * maxWidth div 3
+          i0 = hi
+          lo = i0
+        else
+          initSpace = hi - lo
+        end
+      end
+      
+      -- Need to break a line?
+      if lo - i0 > maxWidth
+        if initSpace > 0 and i2 == i0
+          -- A single word cannot fit on a line + space at the start of the 
+          -- line. Truncate the space.
+          i0 += initSpace
+          i2 = i0
+        end
+      
+        if i2 == i0
+          -- A single word is too long to fit on a single line.
+          var len = maxWidth
+          if not self.splitLongWords
+            -- Insert the entire word since we must not split words.
+            len = lo - i0
+          end
+          -- Split the word.
+          a.append(s[i0:i0 + len])
+          if self.splitLongWords
+            i0 += len
+          else
+            -- Also skip the whitespace following the word.
+            i0 = hi
+          end
+        else
+          -- Normal case, add all the accumulated words on this line and 
+          -- continue with the next line.
+          a.append(normalize(s[i0:i2]))
+          i0 = i
+        end
+        i = i0
+        i2 = i0
+        initSpace = 0        
+        
+        -- The rows after the first need to reserve space for indent, if any.
+        if a.length() == 1
+          maxWidth -= subsequentIndent.length()
+        end
+      else
+        -- No line break.
+        i = hi
+        i2 = lo
+      end
+    end
+
+    -- Add the rest of the text, if any.
+    if i0 < s.length() or a == []
+      a.append(normalize(s[i0:i2]))
+    end
+    
+    -- Apply subsequent indent if it's defined.
+    if subsequentIndent != ""
+      for j in 1 to a.length()
+        a[j] = subsequentIndent + a[j]
+      end
+    end
+
+    return a
+  end
+
+  -- Replace all whitespace with spaces in s and return the result.
+  private def normalize(s as Str) as Str
+    return Subst(s, self.separator, def (m as MatchResult) as Str
+                                      var ss = m.group(0)
+                                      -- CR+LF is logically a single character.
+                                      ss = ss.replace(CR + LF, " ")
+                                      return " " * ss.length()
+                                    end)
+  end  
+end

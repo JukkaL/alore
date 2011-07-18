@@ -1,0 +1,138 @@
+@head
+@module io
+@title <tt>io</tt>: Basic file access
+
+<p>This module provides facilities for reading, creating, and writing files.
+The <tt>Stream</tt> class is also used as a base class for other file-like
+objects such as network connections.
+
+<p>Streams support both character and line based input and output. All of
+the following line endings are accepted when reading lines:
+
+<ul>
+  <li>CR (carriage return, decimal code 13)
+  <li>LF (line feed, decimal code 10)
+  <li>CR+LF
+</ul>
+
+<p>Line based output uses the native line ending of the platform
+(CR+LF on Windows, LF on Unix-like operating systems).
+
+<p>All file operations and some stream operations may raise a
+@ref{std::IoError} exception.
+
+@see The module @ref{encodings} defines several useful text file encodings that
+     can be used with @ref{TextStream} and @ref{TextFile} classes.
+@end
+
+<h2>Stream classes</h2>
+
+<dl>
+  <dt><b>
+    @link io_file.html
+    </b>
+  <dd>This class represents open files using raw access, i.e. no character
+    set conversion.
+  <dt><b>
+    @link io_textfile.html
+    </b>
+  <dd>This class represents open text files with a particular character
+    encoding.
+  <dt><b>
+    @link io_stream.html
+    </b>
+  <dd>This is the abstract base class of all stream classes defined in this
+    module.
+  <dt><b>
+    @link io_textstream.html
+    </b>
+  <dd>This class can be used to wrap around raw streams to provide
+    transparent character set conversion when reading or writing.
+</dl>
+  
+<h2>Standard streams</h2>
+
+<p>The following constants refer to standard streams. They are available as
+text stream objects using the platform default encoding:
+
+@var StdIn
+@desc The standard input stream.
+@end
+  
+@var StdOut
+@desc The standard output stream. This stream will be line buffered if
+      connected to a terminal, and buffered otherwise.
+@end
+  
+@var StdErr
+@desc The standard error stream. This stream is always unbuffered.
+@end
+
+<p>The standard streams are also available as raw 8-bit streams:
+  
+@var RawStdIn
+@var RawStdOut
+@var RawStdErr
+@desc Raw standard streams. The buffering mode is the same as with
+      corresponding non-raw streams.
+@end
+
+<h2>Stream options</h2>
+
+<p>Several options can be used with <tt>Stream</tt> and <tt>File</tt>
+constructors. They are all symbolic constants:
+
+@var Input
+@desc Stream option for reading.
+@end
+  
+@var Output
+@desc Stream option for writing.
+@end
+  
+@var Append
+@desc <tt>File</tt> option for opening a file for writing. The existing 
+      file contents will be kept and the file pointer will be moved to the end 
+      of the file when the file is opened.
+@end
+
+@var Unbuffered
+@desc Stream option for unbuffered access. The stream will be automatically
+      flushed after every output operation and the use of an input buffer is
+      minimized.
+@end
+  
+@var LineBuffered
+@desc Stream option for line buffered access. The stream will be
+      automatically flushed after writing a line break. The output and input
+      buffer sizes will be small.
+@end
+
+@var Buffered
+@desc Stream option for fully buffered access. All stream input and output
+      operations will be buffered. The <tt>flush</tt>
+      method (or the <tt>close</tt> method) must be
+      called after a set of write operations.
+@end
+
+@var Narrow
+@desc Stream option for creating a <i>narrow stream</i>. Narrow streams 
+      only process 8-bit (narrow) strings, i.e. strings with no character codes
+      larger than 255.
+@end
+
+@var Protected
+@desc File option for creating a file that can only be accessed by the current
+      user.
+@end
+
+<h2>Default encoding</h2>
+  
+<p>The platform default encoding class:
+
+@var DefaultEncoding
+@desc The default system text encoding. Its value depends on the current
+      locale settings and the operating system. This object implements the
+      @href{Character encoding interface} described in the @ref{encodings}
+      module.
+@end

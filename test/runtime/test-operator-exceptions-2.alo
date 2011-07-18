@@ -1,0 +1,423 @@
+module runtime
+
+import unittest
+import libs
+
+
+class OperatorExceptionMessagesSuite is Suite
+  const anonFunc = def (); end
+  const ss = SS("foo bar 123")
+
+  private const opFuncs = Map(
+    "+" :   def (x, y)
+              return x + y
+            end,
+    "-" :   def (x, y)
+              return x - y
+            end,
+    "*" :   def (x, y)
+              return x * y
+            end,
+    "/" :   def (x, y)
+              return x / y
+            end,
+    "div" : def (x, y)
+              return x div y
+            end,
+    "mod" : def (x, y)
+              return x mod y
+            end,
+    "**" : def (x, y)
+              return x ** y
+            end,
+    "<" :   def (x, y)
+              return x < y
+            end,
+    ">" :   def (x, y)
+              return x > y
+            end,
+    "<=" :  def (x, y)
+              return x <= y
+            end,
+    ">=" :  def (x, y)
+              return x >= y
+            end,
+    "in"  : def (x, y)
+              return x in y
+            end,
+    "is"  : def (x, y)
+              return x is y
+            end,
+    "not <" : def (x, y)
+              return not x < y
+            end,
+    "not >" : def (x, y)
+              return not x > y
+            end,
+    "not <=" : def (x, y)
+              return not x <= y
+            end,
+    "not >=" : def (x, y)
+              return not x >= y
+            end,
+    "not in" : def (x, y)
+              return not x in y
+            end,
+    "not is" : def (x, y)
+              return not x is y
+            end,
+    "and" : def (x, y)
+              return x and y
+            end,
+    "or" :  def (x, y)
+              return x or y
+            end,
+  )
+
+  def testArithmeticOps()
+    for op in "+", "-", "/", "mod", "div", "**"
+      assertBinOpMessage(op, 1, "x")
+      assertBinOpMessage(op, "x", 1)
+      assertBinOpMessage(op, 1.1, "x")
+      assertBinOpMessage(op, "x", 1.1)
+      assertBinOpMessage(op, 1, nil)
+      assertBinOpMessage(op, nil, 1)
+      
+      assertBinOpMessage(op, True, 1)
+      assertBinOpMessage(op, True, "x")
+      assertBinOpMessage(op, "x", True)
+      
+      assertBinOpMessage(op, Ord, 1)
+      assertBinOpMessage(op, 1, testIn)
+      assertBinOpMessage(op, anonFunc, 1)
+      
+      assertBinOpMessage(op, (1 : 2), "x")
+      assertBinOpMessage(op, "x", (1 : 2))
+      
+      assertBinOpMessage(op, "x", [])
+      if op != "+"
+        assertBinOpMessage(op, [], "x")
+      end
+      
+      assertBinOpMessage(op, "x", ())
+      assertBinOpMessage(op, (), "x")
+      
+      assertBinOpMessage(op, User(), "x")
+      assertBinOpMessage(op, "x", User())
+      
+      assertBinOpMessage(op, 1, "\u1234")
+      assertBinOpMessage(op, "\u1234", 1)
+      
+      assertBinOpMessage(op, User(), "\u1234")
+      assertBinOpMessage(op, "\u1234", User())
+      
+      assertBinOpMessage(op, User(), ss)
+      assertBinOpMessage(op, ss, User())
+    end
+    
+    -- + switches operands if the left operand is Int/Float.
+    AssertRaises(TypeError, opMsg("+", True, 1), def (); 1 + True; end)
+    AssertRaises(TypeError, opMsg("+", True, 1.1), def (); 1.1 + True; end)
+    
+    AssertRaises(TypeError, "Can only concatenate Array (not Str) to Array", 
+                 def (); [] + "x"; end)
+  end
+  
+  def testMultiply()
+    assertBinOpMessage("*", "x", 1.0)
+    assertBinOpMessage("*", 1.0, "x")
+    assertBinOpMessage("*", "x", nil)
+    assertBinOpMessage("*", 1, nil)
+    assertBinOpMessage("*", nil, 1)
+    
+    assertBinOpMessage("*", True, 1)
+    assertBinOpMessage("*", True, "x")
+    assertBinOpMessage("*", "x", True)
+    
+    assertBinOpMessage("*", "x", [])
+    
+    assertBinOpMessage("*", "x", ())
+    assertBinOpMessage("*", (), "x")
+    
+    assertBinOpMessage("*", "x", User())
+    assertBinOpMessage("*", User(), "x")
+    
+    assertBinOpMessage("*", ss, User())
+    assertBinOpMessage("*", User(), ss)
+    
+    assertBinOpMessage("*", "\u1234", User())
+    assertBinOpMessage("*", User(), "\u1234")
+    
+    assertBinOpMessage("*", ss, User())
+    assertBinOpMessage("*", User(), ss)
+    
+    assertBinOpMessage("*", "x", Ord)
+    assertBinOpMessage("*", testIn, "x")
+    assertBinOpMessage("*", anonFunc, "x")
+    
+    -- * switches operands if the left operand is Int/Float.
+    AssertRaises(TypeError, opMsg("*", True, 1), def (); 1 * True; end)
+    AssertRaises(TypeError, opMsg("*", True, 1.1), def (); 1.1 * True; end)
+    
+    AssertRaises(TypeError, "Int expected (but Str found)", 
+                 def (); [] * "x"; end)
+  end
+  
+  def testCompare()
+    for op in "<", ">", "<=", ">=", "not <", "not >", "not <=", "not >="
+      assertBinOpMessage(op, 1, "x")
+      assertBinOpMessage(op, "x", 1)
+      assertBinOpMessage(op, 1.1, "x")
+      assertBinOpMessage(op, "x", 1.1)
+      assertBinOpMessage(op, 1, nil)
+      assertBinOpMessage(op, nil, 1)
+
+      assertBinOpMessage(op, True, "x")
+      assertBinOpMessage(op, "x", True)
+      
+      assertBinOpMessage(op, "x", [])
+      
+      assertBinOpMessage(op, 1, Ord)
+      assertBinOpMessage(op, testIn, 1)
+      
+      assertBinOpMessage(op, (1 : 2), "x")
+      assertBinOpMessage(op, "x", (1 : 2))
+      
+      assertBinOpMessage(op, "x", (1, 2))
+      
+      assertBinOpMessage(op, User(), "x")
+      assertBinOpMessage(op, "x", User())
+      
+      assertBinOpMessage(op, 1, "\u1234")
+      assertBinOpMessage(op, "\u1234", 1)
+      
+      assertBinOpMessage(op, 1, ss)
+      assertBinOpMessage(op, ss, 1)
+    end
+    
+    -- Int/Float sometimes switch operands.
+    
+    AssertRaises(TypeError, opMsg(">", True, 1), def (); 1 < True; end)
+    AssertRaises(TypeError, opMsg("<", True, 1), def (); 1 > True; end)
+    AssertRaises(TypeError, opMsg(">=", True, 1), def (); 1 <= True; end)
+    AssertRaises(TypeError, opMsg("<=", True, 1), def (); 1 >= True; end)
+    
+    AssertRaises(TypeError, opMsg(">", True, 1.1), def (); 1.1 < True; end)
+    AssertRaises(TypeError, opMsg("<", True, 1.1), def (); 1.1 > True; end)
+    AssertRaises(TypeError, opMsg(">=", True, 1.1), def (); 1.1 <= True; end)
+    AssertRaises(TypeError, opMsg("<=", True, 1.1), def (); 1.1 >= True; end)
+    
+    -- Array/Tuple have special messages.
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+                 def (); [] < "x"; end)
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+                 def (); [] > "x"; end)
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+                 def (); () < "x"; end)
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+                 def (); () > "x"; end)
+  end
+  
+  def testIn()
+    assertBinOpMessage("in", 1, 1)
+    assertBinOpMessage("in", 1, "x")
+    assertBinOpMessage("in", "x", 1)
+    assertBinOpMessage("in", 1, nil)
+    assertBinOpMessage("in", 1, 1.1)
+    assertBinOpMessage("in", 1, testIn)
+    assertBinOpMessage("in", 1, Ord)
+    
+    assertBinOpMessage("in", 1, True)
+    
+    assertBinOpMessage("in", 1, User())
+    
+    assertBinOpMessage("not in", 1, nil)
+    assertBinOpMessage("not in", 1, 1)
+    assertBinOpMessage("not in", 1, "x")
+  end
+  
+  def testIs()
+    assertBinOpMessage("is", 1, 1)
+    assertBinOpMessage("is", 1, "x")
+    assertBinOpMessage("is", True, nil)
+    assertBinOpMessage("is", nil, 1)
+    
+    assertBinOpMessage("is", nil, User())
+    
+    assertBinOpMessage("not is", 1, nil)
+    assertBinOpMessage("not is", 1, 1)
+    assertBinOpMessage("not is", 1, "x")
+  end
+  
+  def testAnd()
+    assertBinOpMessage("and", 1, True, "Invalid type for boolean (Int)")
+    assertBinOpMessage("and", True, "x", "Invalid type for boolean (Str)")
+    assertBinOpMessage("and", nil, True, "Invalid type for boolean (nil)")
+    assertBinOpMessage("and", User(), True, 
+                       "Invalid type for boolean (runtime::User)")
+  end
+  
+  def testOr()
+    assertBinOpMessage("or", 1, True, "Invalid type for boolean (Int)")
+    assertBinOpMessage("or", False, "x", "Invalid type for boolean (Str)")
+    assertBinOpMessage("or", nil, True, "Invalid type for boolean (nil)")
+  end
+  
+  def testInc()
+    AssertRaises(TypeError, "Unsupported operand types for + (nil and Int)",
+                 def (); var x; x += 1; end)
+    AssertRaises(TypeError, 
+                 "Unsupported operand types for + (runtime::User and Int)",
+                 def (); var x = User(); x += 1; end)
+  end
+  
+  def testDec()
+    AssertRaises(TypeError, "Unsupported operand types for - (nil and Int)",
+                 def (); var x; x -= 1; end)
+    AssertRaises(TypeError, 
+                 "Unsupported operand types for - (runtime::User and Int)",
+                 def (); var x = User(); x -= 1; end)
+  end
+  
+  def testNot()
+    AssertRaises(TypeError, "Invalid type for boolean (Int)", 
+                 def (); if not 1; end; end)
+    AssertRaises(TypeError, "Invalid type for boolean (runtime::User)", 
+                 def (); var x = not User(); end)
+  end
+  
+  def testNeg()
+    AssertRaises(TypeError, "Invalid operand type for unary - (Str)",
+                 def (); -"x"; end)
+    AssertRaises(TypeError, 
+                 "Invalid operand type for unary - (runtime::User)", 
+                 def (); var x = -User(); end)
+  end
+  
+  def testIndexingWithInvalidBase()
+    AssertRaises(TypeError, "nil object is not indexable",
+                 def (); nil[1]; end)
+    AssertRaises(TypeError, "Int object is not indexable",
+                 def (); 1[1]; end)
+    AssertRaises(TypeError, "True object is not indexable",
+                 def (); True[True]; end)
+    AssertRaises(TypeError, "runtime::User object is not indexable",
+                 def (); User()[1]; end)
+  end
+  
+  def testIndexingWithInvalidIndexType()
+    AssertRaises(TypeError, "Array indexed with non-integer (Str)",
+                 def (); []["x"]; end)
+    AssertRaises(TypeError, "Str indexed with non-integer (Float)",
+                 def (); "x"[1.1]; end)
+  end
+ 
+  def testIndexingWithInvalidSliceType()                 
+    var msg = "Slice index neither Int nor nil"
+    AssertRaises(TypeError, msg,
+                 def ()
+                   []["x":1]
+                 end)
+    AssertRaises(TypeError, msg,
+                 def ()
+                   [][1:"x"]
+                 end)
+    AssertRaises(TypeError, msg,
+                 def ()
+                   "x"["x":1]
+                 end)
+    AssertRaises(TypeError, msg,
+                 def ()
+                   "x"[1:"x"]
+                 end)
+  end
+  
+  def testIndexingWithInvalidIndexValue()
+    AssertRaises(IndexError, "Array index out of range",
+                 def (); [][1]; end)
+    AssertRaises(IndexError, "Array index out of range",
+                 def (); [][-1]; end)
+    AssertRaises(IndexError, "String index out of range",
+                 def (); "x"[1]; end)
+    AssertRaises(IndexError, "String index out of range",
+                 def (); "x"[-21]; end)
+    -- Map()[1]
+  end
+  
+  def testCallingAnInvalidValue()
+    AssertRaises(TypeError, "True is not callable",
+                 def (); True(1); end)
+    AssertRaises(TypeError, "Int is not callable",
+                 def (); 1(1); end)
+    AssertRaises(TypeError, "Array is not callable",
+                 def (); [](1); end)
+    AssertRaises(TypeError, "Pair is not callable",
+                 def (); (1 : 2)(1); end)
+    AssertRaises(TypeError, "nil is not callable",
+                 def (); nil(1); end)
+  end
+  
+  private def assertBinOpMessage(op, left, right, msg = opMsg(op, left, right))
+    try
+      self.opFuncs[op](left, right)
+    except e is TypeError
+      AssertEqual(e.message, msg)
+      return
+    end
+    raise AssertionFailure("No exception")
+  end
+  
+  private def opMsg(op, left, right)
+    var tl = typeStr(left)
+    var tr = typeStr(right)
+    var opStr = opStr(op)
+    return "Unsupported operand types for {} ({} and {})".format(opStr, tl, tr)
+  end
+  
+  private def typeStr(v)
+    if v is Int
+      return "Int"
+    elif v is Str
+      return "Str"
+    elif v is Float
+      return "Float"
+    elif v == nil
+      return "nil"
+    elif v == True
+      return "True"
+    elif v == Ord or v == anonFunc
+      return "Function"
+    elif v is Function
+      return "bound method"
+    elif v is Pair
+      return "Pair"
+    elif v is Array
+      return "Array"
+    elif v is Tuple
+      return "Tuple"
+    elif v is User
+      return "runtime::User"
+    else
+      return "???"
+    end
+  end  
+  
+  private const opMap = Map("in" : """in""", 
+                            "is" : """is""",
+                            "<" : "< or >=",
+                            ">=" : "< or >=",
+                            ">" : "> or <=",
+                            "<=" : "> or <=")
+
+  private def opStr(op)
+    if op.startsWith("not ")
+      return opStr(op[4:])
+    else
+      return self.opMap.get(op, op)
+    end
+  end
+end
+
+
+class User
+end

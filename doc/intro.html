@@ -1,0 +1,2619 @@
+@head
+
+<div id="header">
+  @title Introduction to Alore
+
+  <div class="author">Jukka Lehtosalo</div>
+  <div class="email">@email</div>
+  <div class="release-id">@release</div>
+</div>
+
+<h2><a name="preface"></a>Preface</h2>
+
+<p>Alore is a dynamically-typed, object-oriented general-purpose programming
+language.
+This document introduces the main features of the Alore programming language in
+a concise manner for a reader who already understands the basics
+of programming. Some programming experience with an object-oriented programming
+language such as Java, C++ or Python should be enough to understand
+this document without difficulty.
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+<li><a href="#hello">Hello, world</a>
+<li><a href="#localvars">Local variables and the Main function</a>
+<li><a href="#comments">Comments</a>
+<li><a href="#statements">Statements</a>
+  <ul>
+    <li><a href="#assignment">Assignment statement and expressions</a>
+    <li><a href="#if">The if statement</a>
+    <li><a href="#line">Line breaks</a>
+    <li><a href="#loops">The for, while, repeat and break
+        statements</a>
+    <li><a href="#switch">The switch statement</a>
+  </ul>
+<li><a href="#functions">Functions</a>
+  <ul>
+    <li><a href="#anonfunc">Anonymous functions</a>
+    <li><a href="#vararg">Default argument values</a>
+  </ul>
+<li><a href="#globalvars">Global variables and constants</a>
+<li><a href="#types">Types and objects</a>
+  <ul>
+    <li><a href="#int">Int</a>
+    <li><a href="#float">Float</a>
+    <li><a href="#str">Str</a>
+    <li><a href="#array">Array</a>
+    <li><a href="#tuple">Tuple</a>
+    <li><a href="#varargs">Functions with an arbitrary number of arguments</a>
+    <li><a href="#cargs">Command line arguments</a>
+    <li><a href="#map">Map and Pair</a>
+    <li><a href="#booleans">Boolean values</a>
+    <li><a href="#const">Symbolic constants</a>
+    <li><a href="#nil">The nil value</a>
+    <li><a href="#addittypes">Additional primitive types</a>
+  </ul>
+<li><a href="#operators">Operators</a>
+<li><a href="#classes">Classes</a>
+  <ul>
+    <li><a href="#struct">Simple structured data</a>
+    <li><a href="#methods">Methods</a>
+    <li><a href="#init">Constructors and initialization</a>
+    <li><a href="#constmember">Constant members</a>
+    <li><a href="#identity">Object identity</a>
+    <li><a href="#private">Private members</a>
+    <li><a href="#inherit">Inheritance and polymorphism</a>
+    <li><a href="#accessors">Accessors</a>
+    <li><a href="#boundmethods">Bound methods</a>
+    <li><a href="#specialmethods">Special method names</a>
+    <li><a href="#interfaces">Interfaces and extending the for loop</a>
+    <li><a href="#opoverload">Operator overloading</a>
+  </ul>
+<li><a href="#modules">Modules and scopes</a>
+  <ul>
+    <li><a href="#collisions">Scopes and name collisions</a>
+    <li><a href="#hierarchical">Hierarchical modules</a>
+  </ul>
+<li><a href="#exceptions">Exceptions</a>
+  <ul>
+    <li><a href="#raising">Defining and raising exceptions</a>
+    <li><a href="#finally">The finally block</a>
+  </ul>
+<li><a href="#stdlib">The standard library</a>
+</ul>
+
+<h2><a name="introduction"></a>Introduction</h2>
+
+<p>Alore is a general-purpose programming language designed to be
+suitable for many typical programming tasks, ranging from small scripts to
+large and complex applications. It strives for a balanced middle ground
+between scripting
+languages and statically-typed object-oriented programming languages. Alore
+provides high-level
+data types, powerful string processing facilities and a quick edit-run
+cycle like a typical scripting language, but it also naturally supports a more
+structured programming approach than most traditional scripting languages.
+
+<p>This document aims to give a concise overview of programming in Alore.
+Alore is a fairly small language and easy to master, and an
+experienced programmer should become productive with Alore in a day
+or two.
+
+<p>Alore has a design philosophy strongly favoring simplicity, clarity and
+consistency,
+while always remaining pragmatic. Alore tries to achieve a good balance
+between readability and expressive power, resulting in a language that
+encourages writing clear and compact code that is easy to write,
+understand and modify.
+
+<p>Alore borrows ideas from many other programming languages. Python
+is the main source of influence, and there are many
+obvious similarities between Alore and Python in both syntax and libraries.
+
+<p>Here is a quick list of some of the most significant Alore features:
+<ul>
+  <li>clean, readable and concise syntax
+  <li>simple and consistent semantics that
+    <ul>
+      <li>simplify learning</li>
+      <li>help reasoning about programs, both by humans and by tools</li>
+      <li>improve run-time efficiency</li>
+      <li>make the formal specification and analysis of Alore practical
+    </ul>
+  <li>dynamic typing (objects have types, not variables)
+  <li>classes with inheritance
+  <li>everything is an object, including primitive types such as integers and
+    booleans
+  <li>flexible and powerful high-level basic types, including
+    arbitrary-precision
+    integers, Unicode strings, growable arrays and hash-table-based maps
+  <li>automatic garbage collection (no need to manually free memory)
+  <li>strong dynamic typing (few implicit type conversions, all objects have
+      well-defined types)
+  <li>structured and extensible exception handling
+  <li>safety from pointer errors and crashes (all error conditions in Alore
+    code are checked by the virtual machine)
+  <li>proper, language-enforced encapsulation both at class and module
+    levels
+  <li>hierarchical modules with separate namespaces
+  <li>accessor methods for member variables (also known as properties)
+  <li>anonymous functions and lexical closures
+  <li>support for native threads that can take advantage of multi-core
+    processors
+  <li>operator overloading
+  <li>a well-defined API for implementing extension modules in C
+</ul>
+
+<p>This introduction uses a bottom-up approach: basics are introduced first,
+and explanations of more advances concepts are built on top of more basic
+concepts. The next section presents the traditional
+"Hello world" program in Alore, and 
+instructions for getting your first program up and running.
+The rest of this document explains different language
+constructs, with short source code examples for each feature.
+Experienced programmers can get a quick overview of the 
+syntax of Alore by
+only looking at the section titles and code examples. Finally, the last section
+gives a quick introduction to some of the most important Alore standard library
+modules.
+
+<p>We include quite a few details that we could arguably have omitted for
+brevity. This is used to emphasize the fact that
+Alore is not only easy to get started with, but there aren't many hidden
+complex features and trivia needed to properly master the language.
+
+<p>You may refer to the
+<a href="langref.html">Alore Language Reference</a> for more detailed
+explanations after having read this document. The
+<a href="libmain.html">Alore Library Reference</a> explains
+all the modules and types in the Alore standard library. This introduction 
+contains links to the Library Reference for getting further
+information on specific topics.
+
+<h2><a name="hello"></a>Hello, world</h2>
+
+<p>The traditional first program simply displays a message:
+
+@example
+  Print('Hello, world')
+@end
+
+<p>Enter the program in any text editor and save it as "hello.alo". If
+you have the Alore interpreter in your PATH, you can then run the program
+in the shell or the command prompt:
+
+@example
+  $ <b>alore hello.alo</b>
+  Hello, world
+  $
+@end
+
+<p>The above example only defines a single statement that calls the
+<tt>Print</tt> function to display the message.
+
+<h2><a name="localvars"></a>Local variables and the Main function</h2>
+
+<p>The <tt>def</tt> keyword defines functions and
+the <tt>var</tt> keyword is used to define variables:
+
+@example
+  def Main()
+    var local
+    var two = 'two'
+    -- Define two local variables.
+    var first, second
+  end
+@end
+
+<p>The function <tt>Main</tt>, if present, is called at the beginning of each
+Alore program. In the example above, <tt>Main</tt> accepts no arguments,
+but another supported variant of <tt>Main</tt> is explained later.
+
+<p>Variables in Alore are untyped &#8211; only values (or objects) have types.
+By convention, functions and other definitions with a global scope (for
+example, <tt>Main</tt>) typically start with a capital
+letter. Local variables (in the example, <tt>local</tt>, <tt>two</tt>,
+<tt>first</tt> and <tt>second</tt>) start with a lower
+case letter.
+
+<p>Local variables are visible from the location of their definition to the
+end of the block that contains the definition.
+Function definitions and other global definitions are always visible in the
+entire file or module that contains the definition, and they must be defined
+outside a function.
+
+<p>Variable names may contain letters (a-z, A-Z), digits (0-9) and
+underscores, but they may not start with a digit.
+
+
+<h2><a name="comments"></a>Comments</h2>
+
+<p>Two dashes (--) introduce a comment that extends until the end
+of a line. If the first line of an Alore source file starts with <tt>#!</tt>,
+that line also behaves as a comment. This is frequently useful in Unix-like
+operating systems, and it can be safely ignored in other operating systems.
+
+
+<h2><a name="statements"></a>Statements</h2>
+
+<p>Statements are the basic program building block in an imperative language
+like
+Alore. We have
+already seen two kinds of statement: function call and local variable
+definition. The sections below introduce other statement types, including
+the assignment statement, if statement and loops.
+
+<p>All statements are accepted both at the top level as well as in functions.
+However, we recommended you to
+place all non-initialization statements into functions such as <tt>Main</tt>
+instead of the top level of your program to make your code easier to maintain,
+unless you are writing a short throwaway script.
+
+<p>In many of the code fragments below, we have omitted the enclosing function
+definition for brevity. Variable names usually start with a lower case
+letter to make it clear that we actually define local variables.
+
+
+<h3><a name="assignment"></a>Assignment statement and expressions</h3>
+
+<p>In the following fragment,
+the local variable <tt>i</tt> is initialized with the value
+1, and subsequently incremented by 1 (to 2):
+
+@example
+  var i = 1
+  i = i + 1
+@end
+
+<p>You can shorten the previous assignment statement by using += instead of
+the assignment operator:
+
+@example
+  i += 1    -- Increment i by 1
+@end
+
+<p>Numeric expressions can be written using ordinary arithmetic notation:
+<tt>+</tt> and <tt>-</tt> for
+addition and subtraction, <tt>*</tt> for multiplication, <tt>/</tt> for
+division, parentheses for grouping, etc.
+
+@example
+  i = 2 + 3 * 4      -- 2 + 12 == 14
+  i = (2 + 3) * 4    -- 5 * 4 == 20
+  3 / 2              -- 1.5
+@end
+
+<p>There are also four additional assignment operators, -=, *=, /= and **=
+(the power or exponentiation operation). They work in a similar fashion to
+the addition operation += introduced above:
+
+@example
+  var x = 6
+  x -= 2          -- 4
+  x *= 3          -- 12
+  x **= 2         -- 144 (12 * 12)
+@end
+
+<p>Note that the <tt>/</tt> operator performs a floating point division. The
+<tt>div</tt> operator can be used for integer division, rounding down:
+
+@example
+  3 div 2   -- 1
+  -3 div 4  -- -1
+@end
+
+<p>In addition to numbers, some operators can be applied to other types of
+values, such as strings ('==' means equality):
+
+@example
+  'foo' + 'bar' == 'foobar'
+  3 * 'a' == 'aaa'
+@end
+
+<p>The table below introduces some additional operators. Operator precedence
+is described later in section <a href="#operators">Operators</a>.
+
+<table class="with-border" summary="Alore operators">
+  <tr>
+    <th>Operators
+    <th>Description
+    <th>Example
+  </tr>
+  <tr>
+    <td><tt>mod</tt>
+    <td>modulus (remainder)
+    <td><tt>7 mod 3 == 1</tt>
+  </tr>
+  <tr>
+    <td><tt>**</tt>
+    <td>power
+    <td><tt>2**100</tt>
+  </tr>
+  <tr>
+    <td><tt>==</tt>
+    <td>equality
+    <td><tt>1 + 2 == 3</tt>
+  </tr>
+  <tr>
+    <td><tt>!=</tt>
+    <td>inequality
+    <td><tt>'cat' != 'CAT'</tt>
+  </tr>
+  <tr>
+    <td><tt>&lt; &lt;= &gt;= &gt;</tt>
+    <td>order comparison
+    <td><tt>2.3 &lt; 3</tt>
+  </tr>
+  <tr>
+    <td><tt>and or not</tt>
+    <td>boolean operators
+    <td><tt>a &gt;= 2 and b &lt; 5</tt>
+  </tr>
+</table>
+
+<h3><a name="if"></a>The if statement</h3>
+
+<p>The if statement supports multiple conditions using <tt>elif</tt>:
+
+@example
+  if i &lt; 5
+    Print('i less than 5')
+  elif i &gt; 10
+    Print('i greater than 10')
+  else
+    Print('i between 5 and 10')
+  end
+@end
+
+<p>The <tt>elif</tt> and
+<tt>else</tt> parts are optional, and there may more than a single
+<tt>elif</tt> part. The <tt>end</tt> keyword always marks the end of the if
+statement.
+In the above example, every code block contains only a single
+statement, but as a general rule, any number of statements can always be used
+where a single statement is valid.
+
+<p>The <tt>i</tt> variable is assumed to be defined
+outside the above fragment. Variables must be defined before they can be used
+in expressions.
+
+<h3><a name="line"></a>Line breaks</h3>
+
+<p>Line breaks are used to separate statements and other syntactic constructs.
+In the example in the previous section, each statement that calls
+<tt>Print</tt> in
+the body of the if statement must be on a separate line.
+Alternatively, semicolons can
+be used whenever newlines can be used, so the beginning of the previous
+example could have been written equivalently like this:
+
+@example
+  if i &lt; 5; Print('i smaller than'); elif i &gt; 10
+@end
+
+<p>We recommended usually avoiding the use of semicolons for the sake of
+consistency and readability. Thus they will not be used in this tutorial after
+this section.
+
+<p>A single logical line can also span several physical lines. A physical line
+break is always ignored after one of the following lexical items:</p>
+
+@example
+  , ( [ = .
+  + - * / div mod **
+  == != &lt; &lt;= &gt; &gt;= in is
+  or and to :
+@end
+
+<p>Thus this (somewhat contrived) example contains only a single logical line:
+
+@example
+  a[
+    1 + i] =  -- Comments are ignored
+      5 +
+      6
+@end
+      
+
+<h3><a name="loops"></a>The for, while, repeat and break statements</h3>
+
+<p>Perhaps the simplest type of loop is the for loop over an integer range
+(other uses for the for loop are explained later):
+
+@example
+  -- Count 0, 1, ..., 4.
+  for i in 0 to 5
+    Print(i)
+  end
+@end
+
+<p>Note that the range does not include the upper bound (5).
+The loop below is equivalent to the preceding for loop. The while loop
+allows controlling repetition with any boolean expression:
+
+@example
+  -- Count from 0 to 4 using a while loop.
+  var i = 0
+  while i &lt; 5
+    Print(i)
+    i += 1
+  end
+@end
+
+<p>If the while loop condition is false during the first iteration of the loop,
+the body will not be executed at all. The repeat-until loop is always executed
+at least once, until the end condition is true:
+
+@example
+  var reply
+  repeat
+    reply = ReadLn()
+  until reply == 'yes' or reply == 'no'
+@end
+
+<p>A while loop with a <tt>True</tt> condition loops indefinitely.
+A <tt>break</tt> statement can be used to leave the loop and
+continue execution after the end of the loop. The break statement can be used
+to leave for, while and repeat loops.
+
+@example
+  var reply
+  while True
+    reply = ReadLn()
+    if reply == 'yes' or reply == 'no'
+      break
+    end
+    WriteLn('Type "yes" or "no".')
+  end
+  -- At this point, reply is either "yes" or "no".
+@end
+
+<p>Note that we used <tt>WriteLn</tt> instead of <tt>Print</tt> in the above
+example to display output.
+<tt>WriteLn</tt> is preferable to <tt>Print</tt> in interactive
+scripts that use <tt>ReadLn</tt>, since Alore implementations are free to
+redirect the output of <tt>Print</tt> to a different window, for example,
+but <tt>ReadLn</tt> and <tt>WriteLn</tt> always access the standard input
+and output streams, respectively. Another difference is that given more than
+one argument, <tt>Print</tt> inserts spaces between its arguments, but
+<tt>WriteLn</tt> never automatically inserts any spaces. We use
+<tt>WriteLn</tt> instead of <tt>Print</tt> in the rest of the document.
+
+<h3><a name="switch"></a>The switch statement</h3>
+
+<p>The <tt>switch</tt> statement allows selecting from multiple cases depending
+on the value of an expression:
+
+@example
+  switch x.lower()
+    case 'yes', 'y'
+      WriteLn('Agree')
+    case 'no', 'n'
+      WriteLn('Disagree')
+    case 'maybe'
+      WriteLn('Ambivalent')
+    else
+      WriteLn('Unknown')
+  end
+@end
+
+<p>In the fragment above, the value of the expression
+<tt>x.lower()</tt> (string <tt>x</tt> converted to lower case) is compared
+against several
+strings (<tt>'yes', 'y', 'no', 'n'</tt> and <tt>'maybe'</tt>) and if one
+of them matches,
+the related block of code is run. If none of the cases match, the <tt>else</tt>
+block is executed. The <tt>else</tt> block is optional: if it is missing, the
+statement behaves as if it was empty.
+
+<p>Each case may have one or more alternatives separated by commas. Each of
+the alternatives may be any valid expression. The <tt>switch</tt> statement
+cannot directly match against a range of values &#8211; an <tt>if</tt>
+statement is needed to match values between 1.2 and 2.3, for example.
+
+<h2><a name="functions"></a>Functions</h2>
+
+<p>The <tt>def</tt> keyword is used to define functions:
+
+@example
+  def Main()
+    var name = AskName()
+    Greet(name)
+  end
+
+  def AskName()
+    WriteLn('What is your name?')
+    return ReadLn()
+  end
+
+  def Greet(name)
+    WriteLn('Hello, ', name)
+  end
+@end
+
+<p>The previous fragment defines three functions: <tt>Main</tt>,
+<tt>AskName</tt> and <tt>Greet</tt>. The <tt>Greet</tt> function takes a
+single argument (<tt>name</tt>). If a function takes two or more arguments,
+they have to be separated with commas. The <tt>AskName</tt> function
+returns a result using the return statement. If a function exits without an
+explicit return statement, it returns the value <tt>nil</tt> implicitly.
+Using return alone, without a return value, also implicitly
+returns <tt>nil</tt>.
+
+<p>Although the previous example does not illustrate it, arguments are always
+passed by value. The values are references to objects, and objects
+are not copied when passed as arguments to functions. Although functions return
+technically at most a single value, multiple values can be returned by
+returning an array of values (for more information, see section
+<a href="#array">Array</a>).
+
+<h3><a name="anonfunc"></a>Anonymous functions</h3>
+
+<p>The <tt>def</tt> keyword can be used without a function name to define
+  an anonymous
+  function within any expression. Anonymous functions may access variables
+  defined in enclosing functions:
+
+@example
+  def Main()
+    var a = 5
+    var f = def ()
+      a += 1          -- Refer to variable defined in the outer scope
+      return a
+    end
+    WriteLn(f())    -- 6
+    WriteLn(f())    -- 7
+    WriteLn(a)      -- 7
+  end
+@end
+
+<p>Anonymous functions are first-class objects: they can be passed as
+arguments to functions, returned from functions, stored in composite objects,
+etc. The rules for the argument lists of anonymous functions are identical
+to those of ordinary functions.
+
+<h3><a name="vararg"></a>Default argument values</h3>
+
+<p>This example defines a default value for the argument of the
+<tt>Greet</tt> function:
+
+@example
+  def Main()
+    Greet()     -- Display "hello, world"
+    Greet('hi') -- Display "hi, world"
+  end
+  
+  def Greet(greeting = 'hello')
+    WriteLn(greeting, ', world')
+  end
+@end
+
+<p>The <tt>greeting</tt> argument is optional: if it isn't given, the default
+value is
+assumed. When calling a function with multiple default argument values, the
+arguments are filled from left to right and the last arguments with missing
+values are given the default values. The default value expressions are
+evaluated each time the function is called.
+
+<p>Functions that take an unbounded number of arguments are introduced later in
+section <a href="#varargs">Functions with an arbitrary number of
+arguments</a>.
+
+
+<h2><a name="globalvars"></a>Global variables and constants</h2>
+
+<p>Global variables are defined at the top level of a file:
+
+@example
+  var Global
+  var One = 1
+
+  def Main()
+    Global = 4
+    WriteLn(One + Global)   -- Display 5
+  end
+@end
+
+<p>The <tt>const</tt> keyword defines a global constant:
+
+@example
+  const Name = 'Alore'
+@end
+
+<p>Constants can be used like
+variables, but they cannot be assigned a new value after initialization.
+Unlike variables, constants may not be defined locally in functions.
+
+
+<h2><a name="types"></a>Types and objects</h2>
+
+<p>Understanding the concepts type, object and value, and their relationships
+is fundamental to Alore programming. Let's start with a few definitions:
+
+<ul>
+  <li>Each variable represents a reference to an object. Constants, function
+   definitions and class definitions (described later) are similar.
+  <li>A reference to an object is also called a <i>value</i>.
+  <li>Each object, and thus each value, has a specific type.
+  <li>The type of an object cannot be changed, but a variable may refer to
+    objects of different types during its lifetime.
+  <li>There is a small set of special types that are called
+    <i>primitive types</i>.
+  <li>Primitive types cannot be inherited from and their
+    instances are immutable. Other types can be inherited from, and their
+    instances can be mutable or immutable.
+</ul>
+
+<p>Primitive types include basic types such as integers, strings and floating
+point numbers.
+All types described in this section are primitive
+unless mentioned otherwise.
+
+<p>Types are also called <i>classes</i>. These terms are used more or less
+interchangeably. New types can be created by using class definitions.
+This is postponed to section <a href="#classes">Classes</a>;
+this section only illustrates how built-in classes can be used.
+
+<p>Each type is either mutable or immutable (constant). Objects of immutable
+types cannot be modified after they have been created. Integer and string are
+typical immutable types, and array is a typical mutable type. Assignment copies
+only values, i.e. references. There may be several references to a single
+object. A <i>garbage collector</i> frees the resources consumed by
+unreferenced objects automatically.
+
+<p>Types are objects as well. Types are typically referred to by the names of
+their class definitions. For example, the @ref{Int} type refers to
+integers and the @ref{Str} type refers to strings.
+
+<p>The type objects and the basic functions described below are
+included in the <a href="#std"><tt>std</tt></a> module. It is a special module
+that is always available without having to import it. It also contains 
+utility functions such as <tt>WriteLn</tt> and <tt>ReadLn</tt> that have
+already been used in several examples.
+
+<h3><a name="int"></a>Int</h3>
+
+<p>We have already seen several examples of using integers. Alore integers are
+arbitrary-precision, and there is no semantic difference between
+"short" or "long" integers:
+
+@example
+  2**200        -- 1606938044258990275541962092341162602522202993782792835301376
+@end
+
+<p>Integer literals are entered in base 10. The <tt>Int</tt> object can
+be used as a function (constructor) to convert values of other types to
+integers:
+
+@example
+  Int('-123')   -- -123
+  Int(2.34)     -- 2
+@end
+  
+<p>Integers and strings cannot be mixed in arithmetic
+operations. The <tt>Int</tt> constructor is often used to convert
+<tt>Str</tt> objects to integers in arithmetic expressions:
+
+@example
+  1 + '2'       <span class="error">-- Error!</span>
+  1 + Int('2')  -- 3
+@end
+
+<p>When converting strings to integers, the default base can be overridden:
+
+@example
+  Int('ff', 16)  -- 255 (integer representation of a hexadecimal string)
+@end
+
+<h3><a name="float"></a>Float</h3>
+
+<p><tt>Float</tt> objects represent real numbers. Internally they are 64-bit
+floating point numbers. Floating point numbers can be mixed with integers in
+arithmetic expressions, and the results of mixed operations are always
+<tt>Float</tt>s. Examples:
+
+@example
+  3 / 4            -- 0.75
+  1.5e2            -- 150.0 (scientific notation)
+  1.5**2           -- 2.25
+  4**0.5           -- 2.0
+  1 + 2.0          -- 3.0 (Float, not Int)
+  Float('-1.2')    -- -1.2
+@end
+
+<h3><a name="str"></a>Str</h3>
+
+<p>Strings are sequences of characters. Individual characters of
+strings can be indexed using square brackets [ ]. There is no separate
+character type; characters are strings of length 1. The first character of a
+string has the index 0, and the length of a string can be queried using the
+<tt>length</tt> method.
+
+@example
+  ''                -- Empty string
+  var a = 'foobar'
+  a[0]              -- 'f'
+  a[3]              -- 'b'
+  a.length()        -- 6
+@end
+
+<p>A string can be within single or double quotes:
+
+@example
+  "foo"       -- Equivalent to 'foo'
+  '"'         -- String with a double quote "
+  "'"         -- String with a single quote '
+@end
+<!-- " -->
+
+<p>Two consecutive quotes are used to represent a single quote in
+single-quoted string literals (and similarly for double-quoted strings):
+
+@example
+  'That''s it!'     -- String That's it!
+  """quoted"""      -- String "quoted" (in quotes)
+@end
+
+<p>Strings are immutable:
+
+@example
+  a[1] = 'x'        <span class="error">-- Error (immutable)!</span>
+@end
+
+<p><i>Slices</i> of strings (substrings) can be
+created by using the <tt>:</tt> operator in the index.
+The slice contains characters up to but not including the slice end index.
+
+@example
+  a[1:3]            -- 'oo' (slice)
+@end
+
+<p>The start or end index can be omitted when slicing to get a slice that is
+a prefix or suffix or a string, respectively.
+
+@example
+  a[:2]             -- 'fo'
+  a[1:]             -- 'oobar'
+@end
+  
+<p>Negative indices can be used to access string contents relative to the end
+of the string (-1 refers to the last character):
+
+@example
+  a[-1]            -- 'r' (the last character of 'foobar')
+  a[-2]            -- 'a'
+  a[:-1]           -- 'fooba'
+@end
+
+<p>Strings support concatenation and repetition (multiplication by integers):
+
+@example
+  'foo' + 'bar'     -- 'foobar'
+  3 * 'a' == 'aaa'  -- True
+@end
+
+<p>String objects can be compared lexicographically (case is significant):
+
+@example
+  'cat' &gt; 'canine'  -- True
+@end
+
+<p>The <tt>in</tt> operator can be used for testing whether a string contains a
+substring:
+
+@example
+  'bc' in 'abc'      -- True
+  'd' in 'abc'       -- False
+@end
+
+<p>The <tt>Str</tt> constructor can be used to convert objects of most types
+to strings:
+
+@example
+  Str(13)           -- '13'
+  Str(1.2)          -- '1.2'
+  Str([1, 2, 3])    -- '[1, 2, 3]' (convert an array to a string)
+  Str(nil)          -- 'nil'
+@end
+
+<p>Individual characters are
+represented as strings with only a single character.
+The <tt>Chr</tt> function can be used to build strings representing specific
+character codes, and the <tt>Ord</tt> function returns the numeric (usually
+Unicode) value of a character:
+
+@example
+  Chr(65)           -- 'A'
+  Ord('A')          -- 65
+@end
+
+<p>String objects provide some additional useful methods. Two methods
+convert strings to upper and lower case characters:
+
+@example
+  'foo'.upper()                -- 'FOO' (convert to upper case)
+  'Foo'.lower()                -- 'foo' (convert to lower case)
+@end
+
+<p>The location of the leftmost instance of a substring can be queried using
+the <tt>find</tt> method:
+
+@example
+  'foobar'.find('bar')         -- 3 (find the leftmost index of 'bar')
+  'foobar'.find('BAR')         -- -1 (not found)
+@end
+
+<p>You can construct string objects based on a format string using the
+<tt>format</tt> method. Formatting sequences between { and } are replaced
+with method arguments converted to strings using the desired formatting:
+
+@example
+  '{} weighs {0.0} kg'.format('the dog', 13.72)  -- 'the dog weighs 13.7 kg'
+  '{10:}'.format('cat')      -- '       cat' (right align field)
+  '{-10:}'.format('cat')     -- 'cat       ' (left align field)
+@end
+
+<p>The <tt>count</tt> method can be used to calculate how many times a
+substring occurs in a string:
+
+@example
+  'foo'.count('o')             -- 2
+  'foo'.count('x')             -- 0
+@end
+
+<p>You can check whether a string contains a prefix or a suffix:
+
+@example
+  'foobar'.startsWith('foo')   -- True ('foo' is a prefix of 'foobar')
+  'foobar'.endsWith('bar')     -- True ('bar' is a suffix of 'foobar')
+@end
+
+<p>You can also construct a copy of any string with leading and trailing
+whitespace characters removed:
+
+@example
+  '   foobar  '.strip()        -- 'foobar'
+@end
+
+<p>String objects also support replacing all instances of a substring with
+another string:
+
+@example
+  'foobar'.replace('oo', 'u')  -- 'fubar'
+@end
+
+<p>The <a href="#string"><tt>string</tt></a> module contains several additional
+functions that make working with strings easier. These functions are
+introduced later in this document.
+
+<p>Alore standard functions assume strings are encoded in Unicode (16-bit
+character codes), but string objects can be used
+to represent strings in various encodings, and even arbitrary binary data.
+In particular, 0-characters can be freely included in strings. The
+@ref{encodings} module implements various character encodings and conversions.
+
+<p>Alore source files may be encoded in UTF-8, ASCII or Latin 1. UTF-8 is the
+default encoding. Any 16-bit Unicode characters can be encoded using UTF-8.
+This example contains a Russian word:
+
+@example
+  -- This source file uses the UTF-8 encoding
+  def Main()
+    var s = '&#1047;&#1076;&#1088;&#1072;&#1074;&#1089;&#1090;&#1074;&#1091;&#1081;&#1090;&#1077;'
+  end
+@end
+
+<p>Note that the set of characters supported by WriteLn and similar
+functions depends on the current operating system and locale. Displaying
+non-ASCII characters might be limited to a narrow subset of Unicode.
+Consider this example:
+
+@example
+  -- This source file uses the UTF-8 encoding
+  def Main()
+    var euro = '&#8364;'
+    WriteLn(Ord(euro))           -- Display 8364.
+    WriteLn(euro)                -- Display &#8364; or ? depending on locale.
+                                 -- ? implies that the euro sign is not
+                                 -- supported by the current locale.
+  end
+@end
+
+<p>The euro sign can be displayed properly in, for example, POSIX compliant
+operating systems using a UTF-8 locale. This is the default in many Linux
+distributions.
+
+<p>An encoding declaration at the top of a file can be used to specify a
+different encoding than UTF-8. This example uses Latin 1 and converts a string
+to an ASCII representation using the Repr function:
+
+@example
+  encoding latin1
+
+  def Main()
+    var s = Repr('Buenos diás') -- Encode the string using ASCII
+                                -- characters to make it displayable
+    WriteLn(s)                  -- Display 'Buenos di\u00e1s' (00e1 is the
+                                -- hexadecimal character code for á)
+  end
+@end
+
+<p>Arbitrary character
+codes can also be directly included in string literals
+using the <tt>\uNNNN</tt> construct, even if the file encoding is not UTF-8.
+Note that backslash <tt>\</tt> has no
+other special meaning and does not need to be escaped in string literals.
+
+@example
+  '\u1230'          -- Character code 4656 (hexadecimal 1230)
+  '\u000a'          -- Character code 10 (LF) 
+@end
+  
+<h3><a name="array"></a>Array</h3>
+
+<p>Arrays are <i>composite</i> objects that store sequences of references to
+objects. The contents and the length of an array object can be modified after
+creation. <tt>Array</tt> is not a primitive type.
+
+<p>Arrays with a specific length and contents can be generated by separating
+the items in the array with commas, and enclosing the list in brackets:
+
+@example
+  [2, 6 + 2, 5]         -- Create array with 3 Int items
+  ['foo']               -- Create an array with a single Str item
+  []                    -- Create an empty array
+@end
+
+<p>Arrays can appear within arrays and argument lists:
+
+@example
+  a = [1, [2, 3], 4]    -- Construct an array with 3 items: Int, Array and Int
+  Fun(1, 2, [3, 4])     -- Call function with 3 arguments: Int, Int and Array
+@end
+
+<p>Arrays with a run-time computed length can be created with the
+multiplication operator *:
+
+@example
+  a = [0] * 100         -- Array with 100 items, initialized to 0
+  b = ['x', 'y'] * 2    -- Array ['x', 'y', 'x', 'y']
+@end
+
+<p>Length of an array can be queried with the <tt>length</tt> method:
+
+@example
+  a.length()            -- 100
+@end
+
+<p>The indexing operator can be used to get and set array items. The index of
+the first item in an array is 0:
+
+@example
+  a[0] = 'foo'          -- Set the first array item
+  a[1] = a[0] + 'bar'   -- Get and set array item
+  a[0:2]                -- ['foo', 'foobar']
+  b[2]                  -- 'x'
+@end
+
+<p>Like strings, negative indices refer to array items relative to the end of
+the array, and arrays support slicing:
+
+@example
+  a = [1, 2, 3, 4]
+  a[-1]           -- 4 (the last item)
+  a[1:-1]         -- [2, 3]
+@end
+
+<p>The <tt>append</tt>, <tt>insertAt</tt> and <tt>removeAt</tt> methods can be
+used to add or delete array items:
+
+@example
+  a = ['A', 'B', 'C']
+  a.append('x')       -- Add item to end: a == ['A', 'B', 'C', 'x']
+  a.removeAt(1)       -- Remove item: a == ['A', 'C', 'x']
+  a.insertAt(2, nil)  -- Add item: a == ['A', 'C', nil, 'x']
+@end
+
+<p>Arrays can compared for equality and lexicographic order:
+
+@example
+  [1, 2] == [1, 2]     -- True
+  [1, 2] &lt; [1, 3, 1]   -- True
+  [1, 3] &lt; [1, 2, 1]   -- False
+@end
+
+<p>Arrays can store references to any objects and a single array can store
+references to objects of several different types:
+
+@example
+  a = [1, 'foo', [2, 3]]
+@end
+
+<p>Similar to strings, the <tt>in</tt> operator can be used with arrays for
+testing whether an object is contained within an array. Likewise, arrays also
+support the <tt>find</tt> and <tt>count</tt> methods:
+
+@example
+  if 'foo' in a
+    WriteLn('a contains the string "foo"')
+  end
+  a.find('foo')    -- 1 (first item index that contains 'foo')
+  a.count('foo')   -- 1 (number of 'foo' items in an array)
+@end
+
+<p>You can use the <tt>+</tt> operator to concatenate arrays:
+
+@example
+  [1, 2] + [3, 4]    -- Result [1, 2, 3, 4]
+@end
+
+<p>The <tt>for</tt> statement can be used for iterating over all the elements
+of an array. The loop variable (<tt>i</tt> in the example below) receives all
+the items of the array in sequence, starting from the first item:
+
+@example
+  -- Print 1, foo and nil
+  for i in [1, 'foo', nil]
+    WriteLn(i)
+  end
+@end
+
+<p>The assignment statement only modifies references of objects. In the example
+below, the variables <tt>a</tt> and <tt>b</tt> are made to point to the same
+object. When the object is modified using one of the references (<tt>b</tt>),
+the results can be read using the other reference (<tt>a</tt>).
+
+@example
+  var a = [1, 2]
+  var b = a
+  b[0] = 3
+  WriteLn(a)  -- Print 3, 2
+@end
+
+<p>String objects provide two very useful methods for splitting strings into
+arrays and back again:
+
+@example
+  'foo  bar !'.split()         -- ['foo', 'bar', '!'] (split at whitespace)
+  'foo,bar,zar'.split(',')     -- ['foo', 'bar', 'zar']
+  ''.join(['foo', 'bar', '!']) -- 'foobar!'
+  ', '.join(['foo', 'bar'])    -- 'foo, bar'
+@end
+
+<h3><a name="tuple"></a>Tuple</h3>
+
+<p>Tuples resemble arrays, but they are immutable (their items cannot
+be changed after creation) and they have a fixed length. Use commas to create
+tuples (without the surrounding square brackets):
+
+@example
+  var t = 1, 'x'     -- Tuple with items 1 and 'x'
+  t[0]               -- The first item in a tuple (1)
+  t[1] = 'y'         <span class="error">-- Error (immutable)</span>
+@end
+
+<p>Empty and single-item tuples have special syntax:
+
+@example
+  var t0 = ()        -- Empty tuple
+  var t1 = (2,)      -- Single-item tuple
+@end
+
+<p>Tuples support iteration and the <tt>in</tt> operator:
+
+@example
+  for n in 1, 1, 2, 3, 5
+    WriteLn(n)      -- Write 1, 1, 2, 3 and 5
+  end
+  if a in (1, 2)
+    -- a is either 1 or 2
+  end
+@end
+
+<p>Tuples and arrays can also be used in the left hand side of an assignment
+and initialization. This is sometimes called <i>multiple assignment</i>:
+
+@example
+  var a, b = 1, 2     -- a gets 1, b gets 2
+  a, b = b, a         -- Swap the values of a and b
+  
+  var xy = ['x', 3]
+  a, b = xy           -- a gets 'x', b gets 3
+@end
+
+<p>If the for loop has multiple index variables, the iterated items are
+expanded, similar to multiple assignment:
+
+@example
+  for x, y in (1, 2), (3, 4)   -- Expand items in for loop
+    WriteLn(x, '/', y)         -- Write 1/2 and 3/4
+  end
+@end
+  
+<p>Tuples are often used to return
+multiple values from functions: a tuple (or array) of values, potentially with
+mixed types, is returned, and the caller expands the result by assigning it to
+a tuple of lvalue destinations:
+
+@example
+  a, b = MultiFunc() -- Expand multiple values returned by a function
+@end
+
+<p>Unlike arrays, tuples do not support concatenation or multiplication.
+Tuples are fixed-length sequences.
+
+<h3><a name="varargs"></a>Functions with an arbitrary number of arguments</h3>
+
+<p>Functions may also accept an arbitrary number of arguments as an array, and
+the arguments passed to a function can be given in an array or a tuple:
+
+@example
+  def Main()
+    WriteLines('first', 'second', 'third')
+    var a = ['first', 'second', 'third']
+    WriteLines(*a)                        -- Equivalent to the previous call
+  end
+
+  def WriteLines(*lines)
+    for l in lines
+      WriteLn(l)
+    end
+  end
+@end
+
+<p>The program above displays twice the lines "first", "second" and "third"
+without the quotes. The function <tt>WriteLines</tt> accepts any number of
+arguments that will be stored as an array in the <tt>lines</tt> parameter, as
+indicated by the asterisk (*) before the name of the parameter.
+
+<p>In a similar fashion, a variable number of arguments can be passed to a
+function using an array or a tuple, as seen on the last line of
+the <tt>Main</tt>
+function. The asterisk at the caller does not have to match that in the
+callee; the example below is valid:
+
+@example
+  a = ['second', 'third']
+  WriteLines('first', *a)
+@end
+
+<p>The asterisk can be mixed with default arguments and ordinary,
+fixed arguments. The caller of a function does not need to know which arguments
+have default values and which will be stored as an array &#8211; only the valid
+number of arguments and the valid values for arguments are relevant.
+
+<h3><a name="cargs"></a>Command line arguments</h3>
+
+<p>The <tt>Main</tt> function of the main Alore source file optionally
+receives the command line arguments passed to the program. The arguments are
+provided as an array of strings:
+
+@example
+  def Main(args)
+    -- args is an array of command line arguments.
+    for arg in args
+      WriteLn(arg) -- Display all arguments
+    end
+  end
+@end
+
+<p>The command line arguments are also available as the constant
+@ref{sys::Args}.
+
+<h3><a name="map"></a>Map and Pair</h3>
+
+<p>While <tt>Array</tt> objects only support indexing with
+integers, the <tt>Map</tt> type allows indexing with values of almost any type:
+
+@example  
+  var m = Map('John': 34, 'Mary': 24)
+  m['John']                 -- 34 (value associated with key 'John')
+  m['Jane'] = 50            -- Assign value
+  m['Peter']                <span class="error">-- Error! (invalid key)</span>
+  m.hasKey('Jane')          -- True
+  m[1, 'x'] = [2, 3]        -- Tuples can be used as keys
+@end
+
+<p>A <tt>Map</tt> object can store an arbitrary mapping (a
+dictionary) between objects, implemented as a hash table. Like <tt>Array</tt>,
+<tt>Map</tt> is not a primitive type. Note that when using
+mutable objects like arrays as keys, the objects should not be modified
+after using them as keys, or you risk not being able to retrieve their values
+later. As tuples are immutable, they are better map keys than arrays.
+
+<p>More examples of using <tt>Map</tt>:
+
+@example
+  var m = Map()      -- Create an empty Map
+  m[12] = 56         
+  m['x'] = 66        -- Assign values
+  m.keys()           -- [12, 'x'] (array of keys in an arbitrary order)
+  m.remove(12)       -- Remove a key/value mapping using a key
+  m.values()         -- [66] (array of values)
+@end
+
+<p>The contents of a map can be iterated using the for loop. Each item in the
+iteration is a tuple <tt>(key, value)</tt>:
+
+@example
+  for key, value in m
+    WriteLn(key, ': ', value)
+  end
+@end
+
+<p>The arguments given to the map constructor are <tt>Pair</tt> objects,
+immutable composite objects that represent exactly two values:
+
+@example
+  var p = 'John' : 25     -- Create Pair object
+  p.left                  -- 'John'
+  p.right                 -- 25
+@end
+
+<h3><a name="booleans"></a>Boolean values</h3>
+
+<p>Instances of the Boolean type, <tt>True</tt> and <tt>False</tt> (defined
+in the @ref{std} module) are the only values valid in boolean contexts,
+such as
+<tt>if</tt> or <tt>while</tt> conditions. Comparison and logical operators
+always return boolean values:
+
+@example
+  1 == 2   -- False
+  1 == 1   -- True
+@end
+
+<h3><a name="const"></a>Symbolic constants</h3>
+
+<p>Global uninitialized constants are <i>symbolic constants</i>. These
+constants are automatically given unique values of type <tt>Constant</tt>.
+Symbolic constants can be compared for equality and they can be converted
+to strings to query their name.
+
+@example
+  const Foo        -- Define symbolic constant 'Foo'
+
+  def Main()
+    WriteLn(Foo)   -- Display Foo
+  end
+@end
+
+<h3><a name="nil"></a>The <tt>nil</tt> value</h3>
+
+<p>The reserved word <tt>nil</tt> refers to a special object that
+represents an uninitialized or an empty value. Variables are given the value
+<tt>nil</tt>
+before they are explicitly assigned any value.
+
+@example
+  var a
+  a == nil      -- True
+  WriteLn(a)    -- nil (uninitialized)
+@end
+
+<p>Unlike all other values, <tt>nil</tt> is not an instance of any type
+visible to the programmer. <tt>nil</tt> has no other special properties; in
+particular, it cannot be used as a boolean value.
+
+<h3><a name="addittypes"></a>Additional primitive types</h3>
+
+<p>A <tt>Range</tt> object represents a sequence of integer values. The range
+includes integers from the start value up to, but not including, the stop
+value. The <tt>to</tt> operator creates a range:
+
+@example
+  var r = 5 to 13      -- Create Range object representing 5, 6, ..., 12
+  r.start              -- 5
+  r.stop               -- 13
+  5 in r               -- True
+  13 in r              -- False
+@end
+
+<p>The <tt>in</tt> operator can be used to check if a value is within a
+range. Range objects are usually used in for loops to iterate over an
+integer range:
+
+@example
+  var a = [1, 5, 3, 7]
+  for i in 0 to a.length()
+    a[i] *= 3
+  end
+  -- Now a is [3, 15, 9, 21].
+@end
+
+<p>Types are objects as well. They are used to construct values of a specific
+type
+and to check if a value has a specific type using the <tt>is</tt> operator. 
+
+@example
+  Int('23')            -- 23 (Int object)
+  23 is Int            -- True
+  23 is Str            -- False
+  Int is Type          -- True
+  Type is Type         -- True
+@end
+
+<p>Functions are objects that can be called. Like types and all other objects,
+they can be stored in variables or composite objects, passed as arguments to
+functions, etc.
+
+@example
+  var func = WriteLn    -- Functions are objects
+  func('hello, world')  -- Call WriteLn indirectly
+  WriteLn is Function   -- True
+@end
+
+
+<h2><a name="operators"></a>Operators</h2>
+
+<p>All Alore operators are included in the list below, from the highest to the
+lowest precedence, with each operator on the same line having the same
+precedence:
+
+<ol>
+  <li><tt>. () []</tt> (member access, function call, indexing)
+  <li><tt>**</tt>
+  <li><tt>-</tt> (unary)
+  <li><tt>* / div mod</tt>
+  <li><tt>+ -</tt> (binary)
+  <li><tt>to</tt>
+  <li><tt>== != &lt; &lt;= &gt;= &gt; in is</tt>
+  <li><tt>:</tt>
+  <li><tt>not</tt>
+  <li><tt>and</tt>
+  <li><tt>or</tt>
+  <li><tt>,</tt> (tuple constructor)
+</ol>
+
+<p>All operators except the exponentiation operator <tt>**</tt> are left
+associative, i.e. <tt>a + b + c == (a + b) + c</tt>, whereas <tt>**</tt> is
+right associative, i.e. <tt>a**b**c == a**(b**c)</tt>.
+
+
+<h2><a name="classes"></a>Classes</h2>
+
+<p>Most non-trivial Alore programs implement some user-defined types or
+classes. These types can inherit from other user-defined types or
+non-primitive built-in types such as <tt>Array</tt>.
+
+<p>Class objects can be called to construct objects of the
+type. All objects that have a specific type are called <i>instances</i> of that
+type, including objects of primitive types.
+
+<h3><a name="struct"></a>Simple structured data</h3>
+
+<p>This example illustrates defining a simple class that includes two
+<i>member variables</i> <tt>name</tt> and <tt>occupation</tt>:
+
+@example
+  -- Definition of the Person class
+  class Person
+    var name
+    var occupation
+  end
+
+  def Main()
+    var p = Person('John Smith',  -- Construct a Person object
+                   'journalist')  
+    WriteLn(p.name)             -- John Smith
+    p.name = 'Mary Smith'       -- Change name
+    WriteLn(p.name)             -- Mary Smith
+    WriteLn(p is Person)        -- True
+    p.address = '15 Juniper St.'  <span class="error">-- Error! (undefined member)</span>
+  end
+@end
+
+<p>The <tt>Main</tt> function constructs a <tt>Person</tt> object (an instance
+of the <tt>Person</tt> class) and accesses the
+<tt>name</tt> member variable. Class members are accessed using the dot
+operator. By default, class objects take one argument for each member variable
+that does not have an initializer when called
+(initializers are described later in this section).
+
+<p>The structure of classes and class instances is immutable. It is not
+possible to add new members to an object or a class after it has been created
+or defined.
+
+<h3><a name="methods"></a>Methods</h3>
+
+<p>Classes usually have <i>member functions</i> or <i>methods</i> in addition
+to member variables. Methods are defined with a syntax similar to ordinary
+functions, but the definitions are always within class definitions:
+
+@example
+  class Person
+    var name
+    var occupation
+
+    <b>def show()
+      WriteLn('Name: ', name)
+      WriteLn('Occupation: ', occupation)
+    end</b>
+  end
+
+  def Main()
+    var p = Person('John Smith', 'journalist')
+    p.show()   -- Print 'Name: John Smith' and 'Occupation: journalist'
+  end
+@end  
+
+<p>Other members of a class can be accessed within methods like ordinary
+variables.
+Methods receive a reference to the object they are associated
+with as a hidden argument called <i>self</i>, and the <tt>self</tt> keyword
+can be used to refer to this object.
+
+<h3><a name="init"></a>Constructors and initialization</h3>
+
+<p>Default values for member variables can be defined by including
+initialization expressions with a syntax similar to initializing local or
+global variables. When an object is constructed, the initialized members are
+automatically given the default values.
+
+<p>The <tt>create</tt> member function acts as the <i>constructor</i> of a
+class. When the class object is called, the constructor is called and the
+arguments are passed to the constructor. The examples in the previous
+sections did not define
+constructors; in this case, a default constructor will be automatically
+defined. Initialized members are initialized before calling the constructor.
+
+<p>This example illustrates the use of initialized members and constructors:
+
+@example
+  class MyList
+    <b>var count = 0</b>       -- Initialized member
+    var array
+
+    <b>def create(len)</b>     -- Constructor
+      <b>array = [nil] * len
+    end</b>
+
+    def append(item)
+      array[count] = item
+      count += 1
+    end
+
+    def get(index)
+      return array[index]
+    end
+  end
+
+  def Main()
+    var list = MyList(5)
+    list.append('John')
+    list.append('Mary')
+    WriteLn(list.get(0))   -- John
+    WriteLn(list.get(1))   -- Mary
+  end
+@end
+
+<p>Note that this example violates encapsulation, since internal state
+information is visible outside the class. We later improve the code by
+using private member variables to achieve better encapsulation.
+
+<h3><a name="identity"></a>Object identity</h3>
+
+<p>Class instances can be compared for equality. By default, this comparison
+is based on <i>object identity</i> &#8211; only references to the same object
+are equal to each other:
+
+@example
+  class Person
+    var name
+  end
+
+  def Main()
+    var p1 = Person('John')
+    var p2 = Person('John')
+    var p3 = p1
+
+    WriteLn(p1 == p2)    -- False
+    WriteLn(p1 == p1)    -- True
+    WriteLn(p1 == p3)    -- True
+  end
+@end
+
+<p>This behavior can be changed by overloading the <tt>==</tt>
+operator, as described later in section <a href="#opoverload">Operator
+overloading</a>.
+
+<h3><a name="constmember"></a>Constant members</h3>
+
+<p>It is possible to define read-only member variables by using the
+<tt>const</tt> keyword in a member variable definition:
+
+@example
+  class Person
+    const name
+    const occupation
+    const numberOfLimbs = 4
+  end
+
+  def Main()
+    var p = Person('Tracy', 'ornithologist')
+    p.name = 'Mary'  <span class="error">-- Error!</span>
+  end
+@end
+
+<p>These <i>member constants</i> cannot be assigned new values after object
+construction, but constant members of the self object can be modified within the
+<tt>create</tt> method.
+
+<h3><a name="private"></a>Private members</h3>
+
+<p>Member definitions can be made <i>private</i> by giving the <tt>private</tt>
+modifier:
+
+@example
+  class MyList
+    <b>private</b> var count = 0    -- Private member variable
+    <b>private</b> var array
+
+    def create(len)
+      array = [nil] * len
+    end
+
+    def add(item)
+      array[count] = item
+      count += 1
+    end
+
+    def get(index)
+      return array[index]
+    end
+  end
+  
+  def Main()
+    var list = MyList(5)
+    list.add('John')
+    list.add('Mary')
+    WriteLn(list.array)   <span class="error">-- Error!</span>
+  end
+@end
+
+<p>Private members can only be accessed by methods defined in the same class
+that defines the private members. In addition, only private members of the
+<tt>self</tt> object can be accessed, either as "<tt>self.member</tt>" or
+simply as "<tt>member</tt>". For example:
+
+@example
+  class Example
+    private def member()
+      ...
+    end
+
+    def method(x)
+      x.member()        <span class="error">-- Error! Invalid even if x has type Example or if x == self</span>
+      self.member()     -- Ok, since using self
+      member()          -- Also ok (implicit self)
+    end
+  end
+@end
+
+<h3><a name="inherit"></a>Inheritance and polymorphism</h3>
+
+<p>Each class can inherit from a single another class using the <tt>is</tt>
+keyword after specifying the class name. The class after "<tt>is</tt>" is the
+<i>superclass</i> of the defined class, which is called a <i>derived</i>
+class. Derived classes contain
+all the members of the superclass and any additional members defined in the
+derived class. This example defines a <i>base class</i> <tt>Shape</tt> and
+two <i>derived classes</i> <tt>Square</tt> and <tt>Circle</tt>:
+
+@example
+  import math -- Use the math module (contains the definition of Pi)
+
+  -- Base class with a default constructor create(centerX, centerY)
+  class Shape
+    const centerX
+    const centerY
+  end
+
+  -- Derived class
+  class Square is Shape        -- Inherit from Shape
+    const width
+
+    def create(x, y, width)
+      super.create(x, y)       -- Call superclass constructor
+      self.width = width       -- <b>self</b> refers to the current object
+    end
+
+    def area()
+      return width**2
+    end
+  end
+
+  -- Another derived class
+  class Circle is Shape
+    const radius
+
+    def create(x, y, radius)
+      super.create(x, y)
+      self.radius = radius
+    end
+
+    def area()
+      return Pi * radius**2
+    end
+  end
+
+  def Main()
+    var shapes = Square(4, 5, 6), Circle(2, 3, 5)
+    for shape in shapes
+      WriteLn(shape.area())
+    end
+  end
+@end
+
+<p>If a class definition does not specify a superclass, it defaults
+to <tt>Object</tt>. All classes except Object have a superclass.
+The <tt>Object</tt> type is defined in the <tt>std</tt>
+module with almost no functionality of its own: <tt>Object</tt> instances
+can only compare themselves with another objects using the
+== and != operators based on object identity.
+Inheritance from primitive types
+(<tt>Int</tt>, <tt>Str</tt>, etc.) is not supported. 
+
+<p>If a derived class defines a member with an
+identical name as a public member in the superclass, the definition in the
+derived class <i>overrides</i> the definition in the superclass.
+The original definitions of members
+overridden in a derived class can be accessed as <tt>super.<i>member</i></tt>.
+All references to overridden members, even in superclasses, that are not
+prefixed with the <tt>super</tt> keyword, refer to the definition in the
+subclass instead of the original definition.
+
+<p>Members accessed using the dot operator are determined dynamically based on
+the type of the value. The <tt>Main</tt> function in the above example calls
+the <tt>area</tt> method of two values of different types.
+Calls such as this are called <i>polymorphic</i> and the objects they function
+on do not need to have a common ancestor class provided that the methods have
+compatible calling conventions.
+
+<h3><a name="accessors"></a>Accessors</h3>
+
+<p>Each member variable has two implicit methods associated with it: a
+<i>getter</i> and a <i>setter</i>.
+When the value of a member variable is being read or modified, the operation
+is transparently performed by calling the getter (when reading) or setter
+(when modifying) methods. Each
+member variable has a default getter and setter method that simply read and
+set the value of the physical variable associated with the member &#8211; i.e.
+the
+member variable behaves like an ordinary variable. Member constants only have
+the getter method.
+
+<p>These default getters and setters can be overridden in subclasses by
+specifying special methods as shown in the fragment below:
+
+@example
+    def <i>variable</i>          -- Getter
+      ...
+    end
+    def <i>variable</i> = <i>param</i>  -- Setter
+      ...
+    end
+@end
+
+<p>The <tt>param</tt> behaves like a function argument, and it refers to the
+new value assigned to the member. Its name is not visible outside the setter.
+The getter must return a value for the member, while the setter never
+returns a value (other than the implicit <tt>nil</tt> value).
+
+<p>This example overrides the inherited default getter and setter methods:
+
+@example
+  class Base
+    var value = nil           -- Member variable, default getter and setter
+  end
+  
+  class Monitor is Base
+    def value                 -- Getter for value
+      WriteLn('read value')
+      return super.value      -- Call original getter
+    end
+
+    def value = new           -- Setter for value
+      WriteLn('set value')
+      super.value = new       -- Call original setter to set the value
+    end
+  end
+
+  def Main()
+    var m = Monitor()         -- Do not call setter in initialization
+    m.value = 2               -- Display 'set value'
+    WriteLn(m.value)          -- Display 'read value' and 2
+  end
+@end
+
+<p>The getters and setters defined in a superclass can be accessed by
+prefixing the member variable with the <tt>super</tt> keyword, as shown in the
+previous example.
+
+<p>It is also possible to define only the getter, or getter and setter,
+methods for a member, without a corresponding member variable or constant
+definition, as seen in the example below. These <i>implicit</i> member
+variables can be used like ordinary member variables.
+
+@example
+  class Implicit
+    def member   -- Member constant whose value is always 5
+      return 5
+    end
+  end
+@end
+
+<h3><a name="boundmethods"></a>Bound methods</h3>
+
+<p>Methods themselves are objects. They can be used like ordinary function
+objects. These objects are called <i>bound methods</i> since they implicitly
+contain a reference to the object they are related to. Example:
+
+@example
+  class Printer
+    var message
+  
+    def print()
+      WriteLn(message)
+    end
+  end
+
+  def Main()
+    var p = Printer('hello, world')
+    var method = <b>p.print</b>
+    method()              -- Call the print method, print 'hello, world'
+  end
+@end
+
+<h3><a name="specialmethods"></a>Special method names</h3>
+
+<p>It is possible to enable class instances to be used with some built-in
+functions and types by defining specific methods whose names begin with
+an underscore. For example, the <tt>Str</tt> constructor tries to call the
+<tt>_str</tt> method to convert an object to a string:
+
+@example
+  class MyList
+    <i>... as defined previously ...</i>
+  
+    def _str()
+      return 'MyList'
+    end
+  end
+
+  def Main()
+    var list = MyList(4)
+    WriteLn(Str(list))      -- Write 'MyList'
+  end
+@end
+
+<p>The <tt>Int</tt>
+constructor calls the <tt>_int</tt> method in a similar fashion to convert an
+object to an integer. The underscore in these methods names is only a
+convention and these methods
+have no special properties. Underscore is conventionally used as the first
+character in class member names who are public but are supposed to be accessed
+only in specific places in the code. Other programming languages support
+other member visibilities in addition to public and private, such as protected,
+module-local, friend, etc. Instead of supporting complex
+visibility specification features, Alore groups all of these under a simple
+informal convention, which essentially says that do not access members with
+underscores in their names unless you are given permission to do so by the
+designer of the class.
+
+<p>Method names that start with underscores are also used to implement
+operations such as addition, subtraction and indexing. This topic is discussed
+later in the section <a href="#opoverload">Operator overloading</a>.
+
+<h3><a name="interfaces"></a>Interfaces and expanding the for loop</h3>
+      
+<p>An interface defines a set of member names and their behaviors. An example
+of a simple
+interface is the <tt>_str</tt> interface: a class implements this interface if
+it defines a public <tt>_str</tt> method that takes no arguments and returns
+a string representation of the object. Interfaces are <i>implicit</i>: they
+are not visible
+in Alore code, other than potentially in comments. Therefore any class may
+implement any number of interfaces, but the interfaces may not be visible when
+observing the class definition.
+
+<p>Objects conforming to the <i>iterable</i> interface can be iterated
+using for loops. They must define an <tt>iterator</tt> method that returns an
+object that conforms to the <i>iterator</i> interface. The iterator interface
+contains <tt>hasNext</tt> and <tt>next</tt> methods.
+As an example, <tt>Array</tt> and <tt>Range</tt> objects provide the
+<tt>iterator</tt> method.
+
+<p>We can define the for loop in terms of an equivalent while loop
+to clarify the iterable and iterator interfaces:
+
+@example
+  for i in a
+    <i>... code ...</i>
+  end
+@end
+
+<p>can thought as equivalent to
+
+@example
+  var <i>e</i> = a.iterator()
+  while <i>e</i>.hasNext()
+    const i = <i>e</i>.next()
+    <i>... code ...</i>
+  end
+@end
+
+<p>if the name <tt>e</tt> is replaced with a name that does not occur
+anywhere else in the program. 
+
+<p>A <i>polymorphic function</i> or method accepts all objects that support a
+specific interface.
+In the example below, <tt>Show</tt>
+is a polymorphic function that displays the contents of any object that
+implements the <i>iterable</i> interface. The example also illustrates
+creating an iterable class.
+
+@example
+  class DownTo
+    private var index
+    private var min
+
+    def create(max, min)
+      index = max + 1
+      self.min = min
+    end
+
+    -- Return iterator.
+    def iterator()
+      return self
+    end
+
+    -- Are there any items left in the iteration?
+    def hasNext()
+      return index &gt; min
+    end
+
+    -- Return the next item in the iteration.
+    def next()
+      index -= 1
+      return index
+    end
+  end
+
+  -- Show an iterable object.
+  def Show(o)
+    for i in o
+      WriteLn(i)
+    end
+  end
+
+  def Main()
+    Show(DownTo(5, 1))      -- Print 5, 4, 3, 2 and 1.
+    Show(['a', 'c', 'b'])   -- Print a, c and b.
+  end
+@end
+
+<h3><a name="opoverload"></a>Operator overloading</h3>
+
+<p>Classes may define methods that are called whenever operators such as
+<tt>+</tt> or <tt>[]</tt> are applied to instances of the class. This is called
+<i>operator
+overloading</i>. This applies to all types: even primitive types such as
+<tt>Int</tt> and <tt>Str</tt> have methods that implement the basic arithmetic
+and comparison operations, etc.
+
+<p>In the example below, we define methods that are called when
+the indexing operator <tt>[]</tt> is used. There are separate methods for
+indexed reads and writes. <tt>MyArray</tt> instances behave a
+bit like <tt>Array</tt> objects:
+
+@example
+  class MyArray
+    private var array
+
+    def create(length)
+      array = [nil] * length
+    end
+
+    def _get(index)
+      return array[index]
+    end
+
+    def _set(index, new)
+      array[index] = new
+    end
+  end
+
+  def Main()
+    var a = MyArray(5)
+    a[2] = 'John'
+    WriteLn(a[2])           -- John
+  end
+@end
+
+<p>Excessive use of operation overloading may
+result in programs that are confusing and difficult to understand. A good
+guideline is to overload an operator only if its overloaded behavior strongly
+resembles the built-in behavior of the operator. The add operator, for
+example, should be reserved for arithmetic addition and concatenation.
+
+<p>The table below introduces the method signatures of overloadable
+operators, except for a few operators with special calling conventions
+that are described later. The operands <tt>x</tt>, <tt>y</tt> and <tt>z</tt>
+can be
+replaced with arbitrary expressions (but note that you may have to add
+parentheses to ensure the correct evaluation order).
+
+<table class="with-border"
+  summary="Method signatures of overloadable operators">
+  <tr>
+    <th>Operation
+    <th>Equivalent method call
+  <tr>    
+    <td><tt>x + y</tt>
+    <td><tt>x._add(y)</tt>
+  <tr>    
+    <td><tt>x - y</tt>
+    <td><tt>x._sub(y)</tt>
+  <tr>    
+    <td><tt>x * y</tt>
+    <td><tt>x._mul(y)</tt>
+  <tr>    
+    <td><tt>x / y</tt>
+    <td><tt>x._div(y)</tt>
+  <tr>    
+    <td><tt>x div y</tt>
+    <td><tt>x._idiv(y)</tt>
+  <tr>    
+    <td><tt>x mod y</tt>
+    <td><tt>x._mod(y)</tt>
+  <tr>    
+    <td><tt>x ** y</tt>
+    <td><tt>x._pow(y)</tt>
+  <tr>
+    <td><tt>x == y</tt>
+    <td><tt>x._eq(y)</tt>
+  <tr>
+    <td><tt>x != y</tt>
+    <td><tt>not x._eq(y)</tt>
+  <tr>    
+    <td><tt>x &lt; y</tt>
+    <td><tt>x._lt(y)</tt>
+  <tr>    
+    <td><tt>x &gt;= y</tt>
+    <td><tt>not x._lt(y)</tt>
+  <tr>    
+    <td><tt>x &gt; y</tt>
+    <td><tt>x._gt(y)</tt>
+  <tr>    
+    <td><tt>x &lt;= y</tt>
+    <td><tt>not x._gt(y)</tt>
+</table>
+
+<p>The <tt>_add</tt> and <tt>_mul</tt> methods of @ref{Int} and
+@ref{Float} objects call the <tt>_add</tt> or <tt>_mul</tt>
+method, respectively, of the argument if the argument type is not
+supported by the method. For example, <tt>3 * 'x'</tt> is evaluated as
+<tt>'x'._mul(3)</tt>
+(the result being 'xxx'), since the integer <tt>_mul</tt> method does not
+know how to deal with strings.
+
+<p>The in, unary minus, indexing and call operations behave slightly
+differently from the binary operators in the previous table:
+
+<table class="with-border"
+  summary="Method signatures of overloadable operators">
+  <tr>
+    <th>Operation
+    <th>Equivalent method call
+    <th>Notes
+  <tr>
+    <td><tt>x in y</tt>
+    <td><tt>y._in(x)</tt>
+    <td>Order of operands reversed
+  <tr>
+    <td><tt>-x</tt>
+    <td><tt>x._neg()</tt>
+    <td>Unary operation, no arguments
+  <tr>    
+    <td><tt>x[y]</tt>
+    <td><tt>x._get(y)</tt>
+    <td>Indexed read
+  <tr>    
+    <td><tt>x[y] = z</tt>
+    <td><tt>x._set(y, z)</tt>
+    <td>Indexed store
+  <tr>    
+    <td><tt>x(y, z)</tt>
+    <td><tt>x._call(y, z)</tt>
+    <td>Any number of arguments may be used
+</table>
+
+<p>There are no methods specific to +=, -=, etc. They are mapped to the
+corresponding methods for ordinary operators such as + or -. Therefore the
+following three lines of code are equivalent (if <tt>x</tt> provides
+<tt>_add</tt>):
+
+@example
+  x += y
+  x = x + y
+  x = x._add(y)
+@end
+
+<p>Boolean operators <tt>and</tt>, <tt>or</tt>, and <tt>not</tt> cannot be
+overloaded. The comparison operators and the <tt>in</tt> operator must return
+a boolean value (<tt>True</Tt> or <tt>False</tt>). Only three methods (
+<tt>_eq</tt>, <tt>_lt</tt> and <tt>_gt</tt>) are
+sufficient for evaluating all comparison operations, since the operators
+are expected to follow the rules listed below:
+
+<ol>
+  <li>(x != y) is equivalent to (not x == y)
+  <li>(x &gt;= y) is equivalent to (not x &lt; y) 
+  <li>(x &lt;= y) is equivalent to (not x &gt; y)
+</ol>
+
+<h2><a name="modules"></a>Modules and scopes</h2>
+
+<p>Most of the example programs in previous sections have consisted of a single
+source file that does not use any external modules other than the @ref{std}
+module which is always available. Almost all real-world programs import some
+additional modules using
+<tt>import</tt> declarations at the start of a source file, since the
+<tt>std</tt> module provides only fairly basic services. This example
+uses two built-in modules, <tt>math</tt> and <tt>io</tt>:
+
+@example
+  import math, io
+
+  def Main()
+    var f = File('output.txt', Output)
+    for i in 0 to 5
+      f.writeLn(i, ' ', Cos(i))
+    end
+    f.close()
+  end
+@end
+
+<p>The @ref{File} class is provided by the @ref{io} module and the
+@ref{Cos} function by the @ref{math} module. These definitions cannot
+be accessed in a Alore source file without including the proper import
+declarations.
+
+<p>The previous example illustrates the structure of an Alore program: first
+import declarations, then one or more definitions of functions, global
+variables, constants or classes (or statements). The
+above example has a single import declaration that imports two modules
+and a single function definition,
+<tt>Main</tt>. Likewise, each module contains functions, classes,
+variables and constants related to a specific task or topic grouped together.
+When a module is imported, its contents are made available in
+the rest of the source file.
+
+<p>Many Alore programs define some modules of their own. This
+way a program can be divided into smaller components that are easier to manage
+and potentially reuse.
+Modules can optionally be divided into multiple source files.
+
+<p>A module is defined by creating a directory that contains one or more Alore
+source files. Typically the directory is created below the directory that
+contains the <i>main</i> Alore source file. The name of the directory must be
+the same as the name of the module, and each source file in the module must
+start with a <i>module header</i>. An example program consisting of a single
+module "message" and the main source file is illustrated below:
+
+@example
+<b>main.alo:</b>
+  import message
+
+  def Main()
+    Show('Hello!')
+  end
+
+<b>message/a.alo:</b>
+  module message
+
+  private const Hili = ' *** '
+  
+  def Show(msg)
+    WriteLn(Hili, msg.upper(), Hili)
+  end
+@end
+
+<p>The main source file imports the module <tt>message</tt> that is defined in
+the other source file. The <tt>Show</tt> function, like all other <i>public</i>
+functions, variables, constants and classes, can be used in any file that
+imports the module. All definitions are public unless they are preceded by
+the keyword <tt>private</tt>. The constant <tt>Hili</tt> is an example of a
+private constant.
+
+<h3><a name="collisions"></a>Scopes and name collisions</h3>
+
+<p>Each module defines a separate <i>scope</i>. Names in different scopes may
+overlap. If modules <tt>foo</tt> and <tt>bar</tt> both define the
+name <tt>Func</tt> and only one of the modules is imported in each source file,
+the correct name <tt>Func</tt> will always be referenced. But if a file imports
+both modules, the name must be prefixed by the module name and the scope
+resolution operator <tt>::</tt> (two colons):
+
+@example
+  import foo
+  import bar
+
+  def Main()
+    foo::Func()
+    bar::Func()
+    Func()      <span class="error">-- Error: Ambiguous!</span>
+  end
+@end
+
+<p>The scope resolution operator can be used even if there is no ambiguity to
+make it clear which module a name belongs to or to avoid future <i>name
+collisions</i>, i.e. multiple definitions having the same name.
+
+<p>Another example of avoiding a name collision is in the program below:
+
+@example
+  def Write(s)
+    -- do something with s
+  end
+
+  def Main()
+    Write('foo')     -- Refers to the Write in this module
+    std::Write('foo')  -- Refers to the Write in the std module
+  end
+@end
+
+<p>The names defined in the current module take precedence over names defined
+in other modules. All names in a module are equivalent; they are visible in
+every file of a module, and even before their definition in a file. This means
+that this example is valid:
+
+@example
+  def Main()
+    Hello()
+  end
+
+  def Hello()
+    WriteLn('hello, world')
+  end
+@end
+
+<p>Another case of name collision is possible between class members and global
+names defined in the same module. In this case, the global names can be
+accessed by prefixing a name only with the scope resolution operator. Since
+class members usually start with a lower case letter and global names with an
+upper case letter, this type of name collision is rare.
+
+@example
+  var Name
+
+  class Foo
+    var Name
+
+    def Bar()
+      Name = 1   -- Refers to the member variable
+      ::Name = 2  -- Refers to the global variable
+    end
+  end
+@end
+
+<p>Finally, local variables take precedence over member variables or global
+variables with the same name. Member variables can be accessed using the
+<tt>self.member</tt> notation even if there is a local variable with the same
+name.
+
+<h3><a name="hierarchical"></a>Hierarchical modules</h3>
+
+<p>Alore supports subdividing modules into <i>submodules</i>. The name of
+a submodule
+has the form <tt>main_name::sub_name</tt>, where <tt>main_name</tt> is the name
+of a module. For example, a submodule of the module <tt>message</tt> could be
+named <tt>message::french</tt>. A submodule is located in a subdirectory of the
+main module, i.e. <tt>message/french</tt> in the previous example.
+
+<p>Each submodule is a separate module and is not directly related to any main
+modules. The main modules do not even have to exist, i.e. their directories do
+not have to contain any source files. When importing a main module, for example
+<tt>import message</tt>, the submodules are not imported automatically. They
+can be imported in a similar way, for example <tt>import message::french</tt>.
+
+<p>More than a single level of subdivision are supported, for example
+<tt>company::product::core</tt>. We recommend that the number of
+subdivisions should be kept at fairly low levels, since navigating deep
+directory hierarchies
+can be tedious. Hierarchical modules can be used to avoid
+name collisions. For example, instead of defining a module <tt>code</tt>
+in a product <tt>acme</tt>, it might make sense to define the module as
+<tt>acme::code</tt>, since it is conceivable that another module named
+<tt>code</tt> could be defined in the future, causing ambiguity.
+
+<p>Variables and other names defined in hierarchical modules can be accessed
+from the files that import
+them also by specifying the whole module name as a prefix or only a part of it,
+at least enough to make the name unambiguous. So <tt>acme::code::Foo</tt> can
+be accessed as <tt>code::Foo</tt> if <tt>code::Foo</tt> is unambiguous. The
+module name can be shortened only by dropping some of the initial components.
+Thus <tt>acme::Foo</tt> is not a valid abbreviation for
+<tt>acme::code::Foo</tt>.
+
+<h2><a name="exceptions"></a>Exceptions</h2>
+
+<p>Many things can go wrong when a program is run. When creating a file, for
+example, we may not have a write permission to the directory we want to create
+the file in, the disk may be full, or the disk may be faulty. These kinds of
+conditions cause an <i>exception</i> to be <i>raised</i>. The <tt>try</tt>
+statement is used to catch exceptions raised in the body of the statement:
+
+@example
+  import io
+
+  def Main()
+    try
+      var f = File('file.txt', Output)
+      f.writeLn('hello, world')
+      f.close()
+    except IoError
+      WriteLn('error')
+    end
+  end
+@end
+
+<p>In the example above, any of the three lines within the <tt>try</tt>
+statement
+may raise an <tt>IoError</tt> exception. The <tt>except</tt> line near the end
+of the statement catches all of these errors. The last <tt>WriteLn</tt>
+statement is executed only if an <tt>IoError</tt> exception was raised in the
+body of the <tt>try</tt> statement.
+
+<p>The innermost enclosing <tt>try</tt> statement with the matching exception
+type always catches a raised exception. If no matching <tt>try</tt> statement
+can be found in the function that caused the exception to be raised, the
+function that called the function is consulted, and so on until finally an
+error message will be displayed if no except block matches the exception type.
+
+<p>Exception types such as <tt>IoError</tt> are classes that descend from
+<tt>std::Exception</tt>. Each <tt>except</tt> clause catches exceptions of the
+specified type and all its subclasses. Therefore <tt>except std::Exception</tt>
+catches all exceptions. The <tt>std::</tt> prefix can be omitted if there are
+no other variables with the name <tt>Exception</tt>.
+
+<p>The @ref{std} module defines several basic exception types. Many of these
+can be raised in expressions or built-in functions:
+
+@example
+  1 + 'foo'     -- Raise std::TypeError
+  1 / 0         -- Raise std::ArithmeticError
+  Chr(-1)       -- Raise std::ValueError
+@end
+
+<h3><a name="raising"></a>Defining and raising exceptions</h3>
+
+<p>New exception types can be defined by inheriting from another exception
+type, and the <tt>raise</tt> statement is used to raise an exception
+explicitly:
+
+@example
+  def Main()
+    try
+      ErrorFunction()
+    except e is MyError   -- Bind the exception object to a variable
+      WriteLn('caught MyError with message: ', e.message)
+    end
+  end
+
+  class MyError is Exception   -- Define exception class
+  end
+
+  def ErrorFunction()
+    raise MyError('problem')
+  end
+@end
+
+<p>The <tt>std::Exception</tt> class takes an optional argument, the message.
+The exception class <tt>MyError</tt> is defined in the above example to inherit
+the constructor. The message
+<tt>"problem"</tt> is associated with the exception instance. The <tt>Main</tt>
+function catches the exception and stores a reference to it in the
+<tt>e</tt> variable.
+The "<tt><i>variable</i> is</tt>" part of the <tt>except</tt> clause is
+optional.
+
+<h3><a name="finally"></a>The <tt>finally</tt> block</h3>
+
+<p>The optional <tt>finally</tt> block in a <tt>try</tt> statement is always
+executed, even if an exception was raised within the block. If an exception was
+raised and not catched within the <tt>try</tt> block, the exception will be
+<i>re-raised</i> after the <tt>finally</tt> block has been executed, provided
+that the <tt>finally</tt> block itself did not raise any exceptions.
+
+<p>The example below writes the text <tt>"hello, world"</tt> to a file and
+closes the file afterwards, even if any exceptions were raised.
+<tt>IoError</tt> and <tt>ResourceError</tt> exceptions are caught:
+
+@example
+  def Main()
+    try
+      var f = File('file.txt', Output)
+      try
+        f.writeLn('hello, world')
+      finally
+        f.close()
+      end
+    except IoError
+      WriteLn('io error')
+    except ResourceError
+      WriteLn('resource error')
+    end
+  end
+@end
+
+<p>Both <tt>except</tt> and <tt>finally</tt> blocks cannot be mixed within a
+single <tt>try</tt> statement. Multiple <tt>except</tt> blocks can be defined,
+and they are evaluated in the order of their definition. Only a single
+<tt>except</tt> block will be
+activated for a single exception; after the block has been executed, the
+execution continues after the <tt>try</tt> statement.
+
+
+<h2><a name="stdlib"></a>The standard library</h2>
+
+<p>This section gives a short overview of some commonly-used standard library
+modules. The <a href="libmain.html">Alore Library Reference</a> is a complete
+reference to all the standard library modules.
+
+<h3>The <a name="std"></a><tt>std</tt> module</h3>
+
+<p>The @ref{std} is a special module that is always implicitly imported in
+each Alore source file. It contains the primitive types, collection types,
+exceptions, several utility functions and the several constants, including
+<tt>True</tt> and <tt>False</tt>.
+
+<p>The primitive types defined in the <tt>std</tt> module are @ref{Int},
+@ref{Str}, @ref{Float}, @ref{Boolean}, @ref{Function}, @ref{Type},
+@ref{Constant}, @ref{Tuple}, @ref{Pair} and @ref{Range}. The
+collection types include @ref{Array} and @ref{Map}.
+
+<p>Usage of many of the functions in the <tt>std</tt> module is illustrated
+below:
+
+@example
+  Print('num', 4)      -- Write objects to standard output (by default),
+                       -- separated by spaces and followed by a line break.
+                       -- Flush the output stream after each call. Print
+                       -- is useful for debugging.
+  WriteLn('num=', 4)   -- Write objects to standard output, followed by a line
+                       -- break
+  Write('text')        -- Write objects to standard output without a line break
+  ReadLn()             -- Read a line of text from the standard input
+  Repr('foo')          -- "'foo'" (convert to string, works with all types)
+  Chr(65)              -- 'A' (parameter is Unicode character code)
+  Ord('A')             -- 65 (Unicode character code of a character)
+  Hash(5)              -- Calculate a hash value of an object
+  Reversed([1, 2, 3])  -- [3, 2, 1]
+  Reversed(0 to 3)     -- [2, 1, 0]
+  Reversed('foo')      -- ['o', 'o' 'f']
+  Min(3, 2)            -- 2 (smallest of two values)
+  Max(3, 2)            -- 3 (largest of two values)
+  Sort([4, 3, 5, 1])   -- [1, 3, 4, 5]
+  Exit(1)              -- Exit the program by raising ExitException
+@end
+
+<p>The container types @ref{Array} and @ref{Map} were described earlier in
+this document.
+
+<p>The <tt>std</tt> module also contains these constants:
+
+@example
+  Tab                          -- Tab character ('\u0009')
+  Newline                      -- Line break
+  CR                           -- Carriage return ('\u000d')
+  LF                           -- Line feed ('\u000a')
+@end
+
+<p>This class hierarchy contains all the exception classes in the
+<tt>std</tt> module:
+
+@example
+  Exception
+    ValueError
+      TypeError
+      MemberError
+      ArithmeticError
+      IndexError
+      KeyError
+      CastError
+    ResourceError
+      MemoryError
+    RuntimeError
+    IoError
+    InterruptException
+    ExitException
+@end
+
+<p>All exception classes are descendants of the <tt>std::Exception</tt> class.
+
+<h3>The <tt>io</tt> module</h3>
+
+<p>The @ref{io} module contains the @ref{File} and @ref{Stream}
+classes that allow reading and writing of files and similar objects (streams).
+The simplest way of accessing the contents of a file is enumerating the lines
+of the file using a for loop:
+
+@example
+  import io
+
+  def Main()
+    var f = File('file.txt')  -- Open for reading
+    for s in f                -- Enumerate over the lines in the file
+      if s.length() &lt; 5
+        WriteLn(s)            -- Display lines shorter than 5 characters
+      end
+    end
+    f.close()                 -- Close file
+  end
+@end      
+
+<p>The <tt>write</tt> and <tt>writeLn</tt> methods are used to write to
+streams:
+
+@example
+  var f = File('out.txt', Output)  -- Open for writing
+  f.write('abc', 1)                -- Write without a line break 'abc1'
+  f.writeLn('line')                -- Write line
+  f.close()
+@end
+
+<p>The <tt>std::WriteLn</tt> function is equivalent to
+<tt>StdOut.writeLn</tt>. <tt>StdOut</tt>, <tt>StdIn</tt> and <tt>StdErr</tt>
+refer to file objects representing the standard output, input and error
+streams, respectively.
+
+<p>The <tt>read</tt>, <tt>eof</tt> and <tt>readLn</tt> methods provide finer
+control of reading from files, whereas the <tt>readLines</tt> methods returns
+the contents of a stream as an array of lines:
+
+@example
+  var f = File('file.txt')  
+  var s = f.read(5)         -- Read 5 characters as a string
+  while not f.eof()         -- Copy the rest of the contents to 
+    WriteLn(f.readLn())     -- standard output
+  end
+  f.close()
+
+  var l = StdIn.readLines()
+@end
+
+<p>The <tt>std::ReadLn</tt> function is equivalent to
+<tt>StdIn.readLn</tt>.
+
+<p>The <tt>io</tt> module also defines classes @ref{TextFile} and
+@ref{TextStream} for accessing encoded text streams.
+
+<h3>The <tt>os</tt> module</h3>
+
+<p>The @ref{os} module allows accessing basic operating system services:
+
+@example
+  Remove('file.txt')            -- Remove file or an empty directory
+  Rename('old.txt', 'new.txt')  -- Rename file or directory
+  MakeDir('dirname')            -- Create directory
+  ChangeDir('../dir')           -- Change current directory
+  CurrentDir()                  -- Get current directory
+  System('dir')                 -- Execute shell command
+  Join('foo', 'bar')            -- 'foo/bar'
+  ListDir('.')                  -- Read the contents of a directory
+  IsDir('name')                 -- Does the path refer to a directory
+  IsFile('name')                -- Does the path refer to an ordinary file
+  IsLink('name')                -- Does the path refer to a symbolic link
+  DirName('foo/bar/file.txt')   -- 'foo/bar'
+  BaseName('foo/bar/file.txt')  -- 'file.txt'
+  FileExt('foo/bar/file.txt')   -- '.txt'
+  GetEnv('PATH')                -- Get the value of an environment variable
+  SetEnv('VAR', 'value')        -- Change or add an environment variable
+  var s = Stat('file.txt')      -- Get file properties 
+    s.size, s.isFile, s.isDir,
+    s.isLink, s.modificationTime,
+    s.accessTime, s.isReadable,
+    s.isWritable
+  Sleep(0.2)                    -- Wait 0.2 seconds
+@end
+
+<h3>The <tt>math</tt> module</h3>
+
+<p>The @ref{math} module contains several useful mathematical functions and
+the constants <tt>Pi</tt> and <tt>E</tt> (Euler's number):
+
+@example
+  Sqrt(4)           -- 2.0 (square root)
+  Abs(-3)           -- 3 (absolute value)
+  Sin(Pi / 2)       -- 1.0
+  Cos(Pi / 2)       -- 0.0
+  Tan(Pi / 4)       -- ~1.0
+  ArcSin(1.0)       -- ~1.571 (Pi / 2)
+  Exp(2)            -- ~7.39 (E**2)
+  Log(E**2)         -- 2
+  Round(1.5)        -- 2.0 (round to nearest integer)
+  Floor(1.7)        -- 1.0 (round down to nearest integer)
+  Ceil(1.7)         -- 2.0 (round up to nearest integer)
+  Trunc(-1.7)       -- -1.0 (round towards zero)
+@end
+
+<h3>The <tt>bitop</tt> module</h3>
+
+<p>Bitwise operations are defined in the @ref{bitop} module:
+
+@example
+  And(12, 6)        -- 4 (bitwise and)
+  Or(12, 6)         -- 14 (bitwise or)
+  Xor(12, 6)        -- 10 (bitwise exclusive or)
+  Neg(12)           -- -13 (bitwise complement)
+  Shl(12, 2)        -- 48 (shift left)
+  Shr(12, 2)        -- 3 (shift right)
+@end
+
+<h3>The <a name="string"></a><tt>string</tt> module</h3>
+
+<p>The @ref{string} module contains utility functions for dealing with string
+objects:
+
+@example
+  IntToStr(255, 16)  -- 'ff' (255 in hexadecimal)
+  IsWhitespace(' ')  -- True
+  IsWhitespace('x')  -- False
+  IsLetter('a')      -- True
+  IsLetter('3')      -- False
+  IsDigit('5')       -- True
+  IsWordChar('a')    -- True
+  IsWordChar('6')    -- True
+  IsWordChar('.')    -- False
+@end
+
+<h3>The <tt>reflect</tt> module</h3>
+
+<p>The @ref{reflect} module allows dynamically manipulating and querying
+objects. The @ref{Type} class is also useful.
+
+@example
+  TypeOf(1)            -- Get type of object (std::Int)
+  GetMember(o, 'x')    -- Get member x of object o
+  SetMember(o, 'x', 2) -- Set member x of object o
+  HasMember(o, 'x')    -- Does an object have a member?
+@end
+
+<h3>The <tt>random</tt> module</h3>
+
+<p>You can construct pseudo-random integers and floating point numbers using
+the @ref{random} module:
+
+@example
+  Random(5)         -- Random integer in range 0, 1, ..., 4
+  RandomFloat()     -- Random float (&gt;= 0 and &lt; 1)
+  Seed(n)           -- Initialize random number generator
+@end
+
+<h3>Further reading</h3>
+
+<p>Refer to the <a href="libmain.html">Alore Library Reference</a> for
+details of the modules described above and information on other Alore
+modules, such as:
+
+<ul>
+  <li>The @ref{re} module provides operations for
+    searching and manipulating
+    strings using <i>regular expressions</i>. It supplements the @ref{Str}
+    type and the
+    @ref{string} module with more expressive pattern matching operations.
+  <li>The @ref{encodings} module supports encoding and decoding text stored in
+    different encodings, for example UTF-8. It is often useful when processing
+    non-English text.
+  <li>The @ref{time} module contains types and
+      functions for dealing with times and dates.
+  <li>Use the @ref{thread} module to create
+    multi-threaded programs
+    and synchronize the different threads of execution.
+  <li>The @ref{socket} module allows making
+    network connections between computers.
+</ul>

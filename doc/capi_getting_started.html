@@ -1,0 +1,486 @@
+@head
+@title Getting started
+
+<p>Next we'll describe how to create a minimal C module and use it from an
+Alore program. Then we'll proceed to introduce a few useful functions and
+concepts. Finally, some miscellaneous important information regarding the API
+is presented.
+
+@h2 Hello module
+
+<p>This C file defines a trivial module that contains a single function
+Greeting. Greeting accepts no arguments and returns the string "hello, world"
+when called.
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  AValue Greeting(AThread *t, AValue *frame)
+  {
+      return AMakeStr(t, "hello, world");
+  }
+
+  A_MODULE(hello, "hello")
+      A_DEF("Greeting", 0, 0, Greeting)
+  A_END_MODULE()
+@end
+
+<p>Next we explain each line of code in the above example.
+
+<p>The first line includes the Alore C API header file:
+
+@example
+  #include &lt;alore/alore.h&gt;
+@end
+
+<p>You must include this file in order to use the Alore C API. It
+defines all the required functions, types and macros.
+
+<p>All functions that can be called from Alore code have this signature:
+
+@example
+  AValue Greeting(AThread *t, AValue *frame)
+@end
+
+<p>They accept two arguments, of type AThread * and AValue *, and return a
+value of type AValue. These
+types and arguments will be discussed later in more detail. At this point,
+is suffices to say that AValue represents a reference to a single Alore object.
+The C-level name of the function (in this example, Greeting) is internal to the
+module and not visible to Alore code, but for clarity it makes sense to keep
+the internal and public names similar.
+
+<p>The function constructs a single Str object with value "hello, world" and
+returns it to the caller:
+
+@example
+      return AMakeStr(t, "hello, world");
+@end
+
+<p>Customarily the end of a C module file contains a module description that
+is introduced with the A_MODULE macro. The arguments to this macro specify
+the name of the
+module, in this case hello. The name of the module must be included twice,
+once without quotes and then quoted. We'll see later the reason for this.
+
+@example
+  A_MODULE(hello, "hello")
+@end
+
+<p>The module description describes the function, class and variable
+definitions included in the module. The hello module only defines a single
+function, named "Greeting" (hello::Greeting):
+
+@example
+      A_DEF("Greeting", 0, 0, Greeting)
+@end
+
+<p>The last argument to the macro is a pointer to the corresponding C function
+that is called to execute the function. The two 0 parameters
+will be described later
+in detail, but the first one specifies the number of arguments the function
+takes (in this case, no arguments).
+
+<p>Finally, the module description must end with the A_END_MODULE() macro.
+Note that the empty parentheses must be included.
+
+@example
+  A_END_MODULE()
+@end
+
+@h2 Compiling and using hello
+
+<p>To use the hello module, you have to compile and link the source code.
+The details of these tasks depend on your operating system and C compiler.
+
+<p>In Linux, first compile the C file, here assumed to be
+named hello_module.c, to an object file hello_module.o:
+
+@example
+  gcc -pthread -fPIC -c hello_module.c
+@end
+
+<p>Alore header files must have been installed to a directory that is in the
+include path of the compiler, or the path must be passed to the C compiler
+using the -I option.
+
+<p>Then, the linker is used to build a shared library hello.so
+from the object file:
+
+@example
+  gcc -pthread -shared -o hello.so hello_module.o
+@end
+
+<p>Multiple .o files can be used in this step. Any additional required
+C libraries can be added using the -l and -L linker options.
+
+<p>The last command generated the hello.so file which contains the
+linked C module, ready to be used. Now save the following Alore program as
+testhello.alo in the directory that also contains the hello.so file:
+
+@example
+  import hello
+
+  def Main()
+    WriteLn(Greeting())
+  end
+@end
+
+<p>Finally, run the program normally:
+
+@example
+  $ <b>alore testhello.alo</b>
+  hello, world
+@end
+
+<p>If you see that message, you have successfully compiled and run an Alore C
+module! These Linux instructions also apply to FreeBSD.
+
+<!-- FIX: How to use compiled modules with alorec -->
+
+<h3>Compiling in Windows</h3>
+
+<p>For Windows, you first need to install the MinGW development tools,
+available at <a href="http://www.mingw.org">www.mingw.org</a>. Then
+the module can be compiled in the MinGW shell:
+
+<!-- FIX: Test these -->
+
+@example
+  gcc -c hello_module.c
+  gcc -shared -o hello.dll hello_module.o
+@end
+
+<p>Note that unlike in Linux, the name of the compiled module file is
+hello.dll.
+
+<h3>Compiling in Mac OS X</h3>
+
+<p>Use these commands to compile hello in Mac OS X using gcc:
+
+<!-- FIX: Test these -->
+
+@example
+  gcc -c hello_module.c
+  gcc -bundle -undefined dynamic_lookup -o hello.so hello_module.o
+@end
+
+<p>You need to have Apple developer tools installed. They are included in
+the Xcode development environment installation.
+
+<h3>Compiling in Solaris</h3>
+
+<p>Use these commands to compile hello in Solaris using Sun's cc (select the
+correct variant of the first command based on your processor architecture):
+
+<!-- FIX: Test these -->
+
+@example
+  cc -KPIC -c hello_module.c              # Intel
+  cc -xcode=pic32 -c hello_module.c       # Sparc
+  cc -G -o hello.so hello_module.o
+@end
+
+<!-- FIX: gcc -->
+
+@h2 Accessing function arguments
+
+<p>As briefly mentioned above, you can define the number of arguments
+a function accepts using a parameter for the A_DEF macro. Let's define a
+function that increments an integer (this version is a bit limited, but soon
+you will learn how to implement this properly):
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  AValue Inc(AThread *t, AValue *frame)
+  {
+      int i = AGetInt(t, frame[0]);
+      return AMakeInt(t, i + 1);
+  }
+
+  A_MODULE(hello, "hello")
+      A_DEF("Inc", 1, 0, Inc)
+  A_END_MODULE()
+@end
+
+<p>Three lines in this example require further discussion. First, the A_DEF
+macro defines a function Inc that takes a single argument, as specified
+by the second macro argument:
+
+@example
+  A_DEF("Inc", 1, 0, Inc)
+@end
+
+<p>This argument can be accessed in the function implementation as frame[0].
+If the function would accept two arguments, the second argument would be
+frame[1], etc. We use the API function @ref{AGetInt} to convert the argument to
+a C int, or raise an exception if it is not possible (we'll describe exceptions
+later):
+
+@example
+      int i = AGetInt(t, frame[0]);
+@end
+
+<p>Finally, we increment the integer by one, and convert it back to AValue
+using @ref{AMakeInt}:
+
+@example
+      return AMakeInt(t, i + 1);
+@end
+
+<p>This example illustrates a typical approach to using the Alore C API:
+First we convert Alore data to C types (in this case, using AGetInt), then
+perform some processing with the data using C types, and finally we convert the
+data back to Alore objects. Performing operations using C types such as int and
+char is generally much faster than performing the same operations using Alore
+objects or AValues. But there are also valid reasons for performing the
+operations using only Alore objects without the conversion steps, and an
+example is given in the next section.
+
+@h2 Storing temporary values
+
+<p>As functions get even slightly more complex than the previous example, it
+is necessary to generate intermediate AValue values. An important property
+of the AValue type is that you cannot generally store values of type AValue in
+local or global C variables &#8212; AValues must usually be accessed
+using pointers to specific locations, since otherwise the garbage collector
+cannot manage them.
+
+<p>Fortunately it is rather easy to allocate new AValue locations for holding
+temporary values. The third argument of the A_DEF macro defines the number of
+additional temporary AValue locations to allocate in the block
+pointed to by the frame argument. These temporary locations are allocated
+just after the function arguments.
+
+<p>Let's return to the previous example, the incrementer. Since it converts
+Alore integers to C int variables, it can only process integers large enough
+to fit in a C int variable. Alore integers, however, have an unlimited
+precision, and we would like our Inc function to support them correctly. This
+can be accomplished by performing the addition using an Alore C API function
+@ref{AAdd} which performs the Alore + operation:
+
+@example
+  AValue Inc(AThread *t, AValue *frame)
+  {
+      frame[1] = AMakeInt(t, 1);
+      return AAdd(t, frame[0], frame[1]);
+  }
+@end
+
+<p>We first construct an <tt>Int</tt> object 1. This is necessary, since
+@ref{AAdd} takes two AValue arguments. This object is stored in the temporary
+location frame[1], and finally the <tt>AAdd</tt> function is called to add
+the first function argument and the just created object 1.
+
+<p>We still have to allocate space for the temporary value frame[1]. Otherwise,
+assigning to frame[1] might corrupt the Alore stack and cause crashes or other
+problems. We change the third argument of A_DEF to 1 to reflect the fact
+that we only need a single temporary location:
+
+@example
+  A_MODULE(hello, "hello")
+      A_DEF("Inc", 1, 1, Inc)
+  A_END_MODULE()
+@end
+
+<p>You might wonder if the temporary location is really necessary, since
+it might seem better to implement the function using a single expression:
+
+@example
+      return AAdd(t, frame[0], AMakeInt(t, 1)); <span class="error">/* Error */</span>
+@end
+
+<p>This is, however, not permitted, but the reason is somewhat non-trivial, and
+thus it is described only later in section
+@href{Coexisting with the garbage collector}.
+
+@h2 More C API functions
+
+<p>This example demonstrates how to create an array object. It creates an array
+object containing integers 1, 2, ..., n:
+
+@example
+  AValue Sequence(AThread *t, AValue *frame)
+  {
+      int i;
+      int n = AGetInt(t, frame[0]);
+      
+      frame[1] = AMakeArray(t, n);
+      for (i = 0; i < n; i++) {
+          frame[2] = AMakeInt(t, i + 1);
+          ASetArrayItem(t, frame[1], i, frame[2]);
+      }
+
+      return frame[1];
+  }
+
+  A_MODULE(example, "example")
+      A_DEF("Sequence", 1, 2, Sequence)
+  A_END_MODULE()
+@end
+
+<!-- IDEA: AGetStr example -->
+
+@h2 Omitting the return value
+
+<p>To signal that a function does not return a meaningful value, you can
+return ANil, which corresponds to the Alore nil value:
+
+@example
+  AValue DoNothing(AThread *t, AValue *frame)
+  {
+      return ANil;
+  }
+@end
+
+@h2 Important C types, constants and functions
+
+<p>These important types are defined in the Alore C API:
+
+@var AValue
+@desc This type represents a single Alore object reference. In addition, a
+      few special values (AError, ADefault) are supported.
+      Note that these special values should not be used in all contexts. 
+@end
+
+@var AThread *
+@desc This type represents the state of the current thread. This is an opaque
+      type, and you should not access its internals directly. It can only be
+      passed around and used as an argument to API functions. Each thread has
+      a separate AThread * value.
+@end
+
+@var ABool
+@desc This is a C-level boolean type, and it is equivalent to int. The
+      constants TRUE (1) and FALSE (0) are also defined.
+      @note Alore booleans are represented as AValues @ref{ATrue} and
+            @ref{AFalse}. Be careful not to mix these types.
+      @end
+@end
+
+@var AInt64
+@desc 64-bit signed integer type.
+@end
+
+@var AIntU64
+@desc 64-bit unsigned integer type.
+@end
+
+@var AWideChar
+@desc 16-bit unsigned integer type that can be used to represent a 16-bit
+      Unicode character.
+@end
+
+@var Asize_t
+@desc Equivalent to the C size_t type.
+@end
+
+@var Assize_t
+@desc The signed variant of Asize_t.
+@end
+
+<p>Here are descriptions of some AValue constants defined in the API:
+
+@var AError
+@desc This value is only used as a return value for functions that return
+      AValue. It represent the case where an exception was raised in the
+      function and it was propagated to the caller. Some exceptions
+      can also be raised as <i>direct exceptions</i>, and in that case the
+      AError return value is not used. This will be described later in section
+      @href{Exceptions}.
+      @see Use @ref{AIsError} (described below) to check if a value is equal
+           to AError.
+      @end
+@end
+
+@var ADefault
+@desc This value is used to represent a missing value for an optional function
+      argument. Any other value means that the caller provided a value.
+      @see Use @ref{AIsDefault} (described below) to check if a value is equal
+           to ADefault.
+      @end
+@end
+
+@var ANil
+@desc This value references the nil object. It also represents a missing return
+      value (similar to return without a return value expression in Alore
+      code).
+      @see Use @ref{AIsNil} to check if a value is nil.
+      @end
+@end
+
+@var ATrue
+@desc This value references the True object.
+      @see Use @ref{AIsTrue} to check if a value is True.
+      @end
+@end
+
+@var AFalse
+@desc This value references the False object.
+      @see Use @ref{AIsFalse} to check if a value is False.
+      @end
+@end
+
+@var AZero
+@desc This value represents the number zero. It can be used instead of
+      <tt>AMakeInt(t, 0)</tt>.
+@end
+
+<!-- FIX: A_VALUE_BITS?? -->
+
+<p>These functions are often useful:
+
+@fun ABool AIsError(AValue v)
+@desc Return a boolean indicating whether v is equal to @ref{AError}.
+@end
+
+@fun ABool AIsDefault(AValue v)
+@desc Return a boolean indicating whether v is equal to @ref{ADefault}.
+@end
+
+@fun ABool AIsNil(AValue v)
+@desc Return a boolean indicating whether the argument refers to the
+      <tt>nil</tt> object.
+@end      
+
+<!-- -->
+@note You should not compare AValues using the C == operator. You should use
+      functions such as @ref{AIsError} above or @ref{AIsEq} (described later)
+      to compare Alore values.
+@end
+
+@h2 Important conventions
+
+<p>All API calls may be implemented as macros, and therefore you should never
+take pointers to them. Any macros may also evaluate their arguments more than
+once. Therefore no side effects are allowed in arguments, and code like this is
+invalid:
+
+@example
+  return AMakeInt(t, Counter++); <span class="error">/* Error */</span>
+@end
+
+<p>It should be replaced with something like this:
+
+@example
+  int x = Counter++;
+  return AMakeInt(t, x);
+@end
+
+<p>The following naming conventions are used in the Alore C API:
+
+<ul>
+  <li>Types, functions and macros that behave more or less like functions are
+    named using CamelCase, and they all start with 'A'.
+  <li>Constants and macros that can be used outside functions are named like
+    this: A_CONSTANT_NAME.
+  <li>Constant values that can only be used within functions 
+    are named like functions. Examples:  ANil, AError and ATrue. Even though
+    these might be implemented as C global variables, you must not try to
+    create pointers to them.
+  <li>Macros that are used within functions but that do not behave like
+    functions are named like functions, but have a _M suffix. Examples:
+    @ref{AGetData_M} and @ref{ASetData_M}.
+    <!-- FIX _P -->
+</ul>

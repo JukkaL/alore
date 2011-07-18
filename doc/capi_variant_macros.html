@@ -1,0 +1,103 @@
+@head
+@title Variant macros
+
+@indexitem A_DEF_P
+@indexitem A_DEF_OPT_P
+@indexitem A_DEF_VARARGS_P
+@indexitem A_VAR_P
+@indexitem A_EMPTY_CONST_P
+@indexitem A_SYMBOLIC_CONST_P
+@indexitem A_CLASS_P
+@indexitem A_CLASS_PRIV_P
+
+<p>Many macros that are used in module definitions have variants with an
+additional _P suffix. These variants always take a single additional argument,
+of type int *. When the module is imported and before calling Main, a numeric
+identifier is stored in
+that location that can be used to refer to the defined entity efficiently.
+The pointer argument must point to a global variable defined in the current
+compilation unit. The _P macro variants behave otherwise identically to the
+ordinary macros.
+
+@h2 Example
+
+<p>The _P variant macros are provided for convenience and efficiency reasons.
+For example, they can be used to
+access data related to a global definition more efficiently than by using the
+name of the definition. Consider this implementation of a trivial
+function that returns the value of a global variable:
+
+@example
+  static AValue GetValue(AThread *t, AValue *frame)
+  {
+      return AGlobal(t, "example::Variable");
+  }
+
+  A_MODULE(example, "example")
+      A_VAR("Variable")
+      A_DEF("GetValue", 0, 0, GetValue)
+  A_END_MODULE()
+@end
+
+<p>The function GetValue can be implemented more efficiently with the help of a
+A_VAR_P macro:
+
+@example
+  static int VariableNum;
+
+  static AValue GetValue(AThread *t, AValue *frame)
+  {
+      return AGlobalByNum(VariableNum);
+  }
+
+  A_MODULE(example, "example")
+      A_VAR_P("Variable", &amp;VariableNum)
+      A_DEF("GetValue", 0, 0, GetValue)
+  A_END_MODULE()
+@end
+
+<p>The potentially costly call to @ref{AGlobal} in GetValue was
+replaced with the much faster @ref{AGlobalByNum} call. It should be noted
+that the same effect can be achieved, though not as elegantly, by defining a
+Main function for the module and initializing VariableNum in this function
+using @ref{AGetGlobalNum}.
+
+@h2 Variant macros for global definitions
+
+<p>The following variant macros are available for global definitions:
+
+<ul>
+  <li>A_DEF_P
+  <li>A_DEF_OPT_P
+  <li>A_DEF_VARARGS_P
+  <li>A_VAR_P
+  <li>A_EMPTY_CONST_P
+  <li>A_SYMBOLIC_CONST_P
+  <li>A_CLASS_P
+  <li>A_CLASS_PRIV_P
+</ul>
+
+<p>The numeric identifier initialized by these macros can be used to access the
+defined global value using @ref{AGlobalByNum} and @ref{ASetGlobalByNum}.
+
+@h2 Variant macros for member definitions
+
+<p>The following variant macros are available for member definitions within
+class definitions:
+
+<ul>
+  <li>A_VAR_P
+  <li>A_EMPTY_CONST_P
+</ul>
+
+<p>In these cases, the stored numeric identifier refers to the physical member
+slot that can be accessed using @ref{AMemberDirect} and @ref{ASetMemberDirect}.
+Read the descriptions of these functions carefully, since using these functions
+can be dangerous!
+
+@h2 Variant macro A_BINARY_DATA_P
+
+<p>The A_BINARY_DATA_P variant stores the binary data offset that
+can be used as an argument for @ref{ADataPtr}, @ref{ASetData_M} and
+@ref{AGetData_M}.
+

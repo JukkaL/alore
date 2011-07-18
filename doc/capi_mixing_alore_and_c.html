@@ -1,0 +1,52 @@
+@head
+@title Mixing Alore and C in modules
+
+<p>Each module available to Alore code is either an Alore module (fully
+implemented in Alore) or a C module (fully implemented in C using the Alore C
+API). Mixed Alore and C module implementations are possible by
+defining two modules, an Alore module and a C module, and by
+making all the public definitions available in one
+of the modules, while the other module is an internal module that should not be
+imported by clients.
+
+<p>Here is a sketch of using circular dependencies to define a module
+that is effectively a mixed C/Alore module:
+
+<ul>
+  <li>Define module acme in Alore and module _acme in C.
+  <li>Module acme imports _acme and vice versa.
+  <li>Module acme defines the public interface of the module.
+  <li>_acme is purely an implementation detail and is never imported by
+    external code.
+  <li>Function and class definitions in _acme can be made available in the
+    public interface module acme like this:
+
+    @example
+      module acme
+      import _acme
+
+      -- Alternative 1
+      const MyFunc = _acme::MyFunc
+
+      -- Alternative 2
+      def MyFunc2()
+        _acme::MyFunc2()
+      end
+
+      -- The const trick cannot be used with classes, since const definitions
+      -- cannot be inherited from or used as exception types in except
+      -- statements.
+      class MyClass is _acme::MyClass
+      end
+    @end
+  <li>Since _acme imports acme, it can access the public definitions of the
+    acme module.
+  <li>Class hierarchies implemented in C require additional public classes in
+    the acme module like this:
+    @example
+      _acme::AbstractClass (private C base class)
+        acme::AbstractClass (public base class)
+          _acme::ConcreteClass (private C derived class)
+            acme::ConcereteClass (public derived class)
+    @end
+</ul>

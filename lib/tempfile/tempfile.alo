@@ -1,0 +1,96 @@
+-- tempfile.alo - Temp file generator
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module tempfile
+
+import random
+import sys
+import io
+import os
+import thread
+
+
+private const RandomChars = "abcdefghijklmnopqrstuvwxyz0123456789"
+private const MaxIterations = 1000 -- Max number of file names to try
+private const TempMutex = Mutex()
+private var TempDir = nil
+
+
+def MakeTempFile(template = "tmp######")
+  var d = GetTempDir()
+  for i in 0 to MaxIterations
+    var p = Join(d, RandomName(template))
+    if not IsFile(p) -- For platforms that do not properly support Protected
+      try
+        var f = File(p, Output, Protected)
+        f.close()
+        return p
+      except IoError
+      end
+    end
+  end
+  raise IoError("Could not make temp file")
+end
+
+
+private def GetTempDir()
+  TempMutex.lock()
+  try
+    if TempDir == nil
+      for d in PotentialTempDirs()
+        if IsDir(d) and Stat(d).isWritable
+          TempDir = d
+          break
+        end
+      end
+    end
+  
+    if TempDir == nil
+      raise IoError("No temp directory found")
+    end
+    
+    return TempDir  
+  finally
+    TempMutex.unlock()
+  end
+end
+
+
+private def PotentialTempDirs()
+  var dirList = []
+  
+  for env in "TMPDIR", "TEMP", "TMP"
+    var v = GetEnv(env)
+    if v != nil
+      dirList.append(v)
+    end
+  end
+
+  if Platform == "windows"
+    dirList += ["c:\TEMP", "c:\TMP"]
+  else
+    dirList += ["/tmp", "/var/tmp"]
+  end
+  
+  return dirList
+end
+
+
+private def RandomName(template)
+  var n = ""
+  for i in 0 to template.length()
+    if template[i] == "#"
+      -- FIX: Do not use Random since is changes the random number sequence and
+      --      somebody might be relying on it to be predictable.
+      -- FIX: Is Random threadsafe?
+      n += RandomChars[Random(RandomChars.length())]
+    else
+      n += template[i]
+    end
+  end
+  return n
+end

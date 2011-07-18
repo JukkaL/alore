@@ -1,0 +1,98 @@
+module runtime
+
+import unittest
+import reflect
+
+
+class TestMessageSuite is Suite
+  def testTypeErrorMessages()
+    -- FIX: Implement.
+  end
+  
+  def testOperationTypeErrorMessages()
+    -- FIX: Implement.
+  end
+  
+  def testInvalidArgCountMessages()
+    AssertErrorMsg(call, NoArgsFunc, 1, ValueError, 
+                   "runtime::NoArgsFunc expects no arguments (1 given)")
+    AssertErrorMsg(call, SingleArgsFunc, ValueError, 
+                   "runtime::SingleArgsFunc expects 1 argument (0 given)")
+    AssertErrorMsg(call, OnePlusArgsFunc, ValueError, 
+                   "runtime::OnePlusArgsFunc expects at least 1 argument" +
+                   " (0 given)")
+    
+    var i = MessageClass()
+    try
+      i.bar()
+    except e is ValueError
+      Assert(e.message == "bar of runtime::MessageClass expects " +
+             "1 argument (0 given)")
+    end
+      
+    AssertErrorMsg(call, MessageClass().bar, ValueError, 
+               "bar of runtime::MessageClass expects 1 argument " +
+               "(0 given)")
+    
+    AssertErrorMsg(call, MessageClass, 1, ValueError,
+                   "class runtime::MessageClass expects no arguments (1 given)")
+  end
+  
+  def testMemberErrorMessages()
+    AssertErrorMsg(getMember, nil, "foo", MemberError, 
+                "nil has no member ""foo""")
+    AssertErrorMsg(getMember, 1, "foo", MemberError, 
+                "Int has no member ""foo""")
+    AssertErrorMsg(getMember, MessageClass(), "foo", MemberError, 
+                "runtime::MessageClass has no member ""foo""")
+    var i = MessageClass()
+    try
+      i.foo(1)
+    except e is ValueError
+      Assert(e.message == "runtime::MessageClass has no member ""foo""")
+    end
+  end
+  
+  private def getMember(o, attr)
+    return GetMember(o, attr)
+  end
+  
+  private def call(f, *args)
+    return f(*args)
+  end
+end
+
+
+private def NoArgsFunc()
+end
+
+
+private def SingleArgsFunc(a)
+end
+
+
+private def OnePlusArgsFunc(a, *b)
+end
+
+
+private class MessageClass
+  def bar(x)
+  end
+end
+
+
+-- Usage: AssertRaises(function, ... args ..., exception class, msg)
+--
+-- Call function with the given arguments and expect an exception of the given
+-- class with the given message.
+private def AssertErrorMsg(f, *rest)
+  try
+    f(*rest[0:rest.length() - 2])
+  except e is Exception
+    AssertType(rest[rest.length() - 2], e)
+    AssertEqual(e.message, rest[rest.length() - 1])
+    return
+  end
+  -- Not reached.
+  Assert(False)
+end

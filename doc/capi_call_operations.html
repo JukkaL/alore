@@ -1,0 +1,136 @@
+@head
+@title Call operations
+
+<p>This section describes operations for calling methods, functions and other
+callable objects such as types and bound methods.
+
+<p>All of these functions may raise direct or normal exceptions.
+
+@see The section @href{Member operations} contains operations for dealing with
+     member variables and reading members, including bound methods.
+@end
+
+@h2 Operations
+
+<p>All of these functions have a few things in common:
+
+<ul>
+  <li>They return the return value of the call, or AError if a normal
+      uncaught exception was raised.
+  <li>The args array must point to locations in a function frame or in
+      temporary locations allocated using @ref{AAllocTemps}, i.e. they must
+      be visible to the garbage collector.
+  <li>The args array must have space for one extra item in addition to the
+      arguments (and self, in case of method calls). This is needed for
+      evaluating the calls.
+  <li>The functions may modify the contents of the args array.
+</ul>
+
+@fun AValue ACall(AThread *t, const char *callable, int numArgs, AValue *args)
+@desc Call an object specified using the fully qualified name of global
+      definition with numArgs arguments, stored in the array args.
+      args[0] is the first argument, args[1] is the second one, and so on.
+      See the list above for additional details.
+@end
+
+@fun AValue ACallVarArg(AThread *t, const char *callable, int numFixedArgs, AValue *args)
+@desc Like above, but an additional Array object must be present in the args
+      array that contains the rest of the arguments (args[numFixedArgs]).
+@end
+
+@fun AValue ACallValue(AThread *t, AValue callable, int numArgs, AValue *args)
+@desc Call a callable object with numArgs arguments, stored in the array args.
+      args[0] is the first argument, args[1] is the second one, and so on.
+      See the list above for additional details.
+@end
+
+@fun AValue ACallValueVarArg(AThread *t, AValue callable, int numFixedArgs, AValue *args)
+@desc Like above, but an additional Array object must be present in the args
+      array that contains the rest of the arguments (args[numFixedArgs]).
+@end
+
+@fun AValue ACallMethod(AThread *t, const char *member, int numArgs, AValue *args)
+@desc Call a method with numArgs arguments (not including the implicit self
+      argument), stored in the array args.
+      args[0] is the target object (self), args[1] is the first argument,
+      and so on.
+      See the list above for additional details.
+@end
+
+@fun AValue ACallMethodVarArg(AThread *t, const char *member, int numFixedArgs, AValue *args)
+@desc Like above, but an additional Array object must be present in the args
+      array that contains the rest of the arguments (args[numFixedArgs + 1]).
+@end
+
+@h2 Examples
+
+<p>This module defines two example functions, one that calls a function and one
+that calls a method:
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  AValue FunctionExample(AThread *t, AValue *frame)
+  {
+      AValue ret; /* The return value does not need to be stored in the frame,
+                     since no operation invalidates it. However, it could be
+                     stored in the frame for safety and consistency. */
+  
+      /* Setup arguments. Note that frame[3] is not set, but it is allocated in
+         the frame. */
+      frame[1] = AMakeInt(t, 4);
+      frame[2] = AMakeStr(t, "hello");
+
+      ret = ACallValue(t, frame[0], 2, frame + 1);
+      if (AIsError(ret))
+          return AError; /* Normal exception */
+      else
+          return ret; /* Pass on the return value. */
+  }
+
+  AValue MethodExample(AThread *t, AValue *frame)
+  {
+      AValue ret;
+  
+      /* Setup arguments. Note that frame[4] is not set, but it is allocated in
+         the frame. */
+      frame[1] = frame[0]; /* self */
+      frame[2] = AMakeInt(t, 4); /* First argument */
+      frame[3] = AMakeStr(t, "hello"); /* Second argument */
+      
+      ret = ACallMethod(t, "method", 2, frame + 1);
+      if (AIsError(ret))
+          return AError; /* Normal exception */
+      else
+          return ret; /* Pass on the return value. */
+  }
+
+  A_MODULE(call, "call")
+      A_DEF("FunctionExample", 1, 3, FunctionExample)
+      A_DEF("MethodExample", 1, 4, MethodExample)
+  A_END_MODULE()
+@end
+
+<p>This Alore code uses the above module:
+
+@example
+  import call
+
+  def Main()
+    WriteLn(FunctionExample(Func)) -- Display 9 (== 4 + 5)
+    var x = MyClass()
+    WriteLn(MethodExample(x))      -- Display 10 (== 4 + 5 + 1)
+  end
+
+  def Func(x, y)
+    return x + y.length()
+  end
+
+  class MyClass
+    var member = 1
+
+    def method(x, y)
+      return x + y.length() + member
+    end
+  end
+@end

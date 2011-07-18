@@ -1,0 +1,300 @@
+# Alore Makefile
+
+# Variables set by configure
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
+bindir = @bindir@
+libdir = @libdir@
+incdir = @includedir@
+mandir = @mandir@
+alorelibdir = @alorelibdir@
+aloreincdir = @aloreincdir@
+
+CC = @CC@
+LD = $(CC)
+
+PLATFORM = @PLATFORM@
+
+PG_LDFLAGS = @PG_LDFLAGS@
+OPT_MODULES = @OPT_MODULES@
+#JIT_SRC = @JIT_SRC@
+
+# C compiler and linker options
+CFLAGS = @CFLAGS@ -I. @CPPFLAGS@
+LD_SHARED = @LD_SHARED@
+LDFLAGS = @LDFLAGS@ @LD_EXPORT_FLAGS@ @LIBS@
+MOD_LDFLAGS = @MOD_LDFLAGS@ @LIBS@
+MOD_CFLAGS = $(CFLAGS) @CC_SHARED_FLAGS@
+IMPLIB = @IMPLIB@
+
+# Either buildversion or empty (depending on whether we are building from a
+# svn working copy or not).
+VERSIONDEP = @VERSIONDEP@
+
+# @SOEXT@ and @EXEEXT@ are also required.
+
+# End of variables set by configure
+
+ALORELIBS  = re string time unittest pack tempfile url cgi http
+ALORELIBS += memorystream email __os argparse glob
+
+# Core (parser, interpreter, module and symbol table management, etc.)
+SRC  = src/lex.c src/strtonum.c src/symtable.c src/common.c src/compile.c
+SRC += src/error.c src/file.c src/parse.c src/scan.c src/list.c src/cmem.c
+SRC += src/ident.c src/display.c src/output.c src/parseexpr.c
+SRC += src/opcodesize.c src/class.c src/globals.c src/module.c
+SRC += src/dynaload.c src/files.c src/strtables.c src/dynload.c
+
+# Runtime (interpreter, helpers, etc.)
+SRC += src/interp.c src/runtime.c src/call.c src/keyint.c src/aloreapi.c
+SRC += src/memapi.c src/thread.c src/exception.c
+SRC += src/exit.c src/util.c src/errmsg.c src/win32_exception.c
+
+# Garbage collector
+SRC += src/gc.c src/heap.c src/heapalloc.c
+
+# Debugging helpers
+SRC += src/debug_memory.c src/debug_runtime.c src/displaycode.c
+
+# std module
+SRC += src/std_module.c src/std_float.c src/std_str.c src/std_map.c
+SRC += src/std_sort.c src/std_str_format.c src/std_array.c src/std_type.c
+SRC += src/std_int.c src/std_int_long.c src/std_hashvalue.c src/std_wrappers.c
+
+# Statically linked modules
+SRC += src/io_module.c src/io_posix.c src/io_text.c
+SRC += src/encodings_module.c src/encodings_tables.c
+SRC += src/errno_module.c src/errno_info.c
+SRC += src/loader_module.c
+SRC += src/thread_module.c src/thread_athread.c src/athread_pthread.c
+SRC += src/athread_win32.c
+SRC += src/reflect_module.c
+SRC += src/re_module.c src/re_comp.c src/re_match.c src/re_disp.c
+SRC += src/string_module.c
+SRC += src/os_module.c src/os_posix.c src/os_win32.c
+SRC += src/set_module.c
+SRC += src/random_module.c
+SRC += src/math_module.c
+SRC += src/time_module.c
+SRC += src/bitop_module.c
+SRC += src/sys_module.c
+SRC += src/pack_module.c
+#SRC += $(JIT_SRC)
+
+# Dynamically linked modules
+MODULE_SRC  = src/testc_module.c src/unicode_module.c src/unicode_names.c
+MODULE_SRC += src/socket_module.c src/serversocket_module.c src/base64_module.c
+
+MODULE_OBJ = $(MODULE_SRC:.c=.o)
+
+MODULES  = lib/__testc@SOEXT@ lib/unicode@SOEXT@ lib/socket@SOEXT@
+MODULES += lib/serversocket@SOEXT@ lib/base64@SOEXT@ lib/__dummy@SOEXT@
+MODULES += $(OPT_MODULES:%=lib/%@SOEXT@)
+MODULE_LIBS = $(MODULES:lib/%@SOEXT@=lib/liba%.a)
+
+API_INC  = config.h src/alore.h src/module.h src/value.h src/common.h
+API_INC += src/aconfig.h src/thread.h src/globals.h src/runtime.h src/mem.h
+API_INC += src/operator.h src/class.h src/lex.h src/array.h src/errmsg.h
+API_INC += src/str.h src/cmodules.h
+
+OBJX = $(SRC:.c=.o)
+OBJ = $(OBJX:.S=.o)
+
+INTERP_SRC = $(SRC) src/main.c src/cmodules.c src/version.c
+INTERP_OBJX = $(INTERP_SRC:.c=.o)
+INTERP_OBJ  = $(INTERP_OBJX:.S=.o)
+
+COMPILED_SRC = $(SRC) src/stub.c src/version.c
+COMPILED_OBJX = $(COMPILED_SRC:.c=.o)
+COMPILED_OBJ  = $(COMPILED_OBJX:.S=.o)
+
+ALL_SRC  = $(SRC) $(MODULE_SRC) src/main.c src/cmodules.c src/version.c
+ALL_SRC += src/stub.c
+
+ALOREC_SRC  = util/alorec.alo util/compiler/compile.alo util/compiler/util.alo
+ALOREC_SRC += util/compiler/platdeps.alo util/compiler/options.alo
+
+.PHONY: all clean distclean test testaddit install buildversion doc
+
+.SUFFIXES: .c .o _dyn.o
+
+all: alore alorec $(MODULES) $(IMPLIB)
+
+alore $(IMPLIB): $(INTERP_OBJ)
+	$(LD) -o $@ $(INTERP_OBJ) $(LDFLAGS)
+
+alorec: alore lib/libalorec.a $(ALOREC_SRC) $(MODULE_LIBS) $(MODULES)
+	./alore util/alorec.alo -L lib util/alorec.alo
+	mv util/alorec@EXEEXT@ .
+
+lib/libalorec.a: $(COMPILED_OBJ)
+	ar rc $@ $(COMPILED_OBJ)
+	ranlib $@
+
+test: alore $(MODULES)
+	cd test && ../alore test.alo
+
+doc:	alore $(MODULES)
+	util/conv.sh
+
+clean:
+	rm -rf alore alorec alore.exe alorec.exe lib/libalorec.a \
+	  src/*.o $(MODULES) build.h lib/*.inf $(MODULE_LIBS) test/TEMP \
+          test/TMP test/TMPDIR libalore.a
+
+distclean: clean
+	rm -f config.h config.log config.status config.h configure.lineno
+	rm -rf autom4te.cache
+	rm -f Makefile core
+	rm -f doc/html/*.html doc/html/*.css
+	rm -f release/alore-*.gz release/alore-*.zip
+	find . '(' -name "*~" \
+		-o -name "#*#" \
+                -o -name "svn-commit*.tmp" ')' -exec rm -f {} ';'
+
+install: alore alorec
+	for dir in $(bindir) $(libdir) $(alorelibdir) $(incdir) \
+	           $(aloreincdir); do \
+	  if [ ! -d $$dir ]; then \
+	    mkdir -p $$dir; \
+	  fi; \
+	done
+
+	for lib in $(ALORELIBS); do \
+	  mkdir -p $(alorelibdir)/$$lib; \
+	  cp lib/$$lib/*.alo $(alorelibdir)/$$lib; \
+	done
+	for lib in $(MODULES); do \
+	  cp $$lib $(alorelibdir); \
+	done
+	for lib in $(MODULE_LIBS); do \
+	  cp $$lib $(alorelibdir); \
+	done
+	for inf in $(MODULE_LIBS:.a=.inf); do \
+	  if [ -f $$inf ]; then \
+	    cp $$inf $(alorelibdir); \
+	  fi; \
+	done
+	cp $(API_INC) $(aloreincdir)
+	cp alore $(bindir)
+	cp alorec $(bindir)
+	cp lib/libalorec.a $(libdir)
+	if test $(PLATFORM) != windows; then \
+	  if [ ! -d $(mandir) ]; then mkdir -p $(mandir); fi; \
+	  if [ ! -d $(mandir)/man1 ]; then mkdir -p $(mandir)/man1; fi; \
+	  cp doc/alore.man $(mandir)/man1/alore.1; \
+	  cp doc/alorec.man $(mandir)/man1/alorec.1; \
+	fi
+
+# Update dependencies in Makefile.depend. Run this every time dependicies
+# change. This is not run automatically!
+#
+# NOTE: gcc is required for this target, but since Makefile.depend is normally
+#       included in the distribution, gcc is not needed for building.
+depend:
+	echo '# DO NOT EDIT -- generated automatically by "make depend"' > \
+          Makefile.depend
+	for f in $(ALL_SRC); \
+	do \
+	  gcc -MM -MG -I. $$f | \
+            sed -e "s/^\(.*\)\.o:/`dirname $$f`\/\1.o:/" >> \
+            Makefile.depend; \
+	done
+	for f in $(MODULE_SRC); \
+	do \
+	  gcc -MM -MG -I. $$f | \
+            sed -e "s/^\(.*\)\.o:/`dirname $$f`\/\1_dyn.o:/" >> \
+            Makefile.depend; \
+	done
+
+# Run tidy for all the generated documentation files. Some spurious warnings
+# are ignored manually using grep.
+# Note that tidy may not properly check HTML validity.
+checkhtml: doc
+	@for f in doc/html/*.html; do \
+	  tidy -q -e "$$f" 2>&1 | sed 's/line/  line/g' | \
+	    egrep -v 'anchor "(en|de)code"' > tidy.tmp; \
+	  if test "`cat tidy.tmp`x" != x; then \
+	    echo "$$f":; \
+	    cat tidy.tmp; \
+	  fi; \
+	done
+	@rm tidy.tmp
+
+# Run linkchecker to check the links in the generated documentation files.
+# Note that linkchecker may not properly check anchors and some other issues.
+checklinks: doc
+	linkchecker -a --no-status doc/html/index.html
+
+# Always update build.h if building from a svn working copy.
+build.h: $(VERSIONDEP)
+	@printf '#define A_BUILD "'`svnversion .`'"\n' > build.tmp
+	@if [ ! -f build.h ]; \
+        then \
+	  cp build.tmp build.h; \
+	  echo "build.h created"; \
+	fi
+	@if [ `(cmp -s build.tmp build.h; echo $$?;)` != 0 ]; \
+        then \
+	  cp build.tmp build.h; \
+	  echo "build.h updated"; \
+	fi
+	@rm build.tmp
+
+# Dummy rule.
+buildversion:
+
+lib/__testc@SOEXT@: src/testc_module_dyn.o $(IMPLIB)
+	$(LD_SHARED) -o $@ src/testc_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
+
+lib/liba__testc.a: src/testc_module.o
+	ar rc $@ src/testc_module.o
+	ranlib $@
+
+lib/unicode@SOEXT@: src/unicode_module_dyn.o src/unicode_names_dyn.o $(IMPLIB)
+	$(LD_SHARED) -o $@ src/unicode_module_dyn.o src/unicode_names_dyn.o \
+	  $(IMPLIB) $(MOD_LDFLAGS)
+
+lib/libaunicode.a: src/unicode_module.o src/unicode_names.o
+	ar rc $@ src/unicode_module.o src/unicode_names.o
+	ranlib $@
+
+lib/socket@SOEXT@: src/socket_module_dyn.o $(IMPLIB)
+	$(LD_SHARED) -o $@ src/socket_module_dyn.o $(IMPLIB) \
+	  $(MOD_LDFLAGS) 
+
+lib/libasocket.a: src/socket_module.o
+	ar rc $@ src/socket_module.o
+	ranlib $@
+
+lib/serversocket@SOEXT@: src/serversocket_module_dyn.o $(IMPLIB)
+	$(LD_SHARED) -o $@ src/serversocket_module_dyn.o $(IMPLIB) \
+	  $(MOD_LDFLAGS) 
+
+lib/libaserversocket.a: src/serversocket_module.o
+	ar rc $@ src/serversocket_module.o
+	ranlib $@
+
+lib/base64@SOEXT@: src/base64_module_dyn.o $(IMPLIB)
+	$(LD_SHARED) -o $@ src/base64_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
+
+lib/libabase64.a: src/base64_module.o
+	ar rc $@ src/base64_module.o
+	ranlib $@
+
+lib/__dummy@SOEXT@: src/dummy_module_dyn.o $(IMPLIB)
+	$(LD_SHARED) -o $@ src/dummy_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
+
+lib/liba__dummy.a: src/dummy_module.o
+	ar rc $@ src/dummy_module.o
+	ranlib $@
+
+.c_dyn.o:
+	$(CC) $(MOD_CFLAGS) -c $< -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+include Makefile.depend

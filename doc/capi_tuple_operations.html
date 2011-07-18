@@ -1,0 +1,51 @@
+@head
+@title Tuple operations
+
+<p>These operations are provided for working with tuple objects. Only the most
+commonly needed operations are supported. Generic operations such as
+@ref{AIterator} and @ref{AIn} can be used as well to perform additional
+operations.
+
+<h2>Creating</h2>
+
+@fun AValue AMakeTuple(AThread *t, Assize_t len)
+@desc Create a <tt>std::Tuple</tt> object of the specified length. The object
+      is initialized to contain <tt>nil</tt> values for all items.
+      Use @ref{AInitTupleItem} immediately to initilize the tuple.
+      @note You must
+         not use partially initialized tuple objects for any other purpose than
+         for initializing them. In particular, you must not return them from
+         functions, assign them to non-local variables or pass them as
+         arguments to functions or operations.
+      @end
+@end
+
+<h2>Reading and updating</h2>
+
+@fun Assize_t ATupleLen(AValue v)
+@desc Return the length of a tuple. The argument must be a <tt>std::Tuple</tt>
+      object. This function performs no error checking.
+@end
+
+@fun AValue ATupleItem(AValue v, Assize_t index)
+@desc Return the value of an item in a tuple. The first argument must be a
+      <tt>std::Tuple</tt> object, and the index (0-based) must be non-negative
+      and less than the length of the tuple. This function performs no
+      error checking.
+@end
+
+@fun void AInitTupleItem(AThread *t, AValue v, Assize_t index, AValue item)
+@desc Initialize the value of an item in a tuple. The second argument must
+      be <i>a newly allocated
+      <tt>std::Tuple</tt> object that is not visible to any Alore code</i>,
+      and the index (0-based) must be non-negative
+      and less than then length of the tuple. This function performs
+      no error checking of the argument values. Raise a direct exception if
+      out of memory.
+@end
+
+<h2>Checking</h2>
+
+@fun ABool AIsTuple(AValue v)
+@desc Return a boolean indicating whether the type of v is <tt>std::Tuple</tt>.
+@end

@@ -1,0 +1,1058 @@
+encoding latin1
+
+module runtime
+
+-- FIX: May not work with 64-bit values.
+
+import unittest
+import __testc
+import encodings
+import set
+import errno
+
+
+private const Large = 12345678901234567890
+private const Small = 123456789
+
+
+-- Test Alore C extension API functions.
+class CApiSuite is Suite
+  def testAGetInt()
+    Assert(AGetInt(0) == "0")
+    Assert(AGetInt(1) == "1")
+    Assert(AGetInt(-1) == "-1")
+    for i in 2**31 - 1, -2**31, 2**20
+      AssertEqual(AGetInt(i), Str(i))
+    end
+
+    if not Is64BitArch
+      for i in maxInt, minInt, minPosLong, maxNegLong
+        AssertEqual(AGetInt(i), Str(i))
+      end
+    end
+    
+    AssertRaises(ValueError, AGetInt, [2**31])
+    AssertRaises(ValueError, AGetInt, [-2**31 - 1])
+    AssertRaises(ValueError, AGetInt, [-2**31 - 2**16])
+    AssertRaises(TypeError, AGetInt, [1.0])
+    AssertRaises(TypeError, AGetInt, ["1"])
+  end
+  
+  def testAGetIntU()
+    Assert(AGetIntU(0) == "0")
+    Assert(AGetIntU(1) == "1")
+    for i in 2**32 - 1, 2**20
+      AssertEqual(AGetIntU(i), Str(i))
+    end
+
+    if not Is64BitArch
+      for i in maxInt, minPosLong
+        AssertEqual(AGetIntU(i), Str(i))
+      end
+    end
+        
+    AssertRaises(ValueError, AGetIntU, [-1])
+    AssertRaises(ValueError, AGetIntU, [minInt])
+    AssertRaises(ValueError, AGetIntU, [maxNegLong])
+    AssertRaises(ValueError, AGetIntU, [2**32])
+    AssertRaises(TypeError, AGetIntU, [1.0])
+    AssertRaises(TypeError, AGetIntU, ["1"])
+  end
+  
+  def testAGetInt64()
+    Assert(AGetInt64(0) == "0")
+    Assert(AGetInt64(1) == "1")
+    Assert(AGetInt64(-1) == "-1")
+    for i in maxInt, minInt, minPosLong, maxNegLong, 2**31 - 1, -2**31, 
+             2**31, -2**31 - 1, 2**63 - 1, -2**63, 2**40, 2**50
+      AssertEqual(AGetInt64(i), Str(i))
+    end
+    AssertRaises(ValueError, AGetInt64, [2**63])
+    AssertRaises(ValueError, AGetInt64, [2**64])
+    AssertRaises(ValueError, AGetInt64, [2**164])
+    AssertRaises(ValueError, AGetInt64, [-2**63 - 1])
+    AssertRaises(ValueError, AGetInt64, [-2**64 - 1])
+    AssertRaises(ValueError, AGetInt64, [-2**164 - 1])
+    AssertRaises(ValueError, AGetInt64, [-2**63 - 2**16])
+    AssertRaises(ValueError, AGetInt64, [-2**63 - 2**32])
+    AssertRaises(TypeError, AGetInt64, [1.0])
+    AssertRaises(TypeError, AGetInt64, ["1"])
+  end
+  
+  def testAGetIntU64()
+    Assert(AGetIntU64(0) == "0")
+    Assert(AGetIntU64(1) == "1")
+    for i in maxInt, minPosLong, 2**32 - 1, 2**32, 2**64 - 1, 2**20, 2**40, 2**50
+      AssertEqual(AGetIntU64(i), Str(i))
+    end
+    AssertRaises(ValueError, AGetIntU64, [-1])
+    AssertRaises(ValueError, AGetIntU64, [minInt])
+    AssertRaises(ValueError, AGetIntU64, [maxNegLong])
+    AssertRaises(ValueError, AGetIntU64, [2**64])
+    AssertRaises(ValueError, AGetIntU64, [2**164])
+    AssertRaises(TypeError, AGetIntU64, [1.0])
+    AssertRaises(TypeError, AGetIntU64, ["1"])
+  end
+  
+  def testAMakeInt()
+    Assert(AMakeInt(0) == 0)
+    Assert(AMakeInt(1) == 1)
+    Assert(AMakeInt(-1) == -1)
+    for i in 2**31 - 1, -2**31, 2**20 + 2**10
+      AssertEqual(AMakeInt(i), i)
+    end
+    if not Is64BitArch
+      for i in maxInt, minInt, minPosLong, maxNegLong
+        AssertEqual(AMakeInt(i), i)
+      end
+    end
+  end
+  
+  def testAMakeIntU()
+    Assert(AMakeIntU(0) == 0)
+    Assert(AMakeIntU(1) == 1)
+    for i in 2**32 - 1, 2**20, 2**31
+      AssertEqual(AMakeIntU(i), i)
+    end
+    if not Is64BitArch
+      for i in maxInt, minPosLong
+        AssertEqual(AMakeIntU(i), i)        
+      end
+    end
+  end
+  
+  def testAMakeInt64()
+    Assert(AMakeInt64(0) == 0)
+    Assert(AMakeInt64(1) == 1)
+    Assert(AMakeInt64(-1) == -1)
+    for i in maxInt, minInt, minPosLong, maxNegLong, 2**31 - 1, -2**31,
+             2**63 - 1, -2**63, 2**20, 2**40, 2**50
+      AssertEqual(AMakeInt64(i), i)
+    end
+  end
+  
+  def testAMakeIntU64()
+    Assert(AMakeIntU64(0) == 0)
+    Assert(AMakeIntU64(1) == 1)
+    for i in maxInt, minPosLong, 2**64 - 1, 2**20, 2**31, 2**40, 2**50
+      AssertEqual(AMakeIntU64(i), i)
+    end
+  end
+  
+  def testAGetFloat()
+    AssertEqual(AGetFloat(0.0), "0")
+    AssertEqual(AGetFloat(1.1), "1.1")
+    AssertEqual(AGetFloat(-1.1), "-1.1")
+    AssertEqual(AGetFloat(100), "100")
+    AssertEqual(AGetFloat(-100), "-100")
+    Assert(AGetFloat(2**65) in ("3.68935e+19", "3.68935e+019"))
+    Assert(AGetFloat(-2**65) in ("-3.68935e+19", "-3.68935e+019"))
+    AssertRaises(TypeError, AGetFloat, ["1"])
+  end
+  
+  def testAGetStr()
+    for s in AGetStrVals
+      Assert(AGetStr(s) == s)
+    end
+    for s in AGetStrValsW
+      AssertRaises(ValueError, AGetStr, [s])
+    end
+    AssertRaises(TypeError, AGetStr, [1])
+    AssertEqual(AGetStr("\u0000x"), "")
+  end
+  
+  def testAGetStrW()
+    for s in AGetStrVals
+      Assert(AGetStrW(s) == s)
+    end
+    for s in AGetStrValsW
+      Assert(AGetStrW(s) == s)
+    end
+    AssertRaises(TypeError, AGetStr, [1])
+  end
+  
+  def testAGetStrUtf8()
+    for s in AGetStrVals
+      AssertEqual(AGetStrUtf8(s), Encode(s, Utf8))
+    end
+    for s in AGetStrValsW
+      AssertEqual(AGetStrUtf8(s), Encode(s, Utf8))
+    end
+    var s = "\u0001\u0100\u1000\uffff"
+    AssertEqual(AGetStrUtf8(s), Encode(s, Utf8))
+    AssertRaises(TypeError, AGetStrUtf8, [1])
+    AssertRaises(ValueError, AGetStrUtf8, ["\u0000"])
+  end
+  
+  def testAMakeStrUtf8()
+    AssertEqual(AMakeStrUtf8(""), "")
+    AssertEqual(AMakeStrUtf8("foo bar\u0001\u007f"), "foo bar\u0001\u007f")
+    AssertEqual(AMakeStrUtf8(Encode("hääyö\uffff\u1234", Utf8)), 
+                             "hääyö\uffff\u1234")
+                             
+    AssertEqual(AMakeStrUtf8("a" * 3000), "a" * 3000)
+    AssertEqual(AMakeStrUtf8(Encode("\uffff" * 1000, Utf8)), "\uffff" * 1000)
+    
+    -- NOTE: These are similar to test-textio-1.alo (testUtf8DecodeErrors)
+    
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u0080"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u0080"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u0080\u0080"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00c2."])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00c2\u00c2"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00e0.."])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00e0\u00a0."])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00e0\u00a0\u00c2"])
+    
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00c1\u0080"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00c1\u00bf"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00e0\u0080\u0080"])
+    AssertRaises(ValueError, AMakeStrUtf8, ["\u00e0\u009f\u0080"])
+    
+    AssertRaises(ValueError, AMakeStrUtf8, ["..\u0100.."])
+  end
+  
+  def testAMakeEmptyStr()
+    Assert(AMakeEmptyStr(0) == "")
+    Assert(AMakeEmptyStr(1) == "a")
+    Assert(AMakeEmptyStr(1000) == "a" * 1000)
+  end
+  
+  def testAMakeEmptyStrW()
+    Assert(AMakeEmptyStrW(0) == "")
+    Assert(AMakeEmptyStrW(1) == "\u1000")
+    Assert(AMakeEmptyStrW(1000) == "\u1000" * 1000)
+  end
+  
+  def testAStrLenUtf8()
+    AssertEqual(AStrLenUtf8(""), 0)
+    AssertEqual(AStrLenUtf8("foobar"), 6)
+    AssertEqual(AStrLenUtf8("\uffff"), 3)
+    AssertEqual(AStrLenUtf8("\u0080"), 2)
+    AssertEqual(AStrLenUtf8("\uffffa\u0080"), 6)
+  end
+  
+  def testAConcat()
+    Assert(AConcat("foo", "bar") == "foobar")
+  end
+  
+  def testASubStr()
+    Assert(ASubStr("foobar", 1, 5) == "ooba")
+    Assert(ASubStr("foobar", 2, 2) == "")
+    Assert(ASubStr("foobar", 2, 0) == "")
+  end
+  
+  def testASetArrayItem()
+    var a = (1, 2)
+    ASetArrayItem(a, 0, 4)
+    ASetArrayItem(a, 1, "foo")
+    Assert(a == (4, "foo"))
+  end
+  
+  def testAMakeArray()
+    Assert(AMakeArray(0) == [])
+    Assert(AMakeArray(1) == [nil])
+    Assert(AMakeArray(1000) == [nil] * 1000)
+  end
+  
+  def testASubArray()
+    Assert(ASubArray([], 0, 0) == [])
+    Assert(ASubArray([1, 2], 0, 2) == (1, 2))
+    Assert(ASubArray([1, 2], 0, 1) == [1])
+    Assert(ASubArray([1, 2], 1, 2) == [2])
+    AssertRaises(TypeError, ASubArray, ("foo", 0, 1))
+  end
+  
+  def testATemps()
+    Assert(ATemps() == 1)
+  end
+  
+  def testAIs()
+    Assert(AIsValue(1, Int))
+    Assert(not AIsValue(1, Str))
+    Assert(AIsValue(Set(), Set))
+    Assert(not AIsValue(Set(), Map))
+    AssertRaises(TypeError, AIsValue, (1, 1))
+    Assert(not AIsValue(nil, Constant))
+  end
+  
+  def testACall()
+    AssertEqual(ACall("runtime::RetAll", 5), [5])
+  end
+  
+  def testACallVarArg()
+    AssertEqual(ACallVarArg("runtime::RetAll", 5, [6, 7]), [5, 6, 7])
+  end
+  
+  def testACallValue()
+    Assert(ACallValue(RetAll, 5) == [5])
+    AssertRaises(ValueError, ACallValue, [RetAll])
+    AssertRaises(ValueError, ACallValue, [1]) -- FIX: Should be TypeError?
+  end
+  
+  def testACallValueVarArg()
+    Assert(ACallValueVarArg(RetAll, 5, [6, 7]) == [5, 6, 7])
+    Assert(ACallValueVarArg(RetAll, 5, []) == [5])
+  end
+  
+  def testARaise()
+    AssertRaises(TypeError, ARaise, ["std::TypeError"])
+    AssertRaises(IoError, ARaise, ["std::IoError"])
+    AssertRaises(ValueError, ARaise, ["xyz"])
+  end
+  
+  def testARaiseByType()
+    try
+      ARaiseByType(ResourceError, "error")
+      Fail()
+    except e is ResourceError
+      Assert(e.message == "error")
+      AssertType(ResourceError, e)
+      return
+    end
+    Fail()
+  end
+  
+  def testARaiseValue()
+    try
+      ARaiseValue(ResourceError("error2"))
+      Fail()
+    except e is ResourceError
+      Assert(e.message == "error2")
+      AssertType(ResourceError, e)
+      return
+    end
+    Fail()
+  end
+  
+  def testATry()
+    Assert(ATry(True) == 1)
+    Assert(ATry(False) == 2)
+  end
+  
+  def testAIsExceptionType()
+    Assert(AIsExceptionType(Raiser(IoError), "std::IoError"))
+    AssertRaises(IoError, AIsExceptionType, 
+                [Raiser(IoError), "std::ValueError"])
+    Assert(AIsExceptionType(Raiser(TypeError), "std::TypeError"))
+    Assert(AIsExceptionType(Raiser(TypeError), "std::ValueError"))
+    AssertRaises(TypeError, AIsExceptionType, 
+                [Raiser(TypeError), "std::IoError"])
+    AssertRaises(ValueError, AIsExceptionType, 
+                [Raiser(ValueError), "std::TypeError"])
+  end
+  
+  def testACallMethod()
+    var a = ASetMemberTest()
+    Assert(ACallMethod("method", a) == 11)
+    Assert(ACallMethod("method2", a, 1, 2) == (1, 2))
+    AssertRaises(MemberError, ACallMethod, ("missing", a))
+    AssertRaises(ArithmeticError, ACallMethod, ("err", a))
+    Assert(ACallMethod("length", (1, 2)) == 2)
+  end
+  
+  def testACallMethodVarArg()
+    var a = ASetMemberTest()
+    Assert(ACallMethodVarArg("method", a, []) == 11)
+    Assert(ACallMethodVarArg("method2", a, (1, 2)) == (1, 2))
+    AssertRaises(MemberError, ACallMethodVarArg, ("missing", a, []))
+    AssertRaises(ArithmeticError, ACallMethodVarArg, ("err", a, []))
+  end
+  
+  def testAMember()
+    var a = ASetMemberTest()
+    Assert(AMember(a, "method")() == 11)
+    Assert(AMember(a, "c") == 22)
+    Assert(AMember(a, "v") == 33)
+    Assert(AMember(a, "getter") == 44)
+    Assert(AMember(a, "setter") == 3)
+    AssertRaises(MemberError, AMember, (a, "missing"))
+    AssertRaises(ArithmeticError, AMember, (a, "errProp"))
+    AssertEqual(nil, AMember(a, "getterNoRet"))
+  end
+  
+  def testASetMember()
+    var a = ASetMemberTest()
+    ASetMember(a, "v", 34)
+    Assert(a.v == 34)
+    ASetMember(a, "setter", 10)
+    Assert(a.setter == 14)
+    AssertRaises(MemberError, ASetMember, (a, "method", 1))
+    AssertRaises(MemberError, ASetMember, (a, "c", 1))
+    AssertRaises(MemberError, ASetMember, (a, "getter", 1))
+    AssertRaises(ArithmeticError, ASetMember, (a, "errProp", 1))
+  end
+  
+  def testAGlobal()
+    Assert(AGlobal("std::Ord") == std::Ord)
+    Assert(AGlobal("std::True") == std::True)
+    Assert(AGlobal("std::Map") == std::Map)
+    Assert(AGlobal("__testc::AGlobal") == AGlobal)
+    Assert(AGlobal("runtime::RetAll") == RetAll) -- Private
+    AssertRaises(ValueError, AGlobal, ["x::foo"])
+    AssertRaises(ValueError, AGlobal, ["__testc::foo"])
+    -- IDEA: Test module names of the form x::y::z etc.
+  end
+  
+  def testAGetPair()
+    Assert(AGetPair(1 : 2) == (1 : 2))
+    AssertRaises(TypeError, AGetPair, [1 to 2])
+  end
+  
+  def testAGetRange()
+    Assert(AGetRange(1 to 2) == (1 to 2))
+    AssertRaises(TypeError, AGetRange, [1 : 2])
+  end
+  
+  def testAIsEq()
+    Assert(AIsEq(1, 1) == 1)
+    Assert(AIsEq(0, 1) == 0)
+    Assert(AIsEq(0, "0") == 0)
+    
+    Assert(AIsEq("ab", "ab") == 1)
+    Assert(AIsEq("ab", "aa") == 0)
+    
+    Assert(AIsEq((1, 2), (1, 2)) == 1)
+    Assert(AIsEq((1, 2), (2, 2)) == 0)
+    
+    Assert(AIsEq(1, OpOverloadErrorClass()) < 0)
+    Assert(AIsEq(OpOverloadErrorClass(), 1) < 0)
+    
+    var oo = OpOverload()
+    AssertEqual(AIsEq(oo, 2), 1)
+    AssertEqual(AIsEq(oo, 3), 0)
+    AssertEqual(AIsEq(oo, "x"), 1)
+    AssertEqual(AIsEq(oo, []), 1)
+    AssertEqual(AIsEq(2, oo), 1)
+    AssertEqual(AIsEq(1.5, oo), 1)
+    AssertEqual(AIsEq("x", oo), 0)
+    AssertEqual(AIsEq([], oo), 0)
+  end
+  
+  def testAIsNeq()
+    Assert(AIsNeq(1, 1) == 0)
+    Assert(AIsNeq(0, 1) == 1)
+    Assert(AIsNeq(0, "0") == 1)
+    
+    Assert(AIsNeq(1, OpOverloadErrorClass()) < 0)
+    Assert(AIsNeq(OpOverloadErrorClass(), 1) < 0)
+  end
+  
+  def testAIsLt()
+    Assert(AIsLt(0, 1) == 1)
+    Assert(AIsLt(0, 0) == 0)
+    Assert(AIsLt(1, 0) == 0)
+    
+    Assert(AIsLt(0.1, 0.2) == 1)
+    Assert(AIsLt(0.1, 0.1) == 0)
+    Assert(AIsLt(0.2, 0.1) == 0)
+    Assert(AIsLt(2, 2.1) == 1)
+    
+    Assert(AIsLt("a", "aa") == 1)
+    Assert(AIsLt("a", "a") == 0)
+    Assert(AIsLt("aa", "a") == 0)
+    
+    Assert(AIsLt((1, 2), (1, 2, 1)) == 1)
+    Assert(AIsLt((1, 2), (1, 2)) == 0)
+    Assert(AIsLt((1, 2, 1), (1, 2)) == 0)
+
+    AssertRaises(TypeError, AIsLt, (1, "2"))
+    
+    Assert(AIsLt(1, OpOverloadErrorClass()) < 0)
+    Assert(AIsLt(OpOverloadErrorClass(), 1) < 0)
+    
+    -- Test operator overloading.
+    var oo = OpOverload()
+    AssertEqual(AIsLt(1, oo), 1)
+    AssertEqual(AIsLt(1.0, oo), 1)
+    var o = Ordered()
+    AssertRaises(TypeError, def (); AIsLt("x", o); end)
+  end
+  
+  def testAIsGt()
+    Assert(AIsGt(2, 1) == 1)
+    Assert(AIsGt(2, 2) == 0)
+    Assert(AIsGt(1, 2) == 0)
+    AssertRaises(TypeError, AIsGt, (1, "0"))
+  end
+  
+  def testAIsLte()
+    Assert(AIsLte(2, 1) == 0)
+    Assert(AIsLte(2, 2) == 1)
+    Assert(AIsLte(1, 2) == 1)
+    AssertRaises(TypeError, AIsLte, (1, "0"))
+  end
+  
+  def testAIsGte()
+    Assert(AIsGte(2, 1) == 1)
+    Assert(AIsGte(2, 2) == 1)
+    Assert(AIsGte(1, 2) == 0)
+    AssertRaises(TypeError, AIsGte, (1, "0"))
+  end
+  
+  def testALen()
+    Assert(ALen([]) == 0)
+    Assert(ALen((1, 2, 4)) == 3)
+    Assert(ALen(Set([1, 3])) == 2)
+    AssertRaises(MemberError, ALen, [1])
+  end
+  
+  def testAGetItemAt()
+    var a = [1, 3]
+    Assert(AGetItemAt(a, 0) == 1)
+    Assert(AGetItemAt(a, 1) == 3)
+    Assert(AGetItemAt(a, -1) == 3)
+    Assert(AGetItemAt(a, -2) == 1)
+    
+    var t = (1, 3)
+    Assert(AGetItemAt(t, 0) == 1)
+    Assert(AGetItemAt(t, 1) == 3)
+    Assert(AGetItemAt(t, -1) == 3)
+    Assert(AGetItemAt(t, -2) == 1)
+    
+    AssertEqual(AGetItemAt("foo", 0), "f")
+    AssertEqual(AGetItemAt("foo", -1), "o")
+  end
+  
+  def testASetItemAt()
+    var a = [1, 3]
+    ASetItemAt(a, 1, 11)
+    Assert(a[1] == 11)
+    ASetItemAt(a, -1, 12)
+    Assert(a[1] == 12)
+    -- FIX: fix the following
+    --var l = List(2, 4)
+    --ASetItemAt(l, 1, 22)
+    --Assert(AGetItemAt(l, 1) == 22)
+    AssertRaises(MemberError, ASetItemAt, ("foo", 1, "x"))
+  end
+  
+  def testAGetItem()
+    var a = [1, 3, 4]
+    Assert(AGetItem(a, 0) == 1)
+    Assert(AGetItem(a, 2) == 4)
+    Assert(AGetItem(a, -1) == 4)
+    Assert(AGetItem(a, -3) == 1)
+    Assert(AGetItem(a, 1:3) == [3, 4])
+    Assert(AGetItem(a, nil:2) == [1, 3])
+    Assert(AGetItem(a, 1:-1) == [3])
+    Assert(AGetItem(a, 1:nil) == [3, 4])
+    -- FIX: fix the following
+    --var l = List(2, 4, 5)
+    --Assert(AGetItem(l, 1) == 2)
+    --Assert(AGetItem(l, 3) == 5)
+    --Assert(AGetItem(l, 2:4) == (4, 5))
+    var s = "foo"
+    AssertEqual(AGetItem(s, 0), "f")
+    AssertEqual(AGetItem(s, 2), "o")
+    AssertEqual(AGetItem(s, -1), "o")
+    AssertEqual(AGetItem(s, -3), "f")
+    AssertEqual(AGetItem(s, 1:3), "oo")
+    AssertEqual(AGetItem(s, 1:nil), "oo")
+    AssertEqual(AGetItem(s, nil:2), "fo")
+    AssertEqual(AGetItem(s, 0:-1), "fo")
+    var m = Map(("foo", 1) : ("bar", 2))
+    AssertEqual(AGetItem(m, ("foo", 1)), ("bar", 2))    
+    
+    var t = (2, 3, 4)
+    AssertEqual(AGetItem(t, 0), 2)
+    AssertEqual(AGetItem(t, 2), 4)
+    AssertEqual(AGetItem(t, -1), 4)
+    AssertEqual(AGetItem(t, -3), 2)
+    
+    AssertRaises(TypeError, AGetItem, (5, 1))
+    AssertRaises(IndexError, AGetItem, (a, -4))
+    AssertRaises(IndexError, AGetItem, (s, 3))
+    AssertRaises(IndexError, AGetItem, (a, 3))
+    
+    AssertRaises(IndexError, AGetItem, (a, -4))
+    AssertRaises(IndexError, AGetItem, (s, -4))
+    
+    AssertRaises(IndexError, AGetItem, (t, 3))
+    AssertRaises(IndexError, AGetItem, (t, -4))
+  end
+  
+  def testASetItem()
+    var a = [1, 3]
+    ASetItem(a, 1, 11)
+    Assert(a[1] == 11)
+    ASetItem(a, -1, 12)
+    Assert(a[1] == 12)
+    var m = Map("xy" : "ab")
+    ASetItem(m, "xy", "ba")
+    Assert(AGetItem(m, "xy") == "ba")
+    
+    AssertRaises(TypeError, ASetItem, ("foo", 1, "x"))
+    AssertRaises(IndexError, ASetItem, (a, -3, 1))
+    AssertRaises(IndexError, ASetItem, (a, 2, 1))
+  end
+  
+  def testAAdd()
+    AssertEqual(AAdd(0, 0), 0)
+    AssertEqual(AAdd(1, 0), 1)
+    AssertEqual(AAdd(1, -2), -1)
+    AssertEqual(AAdd(Large, Small), Large + Small)
+    AssertEqual(AAdd(Small, Large), Large + Small)
+    AssertEqual(AAdd(Large, Large), Large + Large)
+    
+    AssertEqual(AAdd(maxInt, 1), maxInt + 1)
+    AssertEqual(AAdd(minInt, -1), minInt - 1)
+    AssertEqual(AAdd(minInt - 1, 1), minInt)
+    
+    AssertEqual(AAdd(1.5, 2.5), 4.0)
+    AssertEqual(AAdd(1.5, 2), 3.5)
+    
+    AssertEqual(AAdd(OpOverload(), 5), -4)
+    AssertEqual(AAdd(5, OpOverload()), -4)
+    
+    AssertEqual(AAdd(OpOverload(), 5.0), -4)
+    AssertEqual(AAdd(5.0, OpOverload()), -4)
+    
+    AssertEqual(AAdd("foo", "bar"), "foobar")
+    AssertEqual(AAdd("foo\ufe12", "bar"), "foo\ufe12bar")
+    
+    AssertEqual(AAdd([1, 2], ["bar"]), [1, 2, "bar"])
+  end
+  
+  def testASub()
+    AssertEqual(ASub(0, 0), 0)
+    AssertEqual(ASub(1, 0), 1)
+    AssertEqual(ASub(1, 2), -1)
+    AssertEqual(ASub(-5, -7), 2)
+    AssertEqual(ASub(Large, Small), Large - Small)
+    AssertEqual(ASub(Small, Large), Small - Large)
+    AssertEqual(ASub(Large, Large), 0)
+    
+    AssertEqual(ASub(minInt, 1), minInt - 1)
+    AssertEqual(ASub(maxInt, -1), maxInt + 1)
+    AssertEqual(ASub(maxInt + 1, 1), maxInt)
+    
+    AssertEqual(ASub(1.5, 2.5), -1.0)
+    AssertEqual(ASub(2, 1.5), 0.5)
+    
+    AssertEqual(ASub(OpOverload(), 5), 11)
+    AssertRaises(TypeError, def (); ASub(5, OpOverload()); end)
+  end
+  
+  def testAMul()
+    AssertEqual(AMul(0, 0), 0)
+    AssertEqual(AMul(5, 7), 35)
+    AssertEqual(AMul(-5, 7), -35)
+    AssertEqual(AMul(-5, -7), 35)
+    AssertEqual(AMul(Large, -Small), Large * -Small)
+    AssertEqual(AMul(Small, -Large), Small * -Large)
+    AssertEqual(AMul(Large, Large), Large * Large)
+    
+    AssertEqual(AMul(1.5, -2.5), 1.5 * -2.5)
+    AssertEqual(AMul(1.5, 2), 3.0)
+    
+    AssertEqual(AMul(OpOverload(), 5), 10)
+    AssertEqual(AMul(5, OpOverload()), 10)
+    
+    AssertEqual(AMul(OpOverload(), 5.0), 10)
+    AssertEqual(AMul(5.0, OpOverload()), 10)
+  end
+  
+  def testADiv()
+    AssertEqual(ADiv(3, 2), 1.5)
+    AssertEqual(ADiv(Large, Small), Large / Small)
+    AssertEqual(ADiv(Small, Large), Small / Large)
+    AssertEqual(ADiv(2 * Large, Large), 2 * Large / Large)
+    
+    AssertEqual(ADiv(1.5, 2.0), 0.75)
+    AssertEqual(ADiv(1.5, 2), 0.75)
+    
+    AssertRaises(ArithmeticError, ADiv, (1, 0))
+    AssertRaises(ArithmeticError, ADiv, (1, 0.0))
+    AssertRaises(ArithmeticError, ADiv, (Large, 0))
+    
+    AssertEqual(ADiv(OpOverload(), 5), 13)
+    AssertRaises(TypeError, def (); ADiv(5, OpOverload()); end)
+  end
+  
+  def testAIntDiv()
+    AssertEqual(AIntDiv(7, 2), 3)
+    AssertEqual(AIntDiv(-7, 2), -4)
+    AssertEqual(AIntDiv(Large, Small), Large div Small)
+    AssertEqual(AIntDiv(Large * Large + Small, Large), Large)
+    AssertEqual(AIntDiv(Large, Large), 1)
+    
+    AssertEqual(AIntDiv(3.5, 2.1), 1.0)
+    
+    AssertRaises(ArithmeticError, AIntDiv, (1, 0))
+    AssertRaises(ArithmeticError, AIntDiv, (1, 0.0))
+    AssertRaises(ArithmeticError, AIntDiv, (Large, 0))
+    
+    AssertEqual(AIntDiv(OpOverload(), 5), 17)
+    AssertRaises(TypeError, def (); AIntDiv(5, OpOverload()); end)
+  end
+  
+  def testAMod()
+    AssertEqual(AMod(7, 2), 1)
+    AssertEqual(AMod(-7, 2), 1)
+    AssertEqual(AMod(Large, Small), Large mod Small)
+    AssertEqual(AMod(Large * Large + Small, Large), Small)
+    AssertEqual(AMod(Large, Large), 0)
+    
+    AssertEqual(AMod(3.5, 2.0), 1.5)
+    AssertEqual(AMod(-3.5, 2.0), 0.5)
+    
+    AssertRaises(ArithmeticError, AMod, (1, 0))
+    AssertRaises(ArithmeticError, AMod, (1, 0.0))
+    AssertRaises(ArithmeticError, AMod, (Large, 0))
+    
+    AssertEqual(AMod(OpOverload(), 5), 15)
+    AssertRaises(TypeError, def (); AMod(5, OpOverload()); end)
+  end
+  
+  def testAPow()
+    AssertEqual(APow(100, 0), 1)
+    AssertEqual(APow(0, 100), 0)
+    AssertEqual(APow(2, 3), 2**3)
+    AssertEqual(APow(2, 49), 2**49)
+    AssertEqual(APow(Large, 3), Large**3)
+    AssertEqual(APow(0, 0), 1)
+    
+    AssertEqual(APow(4.0, 0.5), 2.0)
+    
+    AssertRaises(ArithmeticError, APow, (-2.0, 1))
+    
+    AssertEqual(APow(OpOverload(), 5), 19)
+    AssertRaises(TypeError, def (); APow(5, OpOverload()); end)
+    AssertRaises(ArithmeticError, def (); APow(4, -1); end)
+  end
+  
+  def testANeg()
+    AssertEqual(ANeg(0), 0)
+    AssertEqual(ANeg(1), -1)
+    AssertEqual(ANeg(-123), 123)
+    AssertEqual(ANeg(minInt), -minInt)
+    AssertEqual(ANeg(Large), -Large)
+    
+    AssertEqual(ANeg(1.234), -1.234)
+    
+    AssertEqual(ANeg(OpOverload()), 13)
+  end
+  
+  def testAIn()
+    AssertEqual(AIn(5, (4, 5, 6)), 1)
+    AssertEqual(AIn(3, (4, 5, 6)), 0)
+
+    AssertEqual(AIn(7, 7 to 8), 1)
+    AssertEqual(AIn(6, 7 to 8), 0)
+    AssertEqual(AIn(8, 7 to 8), 0)
+    
+    AssertEqual(AIn(6, Set([6, 7])), 1)
+    AssertEqual(AIn(5, Set([6, 7])), 0)
+    
+    AssertEqual(AIn("o", "foo"), 1)
+    AssertEqual(AIn("O", "foo"), 0)
+    
+    AssertRaises(TypeError, AIn, (1, "foo"))
+  end
+  
+  def testASuperMember()
+    var o = SuperTest()
+    AssertEqual(ASuperMember(o, "method1")(1, 2), 8)
+    AssertEqual(ASuperMember(o, "method2")(), "zz")
+    AssertEqual(ASuperMember(o, "getter1"), 6)
+    AssertEqual(ASuperMember(o, "getter2"), 7)
+    AssertEqual(ASuperMember(o, "x"), 99)
+    AssertEqual(ASuperMember(o, "y"), 22)
+    
+    AssertRaises(MemberError, ASuperMember, [o, "foo"])
+  end
+  
+  def testASetSuperMember()
+    var o = SuperTest()
+    ASetSuperMember(o, "getter1", 88)
+    AssertEqual(ASuperMember(o, "getter1"), 88)
+    ASetSuperMember(o, "getter2", 45)
+    AssertEqual(o.x, 45)
+    
+    AssertRaises(MemberError, ASetSuperMember, [o, "method1", 44])
+    AssertRaises(MemberError, ASetSuperMember, [o, "y", 44])
+  end
+  
+  def testBinaryData()
+    var o = BinaryData()
+    var i = 567346456
+    AssertEqual(o.get(), 1000)
+    o.set(i)
+    AssertEqual(o.get(), i)
+  end
+  
+  def testBinaryDataInheritance()
+    var o = BinaryData2()
+    var i = 123235400
+    var j = 897865700
+    var k = 342345400
+    
+    AssertEqual(o.get(), 1000)
+    AssertEqual(o.get2(), 5000)
+    o.set(i)
+    o.set2(j, k)
+    AssertEqual(o.get(), i)
+    AssertEqual(o.get2(), j + k)
+    AssertEqual(o.x, nil)
+    AssertEqual(o.y, nil)
+    AssertEqual(o.z, nil)
+  end
+  
+  def testBinaryDataUserInheritance()
+    var o = BinaryData3()
+    var i = 123235400
+    var j = 897865700
+    var k = 342345400
+    
+    AssertEqual(o.get(), 1000000)
+    AssertEqual(o.get2(), 5000000)
+    o.set(i)
+    o.set2(j, k)
+    AssertEqual(o.get(), i)
+    AssertEqual(o.get2(), j + k)
+  end
+  
+  def testBinaryDataAutoInit()
+    for i in 0 to 10000
+      var o = BinaryDataNonInit()
+      AssertEqual(o.get(), 0)
+      [nil] * 20
+      o.set(1234567) -- Set it to an arbitrary value to scramble memory.
+    end
+  end
+  
+  def testValueContainerBasics()
+    var a = AAllocContainer("foo")
+    var b = AAllocContainer(nil)
+    
+    var ap = AContainerPtr(a);
+    var bp = AContainerPtr(b);
+    
+    AssertNotEqual(ap, bp)
+    AssertNotEqual(ap, 0)
+    AssertNotEqual(bp, 0)
+    
+    AssertEqual(ap, AContainerPtr(a))
+    
+    AssertEqual(AContainerValue(ap), "foo")
+    AssertEqual(AContainerValue(bp), nil)
+    
+    ASetContainerValue(ap, 1245)
+    ASetContainerValue(bp, 2.5)
+    
+    AssertEqual(AContainerValue(ap), 1245)
+    AssertEqual(AContainerValue(bp), 2.5)
+  end
+  
+  def testValueContainerWithGc()
+    var a = AAllocContainer("x")
+    var ap = AContainerPtr(a)
+    
+    -- Repeat several times for more dependable results.
+    for i in 0 to 10
+      var b = AAllocContainer("y")
+      var bp = AContainerPtr(b)
+      
+      -- Allocate some memory to cause garbage collection with a high
+      -- probability.
+      for j in 0 to 10000
+        [nil] * 20
+      end
+      
+      AssertEqual(AContainerPtr(a), ap)
+      AssertEqual(AContainerPtr(b), bp)
+      
+      AssertEqual(AContainerValue(ap), "x")
+      AssertEqual(AContainerValue(bp), "y")
+    end
+  end
+  
+  def testAMakeRange()
+    AssertEqual(AMakeRange(0, 2), 0 to 2)
+    AssertEqual(AMakeRange(-2**64, 2**100), -2**64 to 2**100)
+    AssertRaises(TypeError, def (); AMakeRange(1.0, 2); end)
+    AssertRaises(TypeError, def (); AMakeRange(1, 2.0); end)
+  end
+  
+  def testAMakeTuple()
+    AssertType(Tuple, AMakeTuple())
+    AssertType(Tuple, AMakeTuple(1))
+    AssertType(Tuple, AMakeTuple(1, "x"))
+    
+    AssertEqual(AMakeTuple(), ())
+    AssertEqual(AMakeTuple(1), (1,))
+    AssertEqual(AMakeTuple(1, "x"), (1, "x"))
+  end
+  
+  def testARaiseErrnoIoError()
+    try
+      ARaiseErrnoIoError(CodeToErrno(ENOENT))
+    except e is IoError
+      AssertEqual(e.message, "No such file or directory [ENOENT]")
+      AssertEqual(e.code, ENOENT)
+      AssertEqual(e.errno, CodeToErrno(ENOENT))
+      return
+    end
+    Assert(False)
+  end
+  
+  def testARaiseErrnoIoErrorWithUnknownErrno()
+    try
+      ARaiseErrnoIoError(1234567)
+    except e is IoError
+      AssertEqual(e.message, "[Errno 1234567]")
+      AssertEqual(e.code, nil)
+      AssertEqual(e.errno, 1234567)
+      return
+    end
+    Assert(False)
+  end
+end
+
+
+private const AGetStrVals = (
+  "", "a", "123456789", "<123456789>"[1:10], "\u1000123456789"[1:10])
+private const AGetStrValsW = (
+  "\u1000", "12345678\u3000", "<12345678\u3000>"[1:10])
+
+
+private def RetAll(*a)
+  return a
+end
+
+
+private class ASetMemberTest
+  def method()
+    return 11
+  end
+  
+  def method2(*a)
+    return a
+  end
+  
+  def err()
+    return 1 / 0
+  end
+  
+  const c = 22
+  var v = 33
+  
+  def getter
+    return 44
+  end
+  
+  def getterNoRet
+  end
+  
+  def errProp
+    return 1 / 0
+  end
+  
+  def errProp = n
+    var a = n / 0
+  end
+  
+  var _setter = 0
+  
+  def setter = n
+    _setter = n + 1
+  end
+  
+  def setter
+    return _setter + 3
+  end
+end
+
+
+private class OpOverloadErrorClass
+  def _eq(x)
+    raise InterruptException()
+  end
+  
+  def _lt(x)
+    raise ExitException(2)
+  end
+  
+  def _gt(x)
+    raise ExitException(2)
+  end
+end
+
+
+private class SuperBase1
+  def method1(a, b)
+    return 5 + a + b
+  end
+  
+  def method2()
+    return "xx"
+  end
+  
+  var getter1 = 6
+end
+
+
+private class SuperBase2 is SuperBase1
+  def method2()
+    return "zz"
+  end
+  
+  def getter2
+    return 7
+  end
+  
+  def getter2 = n
+    x = n
+  end
+  
+  var x = 99
+  const y = 22
+end
+
+
+private class SuperTest is SuperBase2
+  def method1(a, b)
+    return 1 + a + b
+  end
+  
+  def method2()
+    return 44
+  end
+  
+  def getter1
+    return 5
+  end
+  
+  def getter1 = n
+    raise ValueError("getter1")
+  end
+  
+  def getter2
+    return 6
+  end
+  
+  def getter2 = n
+    raise ValueError("getter2")
+  end
+  
+  def foo()
+  end
+end
+
+
+private class BinaryData3 is BinaryData2
+  def create()
+  end
+  
+  var yy
+end
+
+
+private class Raiser
+  var type
+  
+  def _call()
+    ARaiseValue(type())
+  end
+end

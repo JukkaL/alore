@@ -1,0 +1,40 @@
+encoding utf8
+
+-- Source file with invalid UTF-8 sequences
+
+-- Invalid comments
+--   €
+--   €€
+--   Â.
+--   Â
+--   ÂÂ
+--   à..
+--   à
+--   à .
+--   à 
+--   à Â
+--   Á€
+--   Á¿
+--   à€€
+--   àŸ€
+--   xyzï¿¿asfÁ€yttàart
+
+
+def Main()
+  -- Invalid string literals
+  "€"
+  "€€"
+  "Â."
+  "Â"
+  "ÂÂ"
+  "à.."
+  "à"
+  "à ."
+  "à "
+  "à Â"
+  "Á€"
+  "Á¿"
+  "à€€"
+  "àŸ€"
+  "x\u1234yzï¿¿asfÁ€yttàart"
+end

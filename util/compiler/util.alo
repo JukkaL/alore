@@ -1,0 +1,83 @@
+-- util.alo - Utility functions
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module compiler
+
+import io
+import os
+import re
+import tempfile
+
+
+var TempFiles = []
+
+
+def CheckFileName(s)
+  var n = BaseName(s)
+  if Search("[\n\r'""`$]", n) != nil
+    StdErr.writeLn("Invalid characters in file name: """, s, """")
+    Exit(2)
+  end
+end
+
+
+def ExpectArgs(args, n)
+  if args.length() < n
+    Fail("alorec: More arguments expected")
+  end
+end
+
+
+def Fail(msg)
+  StdErr.writeLn(msg)
+  Exit(1)
+end
+
+
+def DoSystem(cmd)
+  Msg(cmd)
+  if System(cmd) != 0
+    Fail("alorec: Compile error")
+  end
+end
+
+
+def Msg(m)
+  if Verbose
+    WriteLn(m)
+  end
+end
+
+
+def FindFile(paths, name)
+  for d in paths
+    var p = Join(d, name)
+    if IsFile(p)
+      return p
+    end
+  end
+  return nil
+end
+
+
+def MyMakeTempFile(t)
+  var p = MakeTempFile(t)
+  TempFiles.append(p)
+  return p
+end
+
+
+-- Remove temporary files created during compilation.
+def RemoveTempFiles()
+  for f in TempFiles
+    try
+      Msg("Remove temporary file: " + f)
+      Remove(f)
+    except Exception
+    end
+  end
+end

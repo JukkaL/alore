@@ -1,0 +1,255 @@
+-- parse.alo - Parse Time, Date and DateTime strings
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module time
+
+import string
+import set
+
+
+private const MonthShortNameToNum = Map("jan" : 1, "feb" : 2, "mar" : 3,
+  "apr" : 4, "may" : 5, "jun" : 6, "jul" : 7, "aug" : 8, "sep" : 9, "oct" : 10,
+  "nov" : 11, "dec" : 12)
+
+private const MonthNameToNum = Map("january" : 1, "february" : 2, "march" : 3,
+  "april" : 4, "may" : 5, "june" : 6, "july" : 7, "august" : 8, 
+  "september" : 9, "october" : 10, "november" : 11, "december" : 12)
+
+
+private const ParseSymbolMap = 
+  Map(Date : Set(["Y", "M", "D"]), 
+      Time : Set(["d", "h", "m", "s"]),
+      DateTime : Set(["Y", "M", "D", "h", "m", "s"]))
+
+
+private def ParseDateTime(t, s, f)
+  var year = nil
+  var month = nil
+  var day = nil   -- For Date
+  var days = nil  -- For Time
+  var hour = nil
+  var minute = nil
+  var second = nil
+  var neg = False
+  var is12Hour = False
+  var isPm = False -- a.m. by default for 12 hour clock
+  var si = 0
+  var fi = 0
+  var symbols = ParseSymbolMap[t]
+  while fi < f.length()
+    if si >= s.length()
+      raise ValueError("Invalid date ({})".format(s))
+    end
+
+    if f[fi] in symbols
+      var n = 1 -- Number of format characters (e.g. h->1, hh->2)
+      var fract = nil
+      while fi + n < f.length() and f[fi + n] == f[fi]
+        n += 1
+      end
+      -- Is it seconds with a fraction?
+      if f[fi] == "s" and fi + n < f.length() and f[fi + n] in (".", ",")
+        fract = 0
+        while fi + n + 1 + fract < f.length() and f[fi + n + 1 + fract] == "s"
+          fract += 1
+        end
+        if fract != 1
+          raise ValueError("Invalid format ({})".format(f))
+        end
+      end
+      switch f[fi]
+        case "Y"
+          if n == 2
+            year, si = ParseInt(s, si, 2, 2)
+            if year > 68 
+              year += 1900
+            else
+              year += 2000
+            end
+          elif n == 4
+            year, si = ParseInt(s, si, 4)
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "M"
+          if n <= 2
+            month, si = ParseInt(s, si, n, 2)
+          elif n == 3
+            var m = s[si:si + 3].lower()
+            month = MonthShortNameToNum[m]
+            si += 3
+          elif n == 4
+            var ei = si
+            while ei < s.length() and IsWordChar(s[ei])
+              ei += 1
+            end
+            var m = s[si:ei].lower()
+            month = MonthNameToNum[m]
+            si = ei
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "D", "d", "h", "m", "s"
+          var val
+          var max = 2 -- Max number of digits for the current format sequence
+          if f[fi] == "d"
+            -- A Time object may have an unlimited number of days
+            max = 100
+          end
+          if n <= 2
+            val, si = ParseInt(s, si, n, max)
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+          switch f[fi]
+            case "D"
+              day = val
+            case "d"
+              days = val
+            case "h"
+              hour = val
+            case "m"
+              minute = val
+            case "s"
+              second = val
+              if fract != nil
+                -- Check if the optional decimal separator exists.
+                if si < s.length() and s[si] == f[fi + n]
+                  si += 1
+                  var actFract = 0
+                  while si + actFract < s.length() and IsDigit(s[si + actFract])
+                    actFract += 1
+                  end
+                  if actFract == 0
+                    raise ValueError("Invalid date ({})".format(f))
+                  end
+                  var fv, si2 = ParseInt(s, si, actFract, 100)
+                  second += fv / 10**(si2 - si)
+                  si = si2
+                end
+                fi += 1 + fract
+              end
+          end
+      end
+      fi += n
+    elif f[fi] == "-" and t == Time
+      fi += 1
+      if si < s.length() - 1 and s[si] == "-"
+        neg = True
+        si += 1
+      end
+    elif f[fi] == "\" 
+      if fi + 1 >= f.length()
+        raise ValueError("Invalid format ({})".format(f))
+      elif f[fi + 1] != s[si]
+        raise ValueError("Invalid date ({})".format(s))
+      end
+      fi += 2
+      si += 1
+    elif f[fi] == "[" and t in (Time, DateTime)
+      var am, pm
+      am, pm, fi = ParseAmPm(f, fi)
+      if s[si:].startsWith(am)
+        si += am.length()
+      elif s[si:].startsWith(pm)
+        si += pm.length()
+        isPm = True
+      else
+        raise ValueError("Invalid value ({})".format(f))
+      end
+      is12Hour = True
+    elif f[fi] != s[si]
+      raise ValueError("Invalid date ({})".format(s))
+    else
+      fi += 1
+      si += 1
+    end
+  end
+
+  if si < s.length()
+    raise ValueError("Invalid date ({})".format(s))
+  end
+  
+  -- Verify the validity of data and fill in missing values. Return the result.
+  if t == Date
+    if year == nil
+      raise ValueError("Year missing in format ({})".format(f))
+    elif month == nil
+      raise ValueError("Month missing in format ({})".format(f))
+    elif day == nil
+      raise ValueError("Day missing in format ({})".format(f))
+    end
+    VerifyDateRange(year, month, day)
+    return year, month, day, nil, nil, nil, nil
+  elif t == Time
+    if days == nil
+      days = 0
+    end
+    if hour == nil
+      hour = 0
+    end
+    if minute == nil
+      minute = 0
+    end
+    if second == nil
+      second = 0
+    end
+    if neg
+      days = -days
+      hour = -hour
+      minute = -minute
+      second = -second
+    end
+    VerifyTimeRange(hour, minute, second, is12Hour)
+    if is12Hour
+      if isPm and hour < 12
+        hour += 12
+      elif not isPm and hour == 12
+        hour = 0
+      end
+    end
+    return nil, nil, nil, days, hour, minute, second
+  elif t == DateTime
+    -- Raise error if any of the values is uninitialized.
+    for v, vs in (year, "Year"), (month, "Month"), (day, "Day"), 
+                 (hour, "Hour"), (minute, "Minute")
+      if v == nil
+        raise ValueError("{} missing in format ({})".format(vs, f))
+      end
+    end
+    if second == nil
+      second = 0
+    end
+    VerifyDateRange(year, month, day)
+    VerifyTimeRange(hour, minute, second, is12Hour)
+    return year, month, day, nil, hour, minute, second
+  end
+end
+
+
+private def VerifyDateRange(year, month, day)
+  if year < 1 or year > 9999 
+    raise ValueError("Year outside range")
+  elif month < 1 or month > 12 
+    raise ValueError("Month outside range")
+  elif day < 1 or day > DaysInMonth(year, month)
+    raise ValueError("Day outside range")
+  end
+end
+
+
+private def VerifyTimeRange(hour, minute, second, is12Hour)
+  if hour < -23 or hour > 23
+    raise ValueError("Hour outside range")
+  elif minute <= -60 or minute >= 60
+    raise ValueError("Minute outside range")
+  elif second <= -60 or second >= 60
+    raise ValueError("Second outside range")
+  elif is12Hour and (hour <= 0 or hour > 12)
+    raise ValueError("Hour outside range")
+  end
+end

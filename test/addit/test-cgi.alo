@@ -1,0 +1,71 @@
+#!/usr/bin/env alore
+
+-- Test script for the cgi module. Needs a web server to be run properly.
+-- Use the cgi-form.html file as a driver.
+
+import cgi
+
+
+def Main()
+  WriteLn("content-type: text/html")
+  WriteLn()
+  WriteLn("<html><body>")
+  WriteLn("<h1>CGI test script</h1>")
+  
+  var r = Request()
+  
+  WriteLn("<h2>Request properties</h2>")
+    
+  WriteLn("<p>")
+  WriteLn("method: {}<br>".format(r.method))
+  WriteLn("contentType: {}<br>".format(r.contentType))
+  WriteLn("contentLength: {}<br>".format(r.contentLength))
+  WriteLn("pathInfo: {}<br>".format(r.pathInfo))
+  WriteLn("userAgent: {}<br>".format(r.userAgent))
+  WriteLn("remoteAddr: {}<br>".format(r.remoteAddr))
+  WriteLn("remoteHost: {}<br>".format(r.remoteHost))
+  
+  WriteLn("<h2>Parameters (single value)</h2>")
+  
+  WriteLn("<p>")
+  for k in r.keys()
+    WriteLn("{}: {}<br>".format(HtmlEncode(k), HtmlEncode(r[k])))
+    if r.hasUpload(k)
+      WriteLn("<b>Error: {} is upload</b><br>".format(k))
+    end
+  end
+  
+  WriteLn("<h2>Parameters (value list)</h2>")
+  
+  WriteLn("<p>")
+  for k in r.keys()
+    WriteLn("{}: {}<br>".format(HtmlEncode(k), 
+                                HtmlEncode(Str(r.valueList(k)))))
+  end
+  
+  WriteLn("<h2>Uploads</h2>")
+  
+  if r.uploads() != []
+    for up in r.uploads()
+      WriteLn("<h3>{}</h3>".format(HtmlEncode(up)))
+      if not r.hasUpload(up)
+        WriteLn("<p><b>Error: {} is not upload</b>".format(up))
+      end
+      for f in r.uploadList(up)
+        WriteLn("fileName: {}<br>".format(HtmlEncode(Repr(f.fileName))))
+        WriteLn("contentType: {}<br>".format(HtmlEncode(f.contentType)))
+        WriteLn("data: ")
+        var data = Repr(f.data)
+        if data.length() > 70
+          data = data[:35] + " ... " + data[-35:]
+        end
+        WriteLn("<pre style=""margin-left: 2em;"">{}</pre>".format(
+          HtmlEncode(data)))
+      end
+    end
+  else
+    WriteLn("<p>No uploads.")
+  end
+  
+  WriteLn("<p><b>End of script output</b></body></html>")
+end

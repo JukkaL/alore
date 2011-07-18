@@ -1,0 +1,6 @@
+﻿encoding latin1
+
+-- File with a BOM and an invalid encoding declaration.
+
+def Main()
+end

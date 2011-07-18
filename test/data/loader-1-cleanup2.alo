@@ -1,0 +1,4 @@
+import errmodule
+
+def Main()
+end

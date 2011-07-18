@@ -1,0 +1,81 @@
+@head
+@title Definitions
+
+<p>This section contains definitions of various terms used in this document.
+
+<dl>
+
+<dt><b>accessor method</b>
+<dd>A getter or a setter.
+
+<dt><b>compile error</b>
+<dd>Any compile errors in a program must be reported when the program is 
+    compiled or the program execution is being started, and they prevent the 
+    execution of the program.
+
+<dt><b>error</b>
+<dd>In this document, the term <b>error</b> is a synonym for
+  <b>compile error</b>.
+
+<dt><b>explicit member variable</b>
+<dt><b>explicit member constant</b>
+<dd>These are member variables and constants defined with the <tt>var</tt> or
+    <tt>const</tt> keywords. See also <b>implicit member variable</b>.
+
+<dt><b>fully qualified name</b>
+<dd>The fully qualified name of a global definition contains the complete name
+    of the module that contains the definition, the <tt>::</tt> operator and
+    the short name of the definition. For
+    example, the fully qualified name <tt>foo::bar::X</tt> refers to the
+    definition <tt>X</tt> in the module <tt>foo::bar</tt>. For definitions in 
+    the main module, the fully qualified name is equal to the short name.
+</dd>
+
+<dt><b>getter</b>
+<dd>A getter is a special method that is called every time a member variable or
+    constant is read to provide the requested value. When explicit member
+    variables and constants are defined, <i>implicit</i> getters are
+    automatically defined for them.
+
+<dt><b>implementation</b>
+<dd>Implementation refers to the software system that includes the Alore 
+  compiler, the Alore run-time system and the standard modules.
+
+<dt><b>implicit member variable</b>
+<dt><b>implicit member constant</b>
+<dd>These are member variables and constants that only have getters or setters
+    but no associated value slots.
+
+<dt><b>invocation</b>
+<dd>The term invocation refers to the state related to a single call
+  operation: the value of called object, values of local variable bindings
+  active during the call and the state of the evaluation of the function call
+  (i.e. which statement or subexpression is currently being evaluated).
+  Multiple
+  invocations related to the same callable object may be active at a same
+  time, and they are independent of each other with separate local variables
+  and states of evaluation.
+
+<dt><b>main module</b>
+<dd>The unnamed module that is formed by the main source file of the program.
+
+<dt><b>program</b>
+<dd>A program contains a main source file and any modules imported by the
+  main source file or other modules that are part of the program.
+
+<dt><b>setter</b>
+<dd>A setter is a special method that is called every time a member variable is
+    assigned to. When explicit member
+    variables are defined, <i>implicit</i> setters are automatically defined
+    for them.
+    
+<dt><b>short name</b>
+<dd>The short name of a definition is the name used in the definition without a 
+    module prefix.
+    
+<dt><b>value slot</b>
+<dd>The value slots in objects contain the values of any explicit member
+    variables and constants defined in the class of the object. They provide
+    the primary way of building composite user-defined objects.
+
+</dl>

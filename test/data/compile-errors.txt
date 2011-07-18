@@ -1,0 +1,1661 @@
+-- Test cases for compile errors. Each test case consists of two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the compiler.
+--
+-- The input code will be stored as file "file.alo".
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+[case testSmallSourceFile]
+x
+[out]
+file.alo, line 1: "x" undefined
+
+[case testTooManyArgumentsToMain]
+def Main(a, b)
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 1: Wrong number of arguments for "Main"
+
+[case testTooManyArgumentsToMain2]
+def Main(a, b = 4)
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 1: Wrong number of arguments for "Main"
+
+[case testInvalidMainArguments]
+---- Comment
+def Main(b = 4)
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Wrong number of arguments for "Main"
+
+[case testInvalidMainArguments2]
+def Main(*a)
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 1: Wrong number of arguments for "Main"
+
+[case testBreakOutsideLoop]
+def Main()
+  break
+  for i in 1 to 5
+  end
+  break
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Break statement outside loop
+file.alo, line 5: Break statement outside loop
+
+[case testBreakFollowedByIf]
+def Main()
+  for i in 1 to 5
+    break if i < 5
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 3: Parse error before "if"
+
+[case testAnonFuncWithNameClash]
+def Main()
+  var x
+  def ()
+    var x
+  end
+  def (x)
+  end
+  def (z)
+    def ()
+      def ()
+        var z
+      end
+    end
+  end
+end
+
+def Foo(y)
+  def (y)
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 4: "x" already defined
+file.alo, line 6: "x" already defined
+file.alo, line 11: Local variable "z" shadows an argument
+file.alo: In function "Foo":
+file.alo, line 18: "y" already defined
+
+[case testAnonFuncParseErrors]
+def Main()
+  def x()
+  end
+  def (x
+  end
+  def (x) y
+  end
+  def (x, +)
+  end
+  def (x)
+  until False
+  def [y]
+  end
+  def def
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Parse error before "x"
+file.alo, line 4: Parse error before end of line
+file.alo, line 6: Parse error before "y"
+file.alo, line 8: Parse error before +
+file.alo, line 11: Parse error before "until"
+file.alo, line 12: Parse error before [
+file.alo, line 14: Parse error before "def"
+
+[case testAnonFuncParseErrors2]
+def Main()
+  def (a, x=)
+  end
+  def (*a
+  end
+  def (a, *)
+  end
+  def (a = 5, b)
+  end
+  def (*a, b)
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Parse error before )
+file.alo, line 4: Parse error before end of line
+file.alo, line 6: Parse error before )
+file.alo, line 8: Non-optional argument after optional argument
+file.alo, line 10: Parse error before ,
+
+[case testInvalidBreakWithinAnonFunc]
+def Main()
+  for i in 1 to 5
+    def ()
+      break
+    end
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 4: Break statement outside loop
+
+[case testAssignmentToExposedConstant]
+def Main()
+  for i in 1 to 5
+    def ()
+      i = 5
+    end
+  end
+  for i, j in 1 to 5
+    def ()
+      i = 5
+      j = 6
+    end
+  end
+  try
+  except e is Exception
+    def ()
+      e = 5
+    end
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 4: Invalid lvalue in assignment
+file.alo, line 9: Invalid lvalue in assignment
+file.alo, line 10: Invalid lvalue in assignment
+file.alo, line 16: Invalid lvalue in assignment
+
+[case testDeepAnonFunctionNesting]
+def Main()
+end
+
+class Foo
+  def method()
+    def (); def (); def (); def ()
+      def (); def (); def (); def ()
+        def (); def (); def (); def ()
+          def (); def (); def (); def ()
+            def ()
+            end
+          end; end; end; end
+        end; end; end; end
+      end; end; end; end
+    end; end; end; end
+  end
+end
+[out]
+file.alo: In member "method" of class "Foo":
+file.alo, line 10: Internal overflow #6
+file.alo, line 10: Parse error before "def"
+file.alo, line 17: Parse error before "end"
+
+[case testConstWithinFunction]
+def Main()
+  const x = 5
+  const y
+end
+
+class Foo
+  def method()
+    const x = 5
+    const y
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Parse error before "const"
+file.alo, line 3: Parse error before "const"
+file.alo: In member "method" of class "Foo":
+file.alo, line 8: Parse error before "const"
+file.alo, line 9: Parse error before "const"
+
+[case testParseErrorBefore]
+def Main()
+  1::2
+  1//2
+  +1
+  for -1
+  for div 1
+  for while
+  for in 1
+  while
+  while , 1
+  "a" 1
+  1 "a"
+  "1" 1.0
+  1 nil
+  = 1
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Parse error before ::
+file.alo, line 3: Parse error before /
+file.alo, line 4: Parse error before +
+file.alo, line 5: Parse error before -
+file.alo, line 6: Parse error before "div"
+file.alo, line 7: Parse error before "while"
+file.alo, line 8: Parse error before "in"
+file.alo, line 9: Parse error before end of line
+file.alo, line 10: Parse error before ,
+file.alo, line 11: Parse error before numeric literal
+file.alo, line 12: Parse error before string literal
+file.alo, line 13: Parse error before numeric literal
+file.alo, line 14: Parse error before "nil"
+file.alo, line 15: Parse error before =
+file.alo, line 18: Unexpected end of file
+
+[case testParseErrorBeforeOpAssign]
+def Main()
+  += 1
+  -= 1
+  *= 1
+  /= 1
+  **= 1
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Parse error before +=
+file.alo, line 3: Parse error before -=
+file.alo, line 4: Parse error before *=
+file.alo, line 5: Parse error before /=
+file.alo, line 6: Parse error before **=
+
+[case testInvalidCharacter]
+def Main()
+  1#2
+  {3}
+  1|2
+  §
+  1!
+  $a
+  1%2
+  1&2
+  1?2
+  \
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: Unrecognized character
+file.alo, line 3: Unrecognized character
+file.alo, line 4: Unrecognized character
+file.alo, line 5: Unrecognized character
+file.alo, line 6: Unrecognized character
+file.alo, line 7: Unrecognized character
+file.alo, line 8: Unrecognized character
+file.alo, line 9: Unrecognized character
+file.alo, line 10: Unrecognized character
+file.alo, line 11: Unrecognized character
+
+[case testExceptionUndefinedInTry]
+def Main()
+  var foo
+  try
+    1 div 0
+  except ReturnError
+    WriteLn("error")
+  except ::Foo
+  except std::Foo
+  except foo
+  except ::foo
+  except e is ReturnError
+  except e is ::ReturnError
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 5: "ReturnError" undefined
+file.alo, line 5: Invalid exception type
+file.alo, line 7: "Foo" undefined
+file.alo, line 7: Invalid exception type
+file.alo, line 8: "Foo" undefined
+file.alo, line 8: Invalid exception type
+file.alo, line 9: "foo" undefined
+file.alo, line 9: Invalid exception type
+file.alo, line 10: "foo" undefined
+file.alo, line 10: Invalid exception type
+file.alo, line 11: "ReturnError" undefined
+file.alo, line 11: Invalid exception type
+file.alo, line 12: "ReturnError" undefined
+file.alo, line 12: Invalid exception type
+
+[case testAccessingCreate]
+class Foo
+  def create()
+  end
+
+  def x()
+    create()
+    self.create()
+    var x
+    x.create
+  end
+end
+
+def Main()
+  var f = Foo()
+  f.create()
+  var m = f.create
+end
+[out]
+file.alo: In member "x" of class "Foo":
+file.alo, line 6: Cannot access "create"
+file.alo, line 7: Cannot access "create"
+file.alo, line 9: Cannot access "create"
+file.alo: In function "Main":
+file.alo, line 15: Cannot access "create"
+file.alo, line 16: Cannot access "create"
+
+[case testInvalidSuperclass]
+class x is y
+end
+
+class x2 is std::y
+end
+
+def Main()
+end
+[out]
+file.alo: In class "x":
+file.alo, line 1: "y" undefined
+file.alo: In class "x2":
+file.alo, line 4: "y" undefined
+
+[case testInvalidLvalue]
+def Main()
+  for i in 1 to 5
+    i = 5
+  end
+  Gconst = 2
+  Main = 1
+  var i
+  i, Gconst = 5, 1
+  Gconst, i = 5, 1
+end
+
+const Gconst
+[out]
+file.alo: In function "Main":
+file.alo, line 3: Invalid lvalue in assignment
+file.alo, line 5: Invalid lvalue in assignment
+file.alo, line 6: Invalid lvalue in assignment
+file.alo, line 8: Invalid lvalue in assignment
+file.alo, line 9: Invalid lvalue in assignment
+
+[case testInvalidLvalue2]
+class Foo
+  def method()
+    c = 1
+    c2 = 1
+    method = 1 -- NOT FLAGGED AS ERROR!
+    self.c = 1
+    self.c2 = 1
+    get = 1
+    self.get = 1
+    privMethod = 1
+  end
+
+  const c
+  private const c2
+
+  def get
+  end
+
+  private def privMethod()
+  end
+end
+
+def Main()
+end
+[out]
+file.alo: In member "method" of class "Foo":
+file.alo, line 3: Invalid lvalue in assignment
+file.alo, line 4: Invalid lvalue in assignment
+file.alo, line 6: Invalid lvalue in assignment
+file.alo, line 7: Invalid lvalue in assignment
+file.alo, line 8: Invalid lvalue in assignment
+file.alo, line 9: Invalid lvalue in assignment
+file.alo, line 10: Invalid lvalue in assignment
+
+[case testInvalidOperatorAssignment]
+def Main()
+  for i in 1 to 5
+    i += 5
+    i /= 2
+  end
+  Gconst *= 2
+  Main += 1
+  var i, j
+  i, j += 5
+end
+
+const Gconst
+[out]
+file.alo: In function "Main":
+file.alo, line 3: Invalid lvalue in assignment
+file.alo, line 4: Invalid lvalue in assignment
+file.alo, line 6: Invalid lvalue in assignment
+file.alo, line 7: Invalid lvalue in assignment
+file.alo, line 9: Invalid lvalue in assignment
+
+[case testInvalidOperatorAssignment2]
+class Foo
+  def method()
+    c += 1
+    c2 += 1
+    method += 1 -- NOT FLAGGED AS ERROR!
+    self.c += 1
+    self.c2 += 1
+    get += 1
+    self.get *= 1
+    privMethod += 1
+  end
+
+  const c
+  private const c2
+
+  def get
+  end
+
+  private def privMethod()
+  end
+end
+
+def Main()
+end
+[out]
+file.alo: In member "method" of class "Foo":
+file.alo, line 3: Invalid lvalue in assignment
+file.alo, line 4: Invalid lvalue in assignment
+file.alo, line 6: Invalid lvalue in assignment
+file.alo, line 7: Invalid lvalue in assignment
+file.alo, line 8: Invalid lvalue in assignment
+file.alo, line 9: Invalid lvalue in assignment
+file.alo, line 10: Invalid lvalue in assignment
+
+[case testUndefinedLvalueInOperatorAssignment]
+def Main()
+  foo += 3
+  "foo" += 3
+  1 += 3
+  5 + + += 3
+  super.x += 1
+end
+
+class Foo
+  def method()
+    bar += 2
+  end
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 2: "foo" undefined
+file.alo, line 3: Invalid lvalue in assignment
+file.alo, line 4: Invalid lvalue in assignment
+file.alo, line 5: Parse error before +
+file.alo, line 6: "super" used in non-member function
+file.alo: In member "method" of class "Foo":
+file.alo, line 11: "bar" undefined
+
+[case testInvalidOperatorAssignmentOperator]
+def Main()
+  var x
+  x + = 5
+  x mod= 5
+  x := 5
+  x >== 5
+  x === 5
+end
+[out]
+file.alo: In function "Main":
+file.alo, line 3: Parse error before =
+file.alo, line 4: Parse error before =
+file.alo, line 5: Parse error before =
+file.alo, line 6: Parse error before =
+file.alo, line 7: Parse error before =
+
+[case testVariableScoping]
+def Foo(x)
+  var y
+  if True
+    var z
+  end
+  z
+end
+x
+y
+[out]
+file.alo: In function "Foo":
+file.alo, line 6: "z" undefined
+file.alo: At top level:
+file.alo, line 8: "x" undefined
+file.alo, line 9: "y" undefined
+
+[case testVariableScopingAtTopLevel]
+if True
+  var x = 1
+end
+x
+[out]
+file.alo, line 4: "x" undefined
+
+[case testFuncAndClassDefinitionsBelowTopLevel]
+if True
+  def foo()
+  end
+
+  class Foo
+  end
+end
+
+sub Fun()
+  def bar()
+  end
+
+  class Bar
+  end
+end
+[out]
+file.alo, line 2: Parse error before "foo"
+file.alo, line 5: Parse error before "class"
+file.alo, line 7: Parse error before "end"
+file.alo: In function "Fun":
+file.alo, line 10: Parse error before "bar"
+file.alo, line 13: Parse error before "class"
+file.alo: At top level:
+file.alo, line 15: Parse error before "end"
+
+[case testVariableScopeAndAnonFunctions]
+var f = def (x); var y1; end
+def (x); var y2; end
+if True
+  def (x); var y3; end
+end
+switch def (x); var y4; end
+case def (x); var y5; end
+end
+repeat
+until def (x); var y6; end
+x
+y1
+y2
+y3
+y4
+y5
+y6
+[out]
+file.alo, line 11: "x" undefined
+file.alo, line 12: "y1" undefined
+file.alo, line 13: "y2" undefined
+file.alo, line 14: "y3" undefined
+file.alo, line 15: "y4" undefined
+file.alo, line 16: "y5" undefined
+file.alo, line 17: "y6" undefined
+
+[case testInvalidTopLevelStatements]
+break
+return
+return 2
+[out]
+file.alo, line 1: Break statement outside loop
+file.alo, line 2: Return statement outside function
+file.alo, line 3: Return statement outside function
+
+[case testLeavingAwayPairItems]
+WriteLn(1:)
+WriteLn(:1)
+WriteLn(:)
+[out]
+file.alo, line 1: Parse error before )
+file.alo, line 2: Parse error before :
+file.alo, line 3: Parse error before :
+
+[case testInheritanceFromPrimitiveType]
+class P1 is Int
+end
+class P2 is Tuple
+end
+class P3 is Str
+end
+class P4 is Range
+end
+class P5 is Pair
+end
+class P6 is Type
+end
+class P7 is Boolean
+end
+class P8 is Float
+end
+class P9 is Function
+end
+class P10 is Constant
+end
+[out]
+file.alo: In class "P1":
+file.alo, line 1: Invalid superclass
+file.alo: In class "P2":
+file.alo, line 3: Invalid superclass
+file.alo: In class "P3":
+file.alo, line 5: Invalid superclass
+file.alo: In class "P4":
+file.alo, line 7: Invalid superclass
+file.alo: In class "P5":
+file.alo, line 9: Invalid superclass
+file.alo: In class "P6":
+file.alo, line 11: Invalid superclass
+file.alo: In class "P7":
+file.alo, line 13: Invalid superclass
+file.alo: In class "P8":
+file.alo, line 15: Invalid superclass
+file.alo: In class "P9":
+file.alo, line 17: Invalid superclass
+file.alo: In class "P10":
+file.alo, line 19: Invalid superclass
+
+[case testAnnotationInAssignment]
+var a, b
+a = 1 as void
+a, b = 1, 2 as def ()
+[out]
+file.alo, line 2: "void" undefined
+file.alo, line 3: Parse error before "def"
+
+[case testInvalidTokenInAnnotation1]
+var a as #
+[out]
+file.alo, line 1: Unrecognized character
+
+[case testInvalidTokenInAnnotation2]
+def x() as (
+            Int")
+end
+[out]
+file.alo: In function "x":
+file.alo, line 2: Unterminated string literal
+
+[case testInvalidTokenInAnnotation3]
+class A<1e>
+end
+class B is A<1e>
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: Invalid numeric literal
+file.alo: In class "B":
+file.alo, line 3: Invalid numeric literal
+
+[case testInvalidTokenInAnnotation4]
+def f(x as 1e, *y as 1e)
+end
+[out]
+file.alo: In function "f":
+file.alo, line 1: Invalid numeric literal
+file.alo, line 1: Invalid numeric literal
+
+[case testInvalidTokenInAnnotation5]
+() as <<(1e)>>
+[out]
+file.alo, line 1: Invalid numeric literal
+
+[case testInvalidTokenInAnnotation6]
+def f<X, (1e)>()
+end
+def g<1e, x>()
+end
+[out]
+file.alo: In function "f":
+file.alo, line 1: Invalid numeric literal
+file.alo: In function "g":
+file.alo, line 3: Invalid numeric literal
+
+[case testInvalidTokenInForLoopAnnotation]
+for x as 1e,
+    y as 1e in nil
+end
+[out]
+file.alo, line 1: Invalid numeric literal
+file.alo, line 2: Invalid numeric literal
+
+[case testDanglingOldStyleAnnotationAtTopLevel]
+var x
+: def ()
+[out]
+file.alo, line 2: Parse error before :
+
+[case testDanglingOldStyleAnnotationInClass]
+class A
+  var x
+  : def ()
+end
+[out]
+file.alo: In class "A":
+file.alo, line 3: Parse error before :
+
+[case testDanglingOldStyleAnnotationInBlock]
+if True
+  var x
+  : def ()
+end
+[out]
+file.alo, line 3: Parse error before :
+
+[case testPrefixAnnotations]
+: x    -- Prefix annotations are not supported (neither old nor new style)
+var a
+as x
+var b
+: x
+def f()
+end
+class A
+  : x
+  var x
+  : y
+  def f()
+  end
+  as x
+  const z
+end
+[out]
+file.alo, line 1: Parse error before :
+file.alo, line 3: Parse error before "as"
+file.alo, line 5: Parse error before :
+file.alo: In class "A":
+file.alo, line 9: Parse error before :
+file.alo, line 11: Parse error before :
+file.alo, line 14: Parse error before "as"
+
+[case testImportAnnotations]
+import set as x
+[out]
+file.alo, line 1: Parse error before "as"
+
+[case testGreaterThanAtEof]
+var a = 1 >
+[out]
+file.alo, line 1: Parse error before end of line
+
+[case testSemicolonAfterOperator]
+var a = 1 + ; 2   -- Do not ignore semicolons like newlines
+[out]
+file.alo, line 1: Parse error before end of line
+
+[case testUnterminatedAnonymousFunction1]
+def ()
+[out]
+file.alo, line 1: Parse error before end of line
+
+[case testUnterminatedAnonymousFunction2]
+def ()
+var x
+[out]
+file.alo, line 2: Parse error before end of line
+
+[case testUnterminatedAnonymousFunction3]
+def f()
+  f() : def ()
+  return 1 : def ()
+  raise f : def ()
+  while 1 : def ()
+  end
+  repeat
+  until 1 : def ()
+  for x in 1, 2 : def()
+  end
+end
+[out]
+file.alo: In function "f":
+file.alo, line 11: Parse error before end of line
+file.alo, line 11: Parse error before end of line
+file.alo, line 11: Parse error before end of line
+file.alo, line 11: Parse error before end of line
+-- IDEA: The above messages are slightly misleading.
+
+[case testLexErrorInInlineAnnotation]
+Map() as <1e>
+[out]
+file.alo, line 1: Invalid numeric literal
+
+[case testUnterminatedInlineAnnotation]
+[1, 2] as <def ()1, 2
+1 ++ 2   -- Test that parser resynchronizes after the previous error
+var a = 1
+a += 1
+[out]
+file.alo, line 1: Parse error before end of line
+file.alo, line 2: Parse error before +
+
+[case testInterfaceAndImplementsKeywords]
+var interface
+var implements
+[out]
+file.alo, line 1: Parse error before "interface"
+file.alo, line 2: Parse error before "implements"
+
+[case testEndInInterface]
+interface I
+  def x()
+  end
+end
+[out]
+file.alo, line 4: Parse error before "end"
+
+[case testMissingInterfaceName]
+interface
+  def x()
+end
+[out]
+file.alo, line 1: Parse error before end of line
+
+[case testInvalidInterfaceName]
+interface if
+  def f()
+end
+[out]
+file.alo, line 1: Parse error before "if"
+
+[case testInterfaceNameConflict]
+interface A; def f(); end
+interface A; def f(); end
+interface B; def f(); end
+var B
+[out]
+file.alo, line 1: "A" multiply defined
+file.alo, line 2: "A" multiply defined
+file.alo, line 3: "B" multiply defined
+file.alo, line 4: "B" multiply defined
+
+[case testVarInInterface]
+interface I
+  var a
+  const b
+end
+[out]
+file.alo: In interface "I":
+file.alo, line 2: Interface cannot have member variables
+file.alo, line 3: Interface cannot have member variables
+
+[case testPrivateInInterface]
+interface I
+  private def x
+  private def x = y
+  private def f()
+end
+[out]
+file.alo: In interface "I":
+file.alo, line 2: Interface cannot have private members
+file.alo, line 3: Interface cannot have private members
+file.alo, line 4: Interface cannot have private members
+
+[case testMissingSuperClass]
+interface I
+end
+class A is implements I
+  def f()
+    x = 1
+  end
+end
+[out]
+file.alo: In class "A":
+file.alo, line 3: Parse error before "implements"
+file.alo: In member "f" of class "A":
+file.alo, line 5: "x" undefined
+
+[case testInheritingFromInterface]
+interface A
+end
+class B is A
+end
+[out]
+file.alo: In class "B":
+file.alo, line 3: Invalid superclass
+
+[case testImplementingAClass]
+class A
+end
+class B implements A
+end
+[out]
+file.alo: In class "B":
+file.alo, line 3: Invalid interface "A"
+
+[case testImplementsParseErrors]
+interface A
+  def f()
+end
+class B implements
+end
+class C implements A 1
+end
+class D implements A, 1
+end
+[out]
+file.alo: In class "B":
+file.alo, line 4: Parse error before end of line
+file.alo: In class "C":
+file.alo, line 6: Parse error before numeric literal
+file.alo, line 6: "C" does not implement "f" defined in "A"
+file.alo: In class "D":
+file.alo, line 8: Parse error before numeric literal
+file.alo, line 8: "D" does not implement "f" defined in "A"
+
+[case testInterfaceExtentendsClass]
+class C
+end
+interface A is C
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 3: Invalid interface "C"
+
+[case testInterfaceImplements]
+interface A
+end
+interface B implements A
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 3: Parse error before "implements"
+
+[case testInterfaceExtendsAndImplements]
+interface A
+end
+interface B is A implements A
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 3: Parse error before "implements"
+
+[case testInvalidSuperinterface]
+interface A is x
+end
+interface B is f
+end
+var x
+def f()
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 1: Invalid interface "x"
+file.alo: In interface "B":
+file.alo, line 3: Invalid interface "f"
+
+[case testInvalidQualifiedImplementsTarget1]
+class A implements std::x
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: "x" undefined
+
+[case testInvalidQualifiedImplementsTarget2]
+class A implements ::y
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: "y" undefined
+
+[case testInvalidQualifiedImplementsTarget3]
+class A implements std::Object
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: Invalid interface "Object"
+
+[case testInvalidQualifiedSuperinterface]
+interface A is std::x
+[out]
+file.alo: In interface "A":
+file.alo, line 1: "x" undefined
+
+[case testInvalidQualifiedSuperclass]
+class A is std::x
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: "x" undefined
+
+
+-- Interface member errors
+-- -----------------------
+
+[case testMultipleMethodDefinitionInInterface]
+interface A
+  def f()
+  def f(x, y)
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "f" multiply defined
+file.alo, line 3: "f" multiply defined
+
+[case testMultipleAccessorDefinitionInInterface]
+interface A
+  def f
+  def f
+  def f = x
+  def f = x
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "f" multiply defined
+file.alo, line 3: "f" multiply defined
+file.alo, line 4: "f" multiply defined
+file.alo, line 5: "f" multiply defined
+
+[case testIncompatibleMultipleDefinitionInInterface]
+interface A
+  def a()
+  def a
+  def b()
+  def b = x
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 3: "a" multiply defined
+file.alo, line 5: "b" multiply defined
+file.alo, line 5: "b" write-only
+
+[case testOnlySetterInInterface]
+interface A
+  def x = y
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "x" write-only
+
+[case testInvalidCreateInInterface1]
+interface A
+  def create
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "create" must be a method
+
+[case testInvalidCreateInInterface2]
+interface A
+  def create = x
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "create" must be a method
+file.alo, line 2: "create" write-only
+
+
+-- Incompatible or missing members in classes or interfaces
+-- --------------------------------------------------------
+
+[case testInterfaceIncompatibleWithSupertype]
+interface A is B
+  def a
+  def a = x
+  def b()
+end
+interface B
+  def a()
+  def b
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "a" incompatible with definition in "B"
+file.alo, line 3: "a" incompatible with definition in "B"
+file.alo, line 4: "b" incompatible with definition in "B"
+
+[case testMissingInterfaceMethodMember]
+class a implements b
+end
+interface b
+  def f()
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement "f" defined in "b"
+
+[case testMissingInterfaceAccessor]
+class a implements b
+  def b
+  end
+end
+interface b
+  def a
+  def b
+  def b = x
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement getter "a" defined in "b"
+file.alo, line 1: "a" does not implement setter "b" defined in "b"
+
+[case testMissingInterfaceAccessorFromSuperinterface]
+class a implements b
+end
+interface b is c
+end
+interface c
+  def f()
+  def g
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement "f" defined in "c"
+file.alo, line 1: "a" does not implement getter "g" defined in "c"
+
+[case testIncompatibleInterfaceDefinitionInClass]
+class a implements If
+  def a
+  end
+  def b()
+  end
+  var c
+end
+interface If
+  def a()
+  def b
+  def c()
+end
+[out]
+file.alo: In member "a" of class "a":
+file.alo, line 2: "a" incompatible with definition in "If"
+file.alo: In member "b" of class "a":
+file.alo, line 4: "b" incompatible with definition in "If"
+file.alo, line 6: "c" incompatible with definition in "If"
+
+[case testIncompatibleWithMultipleInterfaces]
+class a implements b, c
+end
+interface b
+  def a()
+end
+interface c
+  def b()
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement "a" defined in "b"
+file.alo, line 1: "a" does not implement "b" defined in "c"
+
+[case testPrivateInClassWhilePublicInInterface]
+class a implements If
+  private def a
+  end
+  private def b()
+  end
+end
+interface If
+  def a
+  def b()
+end
+class a2 implements If2
+  private var c
+end
+interface If2
+  def c
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement "b" defined in "If"
+file.alo, line 1: "a" does not implement getter "a" defined in "If"
+file.alo: In member "a" of class "a":
+file.alo, line 2: "a" incompatible with definition in "If"
+file.alo: In member "b" of class "a":
+file.alo, line 4: "b" incompatible with definition in "If"
+file.alo: In class "a2":
+file.alo, line 11: "a2" does not implement getter "c" defined in "If2"
+file.alo, line 12: "c" incompatible with definition in "If2"
+
+[case testInheritedMemberIncompatibleWithInterface]
+class a is b implements c
+end
+class b
+  def a
+  end
+  def b()
+  end
+end
+interface c
+  def a()
+  def b
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement "a" defined in "c"
+file.alo, line 1: "a" does not implement getter "b" defined in "c"
+
+[case testSetterImplementedAsConst]
+class a implements b
+  const x
+end
+interface b
+  def x
+  def x = y
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement setter "x" defined in "b"
+
+[case testSetterImplementedAsConstViaSuperclass]
+class a is b implements c
+end
+class b
+  const x
+end
+interface c
+  def x
+  def x = y
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: "a" does not implement setter "x" defined in "c"
+
+
+-- Misc errors
+-- -----------
+
+[case testInterfaceExtensionCycle1]
+interface a is b
+end
+interface b is a
+end
+[out]
+file.alo: In interface "b":
+file.alo, line 3: Cycle in supertype hierarchy
+
+[case testInterfaceExtensionCycle2]
+interface a is a
+end
+[out]
+file.alo: In interface "a":
+file.alo, line 1: Cycle in supertype hierarchy
+
+[case testClassExtensionCycle1]
+class a is b
+end
+class b is a
+end
+[out]
+file.alo: In class "b":
+file.alo, line 3: Cycle in supertype hierarchy
+
+[case testClassExtensionCycle2]
+class a is a
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: Cycle in supertype hierarchy
+
+
+-- Cast-related errors
+-- -------------------
+
+
+[case testNilCast]
+1 as nil
+[out]
+file.alo, line 1: Parse error before "nil"
+
+[case testStrLiteralCast]
+1 as "x"
+[out]
+file.alo, line 1: Parse error before string literal
+
+[case testNonTypeCast1]
+const a = Object
+1 as a
+[out]
+file.alo, line 2: Invalid cast
+
+[case testNonTypeCast2]
+def f()
+end
+1 as f
+[out]
+file.alo, line 3: Invalid cast
+
+[case testLocalVariableInCast]
+def f()
+  var t = std::Object
+  1 as t
+end
+[out]
+file.alo: In function "f":
+file.alo, line 3: "t" undefined
+
+[case testMemberInCast]
+class A
+  var a
+  const b
+  def c
+  end
+  def d()
+  end
+
+  def f()
+    1 as a
+    1 as b
+    "x" as c
+    1.1 as d
+  end
+[out]
+file.alo: In member "f" of class "A":
+file.alo, line 10: "a" undefined
+file.alo, line 11: "b" undefined
+file.alo, line 12: "c" undefined
+file.alo, line 13: "d" undefined
+
+[case testExtraParensInCast]
+1 as (Int)
+1 as (std::Int)
+2 as (::A)
+class A
+end
+[out]
+file.alo, line 1: Parse error before (
+file.alo, line 2: Parse error before (
+file.alo, line 3: Parse error before (
+
+[case testDynamicKeyword]
+var dynamic
+[out]
+file.alo, line 1: Parse error before "dynamic"
+
+[case testInvalidDynamicCasts]
+1 dynamic
+dynamic, 2
+as dynamic
+1 as (dynamic)
+[out]
+file.alo, line 1: Parse error before "dynamic"
+file.alo, line 2: Parse error before "dynamic"
+file.alo, line 3: Parse error before "as"
+file.alo, line 4: Parse error before (
+
+
+-- Interface binding
+-- -----------------
+
+
+[case testBindInClass]
+class A
+  bind Object
+end
+[out]
+file.alo: In class "A":
+file.alo, line 2: Parse error before "bind"
+
+[case testUndefinedBindTarget]
+interface A
+  bind B
+  bind std::X
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: "B" undefined
+file.alo, line 3: "X" undefined
+
+[case testGarbageAfterBind]
+interface A
+  bind Object, Str
+  def (y
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before ,
+file.alo, line 3: Parse error before (
+
+[case testEmptyBind]
+interface A
+  bind
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before end of line
+
+[case testBindingInterface]
+interface A
+  bind B
+end
+interface B
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Invalid bind target "B"
+
+[case testBindingFunction]
+def F()
+end
+interface A
+  bind F
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 4: Invalid bind target "F"
+
+[case testIncompatibleBinding1]
+class A
+  def f()
+  end
+end
+
+interface B
+  bind A
+  def f()
+  def g()
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 7: "A" does not implement "g" defined in "B"
+
+[case testIncompatibleBinding2]
+class A
+  def f()
+  end
+  def g()
+  end
+end
+
+interface B
+  bind A
+  def f(a)
+  def g
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 9: "A" does not implement getter "g" defined in "B"
+
+[case testIncompatibleBinding3]
+class A
+end
+
+interface B
+  bind A
+  def f()
+  def g
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 5: "A" does not implement "f" defined in "B"
+file.alo, line 5: "A" does not implement getter "g" defined in "B"
+
+[case testIncompatibleBinding4]
+class A
+  var x
+end
+
+interface B
+  bind A
+  def x()
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 6: "A" does not implement "x" defined in "B"
+
+[case testIncompatibleBinding5]
+class A
+  private def f()
+  end
+end
+
+interface B
+  bind A
+  def f()
+end
+[out]
+file.alo: In interface "B":
+file.alo, line 7: "A" does not implement "f" defined in "B"
+
+[case testInterfacExtensionWithBind]
+interface A is B
+  bind C
+end
+interface B
+end
+class C
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Bind used in an interface that has a superinterface
+
+
+-- Misc test cases
+-- ---------------
+
+
+[case testUnterminatedStringLiteral]
+var a = 'foo
+var b = ("bar
+[out]
+file.alo, line 1: Unterminated string literal
+file.alo, line 2: Unterminated string literal
+
+
+-- Intersection types
+-- ------------------
+
+
+[case testSimpleInvalidIntersectionType1]
+def f(a as X) or
+     (a as Y
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before end of line
+
+[case testSimpleInvalidIntersectionType2]
+def f(a as X) or
+     (a b
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before "b"
+
+[case testSimpleInvalidIntersectionType2]
+def f(a as X) or
+     (a
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before end of line
+
+[case testSimpleInvalidIntersectionType2]
+def f(a as X) or
+     )
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before )
+
+[case testIntersectionTypeWithMultipleArguments]
+def f(a as X, b as Y) or
+     (a as X,)
+end
+def g(a as X, b as Y) or
+     (a as X, b as)
+end
+def h(a as X, b as Y) or
+     (a as X, b as Y
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before )
+file.alo: In function "g":
+file.alo, line 5: Parse error before )
+file.alo: In function "h":
+file.alo, line 8: Parse error before end of line
+
+[case testIntersectionTypeWithInvalidReturnType]
+def f(a as X) as X or
+     (a as Y) X
+end
+def g(a as X) as X or
+     (a
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before "X"
+file.alo: In function "g":
+file.alo, line 5: Parse error before end of line
+
+[case testIntersectionTypwWithGenericItems]
+def f<def ()>(a as X) or
+     <def ()>(a
+end
+def g<def ()>(a as X) or
+     <def (>(a as Y)
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before end of line
+file.alo: In function "g":
+file.alo, line 5: Parse error before end of line
+file.alo, line 5: Parse error before end of line
+
+[case testIntersectionTypeWithInvalidVarArgs]
+def f(x as Y, *y as Z) or
+     (x as Y, *y as Z, x as X)
+end
+def g(x as Y, *y as Z) or
+     (x as Y, *y= as Z)
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before ,
+file.alo: In function "g":
+file.alo, line 5: Parse error before =
+
+[case testIntersectionTypeWithInvalidDefaultArgs]
+def f(x as Y, y = 1 as Z, z = 1 as Z) or
+     (x as Y, y= as Z, z as Z)
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before "as"
+
+[case testIntersectionTypeWithMoreThan2Signatures]
+def f(x as X) or
+     (x as Y) or
+     (x
+end
+[out]
+file.alo: In function "f":
+file.alo, line 3: Parse error before end of line
+
+
+-- IDEA Intersection type errors?
+--   missing type def ("as")
+--   too few arguments
+--   too many arguments
+--   incompatible varargs

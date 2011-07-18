@@ -1,0 +1,63 @@
+module libs
+
+import unittest
+import tempfile
+import set
+import re
+import os
+import io
+import sys
+
+
+class TempFileSuite is Suite
+  def testMakeTempFileBasics()
+    var t = MakeTempFile()
+    Assert(Match("tmp[a-z0-9]{6}", BaseName(t)) != nil)
+    AssertTempFile(t)
+    
+    var f = File(t, Output)
+    f.write("hello, there!")
+    f.close()
+    
+    var t2 = MakeTempFile()
+    AssertTempFile(t2)
+    AssertEqual(DirName(t), DirName(t2))
+    Assert(t2 != t)
+    
+    Remove(t)
+    Remove(t2)
+  end
+  
+  def testTemplates()
+    var t = MakeTempFile("#hello#-##.ext")
+    Assert(Match("\whello\w-\w\w\.ext", BaseName(t)) != nil)
+    AssertTempFile(t)
+    Remove(t)
+  end
+  
+  def testMultipleTempFiles()
+    var s = Set()
+    var n = 15
+    for i in 0 to n
+      var t = MakeTempFile("foobar-#.xyz")
+      AssertTempFile(t)
+      s.add(t)
+    end
+    AssertEqual(s.length(), n)
+    for f in s
+      Remove(f)
+    end
+  end
+end
+
+
+private def AssertTempFile(t)
+  Assert(IsFile(t))
+  var s = Stat(t)
+  Assert(s.isWritable)
+  Assert(s.isReadable)
+  AssertEqual(s.size, 0)
+  if Platform != "windows"
+    AssertEqual(s.otherPerm, "")
+  end
+end

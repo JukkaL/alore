@@ -1,0 +1,780 @@
+import io
+import string
+import re
+import os
+import sys
+import set
+
+
+const Grammar
+
+
+-- Header included in all generated pages, without the closing </head> tag.
+const HtmlHeader = [
+  "<!DOCTYPE HTML PUBLIC ""-//W3C//DTD HTML 4.01//EN"" " +
+    """http://www.w3.org/TR/html4/strict.dtd"">",
+  "<html>",
+  "<head>",
+  "  <meta http-equiv=""Content-Type"" " + 
+    "content=""text/html; charset=iso-8859-1"">",
+  "  <link rel=""stylesheet"" type=""text/css"" href=""alore.css"">"]
+
+
+const EmailAddress = "jukka@alorelang.org"
+
+
+def Main(args)
+  -- FIX better command line parameter handling
+
+  var ignoreBrokenLinks = False
+
+  if args.length() < 3
+    WriteLn("Usage: conv.alo [-i] INPUT OUTDIR RELEASE")
+    return 1
+  end
+  
+  if args[0] == "-i" and args.length() >= 3
+    ignoreBrokenLinks = True
+    args = args[1:]
+  end
+  
+  Preprocess(args[0])
+  Convert(args[0], args[1], args[2], ignoreBrokenLinks)
+  if Platform != "windows"
+    System("cp alore.css " + args[1])
+  else
+    System("copy alore.css " + args[1] + " > NUL")
+  end
+end
+
+
+var Hierarchy = Stack()
+var Order = []
+var NameMap = Map()
+var Titles = Set()
+var Modules = Set()
+var GrammarRules = []
+var IndexItems = []
+var Scope = "(undefined)"
+
+
+def Convert(path, outDir, release, ignoreBrokenLinks)
+  var a
+  try
+    a = File(path).readLines()
+  except e is IoError
+    WriteLn("Could not open ", path)
+    return ""
+  end
+  var i = 0
+  var out = []
+  var state = Stack()
+  var prev = ""
+  var titleIndex = -1
+  var title = ""
+  var content
+  var topIndex
+  var shortTitle = nil
+  var sectionType = nil
+  var curMod = nil
+  var curClass = nil
+  var anchors = Set()
+  
+  state.push("top")
+  
+  while i < a.length()
+    var s = a[i]
+    
+    -- Replace certain @ sequences with constant strings.
+    s = s.replace("@raise-direct", 
+      "Raise a direct exception on all error conditions.")
+    s = s.replace("@deprecated", 
+      "<span class=""deprecated"">Deprecated " + 
+      "(this feature will be removed in a future Alore version).</span>")
+    
+    var ss = s.strip()
+    var tag = ""
+    
+    -- Replace href and ref tags with html links.
+    while True
+      var m = Search("@(h?ref)(l?)\{(.*?)\}", ss)
+      if m == nil
+        break
+      end
+      var t, anchor = NormLinkTarget(m.group(3))
+      if not NameMap.hasKey(t)
+        -- Invalid link target
+        if not ignoreBrokenLinks
+          WriteLn("{}: Missing link target {}".format(path, t))
+          Exit(1)
+        else
+          ss = ss.replace(m.group(0), m.group(0)[1:])
+          var ref = m.group(0)
+          ref = ref[ref.index("{") + 1:ref.index("}")]
+          s = s.replace(m.group(0), ref)
+        end
+      else
+        -- Valid link target
+        var url = NameMap[t]
+        if not t in Modules and not t in Titles
+          url += "#" + BaseName(anchor)
+        end
+        var st, et = "", ""
+        if m.group(1) == "ref"
+          st, et = "<span class='ref'>", "</span>"
+        end
+        var text = m.group(3).replace(".", "&nbsp;")
+        if m.group(2) == "l"
+          text = text.lower()
+        end
+        var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
+        ss = ss.replace(m.group(0), ref)
+        s = s.replace(m.group(0), ref)
+      end
+    end
+    
+    s = s.replace("@release", release)
+    s = s.replace("@email", ObfuscateEmail(EmailAddress))
+    
+    if ss.startsWith("@")
+      tag = "@"
+      var arg = ""
+      var j = 1
+      while j < ss.length() and (IsWordChar(ss[j]) or ss[j] == "-")
+        tag += ss[j]
+        j += 1
+      end
+      if j < ss.length() - 1 and ss[j] == " "
+        arg = ss[j + 1:]
+      end
+      switch tag
+        case "@head"
+          for h in HtmlHeader
+            out.append(h)
+          end
+          out.append("")
+          titleIndex = out.length() - 1
+          
+          topIndex = out.length()
+
+        case "@module"
+           curMod = arg
+           if arg != "implicit_interfaces"
+             AddIndexItem([arg, "module"])
+           end
+        case "@fun", "@exception"
+          if state.top() != "dl"
+            state.push("dl")
+            out.append("<dl>")
+          end
+          out.append("<dt>" + Anchor(anchors, arg, curClass) + 
+                     HighlightDef(arg))
+          AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
+        case "@h2"
+          if state.top() == "dl"
+            state.pop()
+            out.append("</dl>")
+          end
+          out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
+        case "@class"
+          if state.top() != "dl"
+            state.push("dl")
+            out.append("<dl>")
+          end
+          out.append("<dt>" + Anchor(anchors, arg) + 
+                     HighlightDef("class " + arg))
+          AddIndexItem([DefName(arg), curMod])
+          curClass = DefName(arg)
+        case "@class-hidden"
+          out.append(Anchor(anchors, arg))
+          AddIndexItem([DefName(arg), curMod])
+          curClass = DefName(arg)
+        case "@end-class"
+          curClass = nil
+        case "@op"
+          if state.top() != "dl"
+            state.push("dl")
+            out.append("<dl>")
+          end
+          out.append("<dt>" + HiliSpan(arg))
+        case "@var"
+          if state.top() != "dl"
+            state.push("dl")
+            out.append("<dl>")
+          end
+          out.append("<dt>" + Anchor(nil, arg, curClass) + HiliSpan(arg))
+          AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
+        case "@desc"
+          out.append("<dd>" + arg)
+          state.push("dd")
+        case "@end"
+          if prev == "@end" and state.top() == "dl"
+            state.pop()
+            out.append("</dl>")
+          elif state.top() == "pre"
+            for l in RemoveSpacePrefix(content)
+              var ll = l
+              if sectionType == Grammar
+                ll = FormatGrammar(l)
+              end
+              out.append(ll)
+            end
+            out.append("</pre>")
+          end
+          state.pop()
+          sectionType = nil
+        case "@shorttitle"
+          shortTitle = arg
+        case "@title"
+          out.append("<h1>" + arg + "</h1>")
+          title = arg
+          arg = arg.replace("<tt>", "")
+          arg = arg.replace("</tt>", "")
+          if shortTitle != nil
+            Hierarchy.append((path, shortTitle))
+          else
+            Hierarchy.append((path, arg))
+          end
+          if titleIndex >= 0
+            out[titleIndex] = "  <title>" + arg + "</title>"
+          end
+          var nav = []
+          OutputNavToolbar(nav, path, True)
+          out.insertAt(topIndex, Newline.join(nav))
+        case "@index"
+          title = arg
+        case "@example"
+          out.append("<pre class='ex'>")
+          state.push("pre")
+          content = []
+        case "@grammar"
+          out.append("<pre class='ex'>")
+          state.push("pre")
+          sectionType = Grammar
+          content = []
+        case "@see"
+          out.append("<p class='note'>")
+          out.append("<span class='note-header'>See&nbsp;also:</span>")
+          out.append(arg)
+          state.push("p")
+        case "@note"
+          out.append("<p class='note'>")
+          out.append("<span class='note-header'>Note:</span>")
+          out.append(arg)
+          state.push("p")
+        case "@link"
+          var t = Convert(arg, outDir, release, ignoreBrokenLinks)
+          if t == ""
+            t = arg
+          end
+          out.append("<a href=""{}"">{}</a>".format(arg, t))
+        case "@complete-grammar"
+          out.append("<pre class='ex'>")
+          for l in RemoveSpacePrefix(GrammarRules)
+            out.append(l)
+          end
+          out.append("</pre>")
+        case "@alpha-index"
+          OutputIndex(out)
+        case "@scope"
+          Scope = arg
+        case "@indexitem"
+          -- Add an uncategorized indexed item.
+          out.append(Anchor(nil, arg))
+          AddIndexItem([arg, "indexitem"])
+      end
+    else
+      if ss != ""
+        if state.top() == "dl"
+          state.pop()
+          out.append("</dl>")
+        end
+      end
+      if state.top() != "pre"
+        out.append(s)
+      else
+        content.append(s)
+      end
+    end
+    i += 1
+    if ss != ""
+      prev = tag
+    end
+  end
+  
+  while state.top() != "top"
+    if state.top() == "dl"
+      out.append("</dl>")
+    end
+    state.pop()
+  end
+  
+  OutputNavToolbar(out, path, False)
+  out.append("</body>")
+  out.append("</html>")
+  
+  var f = File(Join(outDir, BaseName(path)), Output)
+  for s in out
+    f.writeLn(s)
+  end
+  f.close()
+  
+  if title != ""
+    Hierarchy.pop()
+  end
+  
+  return title
+end
+
+
+class Stack is Array
+  def create(*items)
+    for o in items
+      self.append(o)
+    end
+  end
+
+  def push(o)
+    append(o)
+  end
+  
+  def pop()
+    var o = top()
+    removeAt(-1)
+    return o
+  end
+  
+  def top()
+    return self[-1]
+  end
+end
+
+
+def SplitDef(defn)
+  var pre = ""
+  var base = defn
+  var args = ""
+  if "(" in defn
+    base = defn[:defn.index("(")]
+    args = defn[defn.index("("):]
+    if " " in base.strip()
+      var i = FindLastChar(base, " ")
+      pre = base[:i + 1]
+      base = base[i + 1:]
+      if base.startsWith("*")
+        pre += "*"
+        base = base[1:]
+      end
+    end
+  end
+  -- WriteLn([pre, base.strip(), args])
+  return pre, base.strip(), args
+end
+
+
+def FindLastChar(s, c)
+  var i = 0
+  var x = nil
+  while i < s.length()
+    if s[i] == c
+      x = i
+    end
+    i += 1
+  end
+  return x    
+end
+
+
+-- Return a variable or function declaration modified so that the name of the
+-- declaration is within a highlight span and the rest is unmodified.
+def HighlightDef(defn)
+  var pre, base, args = SplitDef(defn)
+  return pre + HiliSpan(base) + args
+end
+
+
+def NormAnchor(s)
+  s = s.replace(" ", "_")
+  s = s.replace("*", "_")
+  if s.startsWith("_") or s.startsWith("#")
+    s = s[1:] + "_"
+  end
+  return s
+end
+
+
+def NormLinkTarget(s)
+  s = NormAnchor(s)
+  if "." in s
+    -- Method reference.
+    var cl, m = s.split(".", 1)
+    return cl, m + "-" + cl
+  else
+    return s, s
+  end
+end
+
+
+def DefName(s)
+  return SplitDef(s)[1]
+end
+
+
+def Anchor(anchors, arg, cl = nil)
+  var id = DefName(arg)
+  id = NormAnchor(id)
+  if cl != nil
+    id += "-" + cl
+  end
+  -- If the id has been used already, return an empty string.
+  if anchors == nil or not id in anchors
+    if anchors != nil
+      anchors.add(id)
+    end
+    return "<a id=""" + id + """></a>"
+  else
+    return ""
+  end
+end
+
+
+def SpacePrefix(a)
+  var p = 100
+  for s in a
+    for i in 0 to s.length()
+      if s[i] != " "
+        p = Min(p, i)
+        break
+      end
+    end
+  end
+  return p  
+end
+
+
+-- Remove shared indent containing only spaces in an array of strings.
+def RemoveSpacePrefix(a)
+  var r = []
+  var prefix = SpacePrefix(a)
+  for s in a
+    r.append(s[prefix:])
+  end
+  return r
+end
+
+
+-- Output the navigation toolbar.
+def OutputNavToolbar(out, path, isTop)
+  if isTop
+    out.append("</head>")
+    out.append("<body>")
+    out.append("<div id='navi-top'>")
+  else
+    out.append("</div></div>")
+    out.append("<div id='navi-bottom'>")
+  end
+  out.append("  <div class='navi-trail'>")
+  
+  var l = []
+  for url, title in Hierarchy[0:-1]
+    l.append("<a href=""{}"">{}</a>".format(url, title))
+  end
+  l.append(Hierarchy[-1][1])
+  
+  out.append("    " + " &gt; ".join(l))
+  
+  out.append("  </div>")
+  out.append("  <div class='navi-browse'>")
+  
+  l = []
+  var o = PathOrder(path)
+  if o > 0 and Order[o - 1] != ""
+    l.append("&lt; <a href='{}'>Previous</a>".format(Order[o - 1]))
+  end
+  if o < Order.length() - 1 and Order[o + 1] != ""
+    l.append("<a href='{}'>Next</a> &gt;".format(Order[o + 1]))
+  end
+  out.append("  " + " | ".join(l))
+  out.append("  </div>")
+  out.append("  <div class='clear'></div>")
+  out.append("</div>")
+  if isTop
+    out.append("<div id='wrapper'><div id='content'>")
+  end
+end
+
+
+def PathOrder(path)
+  for i in 0 to Order.length()
+    if Order[i] == path
+      return i
+    end
+  end
+end
+
+
+-- Preprocess a file (and recursively all linked files). Record all reference 
+-- targets.
+def Preprocess(path, depth = 1)
+  var i, curMod
+  var sectionType = nil
+
+  Order.append(path)
+  
+  if not IsFile(path)
+    raise IoError("{} missing".format(path))
+  end
+  var l = File(path).readLines()
+  for s in l
+    var ss = s.strip()
+    if ss.startsWith("@link ")
+      if depth == 1
+        Order.append("")
+      end
+      var target = ss[6:]
+      Preprocess(target, depth + 1)
+    elif ss.startsWith("@fun ") or ss.startsWith("@class ") or
+         ss.startsWith("@module ") or ss.startsWith("@var") or
+         ss.startsWith("@exception") or ss.startsWith("@class-hidden")
+      var tag, rest = ss.split(" ", 1)
+      var name = NormAnchor(DefName(rest))
+      if not NameMap.hasKey(name)
+        NameMap[name] = path
+      end
+      if curMod != nil
+        NameMap[curMod + "::" + name] = path
+      end
+      if tag == "@module"
+        curMod = rest
+        Modules.add(rest)
+      end
+    elif ss.startsWith("@h2 ")
+      var tag, rest = ss.split(" ", 1)
+      NameMap[NormAnchor(rest)] = path
+    elif ss.startsWith("@title ") or ss.startsWith("@indexitem ")
+      var tag, rest = ss.split(" ", 1)
+      var anchor = NormAnchor(rest)
+      NameMap[anchor] = path
+      Titles.add(anchor)
+    elif ss == "@grammar"
+      sectionType = Grammar
+    elif ss.startsWith("@end")
+      sectionType = nil
+    elif sectionType == Grammar
+      if Match("[a-z0-9-]+ ?::", ss) != nil
+        NameMap[ss.split("::")[0].strip() + "::"] = path
+      end
+      GrammarRules.append(s)
+    end
+  end
+end
+
+
+-- Return the last part of a potentially qualified Alore name (the part after 
+-- the last ::).
+def BaseName(id)
+  return id.split("::")[-1]
+end
+
+
+def FormatGrammar(s)
+  var pre = ""
+  var post = s
+  if "::" in s
+    pre, post = s.split("::", 1)
+    pre = "<a id=""{}""></a>{}::".format(pre.strip(), pre)
+  end
+  post += " "
+  
+  var r = ""
+  var i = 0
+  while i < post.length()
+    if post[i] == "&" and post[i + 1] != "#"
+      repeat
+        r += post[i]
+        i += 1
+      until r[-4:] == "&gt;"
+    end
+  
+    var m = Match("[^""]([a-z0-9-]+)[^""a-z0-9-;]", post, i)
+    r += post[i]
+    if m != nil
+      var key = m.group(1) + "::"
+      if not NameMap.hasKey(key)
+        WriteLn("Missing: ", m.group(1))
+      end
+      var url = NameMap[key] + "#" + m.group(1)
+      r += "<a href=""{}"">{}</a>".format(url, m.group(1))
+      i += m.group(0).length() - 1
+    else
+      i += 1
+    end    
+  end
+  
+  return pre + r[:-1]
+end
+
+
+def AddIndexItem(item)
+  if item.length() < 3
+    item += [Scope]
+  end
+  IndexItems.append(item)
+end
+
+
+-- Output an alphabetical index. It contains all index items defined in the 
+-- current scope, including modules, classes, functions and constants.
+def OutputIndex(out)
+  -- Sort index items.
+  var items = Uniq(Sort(IndexItems, IndexComp))
+  -- These are all the alphabetical categories.
+  var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#"
+  
+  -- Output each alphetical category separately.
+  for i in 0 to alpha.length()
+    -- Get the prefix character of this category (e.g. A or _).
+    var c = alpha[i]
+    
+    -- Within the capi scope, all items start with A (e.g. AAdd).
+    if Scope == "capi" and c != "#"
+      c = "A" + c
+    end
+    
+    -- Filter all items in this category to res.
+    var res = []
+    for x, y, scope in items
+      if x.upper().startsWith(c) and scope == Scope
+        res.append([x, y])
+      end
+    end
+    
+    -- Output category only if it's not empty.
+    if res.length() > 0
+      -- Output title.
+      var title = c
+      if title == "_"
+        title = "_ (underscore)"
+      end
+      out.append("<h2>{}</h2>".format(title))
+      
+      -- Output index items.
+      out.append("<p>")
+      var j = 0
+      while j < res.length()
+        var x, y = res[j]
+        var ref = "#{}".format(NormAnchor(x))
+        if y == "module"
+          ref = ""
+        end
+        var hh = " ({})".format(y)
+        if "implicit_interfaces" in y
+          hh = " (implicit interface)"
+        end
+        if (j == 0 or res[j - 1][0] != x) and 
+           (j == res.length() - 1 or res[j + 1][0] != x)
+          hh = ""
+        end
+        if not NameMap.hasKey(NormAnchor(x))
+          WriteLn(x)
+        end
+        var url = NameMap[NormAnchor(x)]
+        if "::" in y and y.lower() != y
+          -- Get class name.
+          var cl = y.replace("<tt>", "")
+          cl = cl.replace("</tt>", "")
+          url = NameMap[cl]
+          ref += "-" + cl.split("::")[-1]
+        end
+        out.append("<a href='{}{}'>{}</a>{}<br>".format(url, ref, x, hh))
+        j += 1
+      end
+    end
+  end
+end
+
+
+-- Compare two index items (each should be an array with 3 items). Return a 
+-- boolean indicating whether x < y.
+def IndexComp(x, y)
+  try
+    x = NormIndex(x[0]) + " " + x[1]
+    y = NormIndex(y[0]) + " " + y[1]
+    return x < y
+  except e is TypeError
+    WriteLn(x)
+    WriteLn(y)
+    raise e
+  end
+end
+
+
+-- Return a normalized index string that can be used in sorting. Effectively 
+-- map strings starting with an underscore to the end of the sorted list.
+def NormIndex(s)
+  s = s.lower()
+  if s.startsWith("_")
+    s = "zzz" + s
+  end
+  return s
+end
+
+
+-- Return an index item (an array with 3 items) which refers to identifier
+-- name within class curClass within module curMod.
+def IndexItem(name, curMod, curClass)
+  if name[0].lower() == name[0]
+    return [name, "<tt>{}::{}</tt>".format(curMod, curClass)]
+  else
+    if curMod == nil
+      curMod = ""
+    end
+    return [name, curMod]
+  end
+end
+
+
+-- Return an array filtered so that successive equal items are replaced with
+-- a single item (similar to the uniq command line tool).
+def Uniq(a)
+  var aa = []
+  for x in a
+    if aa == [] or aa[-1] != x
+      aa.append(x)
+    end
+  end
+  return aa
+end
+
+
+-- Return HTML code representing a highlighted variable/function name or 
+-- an operation.
+def HiliSpan(html)
+  return "<span class=""hili"">{}</span>".format(html)
+end
+
+
+-- Obfuscate an email address by creating a JavaScript fragment that constructs
+-- the address.
+def ObfuscateEmail(email)
+  var repl
+  for ch in "xz-_#"
+    if not ch in email
+      repl = ch
+      break
+    end
+  end
+  if repl == nil or email.length() < 5
+    raise ValueError("Unsupported email address")
+  end
+  
+  var obfuscated = email[:2] + repl + email[2:5] + repl + email[5:8] + repl +
+    email[8:]
+
+  var res = "<script type='text/javascript'>" + 
+            "document.write(('{}' + '{}').replace(/{}/g, ''));".format(
+              obfuscated[:4], obfuscated[4:], repl) +
+            "</script>";
+            
+  return res
+end

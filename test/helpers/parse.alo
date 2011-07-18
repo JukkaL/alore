@@ -1,0 +1,65 @@
+module helpers
+
+-- Helpers for parsing test case description files.
+
+import string
+import io
+
+
+-- Parsed item of the form
+--   [id arg]
+--   .. data ..
+class TestItem
+  const id
+  const arg
+  const data  -- Text data, array of 8-bit strings
+  const line  -- Line number in file
+end
+
+
+-- Parse a list of lines that represent a sequence of test items.
+def ParseTestData(l)
+  var ret = []
+  
+  var id = nil
+  var arg = nil
+  var data = []
+  
+  var i = 0
+  while i < l.length()
+    var s = l[i].strip()
+  
+    if s.startsWith("[") and s.endsWith("]")
+      if id != nil
+        ret.append(TestItem(id, arg, StripList(data), i))
+      end
+    
+      id = s[1:-1]
+      arg = nil
+      if " " in id
+        arg = id[id.index(" ") + 1:]
+        id = id[:id.index(" ")]
+      end
+      data = []
+    elif not l[i].startsWith("--")
+      data.append(l[i])
+    elif l[i].startsWith("----")
+      data.append(l[i][2:])
+    end
+    i += 1
+  end
+  
+  if id != nil
+    ret.append(TestItem(id, arg, StripList(data), i))
+  end
+  
+  return ret
+end
+
+
+private def StripList(l)
+  while l.length() > 0 and l[-1].strip() == ""
+    l.removeAt(-1)
+  end
+  return l
+end

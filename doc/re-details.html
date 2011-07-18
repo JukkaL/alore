@@ -1,0 +1,92 @@
+@head
+@title Regular expression matching details
+
+<p>This section contains additional technical details of regular
+expression matching.
+
+<h2>Repetition and match length</h2>
+
+<p>The repetition expressions *, +, ? and {} match by default a 
+<i>locally maximal</i> match. Each repeated expression matches the longest
+possible substring in isolation, but the whole expression does not always match
+the longest possible match. The regular expression is matched sequentially from
+left (start) to right, each subexpression matching a locally maximal substring
+so that the rest of the regular expression matches as well. The first 
+successful found match is always reported. The alternation operator | is 
+evaluated in a similar fashion: if the whole expression matches after 
+trying the first alternative, the second alternative is not tried at all.
+
+<p>For example, the regular expression <tt>a?(b|abc)</tt> matches <tt>ab</tt>, 
+not <tt>abc</tt>, when matched against the string <tt>abc</tt>.
+
+<h2>Minimizing repetition</h2>
+
+<p>If a repetition expression is followed by ?, it matches a <i>locally 
+minimal</i> match, i.e. the smallest number of repetitions so that the rest
+of the regular expression matches.
+
+<p>For example, the regular expression <tt>.*?b+</tt> matches the string 
+<tt>ab</tt> when matched against the string <tt>ababb</tt>.
+
+<h2>Grouping and back references</h2>
+
+<p>Each parenthesized subexpression forms a grouped regular expression, or simply
+a group. The substrings matched by groups can be queried using the match object
+methods and they can be referred to later in the regular expression using back
+references of the form \1, \2, etc. Only
+the first 9 groups can be matched as back references.
+
+<p>A back reference matches the string that was last matched by the group. 
+If a group is repeated, each repetition is considered a separate match.
+If
+the group has not matched anything, a back reference fails to match anything.
+
+<p>For example, the regular expression <tt>(a|b)+\1</tt> matches any number 
+of <tt>a</tt>'s and <tt>b</tt>'s followed by <tt>aa</tt> or <tt>bb</tt>.
+
+<h2>Precedence</h2>
+
+<p>The alternation operator <tt>|</tt> has the lowest precedence, followed by
+the concatenation operator. Repetition has the highest precedence. Use grouping
+to override the operator precedence.
+
+<p>For example, <tt>a|bc*</tt> is interpreted as <tt>a|(b(c*))</tt> (except
+for grouping behavior). 
+
+<h2>Character class syntax</h2>
+
+<p>The right square bracket (<tt>]</tt>) and dash (<tt>-</tt>) 
+have special meanings within character 
+classes (<tt>[...]</tt> or <tt>[^...]</tt>). Therefore they usually have to be
+escaped using a backslash to have them interpreted literally. As an
+exception, the right square bracket can be included without
+escaping as the first
+character of a character class, and the dash does not need to be escaped as
+the first character of a character class, as the first character after a
+character range and before the right square bracket.
+
+<p>The following regular expressions have examples of these special cases:
+
+<table class="no-border">
+  <tr>
+    <td><tt>[]]</tt>
+    <td>match right square bracket
+  <tr>
+    <td><tt>[0-]</tt>
+    <td>match 0 or -
+  <tr>
+    <td><tt>[-]</tt>
+    <td>match dash
+  <tr>
+    <td><tt>[a-c-e]</tt>
+    <td>match a, b, c, e or dash
+</table>
+
+<h2>Technical limitations</h2>
+
+<p>The maximum regular expression length is limited to approximately 16000
+characters. The regular expression matching engine uses backtracking to handle
+repetition and alternation, so that matching requires exponential time in
+the worst case. In general, the more complex an expression is, the longer time
+the matching will take. This is different from regular expression matching
+based on a DFA (Deterministic Finite Automata).

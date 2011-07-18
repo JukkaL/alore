@@ -1,0 +1,234 @@
+@head
+@module time
+@title Class <tt>time::Time</tt>
+@index Time
+
+<p>The <tt>Time</tt> class represents elapsed time or the time difference
+between two points in time. <tt>Time</tt> instances
+are immutable. <tt>Time</tt> values can be negative, zero or positive.
+
+<p>There is no upper or lower bound for the values that <tt>Time</tt> can
+represent. <tt>Time</tt> objects always have nanosecond precision, and this
+is independent of the magnitude of the value.
+
+@class Time()
+@desc Construct a <tt>Time</tt> object representing the current clock time
+      (time passed since midnight).
+@end
+
+@class Time(days, hours, minutes, seconds)
+@desc Construct a <tt>Time</tt> object representing a specific duration.
+      Seconds must be
+      a float or an integer and all other arguments must
+      be integers. None of the values are restricted to any specific
+      range. If they are outside the valid range of values, they are
+      normalized and the excess is moved to the larger units. So if
+      seconds is 64, the actual second value becomes 4 and minutes are
+      incremented by one, etc.
+@end
+
+@class Time(seconds)
+@desc  Construct a <tt>Time</tt> instance from a number of seconds. This is
+       a shorthand for <tt>Time(0, 0, 0, seconds)</tt>.
+@end
+
+@class Time(string[, format])
+@desc Construct a <tt>Time</tt> object from a string.
+      The format argument specifies the
+      format of the string. If the format is omitted, the accepted formats are
+      "-h:mm:ss.s" and "-d\d h:mm:ss.s".
+
+      <p>The format must contain <i>format sequences</i> for some
+      time components (day, hour, minute, second). A format sequence matches a
+      time component in the string. The following list contains all the
+      available format sequences and examples of valid values:
+      
+      <table class="no-border" summary="Format sequences">
+        <tr>
+          <td>s
+          <td>seconds (1, 30)
+        <tr>
+          <td>ss
+          <td>seconds, at least 2 digits (01, 30)
+        <tr>
+          <td>s.s
+          <td>seconds with an optional fraction (5, 5.0, 5.12, ...)
+        <tr>
+          <td>ss.s
+          <td>seconds with an optional fraction, at least 2 digits in the
+              integer part
+              (05, 05.0, 05.12, ...)
+        <tr>
+          <td>m
+          <td>minutes (1, 30)
+        <tr>
+          <td>mm
+          <td>minutes, at least 2 digits (01, 30)
+        <tr>
+          <td>h
+          <td>hours (1, 13)
+        <tr>
+          <td>hh
+          <td>hours, at least 2 digits (01, 30)
+        <tr>
+          <td>d
+          <td>days (1, 1234)
+        <tr>
+          <td>dd,&nbsp;ddd,&nbsp;...&nbsp;
+          <td>days; at least <i>n</i> digits, where <i>n</i> is the number of
+            d's (01, 023, ...)
+        <tr>
+          <td>-
+          <td>sign of the value (empty or "-")
+        <tr>
+          <td>[am/pm]
+          <td>specifier for a.m. or p.m. (all h and hh sequences
+              in the same format string will also follow 12-hour clock
+              conventions; "am"
+              and "pm" in the formatting sequence may be replaced with
+              arbitrary strings, and the matched string must contain one of
+              these strings)
+      </table>
+
+      <p>Any other characters in the format must be matched by the same
+      character in the string. As an exception, a backslash \ followed by a
+      character <i>c</i> must be matched by <i>c</i>.
+@end
+
+<h2>Members</h2>
+
+<p>The members <tt>day</tt>, <tt>hour</tt>, <tt>minute</tt> and <tt>second</tt>
+of <tt>Time</tt> are all constants. Either all these members are
+non-negative or all the members are non-positive, depending on the sign of
+the <tt>Time</tt> value.
+
+@var day
+@desc Number of days (integer)
+@end
+  
+@var hour
+@desc Number of hours (integer in the range from -23 to 23, inclusive)
+@end
+  
+@var minute
+@desc Number of minutes (integer in the range from -59 to 59, inclusive)
+@end
+  
+@var second
+@desc Number of seconds (float, -60 &lt; seconds &lt; 60)
+@end
+
+@fun format(template)
+@desc <p class="trim">Format the time as a string.
+      The template string defines the format of
+      the result. The following <i>formatting sequences</i> in the template
+      are replaced with formatted <tt>Time</tt> components (examples within
+      parentheses):
+      
+      <table class="no-border" summary="Format sequences">
+        <tr>
+          <td>s
+          <td>seconds as an integer (5)
+        <tr>
+          <td>ss
+          <td>seconds as an integer, at least 2 digits (05)
+        <tr>
+          <td>s.s,&nbsp;s.ss, ...
+          <td>seconds as a fraction (5.0, 5.12, ...)
+        <tr>
+          <td>ss.s,&nbsp;ss.ss,&nbsp;...&nbsp;
+          <td>seconds as a fraction, at least 2 digits in the integer part
+              (05.0, 05.12, ...)
+        <tr>
+          <td>h
+          <td>hours (6)
+        <tr>
+          <td>hh
+          <td>hours, at least 2 digits (06)
+        <tr>
+          <td>m
+          <td>minutes (4)
+        <tr>
+          <td>mm
+          <td>minutes, at least 2 digits (04)
+        <tr>
+          <td>d
+          <td>days (3)
+        <tr>
+          <td>dd,&nbsp;ddd,&nbsp;...&nbsp;
+          <td>days, at least n digits (03, 003, ...)
+        <tr>
+          <td>-
+          <td>sign of the time (empty or "-")
+        <tr>
+          <td>[am/pm]
+          <td>a.m. or p.m. according 12-hour clock; all h and hh sequences
+              in the same format string will also follow 12-hour clock
+              conventions ("am" and "pm" may be replaced with arbitrary
+              strings, and one of these is substituted in the result string)
+      </table>
+      <p>Other characters in the template are copied as such to the result.
+        As an exception, a backslash \ followed by a character <i>c</i> is
+        replaced with <i>c</i>.
+@end
+
+@fun toSeconds()
+@desc Return the total number of seconds represented by a time object
+      as a <tt>Float</tt>. The return value may be negative.
+      @note The return value may be imprecise due to the properties of
+            floating-point numbers. Use <tt>toNanoSeconds</tt> to get a precise
+            (integer) representation of the total number of seconds.
+      @end
+@end
+
+@fun toNanoSeconds()
+@desc Return the total number of nanoseconds represented by a time object
+      as an integer. The return value may be negative.
+@end
+
+<h2>Operations</h2>
+
+@op time1 + time2
+@op time1 - time2
+@desc Time objects can be added and subtracted.
+@end
+
+@op -time
+@desc Negate a time object. The sign of all components is reversed.
+@end
+
+@op time * 3.2
+@op time / 2
+@desc Time objects support multiplication with and division by a number.
+@end
+
+@op Str(time)
+@desc Convert a time to a string of the
+      form "01:02:03.4" or "5d 01:02:03.4" (if day != 0).
+@end
+
+@op Time("01:00:00") &lt; Time("01:00:01")
+@desc Times can be compared for equality and order.
+@end
+
+@op Hash(time)
+@desc Return the hash value of a <tt>Time</tt> object.
+@end
+
+@op Float(time)
+@desc @deprecated
+      This is equivalent to <tt>time.toSeconds()</tt>.
+      
+@end
+
+<h2>Examples</h2>
+
+<p>This example uses both 12-hour and 24-hour time formats:
+
+@example
+  var t = Time("2:13 PM", "h:mm [AM/PM]")
+  Str(t)                           -- "14:13:00.0" (24-hour clock)
+  t.hour                           -- 14
+  t.format("h:mm [a.m./p.m.]")     -- "2:13 p.m."
+  f.format("hh:mm")                -- "14:13"
+@end

@@ -1,0 +1,18 @@
+@head
+@title Miscellaneous operations
+
+<p>This section contains a few miscellaneous operations that do not fit
+in other sections.
+
+@fun ABool AIsValue(AThread *t, AValue v, AValue type)
+@desc Return a boolean indicating whether the first argument is an object of
+      the type specified by the second argument. This operation is similar to
+      the Alore <tt>is</tt> operator. @raise-direct
+@end
+
+@fun AValue AHash(AThread *t, AValue v)
+@desc Return the hash value of an object as an Int value. This function may
+      return AError.
+@end
+
+

@@ -1,0 +1,555 @@
+@head
+@title Expressions
+
+@grammar
+  expression :: list-expression | single-expression
+  single-expression :: simple-expression
+    | gvar
+    | "(" expression ")"
+    | binary-operation
+    | boolean-operation
+    | unary-operation
+    | subscript-expression
+    | call-expression
+    | array-expression
+    | tuple-expression
+    | member-reference
+    | super-reference
+    | anonymous-function
+    | cast-expression
+  @end
+
+<p>Expressions perform all interesting computation in Alore programs.
+Parentheses can be
+used for grouping and for overriding operation evaluation order.
+
+@h2 Operator precedence
+
+<p>All Alore operators are listed below, from the highest to the
+lowest precedence, with each operator on the same line having the same
+precedence:
+
+<ol>
+  <li><tt>. () []</tt> (member access, function call, indexing)
+  <li><tt>()</tt> (cast)
+  <li><tt>**</tt>
+  <li><tt>-</tt> (unary)
+  <li><tt>* / div mod</tt>
+  <li><tt>+ -</tt> (binary)
+  <li><tt>to</tt>
+  <li><tt>== != &lt; &lt;= &gt;= &gt; in is</tt>
+  <li><tt>:</tt>
+  <li><tt>not</tt>
+  <li><tt>and</tt>
+  <li><tt>or</tt>
+  <li><tt>,</tt> (array constructor)
+</ol>
+
+<p>All operators except the exponentiation operator <tt>**</tt> are left
+associative, i.e. <tt>a + b + c == (a + b) + c</tt>, whereas <tt>**</tt> is
+right associative, i.e. <tt>a**b**c == a**(b**c)</tt>.
+
+<p>The comma operator is used to form lists of arbitrary length. Associativity 
+rules do not apply to the comma operator.
+
+@h2 Lvalues and rvalues
+
+<p>Expressions can be evaluated as either rvalues or lvalues. Lvalues are only
+expected on the left hand side of an assignment statement. Valid lvalues
+include:
+
+<ol>
+  <li>global variable references
+  <li>member variable references
+  <li>local variable references
+  <li>member references
+  <li>subscript expressions
+  <li>superclass member references (but only when referring to a setter)
+  <li>array constructors (all the array items must be valid lvalue expressions
+    but not array constructors themselves)
+  <li>uninitialized member constant references (but only in the <tt>create</tt>
+    method of the class that contains the constant definition)
+</ol>
+
+<p>All expressions are valid in an rvalue context, by contrast. Note that
+the left hand side of assignment may include rvalue expressions as the
+subexpressions of lvalue expressions (target of member reference and
+subscripts in subscript expressions).
+
+<p>The semantics of lvalue expressions are described in section 
+@href{Assignment statement}. The descriptions below only apply to rvalue 
+expressions, unless explicitly mentioned otherwise.
+
+@h2 Expressions in boolean context
+
+<p>Some expressions are evaluated in a boolean context. Such
+an expression is expected to evaluate to a boolean value, either 
+<tt>True</tt> or <tt>False</tt>, as its value. If the expression 
+evaluates to some other value, a @ref{std::TypeError} exception will be
+raised.
+
+@h2 Order of evaluation
+
+<p>Operations within a single expression are always evaluated in their natural
+order as specified by precedence and associativity rules: operations with a
+higher precedence are evaluated first, and consecutive operations with the
+same precedence are evaluated left to right (if the operations are left
+associative) or right to left (otherwise). 
+The natural evaluation order of comma-separated lists is from left to right.
+Parentheses can be used to change the default operation evaluation order.
+
+<p>Variable and constant references 
+within a single expression may be evaluated in an arbitrary order, but all the 
+operands and arguments of operations must be evaluated before the 
+operation is performed.
+
+<p>Otherwise, expressions and statements are always evaluated in their
+entirety in the order described in this document, unless some operation causes
+an exception to be raised. At the instant an exception is raised, any 
+statements or expressions that are not fully evaluated are terminated.
+
+@h2 Simple expressions
+
+@grammar
+  simple-expression :: int | float | str | "nil" | id | "self"
+@end
+
+<p>Integer literals evaluate to @ref{Int} objects. Correspondingly, float 
+and string literals evaluate to @ref{Float} and @ref{Str} objects. The 
+<tt>nil</tt> expression evaluates to the special <tt>nil</tt> object.
+The <tt>self</tt> expression evaluates to the <tt>self</tt> 
+object, i.e. the object that is bound to the current evaluated method or the
+object whose getter or setter is being evaluated. All of these expressions are
+only valid as rvalues.
+
+<p><i>Id</i> evaluates to either a local variable, a member of <tt>self</tt>, 
+or a global definition. Local definitions take precedence over other 
+definitions and member definitions take precedence over global definitions 
+(see @href{Precedence of names} for details). Evaluating a local or global 
+reference results in the value of the variable or constant. Evaluating a
+member 
+reference is equivalent to evaluating the member reference <tt>self.id</tt>.
+It results in the evaluation of the getter for <i>id</i> or in the creation of
+a bound method object (see @href{Member references} for the details).
+
+@h2 Referencing global definitions
+
+@grammar
+  gvar :: id ("::" id)+ | "::" id
+@end
+
+<p>A global reference evaluates to the value of a global definition. The form
+<tt>::id</tt> refers to a 
+global definition in the current module. Otherwise, the last <i>id</i> is the 
+name of a global definition, and all elements before the last <tt>::</tt> form
+the module prefix.
+
+<p>If the module prefix matches the name of a module imported in the current 
+source file,
+the reference refers to that module. Otherwise, the prefix must form a
+unique suffix of the name of any module that was imported in the current file.
+In this case, the reference refers to that module. Otherwise, the reference
+is invalid and a compile error will be reported.
+
+@h2 Binary operations
+
+@grammar
+  binary-operation :: expression binary-op expression
+  binary-op :: "+" | "-" | "*" | "/" | "div" | "mod" | "**" | "==" | "!="
+    | "&#60;" | "&#60;=" | "&#62;" | "&#62;=" | "is" | "in" | "to" | ":"
+@end
+
+<p>Many of the binary operations are evaluated as method calls.
+The table below contains the mappings between these operators and
+methods. The operation
+will be performed by calling the method mentioned in the table on the left
+operand with the right operand as the
+argument (but see (3) in the note section for an exception).
+The return value of the chosen method is usually the result of the
+operation (but see (2) in the note section). If the method is not
+supported by the operand, a @ref{std::MemberError} exception will be raised.
+
+<table class="with-border" summary="Alore binary operators">
+  <tr>
+    <th>Operator
+    <th>Method
+    <th>Notes
+  <tr>
+    <td><tt>+</tt>
+    <td><tt>_add</tt>
+    <td>
+  <tr>
+    <td><tt>-</tt>
+    <td><tt>_sub</tt>
+    <td>
+  <tr>
+    <td><tt>*</tt>
+    <td><tt>_mul</tt>
+    <td>
+  <tr>
+    <td><tt>/</tt>
+    <td><tt>_div</tt>
+    <td>
+  <tr>
+    <td><tt>div</tt>
+    <td><tt>_idiv</tt>
+    <td>
+  <tr>
+    <td><tt>mod</tt>
+    <td><tt>_mod</tt>
+    <td>
+  <tr>
+    <td><tt>**</tt>
+    <td><tt>_pow</tt>
+    <td>
+  <tr>
+    <td><tt>==</tt>
+    <td><tt>_eq</tt>
+    <td>(1)
+  <tr>
+    <td><tt>!=</tt>
+    <td><tt>_eq</tt>
+    <td>(1) (2)
+  <tr>
+    <td><tt>&lt;</tt>
+    <td><tt>_lt</tt>
+    <td>(1)
+  <tr>
+    <td><tt>&gt;</tt>
+    <td><tt>_gt</tt>
+    <td>(1)
+  <tr>
+    <td><tt>&lt;=</tt>
+    <td><tt>_gt</tt>
+    <td>(1) (2)
+  <tr>
+    <td><tt>&gt;=</tt>
+    <td><tt>_lt</tt>
+    <td>(1) (2)
+  <tr>
+    <td><tt>in</tt>
+    <td><tt>_in</tt>
+    <td>(1) (3)
+</table>
+
+<p>Notes:<br>
+<table class="no-border" summary="">
+  <tr>
+    <td>(1)&nbsp;
+    <td>The operation is evaluated in a boolean context, i.e. it must
+      return a boolean value, or a @ref{std::TypeError} exception
+      will be raised.
+  <tr>
+    <td>(2)
+    <td>The result of the operation is the boolean negation of the
+       value returned by the method.
+  <tr>
+    <td>(3)
+    <td>The _in method of the right operand is called, and the left operand
+      is passed as the argument.
+</table>
+
+<p>In addition, the following binary operators are not mapped to method calls,
+but are evaluated directly:
+
+<dl>
+  <dt><b>is</b>
+  <dd>Test whether the left operand is a member of a type specified by the
+    right operand. Evaluate to a boolean value. Raise @ref{std::TypeError} if 
+    the right operand is not a type. The nil value is not considered to be
+    a member of any type.
+  <dt><b>to</b>
+  <dd>Construct a @ref{Range} object. The left operand is assigned to the
+    <tt>start</tt> member and the right operand to the <tt>stop</tt> member.
+    If one of the operands is not an integer, a @ref{std::TypeError}
+    exception will be raised.
+  <dt><b>:</b>
+  <dd>Construct a @ref{Pair} object. The left and right operands are assigned
+    to the <tt>left</tt> and <tt>right</tt> members, respectively.
+  <dt><b>and</b>, <b>or</b>
+  <dd>Perform short-circuit boolean operations (see below).
+</dl>
+
+<p>Equality comparison against a literal <tt>nil</tt> value is treated
+specially. In binary operations with == or != as the operator and a literal
+<tt>nil</tt> expression as the right operand, the left and right operands are
+swapped before evaluation.
+
+@h2 Boolean operations
+
+@grammar
+  boolean-operation :: expression ("and" | "or") expression
+@end
+
+<p>The "<tt>and</tt>" and "<tt>or</tt>" operators are short-circuit boolean 
+operators. Their
+arguments are evaluated in a boolean context. The <tt>and</tt> operator 
+evaluates to <tt>True</tt> if and only if both of the operands are 
+<tt>True</tt>; otherwise, it evaluates to
+<tt>False</tt>. The <tt>or</tt> operator evaluates to <tt>True</tt> if either 
+one or both of the operands is <tt>True</tt>; otherwise, it evaluates to 
+<tt>False</tt>.
+
+<p>The boolean operators use <i>short-circuit evaluation</i>.
+If the first operand of an <tt>and</tt> operation evaluates to 
+<tt>False</tt> or if the first operand of an <tt>or</tt> operation
+evaluates to 
+<tt>True</tt>, the second operand is not evaluated at all. In this case, the 
+value of the operation is the same as if the second operand evaluated to any 
+boolean value, i.e. equivalent to the value of the first operand.
+
+@h2 Unary operations
+
+@grammar
+  unary-operation :: ("-" | "not") expression
+@end
+
+<p>Both of the unary operations have unique semantics:
+
+<ul>
+  <li>The unary negation operator '<tt>-</tt>' is evaluated by calling the 
+    <tt>_neg</tt> method of the operand with no arguments. 
+  <li>The operand of the unary <tt>not</tt> operator is evaluated in a boolean
+    context. The operation evaluates to the boolean negation of the operand.
+</ul>
+    
+@h2 Subscripting
+
+@grammar
+  subscript-expression :: expression "[" expression "]"
+@end
+
+<p>The subscript expression is evaluated by calling the <tt>_get</tt> 
+method of the left operand with the right operand (index) as the only argument.
+The return value of that method is the value of the expression.
+
+<p>The subscript expression is also valid in an lvalue context; see 
+section @href{Assignment statement} for details.
+
+@h2 Call expressions
+
+@grammar
+  call-expression :: expression "(" args ")"
+  args :: [ "*" expression ] 
+    | single-expression ("," single-expression)* [ "," "*" expression ]
+@end
+
+<p>The call expressions are used for executing the bodies of
+functions and methods.
+Additionally the evaluation of most operator expressions falls back to call
+expressions.
+
+<p>The expression before the left parenthesis evaluates to the
+<i>called object</i>. The expressions, if any, between the parentheses evaluate
+to the <i>actual arguments</i>. If the final argument expression is prefixed
+with <tt>*</tt>, this argument is a <i>variable-length argument list</i>. 
+Arguments not prefixed with <tt>*</tt> are the fixed (actual) arguments.
+
+<p>If the called object is a global function, an anonymous function or a bound
+method, the formal argument list and the body of the function are defined
+by this object.
+Otherwise, the formal argument list and the body of the function are those of
+the <tt>_call</tt> method of the object being called. If this method is not 
+defined, the object is not <i>callable</i> and an
+exception will be raised.
+
+<p>If the call expression has only fixed arguments and if all the formal
+arguments are fixed and required (without default values), the function call
+is evaluated as follows:
+
+<ol>
+  <li>Evaluate the called object expression.
+  <li>Evaluate the actual argument expressions, from left to right.
+  <li>If the called object is not callable, raise a @ref{std::TypeError} 
+    exception.
+  <li>If the number of actual arguments is not compatible with the number of
+    formal arguments, raise a @ref{std::ValueError} exception.
+    If there are fewer actual arguments than required formal arguments or more
+    actual arguments than fixed formal arguments, the arguments are
+    incompatible.
+    As an exception, if the callee accepts a variable-length argument list,
+    there is no upper bound for the number of arguments.
+  <li>Create a new <i>invocation</i> of the called object that can hold copies
+    of all the local variables and other state needed by the function call.
+  <li>Assign the values of the argument expressions to local variables defined
+    by the formal arguments and store them in the invocation. The actual
+    arguments are in the same order as the formal arguments.
+  <li>Evaluate the body of the function. All local variables in the body refer
+    to this invocation of the function. There may be multiple invocations of
+    any function or method active at a time, and they each keep their own
+    separate state.
+  <li>If the function exits by a return statement with a return value, this
+    value is the value of the call expressions.
+  <li>If the function exits by a return statement without a return value or
+    without a return statement after all the statements in the body have been
+    successfully evaluated, the call expression evaluates to <tt>nil</tt>.
+  <li>If the function exits because of an uncaught exception, this exception
+    is propagated to the calling function and the expression evaluation will
+    be terminated. The exception will be handled within the calling function
+    as if it was raised within it.
+  <li>The invocation related to a function call will be destroyed after the
+    function has exited. Individual local variables held by the
+    invocation will outlive the invocation, however, if they may be referred
+    after the invocation exit by an anonymous function object that was created
+    within the invocation.
+</ol>
+
+<h3>Caller with a variable-length argument list</h3>
+
+<p>If the call expression contains a variable-length argument list expression,
+it must evaluate to an @ref{Array} or a @ref{Tuple} object (or an object of
+an <tt>Array</tt> subclass). The items of this sequence
+behave identically to fixed actual arguments, as if they were included at the 
+end of the argument list as fixed arguments.
+
+<h3>Arguments with default values</h3>
+
+<p>If some of the formal arguments are optional (i.e. have default argument
+values), these rules are followed:
+
+<ol>
+  <li>If there are more actual arguments than required formal arguments, these
+    actual arguments are assigned to optional formal arguments.
+    These formal arguments behave like required arguments in this invocation,
+    and their default value expressions are ignored.
+  <li>If there are not enough actual arguments to cover all the optional
+    formal arguments, the rest of the optional arguments are 
+    initialized to the values of the
+    initialization expressions. The initialization expressions are evaluated
+    sequentially from left to right. All the available actual arguments are
+    assigned to the corresponding formal arguments before evaluating the
+    initialization expressions.
+</ol>
+
+<h3>Callee with a variable-length argument list</h3>
+
+<p>If the formals include a variable-length argument list, any number of
+additional actual arguments are accepted beyond the fixed formal arguments.
+An <tt>Array</tt> object is created that holds these extra arguments, in the 
+same order they appear in the argument list. This object is assigned to the 
+formal argument preceded by <tt>*</tt>. If there are no extra arguments, an 
+empty <tt>Array</tt> object will be created and assigned instead.
+
+@h2 Array constructors
+
+@grammar
+  array-expression :: "[" comma-list "]"
+  comma-list :: single-expression | list-expression
+  list-expression :: single-expression ("," | ("," single-expression)+ [ "," ])
+@end
+
+<p>Construct an @ref{Array} instance with the values of the subexpressions,
+separated by commas, as the items. The length of the array is equal to the 
+number of items in the array expression.
+
+@h2 Tuple constructors
+
+@grammar
+  tuple-expression :: "(" ")" | list-expression
+@end
+
+<p>Construct a @ref{Tuple} instance with the values of the subexpressions,
+separated by commas, as the items. The length of the tuple is equal to the 
+number of items in the array expression.
+
+<p>An empty tuple is constructed using the <tt>()</tt> form.
+To construct a single-item tuple, a trailing comma must be provided.
+Tuple expressions have to parenthesized when used in contexts where comma has
+another meaning, such as in argument lists of call expressions.
+
+@h2 Member references
+
+@grammar
+  member-reference :: expression "." id
+@end
+
+<p>This expression refers to the member <i>id</i> of an object, specified by
+the left operand expression. In an rvalue context,
+it is evaluated by either constructing a bound method object of type
+<tt>std::Function</tt> (if the member refers to a method) or by evaluating the 
+getter method of the member (if the member refers to a member variable or 
+constant). Otherwise, if the member is not defined, raise a
+@ref{std::MemberError} exception.
+
+<p>In an lvalue context, <i>id</i> must refer to a member variable (a member
+with a setter  method), or otherwise a @ref{std::MemberError} exception will be
+raised. See section @href{Assignment statement} for details.
+
+<p>It is an error to access the member <tt>create</tt> using a member reference
+unless the left operand is <tt>self</tt>.
+
+<h3>Bound methods</h3>
+
+<p>If the member in a dot expression refers to a method, the result of
+the operation is a @ref{std::Function} object that represents the method
+<i>bound</i> to the specific object.
+A bound method accepts the arguments specified in the method definition, and 
+when the bound method is called, the body of the method is evaluated so that 
+<tt>self</tt> refers to the bound object.
+
+<h3>Evaluating getter and setter references</h3>
+
+<p>Getters and setters behave like methods that take either no arguments
+(getters) or a single argument (setters). Unlike methods, they can only be
+directly called; it is not possible to build bound getter or setter method
+objects. Is is also impossible to call getters or setters using the ordinary
+() operator; they are only called implicitly when reading a member or
+assigning to a member.
+
+@h2 Superclass member references
+
+@grammar
+  super-reference :: "super" "." id
+@end
+
+<p>If the member <i>id</i> refers to a method in the current class, this is
+evaluated to a bound method object
+representing the definition of the method <i>id</i> in the superclass of the
+current class. The method must be defined in the superclass. Bound method
+references
+are only valid in an rvalue context.
+
+<p>If the member <i>id</i> refers to a member variable or constant in the
+current class, the getter method of the member defined in the superclass of the
+current class is called (in an rvalue context) or, in a similar fashion, the
+superclass setter method is called
+(in an lvalue context), giving the assigned value as the argument. The
+getter or setter must be defined in the superclass.
+
+<p>The super construct can only access public members defined in the
+superclass. All public members inherited by the superclass can be accessed,
+as well as any members defined or overridden in the superclass.
+
+@h2 Anonymous functions
+
+@grammar
+  anonymous-function :: "def" "(" arg-list ")" br block "end"
+@end
+
+<p>This expression constructs a @ref{Function} object. The argument list and
+  the body of the function are identical to ordinary function definitions
+  (see section @href{Function definitions}). Anonymous functions may refer
+  to local variables defined in the enclosing function or functions.
+  An anonymous
+  function object may outlive the invocation of the enclosing function(s).
+  In that case the local variables defined in the enclosing function(s) that
+  are referenced in an anonymous function will outlive the function invocation.
+
+@h2 Cast expressions
+
+@grammar
+  cast-expression :: "(" cast-type ")" expression
+  cast-type :: gvar | "dynamic"
+@end
+
+<p>The cast expression has two variants with different semantics:
+
+<ol>
+  <li>If <i>cast-type</i> is <tt>dynamic<tt>, the cast expression evaluates
+    to the value of the operand expression.
+  <li>Otherwise, the cast type <i>gvar</i> must refer to a type (class or
+    interface) definition.
+    To evaluate the cast expression, the operand expression is first evaluated.
+    If the result is an instance of the cast type, this is also the
+    result of the cast expression. Otherwise, raise @ref{std::CastError}.
+</ol>

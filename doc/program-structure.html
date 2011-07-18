@@ -1,0 +1,116 @@
+@head
+@title Program structure
+
+@h2 Main module
+
+<p>Each program has a single main source file. The main source file contains 
+an optional UTF-8 byte order mark sequence, an optional <tt>#!</tt> comment,
+an optional encoding declaration, any number of import declarations, and any
+number of global definitions and statements:
+
+@grammar
+  main :: [ utf8-bom ] [ initial-comment newline ] [ br] [ encoding-decl ] imports defs
+@end
+
+<p>The definitions (and statements) in the main source file form the
+<i>main module</i>. This module has the following special characteristics:
+
+<ul>
+<li>It has no name. Therefore, it cannot be imported in other modules.
+<li>It is the <i>root</i> module, i.e. the only module in a program that is
+  not imported by another module.
+<li>It always contains a single file (the main source file). Other modules may
+  contain multiple source files.
+</ul>
+
+<p>To avoid confusion, the term <i>module</i> as used below does not refer to
+the main module, unless explicitly mentioned otherwise.
+
+@h2 Modules
+
+<p>A module contains one or more source files. Modules are identified by names
+that are formed by joining one or more identifiers (components) with the
+<tt>::</tt> operator. Each module source file
+contains an optional encoding declaration, a module declaration,
+import declarations, followed by global definitions and statements:
+
+@grammar
+  module :: [ utf8-bom ] [ encoding-decl ] module-decl imports defs
+  module-decl :: "module" module-name br
+  module-name :: id ("::" id)*
+@end
+
+<p>The tokens after the <tt>module</tt> keyword must form the module name.
+
+<p>The relative location of the module files is formed by interpreting the
+module name components as directory names. The first component is the main 
+directory, the second component is the subdirectory of the main directory, etc.
+The root directory that contains the main directory is the directory of the
+main source file, but implementations may define other, alternative root
+directories for the standard modules and for other purposes.
+
+@h2 Import declarations
+
+<p>An import declaration makes public definitions in one or more modules
+available within a source file:
+
+@grammar
+  imports :: ("import" module-name ("," module-name)* br)*
+@end
+
+<p>It also causes the modules to be parsed and compiled. Modules that are not
+imported are not compiled, and thus any errors in them are not reported.
+
+<p>It is an error to import a module twice in the same source file.
+
+@h2 The std module
+
+<p>The special module @ref{std} contains definitions of basic types,
+exceptions and other objects that are generally useful in many Alore 
+programs. This module is always implicitly imported in every source file, and 
+it is an error to import it explicitly.
+
+@h2 Standard modules
+
+<p>All modules defined in the <a href="libmain.html">Alore Library
+Reference</a> are standard modules, unless explicitly mentioned otherwise.
+There are no other standard modules. Every Alore implementation should provide
+all the standard modules. If it does not provide some of them, or if the
+module implementations are incomplete, this should be clearly mentioned in the 
+accompanying documentation.
+  
+<p>Standard modules may define additional public global definitions and members
+beyond those described in the Alore Library Reference. The names
+of these definitions always start with two underscores (__).
+Otherwise, standard modules define only those public names that are mentioned 
+in the Alore Library Reference. New versions of Alore may define additional
+functionality in standard library modules. An implementation should make clear
+which version of the Alore standard library it implements.
+
+@h2 Encoding declaration
+
+<p>The default encoding of Alore source files is UTF-8. It is possible to
+specify the encoding of a source file using an encoding declaration:
+
+@grammar
+  encoding-decl :: "encoding" ("utf8" | "ascii" | "latin1") br
+@end
+
+<p>The identifier utf8 refers to the UTF-8 encoding (since it is the default,
+the declaration has no effect), latin1 refers to the ISO-8859-1 (Latin 1)
+encoding, and ascii refers to the ASCII encoding. If a utf8-bom token is
+included at the
+start of a file, only an encoding declaration with value utf8 can be present
+in the source file, but as always when using the UTF-8 encoding, no encoding
+declaration is required.
+
+<p>In a source file that contains an encoding declaration, non-ASCII
+characters (other than the UTF-8 BOM) must not be present in the source file
+before the encoding identifier (utf8, ascii or latin1) of the encoding
+declaration.
+
+<p>The encoding declaration only affects comments and string
+literals &#8212; any other tokens may only contain ASCII characters.
+String literals will always be decoded to an internal 16-bit Unicode
+representation. UTF-8 string literals will thus be automatically decoded during
+compilation.

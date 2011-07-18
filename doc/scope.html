@@ -1,0 +1,94 @@
+@head
+@title Scope of definitions
+
+<p>This section discusses the scope (visibility) of variables. Variables,
+functions and other definitions can only be accessed in expressions and other 
+contexts when they are visible. If a definition is not visible at some 
+location, its name has no special meaning at that location and acts as if the
+definition did not exist at all.
+
+<p>Sometimes another definition with the same name <i>shadows</i> a visible 
+definition. There are different ways of accessing global and member 
+definitions, and some of these can often be used to access shadowed 
+definitions.
+
+@h2 Global definitions
+
+<p>All global definitions are visible in all the files of the module that
+defines them. Public global definitions are also visible in the files that
+import the module that defines them.
+
+@h2 Class members
+
+<p>Class members can be accessed in two ways: through the <tt>self</tt> object 
+or through another object. Access through the <tt>self</tt> object is possible 
+by accessing the name of a member directly in the body of a class without the 
+member access operator <tt>"."</tt> or by using the member access operator with
+the <tt>self</tt> keyword as the object.
+
+<p>All members defined in a class, public and private, and all public members
+defined in any superclass can be accessed through the
+<tt>self</tt> keyword. 
+If members are accessed through any other means,
+only public members defined in the class or inherited from a superclass can be
+accessed.
+
+<p>If a name is overridden in a subclass, i.e. there is another public
+definition with the same name as a public definition in a superclass, the
+definition in the subclass will take precedence over the definition in the
+superclass.
+
+@h2 Local variables
+
+<p>Local variables declared using the <tt>var</tt> keyword are visible only in 
+the block that defines them, and only in the statements succeeding the
+variable definition. Method and function formal arguments are visible in the
+entire body of the method or the function. A local variable is also visible
+within any anonymous function expression (both in the argument list and the
+body of the anonymous function) that is within the visibility range of the
+local variable.
+
+<p>The item variable in
+a for loop and the exception variable in a try-except statement are visible
+only in the block that follows the variable declaration.
+
+@h2 Precedence of names
+
+<p>If an identifier may refer to multiple visible definitions, these 
+ambiguities will be handled in the following manner:
+
+<ol>
+  <li>Local variable definitions take precedence over all other definitions.
+  <li>Member definitions take precedence over global definitions.
+  <li>Global names defined in the module that contains the reference take
+    precedence over names defined in other modules.
+  <li>Fully qualified names take precedence over not fully qualified names.
+</ol>
+
+<p>If the name cannot be disambiguated with these rules, a compile error
+will be generated.
+
+@h2 Name clashes
+
+<p>It is an error to define multiple definitions with the same name in a single
+scope. In particular:
+
+<ul>
+  <li>No module may define multiple global definitions with the same name.
+  <li>No class may define multiple definitions (including method, getter,
+    setter and member variable definitions) with a same name, except that:
+    <ul>
+    <li>It is valid to override definitions inherited from a superclass.
+    <li>It is valid to define a setter and a getter with the same name, but
+    <ul>
+      <li>it is an error to define a setter for a member that has only a
+        getter defined in a superclass, i.e. a subclass cannot change a
+        read-only member to a read-write member.
+    </ul>
+    </ul>
+  <li>There may not be multiple local variables with the same name visible
+    at any location (formal arguments, for loop item variables and try-except
+    exception variables are counted as local variables). As a result of this
+    rule, an anonymous function may not introduce a local variable with the
+    same name as a visible local variable defined in a surrounding function.
+</ul>

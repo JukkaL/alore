@@ -1,0 +1,92 @@
+@head
+@module io
+@title Class <tt>io::File</tt>
+@index File
+
+<p>The <tt>File</tt> class represents an open file as a stream.
+
+@class File(path, ...)
+@desc Open a file for reading and/or writing. This class is a subclass of
+      @ref{Stream}.
+      The optional arguments may include @ref{Input}, @ref{Output} or
+      @ref{Append}, or a combination of these. If none of these options are
+      specified, the file defaults to <tt>Input</tt>. <tt>Output</tt> and
+      <tt>Append</tt> options cannot be mixed. When opening an
+      existing file for writing using the <tt>Output</tt> option, the existing
+      file contents will be lost and the file length will be truncated to zero.
+      The optional arguments may also include one of the buffering
+      options @ref{Buffered}, @ref{LineBuffered} or @ref{Unbuffered}; if
+      omitted, the stream defaults to fully buffered
+      access. If the optional arguments include @ref{Protected}, the file
+      access permissions are set so that only the current user can access the
+      file, and the file must not exist before the call. This is only
+      applicable if the file is opened in <tt>Output</tt> mode.
+      <p><tt>File</tt> objects should be
+      closed after they are no longer needed by calling the <tt>close</tt>
+      method. Otherwise any system resources allocated to them may not be
+      freed until the program exits.
+      @note <tt>File</tt> objects are narrow (8-bit) streams. They do
+            not directly support reading and writing the full Unicode character
+            set. The file contents are interpreted as raw bytes and they are
+            directly mapped to character codes. The @ref{TextFile} class allows
+            you to create and access files encoded in several common
+            encodings such as UTF-8. The File class is useful for accessing
+            file contents as raw binary data or for accessing files encoded in
+            ASCII or ISO Latin 1.
+      @end
+@end
+
+<h2><tt>File</tt> methods</h2>
+
+<p>The <tt>File</tt> class supports all the methods of the 
+@ref{Stream} class (follow the previous link for more information) and these
+additional methods:
+
+@fun seek(offset)
+@desc Seek to a specific byte offset in the file. The next read or write
+      operation will start at this location. The first byte in the file has the
+      offset 0.
+      <p>To seek to the end of the file, use <tt>seek</tt> with <tt>size</tt>:
+      @example
+        file.seek(file.size())
+      @end
+@end
+
+@fun pos()
+@desc Return the current byte offset in the file. The offset 0 refers to the
+      start of the file.
+@end
+
+@fun size()
+@desc Return the size of the file, in bytes.
+@end
+
+<!-- -->
+@note The methods <tt>seek</tt>, <tt>pos</tt> and <tt>size</tt> are
+      supported for regular files but might not work with special files such
+      as devices.
+@end
+
+<p>The <tt>File</tt> class has these internal methods that are accessed
+by the <tt>Stream</tt> superclass. Usually these methods are not accessed
+directly:
+
+@fun _write(...)
+@desc Write the arguments directly to the file without buffering. The arguments
+      must be strings.
+@end
+
+@fun _read(size)
+@desc Read up to the specified number of bytes from the file directly without
+      buffering.
+@end
+
+<!-- <h3>File constants</h3>
+
+@ var name
+@ desc The name or a description of the file. If the object was created using
+      the constructor, the value is the same as the first parameter to
+      <tt>File</tt>. Other streams such as @ref{StdIn} and @ref{StdOut} have
+      descriptions of the form <tt>"&lt;...&gt;"</tt>.
+@ end
+-->

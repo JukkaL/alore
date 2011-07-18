@@ -1,0 +1,55 @@
+Alore ChangeLog
+===============
+
+0.6.0 (January 2011)
+
+ * Use "def" keyword instead "sub" to define functions.
+ 
+   "sub" is still supported as an alternative for compatibility with
+   earlier Alore versions, but it will be dropped in a future Alore
+   release. This may break existing programs that use "def" as an
+   identifier.
+
+ * Renamed the C API macros A_SUB* to A_DEF*. Existing C modules have to
+   be updated.
+
+ * Added the std::Tuple type.
+
+   The expression e1, ..., eN now constructs a Tuple object instead of an
+   Array. This may break existing programs. To preserve existing
+   behavior, surround all Array expressions with square brackets.
+
+ * Added several features in preparation for the upcoming optional type
+   system.
+   
+   These are of limited use in dynamically-typed programs. Some existing
+   programs may be broken due to the addition of new keywords.
+
+   The documentation of these new features is still incomplete.
+   
+   * Added interfaces and bind declarations.
+   * Added cast expressions, including the dynamic cast expression.
+   * Added std::CastError.
+   * Accept and ignore optional type annotations in the parser without
+     parsing or validating them.
+   * Added 4 new keywords: "interface", "implements", "bind" and
+     "dynamic".
+   * The ":" token is used for both Pair expressions and for delimiting
+     type annotations. Pair expression must be within parentheses or
+     square brackets to disambiguate them from type annotations.
+   * The lexer and parser process ">" tokens slightly differently. This
+     should not affect valid existing programs.
+   * Added the C API macros A_INTERFACE, A_END_INTERFACE and A_IMPLEMENTS
+     for defining and implementing interfaces.
+   * Added interfaces std::Iterable, std::Iterator, std::Sequence,
+     std::Comparable, std::Addable and std::Multipliable. Several
+     standard library types implement some of these.
+
+ * Made re::MatchResult public so that it can be referred to in type
+   declarations.
+   
+ * Fixed a few parser bugs.
+
+0.5.0 (October 2010)
+
+ * First Alore release in wide distribution.

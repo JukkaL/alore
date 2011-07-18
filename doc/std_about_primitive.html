@@ -1,0 +1,22 @@
+@head
+@module std
+@title About primitive types
+
+<p>Alore has a fixed set of primitive types: @ref{Int}, @ref{Str},
+@ref{Float}, @ref{Boolean}, @ref{Constant}, @ref{Function}, @ref{Type},
+@ref{Tuple}, @ref{Pair} and @ref{Range}. Primitive types share these common
+properties:
+
+<ol>
+  <li>They are defined in the @ref{std} module.
+  <li>Other types cannot inherit from primitive types.
+  <li>Their instances are immutable.
+  <li>Their instances support comparison for equality and hash value
+    calculation with @ref{std::Hash}.
+  <li>All primitive type constructors that accept arguments accept also
+    objects of their own type to construct identical copies of them, so that 
+    <tt>Int(5)</tt> and <tt>Str("foo")</tt> are valid, for example.
+</ol>
+
+<p>Additionally, most primitive types have special syntax associated with
+creating instances of them.

@@ -1,0 +1,91 @@
+@head
+@module math
+@title <tt>math</tt>: Mathematical functions
+
+<p>This module contains several basic mathematical functions and a few numeric
+constants.
+All operations are implemented using floating point arithmetic, and all
+functions return <tt>Float</tt> values. Functions accept integer arguments in
+addition to floats, but integer arguments are converted to floats internally.
+
+<p>All angles are in radians.
+
+<h2>Functions</h2>
+
+@fun Sqrt(x)
+@desc Return the square root of <i>x</i>.
+@end
+
+@fun Sin(x)
+@desc Return the sine of <i>x</i>.
+@end
+
+@fun Cos(x)
+@desc Return the cosine of <i>x</i>.
+@end
+
+@fun Tan(x)
+@desc Return the tangent of <i>x</i>.
+@end
+
+@fun ArcSin(x)
+@desc Return the arc sine of <i>x</i>.
+@end
+
+@fun ArcCos(x)
+@desc Return the arc cosine of <i>x</i>.
+@end
+
+@fun ArcTan(y[, x])
+@desc Return the arc tangent of <i>y</i> or <i>y / x</i>. If <i>x</i> is 
+      negative, the magnitude of the result will be chosen to be 
+      between <tt>Pi</tt> / 2 and <tt>Pi</tt>; otherwise,
+      the magnitude of the result is at most <tt>Pi</tt> / 2.
+@end
+
+@fun Ceil(x)
+@desc Return <i>x</i> rounded up to the nearest integer.
+@end
+
+@fun Floor(x)
+@desc Return <i>x</i> rounded down to the nearest integer.
+@end
+
+@fun Round(x)
+@desc Return <i>x</i> rounded to the nearest integer.
+@end
+
+@fun Trunc(x)
+@desc Return <i>x</i> rounded to the nearest integer towards zero.
+@end
+
+@fun Exp(x)
+@desc Return <i>e</i>**<i>x</i>.
+@end
+
+@fun Log(x)
+@desc Return the natural logarithm of <i>x</i>.<br>
+    @note The logarithm in base <i>y</i> can be calculated as
+      <tt>Log(x)</tt> / <tt>Log(y)</tt>.
+    @end
+@end
+
+@fun IsInf(x)
+@desc Return a boolean indicating whether <i>x</i> is IEEE 754 positive or
+      negative infinity.
+@end
+
+@fun IsNaN(x)
+@desc Return a boolean indicating whether <i>x</i> is IEEE 754 NaN
+      (Not-a-Number).
+@end
+
+<h2>Constants</h2>
+
+@var Pi
+@desc The constant <i>pi</i>, approximately 3.14159.
+@end
+
+@var E
+@desc The constant <i>e</i>, approximately 2.71828.
+@end

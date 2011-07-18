@@ -1,0 +1,51 @@
+<html>
+<title>Alore CGI test page</title>
+<body>
+
+<h1>Alore CGI test page</h1>
+
+<p>This page can be used for testing the Alore cgi module. The test-cgi.alo
+script should be available at /cgi-bin/test-cgi.alo.
+
+<p>Use the forms below to test different CGI functionality.
+
+<hr>
+
+<h2>Form using "get"</h2>
+
+<form method="get" action="/cgi-bin/test-cgi.alo">
+First parameter:  <input type="text" name="first"><br>
+Duplicate parameter (1): <input type="text" name="duplicate"><br>
+Duplicate parameter (2): <input type="text" name="duplicate"><br>
+<br>
+<input type="submit" value="Submit">
+</form>
+
+<hr>
+
+<h2>Form using "post"</h2>
+
+<form method="post" action="/cgi-bin/test-cgi.alo">
+First parameter:  <input type="text" name="first"><br>
+Duplicate parameter (1): <input type="text" name="duplicate"><br>
+Duplicate parameter (2): <input type="text" name="duplicate"><br>
+<br>
+<input type="submit" value="Submit">
+</form>
+
+<hr>
+
+<h2>Upload form</h2>
+
+<form method="post" enctype="multipart/form-data"
+  action="/cgi-bin/test-cgi.alo">
+First file to upload: <input type="file" name="upfile"><br>
+Second file to upload (1): <input type="file" name="upfile2"><br>
+Second file to upload (2): <input type="file" name="upfile2"><br>
+Notes about the files: <input type="text" name="note"><br>
+<br>
+<input type="submit" value="Submit">
+</form>
+
+</body>
+</html>

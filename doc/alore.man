@@ -1,0 +1,62 @@
+.TH ALORE 1 "2010-10-11"
+
+./" Preview with groff:
+./"   groff -Tascii -man alore.man | less
+
+.SH NAME
+alore \- Alore interpreter
+.SH SYNOPSIS
+.B alore
+[
+.I options
+]
+.I programfile
+[
+.I args
+]
+.SH DESCRIPTION
+.B alore
+is the Alore interpreter.
+It loads and executes Alore programs.
+.LP
+The Alore program in file
+.I programfile
+is loaded and executed.
+If
+.I Main
+accepts an argument, the given
+.I args
+are passed to the
+.I Main
+function of
+.I programfile
+as an array of strings.
+.LP
+Options start with
+.B '\-'
+and are described below.
+.SH OPTIONS
+.TP
+.B \-v, \-\-version
+Show version information and exit.
+.SH FILES AND DIRECTORIES
+Modules are searched in platform-specific default locations (typically
+/usr/local/lib/alore or /usr/lib/alore) and in the directory containing
+.IR programfile .
+Additionally, the environment variable ALOREPATH can be used
+to add additional directories to the module search path.
+.LP
+Modules are first searched in the directory containing
+.IR programfile ,
+then according to ALOREPATH and finally in the default locations.
+.SH ENVIRONMENT VARIABLES
+.IP ALOREPATH
+Search for imported modules in the additional directories specified by this
+environment variable.
+Multiple directories must be separated with ':'.
+The directories are searched in the order they appear in the value of this
+environment variable.
+.SH "SEE ALSO"
+.BR alorec (1)
+.SH AUTHOR
+Jukka Lehtosalo

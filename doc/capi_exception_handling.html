@@ -1,0 +1,365 @@
+@head
+@title Exceptions
+
+<p>Exception handling is in an important role when using the C API, since most
+API operations raise exceptions in response to error conditions, such as
+when running out of memory. Out of memory errors are, however, very
+infrequent, and writing lots of error handling code simply to check for
+unlikely error conditions would be counter-productive, and also difficult to
+test.
+
+<p>Alore C API solves this problem by supporting <i>direct exceptions</i>
+which are similar to Alore exceptions: on error conditions control flow is
+transferred directly to the exception handler instead of returning a special
+value signalling the error condition. Direct exceptions are typically
+implemented in terms of C setjmp() and longjmp() functions.
+
+<p>For efficiency reasons, only certain classes of exceptions can be raised
+as direct exceptions. Other exceptions must be raised as <i>normal</i>
+exceptions that are reported using special return values. It should be noted
+that it is possible to raise all exceptions as normal exceptions.
+
+<p>In Alore code, there is no semantic difference between normal and direct
+exceptions. The difference is only visible to code using the C API.
+
+@h2 Normal exceptions
+
+<p>If an API function or an Alore function implemented in C raises a normal
+exception, it first
+calls one of the relevant ARaise* functions described below, and returns a
+special error value, usually AError (if the function returns AValue). The
+actual exception instance is stored in the AThread structure. The caller of
+this function must propagate the AError value to its caller unless it handles
+the exception, and so on.
+
+@h2 Direct exceptions
+
+<p>Only the following exception classes and their subclasses can be used as
+direct exceptions:
+
+<ul>
+  <li>@ref{std::ValueError} (subclasses include TypeError, MemberError and
+    IndexError)
+  <li>@ref{std::MemoryError}
+</ul>
+
+<p>When an exception is raised as a direct exception, it is dispatched directly
+to the next enclosing try statement or ATry() function call, disregarding the
+normal function return behavior.
+
+<p>You must be very careful with direct exceptions when allocating operating
+system resources, since normal resource cleanup actions will be ignored as
+well. See section @ref{Direct exceptions and freeing resources} below for
+details.
+
+@h2 Raising exceptions
+
+<p>These functions are used for raising exceptions. In addition to generic
+functions that can be used to raise exceptions of any types, convenience
+functions simplify raising the most common exception types. A call to an
+exception raising function must be the last call to an API function before
+returning from a function, since calls to any API functions may reset the
+exception status.
+
+@note The percent sign character (<tt>%</tt>) is reserved for future use and
+      should not be used in exception error messages when calling any of the
+      functions below.
+@end
+
+@fun AValue ARaise(AThread *t, const char *type, const char *msg)
+@desc Raise an exception of a type specified using the fully qualified name of
+      the type, and with the specified message.
+      If msg in NULL, the message is omitted. Raise the message as a direct
+      exception if possible, otherwise raise it as a normal exception and
+      return AError.
+@end
+
+@fun AValue ARaiseByType(AThread *t, AValue type, const char *msg)
+@desc Raise an exception of the specified type and with the specified message.
+      If msg in NULL, the message is omitted. Raise the message as a direct
+      exception if possible, otherwise raise it as a normal exception and
+      return AError.
+@end
+
+@fun AValue ARaiseByNum(AThread *t, int typeNum, const char *msg)
+@desc This function is similar to <tt>ARaiseByType</tt> described above, but
+      the type is specified using the numeric id of the global definition of
+      the type,
+      which can be obtained using @ref{AGetGlobalNum} or @ref{A_CLASS_P} (or
+      other similar macro).
+@end
+
+@fun AValue ARaiseValue(AThread *t, AValue v)
+@desc Raise an exception object. If possible, raise it as a direct exception.
+      In this case this function does not return. Otherwise, raise it as a
+      normal exception and return AError. Raise TypeError if v is not a valid
+      exception object.
+@end
+
+@fun AValue ARaiseMemoryError(AThread *t)
+@desc Raise a @ref{std::MemoryError} exception as a direct exception. This
+      function does not return.
+@end
+
+@fun AValue ARaiseTypeError(AThread *t, const char *msg)
+@desc Raise a @ref{std::TypeError} exception as a direct exception with the
+      specified exception message. If msg is NULL, the message is omitted.
+      This function does not return.
+@end
+
+@fun AValue ARaiseValueError(AThread *t, const char *msg)
+@desc Raise a @ref{std::ValueError} exception as a direct exception with the
+      specified exception message. If msg is NULL, the message is omitted.
+      This function does not return.
+@end
+
+@fun AValue ARaiseIoError(AThread *t, const char *msg)
+@desc Raise a @ref{std::IoError} exception as a normal exception with the
+      specified exception message. If msg is NULL, the message is omitted.
+      Return AError.
+@end
+
+@fun AValue ARaiseRuntimeError(AThread *t, const char *msg)
+@desc Raise a @ref{std::RuntimeError} exception as a normal exception with the
+      specified exception message. If msg is NULL, the message is omitted.
+      Return AError.
+@end
+
+@fun AValue ARaiseErrnoException(AThread *t, const char *type)
+@desc Raise an exception of type specified by a fully qualified name
+      of a type. The exception message will be chosen automatically based on
+      the value of the C <tt>errno</tt> value. Return AError or raise the
+      exception as a direct exception.
+@end
+
+@fun AValue ARaiseErrnoExceptionByNum(AThread *t, int typeNum)
+@desc This function is similar to <tt>ARaiseErrnoException</tt> described
+      above, but the type is specified using the numeric id of the global
+      definition of the type, which can be obtained using @ref{AGetGlobalNum}
+      or @ref{A_CLASS_P} (or other similar macro).
+@end
+
+@fun void ADispatchException(AThread *t)
+@desc If the current raised exception object is set (the object returned by
+      @ref{AGetException}) and it can be raised as a direct exception, raise it
+      as a direct exception. In this case, the function will not return.
+      Otherwise, do nothing.
+@end
+
+<!-- FIX ARaiseIndexError? -->
+
+@h2 Propagating exceptions
+
+<p>If an API function returns @ref{AError}, indicating that a normal error was
+raised, you can propagate the exception to the callers of the function that
+received this return value by simply returning <tt>AError</tt> directly after
+receiving the return value (you should, of course, perform any required
+cleanup actions before returning). Example:
+
+@example
+  AValue MyFunc(AThread *t, AValue *frame)
+  {
+      AValue ret;
+      
+      /* ... */
+      
+      frame[x] = Axxx(t, ...); /* Axxx can be any API function that may raise
+                                  a normal exception. x should be some valid
+                                  integer value. */
+      if (AIsError(frame[x]))
+          return AError; /* Propagate any normal exceptions to callers. */
+      
+      /* ... no exception was raised ... */
+      
+      return /* ... */;
+  }
+@end
+
+@h2 Catching exceptions
+
+<p>Normal exceptions can be catched by checking the return value of the C API
+function that could potentially raise the exception. Functions returning AValue
+always return @ref{AError} if a normal exception was raised. Return values
+from other functions vary. Use the @ref{AIsExceptionType} or
+@ref{AGetException} functions to query the exception object.
+
+<p>Direct exceptions must be catched using the ATry function in C code as
+described below.
+
+@fun ABool ATry(AThread *t)
+@desc Guard a block of code for direct exceptions.
+      Return TRUE if an uncaught direct exception was raised in the code
+      following the ATry call and before the call to AEndTry.
+@end
+
+@fun void AEndTry(AThread *t)
+@desc Mark the end of the section that is being guarded by a ATry call. You
+      must call AEndTry in the same function invocation that called ATry,
+      and you must not return from the function before calling AEndTry,
+      unless ATry returned TRUE, in which case you <i>must not</i> make the
+      corresponding AEndTry call. If
+      you have called ATry multiple times, you must also call AEndTry the
+      matching number of times.
+@end
+
+@fun ABool AIsExceptionType(AThread *t, const char *type)
+@desc Return a boolean indicating whether the exception object that was
+      raised last in the current thread is of the specified type (or any
+      subtype). The type
+      argument should be the fully qualified name of an exception type.
+      Does not modify the value of the current exception object returned by
+      @ref{AGetException} (unless a new exception was raised due to an error
+      condition). @raise-direct
+@end
+
+@fun AValue AGetException(AThread *t)
+@desc Return the exception object that was raised last in the current thread.
+      Note that calls to most
+      API functions may reset the value returned by AGetException, so you must
+      call this function right after receiving an error return value such
+      @ref{AError} from an API function or a TRUE return value from ATry.
+      This function never raises an exception and performs no error checking.
+@end
+
+@h2 Direct exceptions and freeing resources 
+
+<p>Since direct exceptions bypass the normal control flow and may skip over
+large sections of code, potentially spanning multiple function invocations,
+direct exceptions may significantly complicate resource cleanup.
+
+<p>The issue is more challenging due to the majority of API functions
+potentially raising @ref{MemoryError} instances as direct exceptions. Any
+operation that may trigger garbage collection may also raise a direct
+<tt>MemoryError</tt> exception unless explicitly mentioned otherwise.
+
+<p>There are at least three main approaches for dealing with this issue:
+
+<ol>
+  <li>You can explicitly catch all exceptions using @ref{ATry} at the
+    beginning of a function, free any resources that have been allocated in the
+    function, and reraise the exception. A trivial example:
+    @example
+      AValue MyFunction(AThread *t, AValue *frame)
+      {
+          /* Note: Calls to AAllowBlocking and AEndBlocking are omitted for
+                   brevity. Error checking is also not sufficient. */
+          FILE *f;
+          int i;
+
+          f = fopen("file.ext", "w")
+          if (f == NULL)
+              return ARaiseIoError(t, "File could not be opened");
+          
+          if (ATry(t)) {
+              fclose(f);
+              return AError;
+          }
+
+          i = AGetInt(t, frame[0]); /* This may raise a direct exception. */
+          fprintf(f, "i = %d\n", i);
+          fclose(f);
+          
+          AEndTry(f);
+          
+          return ANil;
+      }
+    @end
+    <p>Note that this example could also have been written using approach 3,
+    described below.
+  <li>You can store all references to manually freed resources to instances
+    that have a finalization method @ref{#f} defined. The resources are freed
+    in the finalization method, which is called automatically by the garbage
+    collector. See also @href{Using per instance binary data}.
+  <li>You can try to release all resources as soon as possible and avoid
+    calling any C API functions that may raise direct exceptions before freeing
+    the resources. This is possible only in rather simple cases.
+</ol>
+
+@h2 Exception handling examples
+
+<p>This example defines a new exception class and raises an instance of this
+class:
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  static AValue TestRaise(AThread *t, AValue *frame)
+  {
+      return ARaise(t, "except1::MyException", "My message");
+  }
+
+  A_MODULE(except1, "except1")
+      A_CLASS("MyException")
+          A_INHERIT("std::Exception")
+      A_END_CLASS()
+
+      A_DEF("TestRaise", 0, 0, TestRaise)
+  A_END_MODULE()
+@end
+
+<p>The example below demonstrates catching direct exceptions of type
+<tt>ValueError</tt>. Note that unless
+otherwise mentioned, all exception types can also be raised as normal
+exceptions. This example takes advantage of the fact that @ref{AGetStr} only
+raises direct exceptions.
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  static AValue CatchDirect(AThread *t, AValue *frame)
+  {
+      char str[100];
+  
+      if (ATry(t)) {
+          if (AIsExceptionType(t, "std::ValueError")) {
+              /* Caught a ValueError exception. Return -1. */
+              return AMakeInt(t, -1);
+          } else
+              return AError; /* Reraise other exceptions. */
+      }
+
+      /* This might raise a TypeError. */
+      AGetStr(t, frame[0], str, 100);
+      
+      /* ... now we could do something with str ... */
+
+      AEndTry(t);
+
+      /* Return 0 to indicate success. */
+      return AZero;
+  }
+
+  A_MODULE(except2, "except2")
+      A_DEF("CatchDirect", 1, 2, CatchDirect)
+  A_END_MODULE()
+@end
+
+<p>The final example catches normal exceptions of type <tt>std::IoError</tt>
+raised by @ref{AGetItem} by checking if the return value is <tt>AError</tt>.
+<tt>ATry</tt> is not used, since it can only be used to catch direct
+exceptions, and <tt>IoError</tt> cannot be raised as a direct exception.
+
+@example
+  #include &lt;alore/alore.h&gt;
+
+  static AValue CatchNormal(AThread *t, AValue *frame)
+  {
+      /* Perform arg1[arg2]. */
+      frame[2] = AGetItem(t, frame[0], frame[1]);
+      if (AIsError(frame[2])) {
+          /* A normal exception was raised. */
+          if (AIsExceptionType(t, "std::IoError")) {
+              /* Caught an IoError exception. Return -1. */
+              return AMakeInt(t, -1);
+          } else
+              return AError; /* Propagate other exceptions. */
+      }
+      
+      /* Return 0 to indicate success. */
+      return AZero;
+  }
+
+  A_MODULE(except3, "except3")
+      A_DEF("CatchNormal", 2, 1, CatchNormal)
+  A_END_MODULE()
+@end

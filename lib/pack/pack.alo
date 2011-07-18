@@ -1,0 +1,412 @@
+-- pack.alo - Binary data packing and unpacking
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module pack
+
+import string
+import bitop
+import __pack
+
+
+private class PackerBase
+  def packByte(i)
+    if i >= 0 and i < 256
+      return Chr(i)
+    else
+      raise PackError("Byte out of range")
+    end
+  end
+  
+  def unpackByte(s)
+    if s.length() != 1
+      raise PackError()
+    end
+    return Ord(s)
+  end
+  
+  def packBytes(a)
+    return PackMulti(a, self.packByte)
+  end
+  
+  def unpackBytes(s)
+    return UnpackMulti(s, 1, self.unpackByte)
+  end
+  
+  def packInt8(i)
+    if i > 127 or i < -128
+      raise PackError()
+    end
+    return Chr(And(i, 255))
+  end
+  
+  def unpackInt8(s)
+    if s.length() != 1
+      raise PackError()
+    end
+    var x = Ord(s)
+    if x >= 128
+      x -= 256
+    end
+    return x
+  end
+  
+  def packStr(s, n)
+    if s.length() < n
+      return s + (n - s.length()) * " "
+    elif s.length() == n
+      return s
+    else
+      raise PackError()
+    end
+  end
+  
+  def unpackStr(s)
+    return s
+  end
+  
+  def packInts8(a)
+    return PackMulti(a, self.packInt8)
+  end
+  
+  def unpackInts8(s)
+    return UnpackMulti(s, 1, self.unpackInt8)
+  end
+  
+  def packWords16(a)
+    return PackMulti(a, me.packWord16)
+  end
+  
+  def unpackWords16(s)
+    return UnpackMulti(s, 2, me.unpackWord16)
+  end
+  
+  def packInts16(a)
+    return PackMulti(a, me.packInt16)
+  end
+  
+  def unpackInts16(s)
+    return UnpackMulti(s, 2, me.unpackInt16)
+  end
+  
+  def packWords32(a)
+    return PackMulti(a, me.packWord32)
+  end
+  
+  def unpackWords32(s)
+    return UnpackMulti(s, 4, me.unpackWord32)
+  end
+  
+  def packInts32(a)
+    return PackMulti(a, me.packInt32)
+  end
+  
+  def unpackInts32(s)
+    return UnpackMulti(s, 4, me.unpackInt32)
+  end
+  
+  def packWords64(a)
+    return PackMulti(a, me.packWord64)
+  end
+  
+  def unpackWords64(s)
+    return UnpackMulti(s, 8, me.unpackWord64)
+  end
+  
+  def packInts64(a)
+    return PackMulti(a, me.packInt64)
+  end
+  
+  def unpackInts64(s)
+    return UnpackMulti(s, 8, me.unpackInt64)
+  end
+  
+  def packFloats32(a)
+    return PackMulti(a, me.packFloat32)
+  end
+  
+  def unpackFloats32(s)
+    return UnpackMulti(s, 4, me.unpackFloat32)
+  end
+  
+  def packFloats64(a)
+    return PackMulti(a, me.packFloat64)
+  end
+  
+  def unpackFloats64(s)
+    return UnpackMulti(s, 8, me.unpackFloat64)
+  end
+  
+  def packStrs(a, n)
+    var r = []
+    for s in a
+      r.append(packStr(s, n))
+    end
+    return "".join(r)
+  end
+  
+  def unpackStrs(s, n)
+    return UnpackMulti(s, n, unpackStr)
+  end
+  
+  private def me
+    return self
+  end  
+end
+
+
+class Packer is PackerBase
+  def packWord16(i)
+    return PackHalfword(i, False)
+  end
+  
+  def unpackWord16(s)
+    return UnpackHalfword(s, False)
+  end
+  
+  def packInt16(i)
+    return PackHalfword(i, True)
+  end
+  
+  def unpackInt16(s)
+    return UnpackHalfword(s, True)
+  end
+
+  def packWord32(i)
+    return PackWord(i, False)
+  end
+
+  def unpackWord32(s)
+    return UnpackWord(s, False)
+  end
+  
+  def packInt32(i)
+    return PackWord(i, True)
+  end
+  
+  def unpackInt32(s)
+    return UnpackWord(s, True)
+  end
+  
+  def packWord64(i)
+    return PackDword(i, False)
+  end
+
+  def unpackWord64(s)
+    return UnpackDword(s, False)
+  end
+  
+  def packInt64(i)
+    return PackDword(i, True)
+  end
+
+  def unpackInt64(s)
+    return UnpackDword(s, True)
+  end
+  
+  def packFloat32(f)
+    return Reverse(PackFloat32_LE(f))
+  end
+  
+  def unpackFloat32(s)
+    if s.length() != 4
+      raise PackError()
+    end
+    return UnpackFloat32_LE(Reverse(s))    
+  end
+  
+  def packFloat64(f)
+    return Reverse(PackFloat64_LE(f))
+  end
+  
+  def unpackFloat64(s)
+    if s.length() != 8
+      raise PackError()
+    end
+    return UnpackFloat64_LE(Reverse(s))    
+  end
+end
+
+
+class LittleEndianPacker is PackerBase
+  def packWord16(i)
+    return Reverse(PackHalfword(i, False))
+  end
+  
+  def unpackWord16(s)
+    return UnpackHalfword(Reverse(s), False)
+  end
+  
+  def packInt16(i)
+    return Reverse(PackHalfword(i, True))
+  end
+  
+  def unpackInt16(s)
+    return UnpackHalfword(Reverse(s), True)
+  end
+
+  def packWord32(i)
+    return Reverse(PackWord(i, False))
+  end
+
+  def unpackWord32(s)
+    return UnpackWord(Reverse(s), False)
+  end
+  
+  def packInt32(i)
+    return Reverse(PackWord(i, True))
+  end
+  
+  def unpackInt32(s)
+    return UnpackWord(Reverse(s), True)
+  end
+  
+  def packWord64(i)
+    return Reverse(PackDword(i, False))
+  end
+
+  def unpackWord64(s)
+    return UnpackDword(Reverse(s), False)
+  end
+  
+  def packInt64(i)
+    return Reverse(PackDword(i, True))
+  end
+
+  def unpackInt64(s)
+    return UnpackDword(Reverse(s), True)
+  end
+  
+  def packFloat32(f)
+    return PackFloat32_LE(f)
+  end
+  
+  def unpackFloat32(s)
+    if s.length() != 4
+      raise PackError()
+    end
+    return UnpackFloat32_LE(s)    
+  end
+  
+  def packFloat64(f)
+    return PackFloat64_LE(f)
+  end
+  
+  def unpackFloat64(s)
+    if s.length() != 8
+      raise PackError()
+    end
+    return UnpackFloat64_LE(s)
+  end
+end
+
+
+private def AssertRange(x, lo, hi)
+  if x < lo or x > hi
+    raise PackError()
+  end
+end
+
+
+private def PackWord(x, signed)
+  if signed
+    AssertRange(x, -2**31, 2**31 - 1)
+  else
+    AssertRange(x, 0, 2**32 - 1)
+  end
+  return Chr(And(Shr(x, 24), 255)) + Chr(And(Shr(x, 16), 255)) +
+         Chr(And(Shr(x, 8), 255))  + Chr(And(x, 255))
+end
+
+
+private def PackHalfword(x, signed)
+  if signed
+    AssertRange(x, -32768, 32767)
+  else
+    AssertRange(x, 0, 65535)
+  end
+  return Chr(And(Shr(x, 8), 255)) + Chr(And(x, 255))
+end
+
+
+private def PackDword(x, signed)
+  if signed
+    AssertRange(x, -2**63, 2**63 - 1)
+  else
+    AssertRange(x, 0, 2**64 - 1)
+  end
+  return PackWord(And(Shr(x, 32), 2**32-1), False) + 
+         PackWord(And(x, 2**32-1), False)
+end
+
+
+private def UnpackWord(s, signed)
+  if s.length() != 4
+    raise PackError()
+  end
+  var x = Shl(Ord(s[0]), 24) + Shl(Ord(s[1]), 16) +
+          Shl(Ord(s[2]), 8) +  Ord(s[3])
+  if signed and x > 2147483647
+    x -= 4294967296
+  end
+  return x
+end
+
+
+private def UnpackHalfword(s, signed)
+  if s.length() != 2
+    raise PackError()
+  end
+  var x = Shl(Ord(s[0]), 8) + Ord(s[1])
+  if signed and x > 32767
+    x -= 65536
+  end
+  return x
+end
+
+
+private const DwordSignedMax = 2**63 - 1
+
+private def UnpackDword(s, signed)
+  if s.length() != 8
+    raise PackError()
+  end
+  var x = Shl(UnpackWord(s[0:4], False), 32) + UnpackWord(s[4:8], False)
+  if signed and x > DwordSignedMax
+    x -= 2**64
+  end
+  return x
+end
+
+
+private def PackMulti(a, f)
+  var r = []
+  for i in a
+    r.append(f(i))
+  end
+  return "".join(r)
+end
+
+
+private def UnpackMulti(s, n, f)
+  if s.length() mod n != 0
+    raise PackError("Invalid string length")
+  end
+  var r = []
+  for i in 0 to s.length() div n
+    r.append(f(s[i * n:(i + 1) * n]))
+  end
+  return r
+end
+
+
+private def Reverse(s)
+  return ''.join(Reversed(s))
+end
+
+
+class PackError is ValueError
+end

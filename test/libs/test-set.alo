@@ -1,0 +1,211 @@
+module libs
+
+import unittest
+import set
+
+
+-- Test cases for the set module.
+class SetSuite is Suite
+  -- Test adding items and testing for xxinclusion.
+  def testBasics()
+    var s = Set()
+    Assert(s.length() == 0)
+    Assert(not "foo" in s)
+    s.add("foo")
+    Assert(s.length() == 1)
+    Assert("foo" in s)
+    Assert(not "bar" in s)
+    s.add("bar")
+    Assert(s.length() == 2)
+    Assert("foo" in s)
+    Assert("bar" in s)
+    s.add("foo")
+    Assert(s.length() == 2)
+    Assert("foo" in s)
+    Assert("bar" in s)
+  end
+  
+  -- Test initialization at construction.
+  def testCreate()
+    var s = Set([1, 2])
+    Assert(s.length() == 2)
+    Assert(1 in s)
+    Assert(2 in s)
+    Assert(not 0 in s)
+    Assert(not 3 in s)
+    s.add(3)
+    Assert(s.length() == 3)
+    Assert(3 in s)
+  end
+  
+  def testCreate2()
+    AssertEqual(Set([1, 2]), Set(Set([1, 2])))
+    AssertEqual(Set([1, 2]), Set(1 to 3))
+    AssertEqual(Set(["x", "y"]), Set("xy"))
+  end
+  
+  -- Test removing items from Set.
+  def testRemove()
+    var s = Set([3, 7])
+    s.remove(3)
+    Assert(s.length() == 1)
+    Assert(not 3 in s)
+    Assert(7 in s)
+    s.remove(7)
+    Assert(s.length() == 0)
+    Assert(not 7 in s)
+    s.add(7)
+    Assert(s.length() == 1)
+    Assert(7 in s)
+  end
+  
+  -- Test growing the set and emptying it after growing.
+  def testResize()
+    var s = Set()
+    for i in 1 to 1001
+      s.add(i * 7 - 300)
+      Assert(s.length() == i)
+    end
+    for i in 1 to 1001
+      Assert((i * 7 - 300) in s)
+    end
+    for i in 1 to 1001
+      s.remove(i * 7 - 300)
+      Assert(not (i * 7 - 300) in s)
+    end
+    for i in 1 to 1001
+      Assert(not (i * 7 - 300) in s)
+    end
+  end
+  
+  -- Test iterating Set objects.
+  def testIteration()
+    TestSetEnum()
+    TestSetEnum(3)
+    TestSetEnum(1, 17, 33)
+    var l = []
+    for i in 1 to 101
+      l.append(i * 7 - 50)
+    end
+    TestSetEnum(*l)
+  end
+  
+  -- More iterator tests.
+  def testIteration2()
+    var e = Set([1, 2]).iterator()
+    Assert(e.hasNext())
+    Assert(e.next() in [1, 2])
+    Assert(e.hasNext())
+    Assert(e.next() in [1, 2])
+    Assert(not e.hasNext())
+    Assert(not e.hasNext())
+    AssertRaises(ValueError, e.next, [])
+  end
+  
+  -- Test comparing Set objects for equality.
+  def testEquality()
+    Assert(Set() == Set())
+    
+    Assert(Set([1]) != Set())
+    Assert(Set([1]) != Set([2]))
+    Assert(Set([1]) == Set([1]))
+    
+    Assert(Set([1, 2]) == Set([2, 1]))
+    Assert(Set([1, 2]) == Set([1, 2]))
+    Assert(Set([1, 2]) != Set([1, 2, 3]))
+    Assert(Set([1, 2]) != Set([1]))
+    Assert(Set([1, 2]) != Set([2]))
+    
+    Assert(Set([3, 7, "foo", (1, 2)]) == Set([3, 7, "foo", (1, 2)]))
+  end
+  
+  -- Test trying to remove an item that is not a part of a set.
+  def testRemoveError()
+    var s = Set([1])
+    s.remove(2)
+    AssertEqual(s, Set([1]))
+    s = Set()
+    s.remove(1)
+    AssertEqual(s, Set())
+  end
+  
+  -- Test converting Set objects to strings.
+  def testConversionToStr()
+    Assert(Str(Set()) == "Set()")
+    Assert(Str(Set(["x"])) == "Set('x')")
+    
+    var s = Str(Set([1, 2]))
+    Assert(s in ("Set(1, 2)", "Set(2, 1)"))
+  end
+  
+  def testCopy()
+    var s = Set([3, 4, 5])
+    var s2 = s.copy()
+    AssertEqual(s, s2)
+    s.add(6)
+    Assert(not 6 in s2)
+  end
+  
+  def testHash()
+    var s = Set([1, 2, 3, 4, 5, 6, 7])
+    Assert(Hash(s) is Int)
+    
+    var s2 = Set()
+    for i in 1 to 101
+      s2.add(i)
+    end
+    Assert(Hash(s2) != Hash(s))
+    
+    for i in 8 to 101
+      s2.remove(i)
+    end
+    Assert(Hash(s2) == Hash(s))
+  end
+  
+  def testSubTypeWithoutSuperCreate()
+    var s = SetSubType()
+    s.add("foo")
+    Assert("foo" in s)
+  end
+  
+  def testNilItem()
+    var s = Set([nil])
+    var s2 = Set([1])
+    AssertEqual(Str(s), "Set(nil)")
+    Assert(nil in s)
+    Assert(not nil in s2)
+    s.remove(nil)
+    AssertEqual(s, Set())
+  end
+  
+  def testErrors()
+    -- IDEA: The exceptions should be consistent.
+    for err in 1, nil
+      AssertRaises(TypeError, def (); Set(err); end)
+    end
+    AssertRaises(MemberError, def (); Set(True); end)
+  end
+  
+  def testInterfaces()
+    Assert(Set() is Iterable)
+  end
+end
+
+
+private def TestSetEnum(*items)
+  var s = Set(items)
+  var l = []
+  for i in s
+    l.append(i)
+  end
+  Assert(l.length() == items.length())
+  for i in items
+    Assert(i in l)
+  end
+end
+
+
+private class SetSubType is Set
+  def create()
+  end
+end

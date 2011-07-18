@@ -1,0 +1,116 @@
+@head
+@title Member operations
+
+<p>This section contains definitions of functions that can be used to read
+or write members. Several different methods of accessing members are available,
+the main differentiating factor being efficiency. Specifying the
+member name as C strings is simple, but it is also the slowest method. Numeric
+member ids are a faster way of accessing members, with some additional 
+complexity. Direct member access using a slot index is fastest, but its use is 
+severely limited to a specific set of circumstances.
+
+@see Calling methods is described in section @href{Call operations}.
+@end
+
+@h2 Accessing public members
+
+@fun AValue AMember(AThread *t, AValue object, const char *member)
+@desc Return the value of a public member of an object (or AError). This is
+      equivalent to using the dot operator.
+@end
+
+@fun AValue ASetMember(AThread *t, AValue object, const char *member, AValue mv)
+@desc Set the value of the specified public member of an object to value mv. 
+      This is
+      equivalent to using the dot operator on the left-hand-side of an
+      assignment statement. The return value is ANil, if successful, or 
+      AError.
+@end
+
+@fun AValue ASuperMember(AThread *t, AValue *frame, const char *member)
+@desc Return the value of the specified public member based on the definition 
+      in the 
+      superclass. This is equivalent to using <tt>super.member</tt> in Alore
+      code. This
+      function should only be called while executing a method, and the frame
+      argument must point to the frame of the method.
+      <p>If member refers to a method, a bound method is returned that can be
+      passed to @ref{ACallValue} to call the method. Here is an example:
+      @example
+        AValue ExampleMethod(AThread *t, AValue *frame)
+        {
+            /* Get a bound method object that is bound to the method myMethod 
+               defined in the superclass and the self object. */
+            AValue s = ASuperMember(t, frame, "myMethod");
+            if (AIsError(s))
+                return AError;
+            /* Call the method myMethod defined in the superclass. /*
+            return ACallValue(t, s, 0, frame + 1);
+        }
+      @end
+@end
+
+@fun AValue ASetSuperMember(AThread *t, AValue *frame, const char *member, AValue mv)
+@desc Set the value of the specified public member of an object to value mv, 
+      using the setter defined in the superclass. This is
+      equivalent to performing an assignment using the super keyword:
+      @example
+        super.member = mv
+      @end
+      <p>The return value is ANil, if successful, or AError.
+@end
+
+<!--
+@ fun ABool AHasMember(AValue object, const char *member)
+@ desc Return a boolean indicating whether an object has the specified public
+      member defined or inherited.
+@ end
+-->
+
+@fun int AMemberNum(AThread *t, const char *member)
+@desc Return a numeric id of a member. This id can be used instead of the name
+      of the member to refer to the member in some contexts.
+@end
+
+@fun AValue AMemberByNum(AThread *t, AValue object, int member)
+@desc Return the value of a public member of an object. This is equivalent
+      to using the dot operator. The member is specified using a numeric id
+      obtained using <tt>AMemberNum</tt>.
+@end
+
+@fun AValue ASetMemberByNum(AThread *t, AValue object, int member, AValue mv)
+@desc Set the value of the specified public member of an object to value mv. 
+      This is
+      equivalent to using the dot operator on left-hand-side of an assignment
+      statement. The member is specified using a numeric id obtained using
+      <tt>AMemberNum</tt>.
+@end
+
+@fun ABool AHasMemberByNum(AValue object, int member)
+@desc Return a boolean indicating whether an object has the specified public 
+      member defined or inherited. The member is specified using a numeric id 
+      obtained using <tt>AMemberNum</tt>.
+@end
+
+@h2 Direct member access
+
+@note Direct member access is possible only in some specific contexts. Direct
+      member access is most commonly used for accessing private member 
+      variables, direct member access being the only supported way of 
+      accessing them. See the links below for details.
+@end
+
+@fun AValue AMemberDirect(AValue object, int num)
+@desc Return the value of a member. The member is specified using a numeric
+      <i>slot index</i> num. See
+      @href{Accessing member variable slots directly} 
+      for more information. This operation never raises an exception and
+      performs no error checking.
+@end
+
+@fun void ASetMemberDirect(AThread *t, AValue object, int num, AValue mv)
+@desc Set the value of a member. The member is specified using a numeric 
+      <i>slot index</i> num. See
+      @href{Accessing member variable slots directly} 
+      for more information. @raise-direct
+@end

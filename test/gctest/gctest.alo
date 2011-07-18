@@ -1,0 +1,85 @@
+module gctest
+
+-- Routines for testing the garbage collector
+
+import unittest
+
+
+def ArrayTree(depth)
+  if depth <= 1
+    return [6, depth]
+  else
+    return [ArrayTree(depth - 1), ArrayTree(depth - 1)]
+  end
+end
+
+
+def ArrayTreeRev(depth)
+  if depth <= 1
+    return [6, depth]
+  else
+    var a = [2, 3]
+    a[0] = ArrayTreeRev(depth - 1)
+    a[1] = ArrayTreeRev(depth - 1)
+    return a
+  end
+end
+
+
+def CheckArrayTree(t, depth)
+  if depth <= 1
+    Assert(t[0] == 6 and t[1] == depth)
+  else
+    CheckArrayTree(t[0], depth - 1)
+    CheckArrayTree(t[1], depth - 1)
+  end
+end
+
+
+def InstTree(depth)
+  if depth <= 1
+    return Tree(6, 7)
+  else
+    return Tree(InstTree(depth - 1), InstTree(depth - 1))
+  end
+end
+
+
+def InstTreeRev(depth)
+  if depth <= 1
+    return Tree(6, 7)
+  else
+    var a = Tree(2, 3)
+    a.left = InstTreeRev(depth - 1)
+    a.right = InstTreeRev(depth - 1)
+    return a
+  end
+end
+
+
+def CheckInstTree(t, depth)
+  if depth <= 1
+    Assert(t.left == 6 and t.right == 7)
+  else
+    CheckInstTree(t.left, depth - 1)
+    CheckInstTree(t.right, depth - 1)
+  end
+end
+
+
+class Tree
+  var left
+  var right
+
+  def create(l, r)
+    left = l
+    right = r
+  end
+end
+
+
+-- Allocate lots of junk, probably causing a gc
+--def Trash()
+--  ArrayTree(18)
+--  ArrayTree(18)
+--end

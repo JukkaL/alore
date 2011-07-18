@@ -1,0 +1,177 @@
+-- help.alo - Help text generation
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module argparse
+
+
+private const MaxWidth = 78   -- Maximum width of output
+
+
+-- Return the width of first column of help, including spaces.
+def HelpColumnWidth(opts as Array<Str>, help as Array<Pair<Str, Str>>) as Int
+  var nopts = NormalizeHelpOptions(opts, help)
+  
+  var width = 6
+  var helpMap = Map(*help)
+  for opt in nopts
+    if FindHelpKey(helpMap, opt) != nil
+      var argText = ArgText(opt)
+      width = Max(width, argText.length() + 4)
+    end
+  end
+  return Min(width, 29)
+end
+
+
+def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>, 
+             firstColumnWidth as Int) as Str
+  var nopts = NormalizeHelpOptions(opts, help)
+
+  -- Sort options lexicographically.
+  nopts = Sort(nopts, def (x, y); return Key(x) < Key(y); end)
+  
+  var helpMap = Map(*help)
+  
+  var w = __TextWrapper()
+  var helpWidth = MaxWidth - firstColumnWidth
+  
+  var a = [] as <Str>
+  for opt in nopts
+    -- Try find a valid help key from the option synonyms.
+    var helpOpt = FindHelpKey(helpMap, opt)
+    
+    -- Help is only available if we found a key.
+    if helpOpt != nil
+      var argText = ArgText(opt)
+      
+      -- Construct help text. It needs to be wrapped to fit the second column.
+      var helpText = ""
+      for s in w.wrap(helpMap[Name(helpOpt)], helpWidth)
+        if helpText == ""
+          helpText = s
+        else
+          helpText += Newline + firstColumnWidth * " " + s
+        end
+      end
+      
+      -- Format the entire text for this set of option synonyms.
+      if argText.length() <= firstColumnWidth - 4 or 
+           (argText + helpText).length() <= MaxWidth - 4
+        var fmt = "-{}:".format(firstColumnWidth - 4)
+        a.append(("  {" + fmt + "}  {}").format(argText, helpText))
+      else
+        -- Put the argument text and help into different lines, since the
+        -- argument text is long.
+        a.append("  " + argText)
+        a.append(firstColumnWidth * " " + helpText)
+      end
+    end
+  end
+  
+  return Newline.join(a)
+end
+
+
+private def ArgText(opt as Array<Str>) as Str
+  var short = [] as <Str>
+  var long = [] as <Str>
+  var arg = Map() as <Str, Str>
+
+  -- Divide the options into short and and long options. Store argument
+  -- names in the arg map.
+  for o in opt
+    var oo = Name(o)
+    if oo.startsWith("--")
+      long.append(oo)
+    else
+      short.append(oo)
+    end
+    if Arg(o) != nil
+      arg[oo] = Arg(o)
+    end
+  end
+
+  -- Construct the text for the option name(s).
+  var all = short + long
+  var argText = ", ".join(all)
+  if short == []
+    argText = "    " + argText
+  end
+
+  -- Add argument name, if available.
+  if arg.hasKey(all[0])
+    if all[-1].startsWith("--")
+      argText += "=" + arg[all[0]]
+    else
+      argText += " " + arg[all[0]]
+    end
+  end
+  
+  return argText
+end
+
+
+-- Return the sort key based on a option description.
+private def Key(opt as Str) as Str
+  var k = opt[0].lower()
+  if k.startsWith("--")
+    k = k[1:]
+  end
+  return k
+end
+
+
+-- Return the name component of an option description (remove argument name).
+private def Name(o as Str) as Str
+  return o.split(" ")[0]
+end
+
+
+-- Return the argument name component of an option description or nil if none.
+private def Arg(o as Str) as Str
+  if " " in o
+    return o.split(" ")[1]
+  else
+    return nil
+  end
+end
+
+
+private def FindHelpKey(helpMap as Map<Str, Str>, opt as Array<Str>) as Str
+  var helpOpt = nil as Str
+  for o in opt
+    if helpMap.hasKey(Name(o))
+      helpOpt = Name(o)
+    end
+  end
+  return helpOpt
+end
+
+
+-- FIX better name
+private def NormalizeHelpOptions(opts as Array<Str>, 
+                                 help as Array<Pair<Str, Str>>) as
+                                                       Array<Array<Str>>
+  var res = [] as <Array<Str>>
+  for o in opts    
+    var a, name = SplitDescription(o)
+    if name != nil
+      for i in 0 to a.length()
+        a[i] += " " + name
+      end
+    end
+    res.append(a)
+  end
+  
+  for h in help
+    if not h.left.startsWith("-")
+      res.append([h.left])
+    end
+  end
+  
+  return res
+end

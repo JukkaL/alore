@@ -1,0 +1,83 @@
+@head
+@title Module basics
+
+<p>This section discusses several basic issues related to defining modules,
+including the top-level module macros and importing other modules.
+
+@h2 Definition block start and end macros
+
+<p>
+@indexitem A_MODULE
+Use the A_MODULE macro to start the module definition block:
+
+@example
+  A_MODULE(modulename, "modulename")
+@end
+
+<p>The arguments contain the module name, first unquoted and then in quotes.
+If a multipart module name such as foo::bar is used, however, the first
+argument should have the :: operators replaced with underscores like this:
+
+@example
+  A_MODULE(foo_bar, "foo::bar")
+@end
+
+<p>The value of the first argument is also used in the name of the compiled
+module (foo_bar.so or foo_bar.dll in the above example).
+
+<p>
+@indexitem A_END_MODULE
+The A_END_MODULE macro must be used to signal the end of the module
+definition block, after all the definitions. This example illustrates the
+structure of a module definition, with various details omitted:
+
+@example
+  A_MODULE(...)
+      /* contents of the module defined using various A_* macros */
+      A_DEF(...)
+      A_CLASS(...)
+          A_VAR(...)
+          A_METHOD(...)
+          A_METHOD(...)
+      A_END_CLASS()
+      A_DEF(...)
+      ...
+  A_END_MODULE()
+@end
+
+@h2 Importing modules
+
+<p>
+@indexitem A_IMPORT
+Like ordinary modules implemented in Alore, C modules may import other
+modules. The A_IMPORT macro is used for this purpose:
+
+@example
+  A_MODULE(example, "example")
+      A_IMPORT("re")
+      /* contents of the module */
+  A_END_MODULE()
+@end
+
+<p>C modules may import both C and Alore modules, but circular dependencies
+are limited: there must be no circular dependencies between any two C modules.
+
+<p>A circular dependency between an Alore and a C module, however, is possible.
+It is actually a common implementation technique for creating effectively mixed
+C/Alore modules, as explained in section @href{Mixing Alore and C in modules}.
+
+<h3>Visibility of global definitions</h3>
+
+<p>Unlike in Alore code, C modules may access both public and private global
+definitions in all modules that are imported anywhere in the program.
+The A_IMPORT macro therefore does not
+affect the visibility of definitions. The macro is still important, however,
+since it ensures that the imported module is loaded into memory &#8212; if
+a module is never imported in a program, any definitions defined in it are not
+accessible at all. This affects several API functions, including but not
+limited to @ref{AGlobal} and @ref{ACall}.
+
+<p>As an exception, the module that defines the target type of
+the @ref{A_INHERIT}
+macro must be explicitly imported (unless the superclass is defined in
+the std or the current module).

@@ -1,0 +1,11 @@
+module runtime
+
+import unittest
+
+private def VerifyNot(b)
+  Assert(not b)
+end
+
+private def Ok()
+  -- FIX: do something here
+end

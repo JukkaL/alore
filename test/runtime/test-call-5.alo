@@ -1,0 +1,192 @@
+module runtime
+
+-- Method calls
+
+import unittest
+import calltest
+import helpers
+
+
+class CallSuite5 is Suite
+  def testT1()
+    CheckVarArgsFunc(C0__v().Method)
+    Ok()
+  end
+  
+  def testT2()
+    TestFixedArgsFunc0(C0__().Method)
+    TestFixedArgsFuncFail0(C0__().Method)
+    TestFixedArgsFunc1(C1__().Method)
+    TestFixedArgsFuncFail1(C1__().Method)
+    TestFixedArgsFunc2(C2__().Method)
+    TestFixedArgsFunc7(C7__().Method)
+    Ok()
+  end
+  
+  def testT3()
+    TestDefArgsFunc01(C01__().Method)
+    TestDefArgsFunc03(C03__().Method)
+    TestDefArgsFunc11(C11__().Method)
+    TestDefArgsFuncFail11(C11__().Method)
+    TestDefArgsFunc34(C34__().Method)
+    Ok()
+  end
+  
+  def testT4()
+    TestVarArgFunc01(C01__v().Method)
+    TestVarArgFunc03(C03__v().Method)
+    TestVarArgFunc11(C11__v().Method)
+    TestVarArgFunc34(C34__v().Method)
+    TestVarArgFuncFail34(C34__v().Method)
+    Ok()
+  end
+end
+
+
+-- Classes to test
+
+private class C0__
+  var hmm = 2
+
+  def Method()
+    Assert(hmm == 2)
+    return []
+  end
+end
+
+private class C1__
+  var hmm = 2
+
+  def Method(a1)
+    Assert(hmm == 2)
+    return [a1]
+  end
+end
+
+private class C2__
+  var hmm = 2
+
+  def Method(a1, a2)
+    Assert(hmm == 2)
+    return (a1, a2)
+  end
+end
+
+private class C7__
+  var hmm = 2
+
+  def Method(a1, a2, a3, a4, a5, a6, a7)
+    Assert(hmm == 2)
+    return (a1, a2, a3, a4, a5, a6, a7)
+  end
+end
+
+private class C01__
+  var hmm = 2
+
+  def Method(a1 = 1)
+    Assert(hmm == 2)
+    return [a1]
+  end
+end
+
+private class C03__
+  var hmm = 2
+
+  def Method(a1 = 1, a2 = 2, a3 = 3)
+    Assert(hmm == 2)
+    return (a1, a2, a3)
+  end
+end
+
+private class C11__
+  var hmm = 2
+
+  def Method(a1, a2 = 2)
+    Assert(hmm == 2)
+    return (a1, a2)
+  end
+end
+
+private class C34__
+  var hmm = 2
+
+  def Method(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7)
+    Assert(hmm == 2)
+    return (a1, a2, a3, a4, a5, a6, a7)
+  end
+end
+
+private class C0__v
+  var hmm = 2
+
+  def Method(*a)
+    Assert(hmm == 2)
+    return a
+  end
+end
+
+private class C1__v
+  var hmm = 2
+
+  def Method(a1, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, *a)
+  end
+end
+
+private class C2__v
+  var hmm = 2
+
+  def Method(a1, a2, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, *a)
+  end
+end
+
+private class C7__v
+  var hmm = 2
+
+  def Method(a1, a2, a3, a4, a5, a6, a7, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+  end
+end
+
+private class C01__v
+  var hmm = 2
+
+  def Method(a1 = 1, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, *a)
+  end
+end
+
+private class C03__v
+  var hmm = 2
+
+  def Method(a1 = 1, a2 = 2, a3 = 3, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, a3, *a)
+  end
+end
+
+private class C11__v
+  var hmm = 2
+
+  def Method(a1, a2 = 2, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, *a)
+  end
+end
+
+private class C34__v
+  var hmm = 2
+
+  def Method(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7, *a)
+    Assert(hmm == 2)
+    return CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+  end
+end
+
+

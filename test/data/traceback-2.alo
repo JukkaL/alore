@@ -1,0 +1,4 @@
+var Invalid = 1 / 0
+
+def Main()
+end

@@ -1,0 +1,38 @@
+module runtime
+
+-- Test various errors when accessing members
+
+import unittest
+
+
+class ClassSuite5 is Suite
+  def testGetterWithoutReturnValue()
+    var t = GetterErrorTester()
+    
+    AssertEqual(nil, t.noret)
+
+    t.noret
+  end
+  
+  def testAssignmentToGetter()
+    var t = GetterErrorTester()
+    var e = False
+    try
+      t.foo = 2
+      Assert(False)
+    except MemberError
+      e = True
+    end
+    Assert(e)
+  end
+end
+
+
+class GetterErrorTester
+  def foo
+    return 1
+  end
+  
+  def noret
+  end
+end

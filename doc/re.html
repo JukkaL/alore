@@ -1,0 +1,296 @@
+@head
+@module re
+@title <tt>re</tt>: Regular expressions
+
+<p>This module provides operations for matching and manipulating strings
+using regular expressions. Regular
+expressions may be represented as strings or instances of the @ref{RegExp}
+class.
+
+<p>Examples:
+
+@example
+  if Match("foo|bar", "bar   ") != nil -- Succeeds
+    WriteLn("Match!")
+  end
+
+  var r = RegExp("a*b", IgnoreCase)
+  var m = Search(r, "... AaaB ...")
+  m.group(0)                           -- "AaaB"
+@end
+
+@note Use the @ref{RegExp} class for case insensitive matching.
+@end
+
+<h2>Functions</h2>
+
+@fun Match(regexp, str[, pos])
+@desc Test if a regular expression matches at the start of the string.
+      If the regular
+      expression matches a (potentially empty) prefix of the string, return a
+      <a href="#result">match object</a>
+      describing the match. Otherwise, return <tt>nil</tt>. If the <tt>pos</tt>
+      argument
+      is provided, start the matching at the specified string index instead.
+@end
+
+@fun Search(regexp, str[, start])
+@desc Search a string for a match of a regular expression. Return a
+      <a href="#result">match object</a>
+      describing the leftmost match or <tt>nil</tt> if no match could
+      be found. If the <tt>start</tt> parameter is provided, start the
+      matching at the specified string index instead of the string start.
+@end
+
+@fun Subst(str, regexp, new)
+@desc Substitute all non-overlapping occurrences of a regular expression in a
+      string with replacement values described by the
+      <tt>new</tt> parameter.
+
+      <p>If <tt>new</tt> is a string, it acts as a template for the replacement
+      string.
+      \0 in the <tt>new</tt> string is replaced with the string
+      matched
+      by the regular expression and \<i>n</i>, where <i>n</i> is a positive
+      integer, is replaced with the string matched by the group <i>n</i> of the
+      regular expression. A backslash not followed by a digit is
+      replaced with the character following the backslash. Finally, the rest
+      of the string is included literally in the replacement string.
+      Example:
+
+      @example
+        Subst("foo fox", "fo+", "&lt;\0&gt;")   -- Result: "&lt;foo&gt; &lt;fo&gt;x"
+      @end
+
+      <p>If <tt>new</tt> is a callable object, call the object with the
+      corresponding <a href="#result">match object</a> as the argument for
+      each occurrence of the regular expression in the string. The object
+      should return the replacement string when called. Example:
+
+      @example
+        Subst("cat sits on a table", "cat|table", def (m)
+                                                    return m.group(0).upper()
+                                                  end)
+          -- Result: "CAT sits on a TABLE"
+      @end
+@end
+
+@fun Split(str, regexp)
+@desc Split the string into fields at each non-overlapping occurrence of the
+      regular expression. Return an array containing the fields. Example:
+      @example
+        Split("cat;  dog;horse", "; *")   -- Result: ["cat", "dog", "horse"]
+      @end
+@end
+
+@fun FindAll(regexp, str)
+@desc Find all non-overlapping matches of a regular expression in a string.
+      Return an array of @ref{MatchResult} objects that represent the matches.
+      Scan the string from start to end. Include also empty matches, unless
+      they coincide with the start of another match.
+@end
+
+<h2>Class <tt>RegExp</tt></h2>
+
+@class RegExp(regexp, ...)
+@desc Construct a regular expression object. The first parameter
+  must be a regular expression string. Optionally, the <tt>IgnoreCase</tt>
+  constant can be given as an additional parameter to enable case insensitive
+  matching. <tt>RegExp</tt> instances can be used instead of <tt>Str</tt>
+  objects whenever regular expressions are expected.
+  <p>Constructing a <tt>RegExp</tt> instance or passing a <tt>Str</tt> object
+  as a regular expression may be costly, since the regular expression must be
+  compiled into an internal form before matching.
+  Using a single <tt>RegExp</tt> instance for multiple operations is often
+  faster, since this allows reusing the compiled form.
+@end
+
+@end-class
+
+<h2>Constants</h2>
+
+@var IgnoreCase
+@desc Flag for case insensitive matching, passed to @ref{RegExp}.
+@end
+
+<h2 id="result"><tt>MatchResult</tt> objects</h2>
+
+<p>Match result objects are instances of the <tt>MatchResult</tt> class.
+<tt>MatchResult</tt> should not be used to construct match result objects
+directly. Match result objects have these methods:
+
+@class-hidden MatchResult
+
+@fun group(n)
+@desc Return the substring matched by a specific group. The group 0 is the 
+      substring matched by the entire regular expression. Return <tt>nil</tt>
+      if the group exists, but it is within a part of the regular expression
+      that was not matched.
+@end
+
+@fun start(n)
+@desc Return the start index of the substring matched by a specific group.
+      The group 0 refers to the
+      substring matched by the entire regular expressions. Return
+      -1 if the group exists in the regular expression, but it is
+      within a part of the regular expression that was not matched.
+      If a group matched an empty string, the start index is equal to the
+      stop index.
+@end
+
+@fun stop(n)
+@desc Return the stop index of the substring matched by a specific group.
+      The group 0 refers to the
+      substring matched by the entire regular expressions. Return
+      -1 if the group exists in the regular expression, but it is
+      within a part of the regular expression that was not matched.
+      If a group matched an empty string, the span start index is equal to the
+      stop index.
+@end
+
+@fun span(n)
+@desc @deprecated
+      Return a @ref{Pair} object representing the (non-negative) start and
+      end indices of
+      the substring matched by a specific group. The group 0 refers to the
+      substring matched by the entire regular expressions. Return
+      <tt>nil</tt> if the group exists in the regular expression, but it is
+      within a part of the regular expression that was not matched.
+      If a group matched an empty string, the span start index is equal to the
+      stop index.
+@end
+
+@end-class
+
+<h2>Exceptions</h2>
+
+@class RegExpError
+@desc Raised when one of the operations in this module is passed an invalid
+  regular expression string. Inherits from @ref{std::ValueError}.
+@end
+
+<h2>Regular expression syntax overview</h2>
+
+<p>Any character that does not have any other significance is a regular
+expression that matches itself, i.e. "x" matches the letter "x" and so on.
+Additionally, regular expressions can be constructed by following the rules
+below (<i>a</i> and <i>b</i> may refer to any regular expression):
+
+<table class="no-border" summary="">
+  <tr>
+    <td><tt>.</tt></td>
+    <td>Match any single character.
+  <tr>
+    <td><tt>^</tt></td>
+    <td>Anchor match at the beginning of a string.
+  <tr>
+    <td><tt>$</tt></td>
+    <td>Anchor match at the end of a string.
+  <tr>
+    <td><tt>ab</tt>
+    <td>Match <i>a</i> followed by <i>b</i>.
+  <tr>
+    <td><tt>a*</tt>
+    <td>Match <i>a</i> repeated 0+ times.
+  <tr>
+    <td><tt>a+</tt>
+    <td>Match <i>a</i> repeated 1+ times.
+  <tr>
+    <td><tt>a?</tt>
+    <td>Optionally match <i>a</i>.
+  <tr>
+    <td><tt>a|b</tt>
+    <td>Match <i>a</i> or <i>b</i>.
+  <tr>
+    <td><tt>a{n}</tt>
+    <td>Match <i>a</i> exactly <i>n</i> times.
+  <tr>
+    <td><tt>a{n,}</tt>
+    <td>Match <i>a</i> at least <i>n</i> times.
+  <tr>
+    <td><tt>a{n,m}</tt>
+    <td>Match <i>a</i> at least <i>n</i> and at most <i>m</i> times.
+  <tr>
+    <td><tt>(a)</tt>
+    <td>Match <i>a</i>. Use parentheses to group expressions. Each regular
+        expression within parentheses is a <i>group</i>. Groups within a
+        regular expression are numbered so that the leftmost parenthesized
+        expression (the one where the index of the "(" character is smallest)
+        is the group 1, the next is the group 2, etc.
+  <tr>
+    <td><tt>[...]</tt>
+    <td>Match any character inside the brackets. If the brackets contain
+      character ranges of the form <tt>x-y</tt>, each such range matches any
+      character in the range from x to y.
+      Backslash sequences have the same behavior as described below, unless
+      otherwise noted.
+  <tr>
+    <td><tt>[^...]</tt>
+    <td>Match the inverse of the corresponding [...] expression.
+</table>
+
+<p>Finally, combining backslash ("\") and another character or characters forms
+special regular expressions. If the backslash sequence is not special, a
+backslash followed by any character matches the following character. These are
+the special backslash sequences:
+
+<table class="no-border" summary="">
+  <tr>
+    <td><tt>\<i>n</i></tt>
+    <td>Match the string matched by a parenthesized group (back reference) or
+        an octal character code if <i>n</i> is an integer.
+  <tr>
+    <td><tt>\x<i>nn</i></tt>&nbsp;&nbsp;</td>
+    <td>Match hexadecimal character code. <i>nn</i> must be an integer in
+        hexadecimal.
+  <tr>
+    <td><tt>\&lt;</tt>
+    <td>Match the empty string at the beginning of a word.
+  <tr>
+    <td><tt>\&gt;</tt>
+    <td>Match the empty string at the end of a word.
+  <tr>
+    <td><tt>\a</tt>
+    <td>Match ASCII bell.
+  <tr>
+    <td><tt>\b</tt>
+    <td>Match ASCII backspace.
+  <tr>
+    <td><tt>\d</tt>
+    <td>Match any decimal digit [0-9].
+  <tr>
+    <td><tt>\D</tt>
+    <td>Match any character except decimal digit [^0-9].
+  <tr>
+    <td><tt>\f</tt>
+    <td>Match ASCII form feed.
+  <tr>
+    <td><tt>\n</tt>
+    <td>Match ASCII linefeed.
+  <tr>
+    <td><tt>\r</tt>
+    <td>Match ASCII carriage return.
+  <tr>
+    <td><tt>\s</tt>
+    <td>Match any whitespace character.
+  <tr>
+    <td><tt>\S</tt>
+    <td>Match any non-whitespace character.
+  <tr>
+    <td><tt>\t</tt>
+    <td>Match ASCII horizontal tab.
+  <tr>
+    <td><tt>\v</tt>
+    <td>Match ASCII vertical tab.
+  <tr>
+    <td><tt>\w</tt>
+    <td>Match any alphanumeric character or the underscore ("_").
+  <tr>
+    <td><tt>\W</tt>
+    <td>Match any non-alphanumeric and non-underscore character.
+</table>
+
+@see
+     @link re-details.html
+     contains additional information about regular expression matching.
+@end

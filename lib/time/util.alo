@@ -1,0 +1,54 @@
+-- util.alo - Utility functions
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module time
+
+import string
+import math
+
+
+private def ParseInt(s, i, min, max = 100)
+  var n = 0
+  while n < min
+    if not IsDigit(s[i + n])
+      raise ValueError("Invalid date ({})".format(s))
+    end
+    n += 1
+  end
+  while n < max and i + n < s.length() and IsDigit(s[i + n])
+    n += 1
+  end
+  return Int(s[i:i + n]), i + n
+end
+
+
+private def TruncN(f, nfrac)
+  return Trunc(10**nfrac * f) / 10**nfrac
+end
+
+
+-- Parse [../..] starting at s[i] (s[i] must be "[").
+private def ParseAmPm(s, i)
+  var slash = i
+  while slash < s.length() and s[slash] != "/"
+    slash += 1
+  end
+  
+  var close = slash
+  while close < s.length() and s[close] != "]"
+    close += 1
+  end
+  
+  var am = s[i + 1:slash] 
+  var pm = s[slash + 1:close]
+  
+  if close >= s.length() or am == pm or am == "" or pm == ""
+    raise ValueError("Invalid format ({})".format(s))
+  end
+  
+  return am, pm, close + 1
+end

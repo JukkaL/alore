@@ -1,0 +1,364 @@
+@head
+@title Low-level operations
+
+<p>This section contains descriptions of several low-level facilities, most of
+which deal with memory management. Note that using these operations is
+generally more complex and error prone than using higher-level operations
+described earlier, so be careful and read all instructions carefully.
+
+@h2 Temporary locations
+
+<p>The operations described below can be used to allocate additional locations
+for holding temporary values so that they are seen by the garbage collector.
+These are generally used in utility functions that can be called from various
+Alore functions or methods implemented in C. Temporary locations that are used
+directly in Alore functions or methods should be generally allocated in the
+frame.
+
+<p>Since these operations allocate the locations from a stack, the allocation
+and freeing calls must be matched in a Last In, First Out fashion. However, if
+a direct exception is raised before freeing, the runtime automatically frees
+any unfreed temporary locations allocated after the point at which the
+exception is caught. In general, there is no need to account for direct
+exceptions when using temporary locations.
+
+<p>The number of available temporary locations per thread might be fixed to a
+relatively low value. Therefore avoid allocating a large number of temporary
+locations and use Alore container objects such as Arrays for holding large
+numbers of values.
+
+@note These functions never cause the garbage collector to run if they return
+      successfully. This means, most importantly, that they do not invalidate
+      any AValues held in C local variables (unless an exception was raised).
+@end
+
+@fun AValue *AAllocTemp(AThread *t, AValue v)
+@desc Allocate a temporary location in the temporary value stack of the current
+      thread and store v in it. Return a pointer to the temporary location.
+      You must call <tt>AFreeTemp</tt> before returning from the current
+      executing Alore function or method to release the temporary location.
+      The temporary location behaves like a location in the frame of a
+      function. @raise-direct
+@end
+
+@fun void AFreeTemp(AThread *t)
+@desc Release a temporary location allocated using <tt>AAllocTemp</tt>. This
+      function does not check for error conditions and never raises an
+      exception or causes the garbage collector to run.
+@end
+
+@fun AValue *AAllocTemps(AThread *t, int n)
+@desc Allocate n consecutive temporary locations in the temporary value stack
+      of the current thread and initialize them to some undefined value, for
+      example AZero. You must call <tt>AFreeTemps</tt> to free these values
+      before returning from the current executing Alore function or method.
+      @raise-direct
+@end
+
+@fun void AFreeTemps(AThread *t, int n)
+@desc Release n temporary locations allocated using AAllocTemps. This
+      function does not check for error conditions and never raises an
+      exception or causes the garbage collector to run.
+@end
+
+<!-- IDEA: Example -->
+
+@h2 Instance binary data manipulation
+
+<p>The following three operations (<tt>ADataPtr</tt>, <tt>ASetData_M</tt> and
+<tt>AGetData_M</tt>) can only be used with objects of types that
+have allocated binary data using @ref{A_BINARY_DATA} or @ref{A_BINARY_DATA_P}
+macros. These functions perform no error checking.
+
+@fun void *ADataPtr(AValue v, unsigned offset)
+@desc Return a pointer to instance-specific binary data at the specified
+      offset. The returned pointer will be invalidated by any operation that
+      may trigger garbage collection.
+@end
+
+@fun ASetData_M(AValue v, unsigned offset, &lt;type&gt;, &lt;newValue&gt;)
+@desc Modify the instance-specific binary data at the specified offset, storing
+      a value newValue of the specified type. Example:
+      @example
+        MyData *ptr = ...;
+        ASetData_M(frame[0], 0, MyData *, ptr);
+          /* Self must have at least sizeof(MyData *) bytes allocated as
+             instance-specific data. */
+      @end
+      <p>The offset must have proper alignment for the data type. See
+      @href{Alignment of binary data} for more information.
+@end
+
+@fun &lt;type&gt; AGetData_M(AValue v, unsigned offset, &lt;type&gt;)
+@desc Read instance-specific binary data at the specified offset,
+      returning a C value of the specified type. Example:
+      @example
+        MyData *ptr = AGetData_M(frame[0], 0, MyData *);
+      @end
+      <p>The offset must have proper alignment for the data type. See
+      @href{Alignment of binary data} for more information.
+@end
+
+@fun ABool ASetExternalDataSize(AThread *t, AValue v, Asize_t size)
+@desc Use this function to inform the garbage collector of any external data
+      included in object v that is not allocated from the garbage collected
+      heap, since this data is not otherwise visible to the garbage collector.
+      The garbage collector may take advantage of this information when
+      scheduling garbage collection cycles.
+      <p>If the exact size of referenced
+      data cannot be calculated, it is sufficient to provide an estimation
+      of the size. If the actual size is larger than the estimate, the program
+      may consume more memory than it otherwise would. Conversely, if the
+      actual size is smaller than the estimate, the program may spend more time
+      in the garbage collector than it otherwise would.
+      <p>Return TRUE if successful, FALSE if failed.
+
+      @note Size must fit in a short Int. This operation may raise a non-direct
+            exception.
+      @end
+      @note The type of v must have the @ref{A_EXTERNAL_DATA} declaration.
+      @end
+@end
+
+@h2 Object construction
+
+@fun AValue AMakeUnitializedObject(AThread *t, AValue type)
+@desc Construct an instance of a type, but do not call the create method
+      or setup the member variables. All member variables will be initialized
+      to nil.
+      @note You must initialize the object yourself after calling this function
+            and before making the object visible to external code. You must
+            not use this function to create objects whose internal structure
+            might change. This includes all objects of all types defined in
+            the Alore standard library.
+      @end
+@end
+
+@h2 Memory management
+
+<p>These functions can often be used as replacements for C malloc, free and
+realloc calls. They allocate memory from the garbage collected heap, so unlike
+memory allocated using malloc, these memory blocks are automatically freed by
+the Alore garbage collector. The blocks allocated using these functions must
+not be made visible to Alore code. All of these functions raise direct
+exceptions on all error conditions.
+
+@fun AValue AAllocMem(AThread *t, Asize_t size)
+@desc Allocate a block of size bytes from the garbage collected heap. Use
+      @ref{AMemPtr} to access the contents of the block, but note that
+      this block may be moved by the garbage collector, and thus the return
+      value of <tt>AMemPtr</tt> may change. As always, the ordinary rules for
+      using <tt>AValue</tt> values apply to the return value.
+@end
+
+@fun AValue AAllocMemFixed(AThread *t, Asize_t size)
+@desc Allocate a fixed, non-movable block of size bytes from the garbage
+      collected heap. Use
+      @ref{AMemPtr} to access the contents of the block. This block may not be
+      moved by the garbage collector, and thus the return value of AMemPtr
+      is guaranteed to not to be changed by the garbage collector. But note
+      that the returned AValue must still be always accessible to the garbage
+      collector while it is alive.
+@end
+
+@fun void *AMemPtr(AValue mem)
+@desc Return a pointer to the start of the memory area related to a block
+      allocated using @ref{AAllocMem} or @ref{AAllocMemFixed}. This block can
+      be used to store any binary data, as long the boundaries of the block,
+      specified by the size of block, are honored. Note that the block
+      cannot be used to store garbage collected references (<tt>AValue</tt>
+      values), and unless the block was allocated using
+      <tt>AAllocMemFixed</tt>,
+      it may be moved by the garbage collector at any memory allocation
+      operation and thus the value returned by this function becomes invalid.
+      The returned pointer is aligned to a 32-bit or 64-bit boundary depending
+      on the current pointer width (32 or 64 bits, respectively).
+      @note The alignment might be inappropriate for storing some data
+            types (doubles, for example). Manual alignment enforcement may
+            sometimes be needed.
+      @end
+@end
+
+@fun AValue AReallocMem(AThread *t, AValue mem, Asize_t newSize)
+@desc Change the size of the block allocated using @ref{AAllocMem} or
+      @ref{AAllocMemFixed} to a new size. The original contents of the block
+      are kept unless the new size is smaller than the old one, in which case
+      the initial contents, up to the new size, are maintained. Return a
+      reference to the resized block, which might be different from the original
+      value. The return value behaves identically to a block just allocated
+      using <tt>AAllocMem</tt> or <tt>AAllocMemFixed</tt>. The movability
+      status of the block is remains the same as originally, i.e. if the block
+      was allocated originally using <tt>AAllocMemFixed</tt>, the returned
+      block will be non-movable. The mem argument must refer to a valid block.
+@end
+
+@fun void AFreeMem(AThread *t, AValue mem)
+@desc Either do nothing or release the contents of the block referenced to by
+      the mem argument. There must be no active references to the block when
+      <tt>AFreeMem</tt> is called. Calling this function is always optional,
+      since the garbage collector will eventually free any unreferenced blocks,
+      and the implementation may also ignore this call.
+@end
+
+@fun AValue AAllocBuf(AThread *t, Asize_t initReserve)
+@desc Allocate a growable buffer with initReserve bytes initially reserved for
+      the buffer data. The buffer will be empty initially, independent of the
+      value of the initReserve argument.
+@end
+
+@fun AValue AAllocBufFixed(AThread *t, Asize_t initReserve)
+@desc Allocate a fixed, non-movable growable buffer with initReserve bytes
+      reserved for the buffer data. The buffer will be empty initially,
+      independent of the value of the initReserve argument.
+@end
+
+@fun void AAppendBuf(AThread *t, AValue buf, const char *data, Asize_t len)
+@desc Append len bytes of data, pointed to by the argument data, to the end of
+      a buffer allocated using @ref{AAllocBuf} or
+      @ref{AAllocBufFixed}. The buffer is grown if not enough additional
+      space has been reserved for the data.
+@end
+
+@fun void *ABufPtr(AValue buf)
+@desc Return a pointer to the beginning of the memory area related to a buffer
+      allocated using @ref{AAllocBuf} or @ref{AAllocBufFixed}. If the buffer is
+      not fixed, any operation that may trigger garbage collection will
+      invalidate the pointer. The available size of the area is specified by
+      the accumulated number of bytes that has been appended to the buffer
+      using either @ref{AAppendBuf} or @ref{AReserveBuf}. The alignment of
+      the returned data is the same as for @ref{AMemPtr}.
+@end
+
+@fun void *AReserveBuf(AThread *t, AValue buf, Asize_t len)
+@desc This behaves like like @ref{AAppendBuf}, but additional space
+      is only allocated at the end of the buffer and not initialized. A pointer
+      to the uninitialized data area is returned. This pointer behaves like
+      the pointer returned by @ref{ABufPtr}, i.e. if the buffer is not
+      fixed, any operation that may trigger garbage collection will invalidate
+      the pointer.
+@end
+
+@fun void AFreeBuf(AThread *t, AValue buf)
+@desc Either do nothing or release the contents of the buffer referenced to by
+      the buf argument. There must be no active references to the buffer when
+      <tt>AFreeBuf</tt> is called. Calling this function is always optional,
+      since the garbage collector will eventually free any unreferenced
+      buffers, and the implementation may also ignore this call.
+@end
+
+@h2 Value containers
+
+<p>These functions can be used to create and access container objects. Each
+container object encapsulates a single value.
+The only special property of the container objects is the possibility of
+creating a C-level pointer that can be used to read and modify the value stored
+in the container. This pointer can live across function calls and returns and
+memory allocation operations.
+The effect is somewhat similar to that achieved using @ref{AAllocTemp}, but
+the locations allocated with AAllocTemp can only live within a single function
+invocation, and they must be freed in a strict LIFO order. Neither of these
+is true for value containers.
+
+<p>If you need to store multiple values, you can either allocate multiple
+container objects or store a composite object such as an array in a single
+container object.
+
+@fun AValue AAllocContainer(AThread *t, AValue initValue)
+@desc Allocate a container object that is initialized to the specified value.
+      @note You must never expose the returned object to Alore code. 
+      @end
+@end
+
+@fun void *AContainerPtr(AValue container)
+@desc Return an opaque pointer that can be used to access and modify the object
+      reference stored in a container object, but only using the functions
+      below. The pointer remains valid until the
+      container object becomes unreferenced and thus may be garbage collected.
+      This function performs no error checking.
+      @note The returned pointer does not count as a reference to the
+            container,
+            since C level pointers are not visible to the garbage collector.
+            You need to maintain a reference to the container object in
+            a location that is accessible to the garbage collector, such as in
+            another Alore object, in a function frame, etc.
+      @end
+@end
+
+@fun AValue AContainerValue(void *ptr)
+@desc Return the value stored in a container object. The pointer argument
+      can be obtained using AContainerPtr. This function performs no
+      error checking. In particular, the function does not check if the
+      container object has been freed by the garbage collector.
+@end
+
+@fun void ASetContainerValue(AThread *t, void *ptr, AValue item)
+@desc Modify the value contained by a container object.
+      The pointer argument can be obtained using
+      AContainerPtr. The argument pointer must be valid. @raise-direct
+@end
+
+@h2 Thread support
+
+<p>Potentially long-running or blocking C operations must be surrounded with
+<tt>AAllowBlocking</tt> and <tt>AEndBlocking</tt> calls, since otherwise the
+thread performing those C operations may block other threads. In particular,
+garbage collection cannot be performed during a call to an ordinary C function
+unless the call is surrounded by these function calls.
+
+@fun void AAllowBlocking()
+@desc Allow potentially blocking C operations such as file I/O to be performed
+      in the current thread. No Alore API functions (other than
+      @ref{AEndBlocking}) can be called after calling <tt>AAllowBlocking</tt>
+      until calling @ref{AEndBlocking}. This function enables other threads to
+      run the garbage collector at any time without having to synchronize with
+      the current thread. Normally the garbage collector can be run only at
+      well-defined instants in each thread.
+@end
+
+@fun void AEndBlocking()
+@desc Disallow blocking C operations in the current thread. This must be called
+      only after calling AAllowBlocking to enable the normal mode of operation
+      in the current thread.
+@end
+
+<p>Here is a short example of using these functions:
+
+@example
+  #include &lt;alore/alore.h&gt;
+  #include &lt;stdio.h&gt;
+
+  static AValue WriteFile(AThread *t, AValue *frame)
+  {
+      /* Note: Most error checking is left out for brevity. */
+      
+      char path[1024];
+      FILE *f;
+
+      AGetStr(t, frame[0], path, 1024);
+  
+      AAllowBlocking();
+      f = fopen(path, "w");
+      fprintf(f, "Hello\n");
+      fclose(f);
+      AEndBlocking();
+
+      return ANil;
+  }
+
+  A_MODULE(example, "example")
+      A_DEF("WriteFile", 1, 0, WriteFile)
+  A_END_MODULE()
+@end
+
+@h2 Miscellaneous functions
+
+@fun ABool ACheckInterrupt(AThread *t)
+@desc Return TRUE and raise @ref{InterruptException} if the user has recently
+      pressed Ctrl+C (or Ctrl+Break, depending on the operating system);
+      return FALSE otherwise. You should call this function
+      periodically in a long-running function or method invocation to enable
+      the user to interrupt the program. You should generally propagate the
+      exception to the caller when interrupted.
+@end
+
+<!-- IDEA: These are missing: AIsStandalone -->

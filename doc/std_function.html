@@ -1,0 +1,40 @@
+@head
+@module std
+@title Class <tt>std::Function</tt>
+@index Function
+
+<p>Instances of the <tt>Function</tt> type are functions (named or anonymous)
+  or bound methods. <tt>Function</tt> instances cannot be constructed using the
+  type constructor &#8212; new functions can be created using a global
+  function definition or an anonymous function expression, and bound methods
+  are created by reading a method member of an object.
+
+@see See sections @href{Call expressions}, @href{Member references},
+  @href{Anonymous functions} and @href{Function definitions} in the Alore
+  Language Reference for additional information.
+@end
+  
+@class Function
+@desc The <tt>Function</tt> type. <tt>Function</tt> objects can only be created
+      with a function definition, an anonymous function expression or by
+      accessing a bound method using the dot (<tt>.</tt>) operator.
+@end
+
+<h2>Operations</h2>
+
+@op function(...)
+@desc Calling is the primary operation supported by <tt>Function</tt> objects.
+      The related
+      function or method definition specifies the number of accepted arguments,
+      the behavior of the function and the return value, if any. Each
+      function call operation creates a new <i>invocation</i> of the function
+      with local variables and arguments whose values are independent from
+      every other invocation of the function.
+@end
+
+@op Str(function)
+@desc Return a string containing the fully qualified name of the
+      <tt>Function</tt> object.
+@end
+
+<!-- XXX == operator semantics -->

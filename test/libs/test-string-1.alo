@@ -1,0 +1,249 @@
+encoding latin1
+
+module libs
+
+import unittest
+import string
+import __testc
+import sys
+import runtime
+
+
+class StringSuite1 is Suite
+  -- Test IsSpace.
+  def testIsSpace()
+    Assert(IsSpace(" "))
+    Assert(IsSpace(Tab))
+    Assert(IsSpace(CR))
+    Assert(IsSpace(LF))
+    Assert(not IsSpace("\u0300"))
+    
+    var n = 0
+    for c in 0 to 256
+      if IsSpace(Chr(c))
+        n += 1
+      end
+    end
+    Assert(n == 4)
+  end
+  
+  -- Test IsLetter.
+  def testIsLetter()
+    Assert(IsLetter("a"))
+    Assert(IsLetter("b"))
+    Assert(IsLetter("z"))
+    Assert(IsLetter("A"))
+    Assert(IsLetter("Z"))
+    Assert(IsLetter("ä"))
+    Assert(IsLetter("Ö"))
+    Assert(IsLetter("\u012a"))
+    Assert(not IsLetter(" "))
+    Assert(not IsLetter("1"))
+    Assert(not IsLetter("#"))
+    Assert(not IsLetter("@"))
+    Assert(not IsLetter("["))
+    Assert(not IsLetter("`"))
+    Assert(not IsLetter("{"))
+    Assert(not IsLetter("_"))
+    Assert(not IsLetter("\uffff"))
+  end
+  
+  -- Test IsDigit.
+  def testIsDigit()
+    Assert(IsDigit("0"))
+    Assert(IsDigit("4"))
+    Assert(IsDigit("9"))
+    Assert(not IsDigit(" "))
+    Assert(not IsDigit("a"))
+    Assert(not IsDigit("A"))
+    Assert(not IsDigit("Ä"))
+    Assert(not IsDigit("\u012a"))
+    -- FIX what about other potential digits with codes > 255
+  end
+  
+  -- Test IsWordChar.
+  def testIsWordChar()
+    Assert(IsWordChar("a"))
+    Assert(IsWordChar("b"))
+    Assert(IsWordChar("z"))
+    Assert(IsWordChar("A"))
+    Assert(IsWordChar("Z"))
+    Assert(IsWordChar("ä"))
+    Assert(IsWordChar("Ö"))
+    Assert(IsWordChar("\u012a"))
+    Assert(IsWordChar("0"))
+    Assert(IsWordChar("4"))
+    Assert(IsWordChar("9"))
+    Assert(not IsWordChar(" "))
+    Assert(not IsWordChar("#"))
+    Assert(not IsWordChar("@"))
+    Assert(not IsWordChar("["))
+    Assert(not IsWordChar("`"))
+    Assert(not IsWordChar("{"))
+    Assert(not IsWordChar("_"))
+    Assert(not IsWordChar("\uffff"))
+  end
+  
+  -- Test literal constants.
+  def testConstants()
+    Assert(Ord(Tab) == 9)
+    Assert(Ord(LF) == 10)
+    Assert(Ord(CR) == 13)
+    if Platform == "windows"
+      Assert(Newline == CR + LF)
+    else
+      Assert(Newline == LF)
+    end
+  end
+  
+  -- Test IntStr.
+  def testIntStr()
+    AssertEqual(IntToStr(0, 10), "0")
+    AssertEqual(IntToStr(3, 10), "3")
+    AssertEqual(IntToStr(-5, 10), "-5")
+    AssertEqual(IntToStr(12345, 10), "12345")
+    AssertEqual(IntToStr(1234567890123456789012345678901234567890, 10), 
+                "1234567890123456789012345678901234567890")
+                
+    AssertEqual(IntToStr(256, 16), "100")
+    AssertEqual(IntToStr(-14, 2), "-1110")
+    
+    AssertEqual(IntToStr(12, 10, 4), "0012")
+    AssertEqual(IntToStr(-12, 10, 4), "-0012")
+    AssertEqual(IntToStr(1234, 10, 4), "1234")
+    AssertEqual(IntToStr(12345, 10, 4), "12345")
+    
+    AssertEqual(IntToStr(2**64, 16, 20), "00010000000000000000")
+    AssertEqual(IntToStr(2**64-1, 16, 20), "0000ffffffffffffffff")
+    AssertEqual(IntToStr(-2**64, 16, 20), "-00010000000000000000")
+    AssertEqual(IntToStr(-2**64+1, 16, 20), "-0000ffffffffffffffff")
+    
+    var ii = Int("abcdef0123456789", 16)
+    AssertEqual(IntToStr(ii, 16), "abcdef0123456789")
+    
+    for radix in 2 to 11
+      AssertEqual(IntToStr(radix - 1, radix), Chr(Ord("0") + radix - 1))
+    end
+    
+    for radix in 11 to 37
+      AssertEqual(IntToStr(radix - 1, radix), Chr(Ord("a") + radix - 11))
+    end
+    
+    AssertRaises(ValueError, IntToStr, (2, 1))
+    AssertRaises(ValueError, IntToStr, (2, 37))
+  end
+  
+  -- Test ExpandTabs for simple inputs.
+  def testExpandTabsBasic()
+    AssertEqual(ExpandTabs(""), "")
+    AssertEqual(ExpandTabs("x"), "x")
+    AssertEqual(ExpandTabs(CR), CR)
+    AssertEqual(ExpandTabs(LF), LF)
+    AssertEqual(ExpandTabs("x y"), "x y")
+    AssertEqual(ExpandTabs("x y" * 10000), "x y" * 10000)
+    AssertEqual(ExpandTabs(("x y" + LF) * 10000), ("x y" + LF) * 10000)
+  end
+  
+  -- Test normal usage of ExpandTabs.
+  def testExpandTabs()
+    AssertEqual(ExpandTabs(Tab), "        ")
+    AssertEqual(ExpandTabs(Tab + Tab + "x"), "                x")
+    AssertEqual(ExpandTabs("x" + Tab), "x       ")
+    AssertEqual(ExpandTabs("x" + Tab + Tab + "x"), "x               x")
+    AssertEqual(ExpandTabs("1234567" + Tab), "1234567 ")
+    AssertEqual(ExpandTabs("12345678" + Tab), "12345678        ")
+  end
+  
+  -- Test ExpandTabs with different tab sizes.
+  def testExpandWithDifferentTabSizes()
+    AssertEqual(ExpandTabs(Tab + "xxx" + Tab + "y", 4),
+                           "    xxx y")
+    AssertEqual(ExpandTabs(Tab + "xxx" + Tab + "y", 1),
+                           " xxx y")
+    AssertEqual(ExpandTabs(Tab + "xxx" + Tab + "y", 0),
+                           "xxxy")
+  end
+  
+  -- Test ExpandTabs with multiline strings.
+  def testExpandMultiLine()
+    AssertEqual(ExpandTabs("x" + LF + Tab + "y" + Tab, 4),
+                           "x" + LF + "    y   ")
+    AssertEqual(ExpandTabs(Tab + CR + CR + Tab + "y" + Tab, 4),
+                           "    " + CR + CR + "    y   ")
+  end
+  
+  -- IDEA: Test errors.
+end
+
+
+def SandSS(s, w)
+  if w == 1
+    return [s, SS(s)]
+  else
+    return [W(s), WSS(s)]
+  end
+end
+
+
+def W(s)
+  var ss = Conv(s)
+  Assert(IsWideStr(ss))
+  Assert(not IsSubStr(ss))
+  return ss
+end
+
+
+private def Conv(s)
+  var ss = ""
+  for i in 0 to s.length()
+    var c = s[i]
+    if c >= "A" and c <= "Z"
+      ss += Chr(Ord(c) + 1024)
+    else
+      ss += c
+    end
+  end
+  return ss
+end
+
+
+def WSS(s)
+  var ss = Conv(s)
+  ss = ("\uffff123" + ss + "45 7")[4:4 + ss.length()]
+  Assert(IsSubStr(ss))
+  Assert(IsWideStr(ss))
+  return ss
+end
+
+
+def SS(s)
+  var ss = ("1234" + s + "56 8")[4:4 + s.length()]
+  Assert(IsSubStr(ss))
+  Assert(not IsWideStr(ss))
+  return ss
+end
+
+
+def S(s)
+  Assert(not IsSubStr(s))
+  Assert(not IsWideStr(s))
+  return s
+end
+
+
+def SandSSFunc(w)
+  if w == 1
+    return [S, SS]
+  else
+    return [W, WSS]
+  end
+end
+
+
+def SorWS(s, w)
+  if w == 1
+    return s
+  else
+    return W(s)
+  end
+end

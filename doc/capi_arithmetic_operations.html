@@ -1,0 +1,41 @@
+@head
+@title Arithmetic operations
+
+<p>These API functions perform operations that are equivalent to using
+Alore operators such as +, / and **. Therefore they support multiple
+operand types and operator overloading, in a similar fashion to the Alore
+operators.
+
+<p>All of these functions may raise direct or normal exceptions.
+
+@fun AValue AAdd(AThread *t, AValue a, AValue b)
+@desc Return the result of a + b.
+@end
+
+@fun AValue ASub(AThread *t, AValue a, AValue b)
+@desc Return the result of a - b.
+@end
+
+@fun AValue AMul(AThread *t, AValue a, AValue b)
+@desc Return the result of a * b.
+@end
+
+@fun AValue ADiv(AThread *t, AValue a, AValue b)
+@desc Return the result of a / b.
+@end
+
+@fun AValue AIntDiv(AThread *t, AValue a, AValue b)
+@desc Return the result of a div b.
+@end
+
+@fun AValue AMod(AThread *t, AValue a, AValue b)
+@desc Return the result of a mod b.
+@end
+
+@fun AValue APow(AThread *t, AValue a, AValue b)
+@desc Return the result of a**b.
+@end
+
+@fun AValue ANeg(AThread *t, AValue a)
+@desc Return the result of -a.
+@end

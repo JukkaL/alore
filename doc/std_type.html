@@ -1,0 +1,58 @@
+@head
+@module std
+@title Class <tt>std::Type</tt>
+@index Type
+
+<p>Instances of the <tt>Type</tt> class represent types (classes or
+interfaces). They are primarily used for constructing
+objects (class instances) and for
+testing the type of objects. The <tt>Type</tt> constructor cannot be used to
+build new classes. New types can only be defined using the <tt>class</tt>
+and <tt>interface</tt> constructs.
+
+@class Type
+@desc The <tt>Type</tt> type. This object cannot used to build new classes.
+@end
+
+<!-- -->
+@see @ref{reflect::TypeOf} allows querying the class of arbitrary objects.
+@end
+
+<h2>Methods</h2>
+
+@fun members()
+@desc Return an array of all defined public member names for the type. The
+      order of the names is arbitrary. The array includes both members defined
+      directly in the type and any inherited members.
+      <b>Not implemented yet</b>
+@end
+
+@fun supertype()
+@desc Return the supertype of the type, or <tt>nil</tt> if the type has no
+      supertype.
+@end
+
+<h2>Operations</h2>
+
+<p>Type objects support the following operations:
+
+@op type(...)
+@desc Construct an instance of the type by calling the type object. This
+  operation is only valid for type objects that represent classes. The
+  arguments are passed to the <tt>create</tt> method of the class.
+  @note Some primitive types do not support directly calling the type object.
+    Instances of these classes must be constructed using other means, such as
+    by using the
+    <tt>to</tt> operator for creating @ref{Range} objects.
+  @end
+@end
+
+@op x is type
+@desc Return a boolean indicating whether <tt>x</tt> is an instance of 
+  <tt>type</tt> or a subtype of <tt>type</tt>. If <tt>x</tt> is <tt>nil</tt>,
+  return <tt>False</tt>.
+@end
+
+@op Str(type)
+@desc Return a string containing the fully qualified name of the type.
+@end

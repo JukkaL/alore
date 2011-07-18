@@ -1,0 +1,150 @@
+@head
+@title Defining functions
+
+<p>Functions are defined in C modules using macros A_DEF, A_DEF_OPT and
+A_DEF_VARARG. The correct macro depends on the kinds of arguments the function
+accepts.
+
+@h2 Implementing C functions
+
+<p>The type signature of the C function that implements a function in a module
+must be AValue &lt;func&gt;(AThread *, AValue *). The final argument, named
+frame by convention, is a pointer to the function frame, and it may contain the
+following items, starting at index 0:
+
+@example
+  frame[0]: Arg 1 (first argument, may be ADefault if optional and not provided by the caller)
+  frame[1]: Arg 2 (second argument, may be ADefault if optional and not provided by the caller)
+  ...
+  frame[n-1]: Arg n (last argument, may be ADefault if optional not provided by the caller)
+  frame[n]: VarArgs (optionally an Array containing the rest of the arguments)
+  frame[n+1]: Temp 1 (first temporary location)
+  ...
+  frame[n+m]: Temp m (last temporary location)
+@end
+
+<p>VarArgs is included only in functions defined with A_DEF_VARARG. If VarArgs
+is missing, the index of the first temporary location is n.
+Arguments and temporary locations may also be missing completely (n = 0 or
+m = 0).
+
+<p>If the C function returns any ordinary AValue, it is interpreted as the
+return value of the function. Additionally, the following special value can
+be returned:
+
+<ul>
+  <li>@ref{AError} signals a raised exception. In this case, an unhandled
+    exception must just have been raised in the function (or any function or
+    method called by the function).
+</ul>
+
+<p>Exceptions can also be raised as <i>direct exceptions</i> in a C function.
+See section @href{Exceptions} for details.
+
+@h2 Defining functions with a fixed number of arguments
+
+@fun A_DEF(name, numArgs, numTemps, cFunc)
+@desc Define a function that accepts a fixed number of arguments.
+      The arguments include the short name (string) of the function,
+      visible to Alore code, the number of arguments the function expects,
+      the number of additional temporary items in the frame, and
+      a reference to the C function that implements the function.
+
+<p>Here is an example of using A_DEF:
+
+@example
+  static AValue DoExampleImplementation(AThread *t, AValue *frame)
+  {
+      /* frame[0] is the only argument.
+         frame[1] and frame[2] are temporary locations, initialized to some
+           valid value (for example, AZero).
+         Other frame locations must not be used! */
+      return ANil;
+  }
+
+  A_MODULE(example, "example")
+      A_DEF("DoExample", 1, 2, DoExampleImplementation)
+  A_END_MODULE()
+@end
+@end
+
+@h2 Defining functions with a variable number of arguments
+
+@fun A_DEF_OPT(name, minArgs, maxArgs, numTemps, cFunc)
+@desc Define a function that accepts a variable number of arguments, with a
+      fixed maximum. MinArgs and maxArgs define the minimum and maximum
+      number of arguments the function accepts. The other arguments are
+      identical to A_DEF.
+
+<p>The frame of the implementation function contains argument slots for each
+possible argument. If there are fewer actual arguments than the maximum, the
+slots with missing values will initialized with the value ADefault. Here is an
+example of using A_DEF_OPT:
+
+@example
+  static AValue DoExampleImplementation(AThread *t, AValue *frame)
+  {
+      /* frame[0] is the first argument. It is always defined (not ADefault). */
+      if (AIsDefault(frame[1])) {
+          /* The second argument was omitted */
+      } else {
+         /* The second argument was given */
+      }
+      /* frame[2] is the temporary location */
+      return ANil;
+  }
+
+  A_MODULE(example, "example")
+      /* This is analogous to this Alore definition:
+           def DoExample(arg1, arg2 = Default)
+         (if Default is defined somewhere) */
+      A_DEF_OPT("DoExample", 1, 2, 1, DoExampleImplementation)
+  A_END_MODULE()
+@end
+@end
+
+@fun A_DEF_VARARG(name, minArgs, maxOrdinary, numTemps, cFunc)
+@desc This macro can be used to define a function that takes an
+      arbitrary number of arguments. The arguments of this macro are the same
+      as for A_DEF_OPT, but the frame contains an additional argument after
+      the ordinary arguments that is an Array object containing the rest of the
+      arguments, if any. I.e. the maximum is only the maximum number of
+      arguments stored directly in the frame.
+
+<p>Here is an example of using A_DEF_VARARG:
+
+@example
+  static AValue DoExampleImplementation(AThread *t, AValue *frame)
+  {
+      int i;
+      /* frame[0] is the first argument. It is always defined. */
+      if (AIsDefault(frame[1])) {
+          /* The second argument was omitted */
+      } else {
+         /* The second argument was given */
+      }
+      /* frame[2] is always an Array object containing the rest of the
+         arguments (potentially empty). Loop through the arguments. */
+      for (i = 0; i < AArrayLen(frame[2]); i++) {
+          frame[3] = AArrayItem(frame[2], i);
+          /* frame[3] refers to the i'th argument. frame[3] is the temporary
+             location. */
+      }
+      return ANil;
+  }
+
+  A_MODULE(example, "example")
+      /* This is analogous to this Alore definition:
+           def DoExample(arg1, arg2 = Default, *rest)
+         (if Default is defined somewhere) */
+      A_DEF_VARARG("DoExample", 1, 2, 1, DoExampleImplementation)
+  A_END_MODULE()
+@end
+@end
+
+@h2 Main function
+
+<p>Modules defined using the C API can have a Main function that is called
+to initialize the module. It is defined like an ordinary function, but it
+is never visible outside the module. The Main function must take no arguments,
+but it can allocate any number of temporary locations in the frame.

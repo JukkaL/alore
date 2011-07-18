@@ -1,0 +1,10 @@
+﻿#!/usr/local/bin/alore
+
+-- This is a file with both a UTF-8 byte order mark chracter and a #! comment.
+
+encoding utf8
+
+def Main()
+end
+
+const Ss = ""

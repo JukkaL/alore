@@ -1,0 +1,75 @@
+module libs
+
+import unittest
+import __testc
+
+
+class TestCSuite is Suite
+  def testTestMembers()
+    AssertEqual(Members(Empty()), ["create", "_eq"])
+    AssertEqual(Members(MemberTest()),
+      ("variable",
+       "constant",
+       "create",
+       "_eq",
+       "method",
+       "property"))
+    AssertEqual(Members(Inherit()),
+      ("variable",
+       "constant",
+       "create",
+       "_eq",
+       "method",
+       "new1",
+       "new2",
+       "property"))
+  end
+  
+  
+end
+
+
+private class Empty
+end
+
+
+private class MemberTest
+  var variable
+  const constant
+  
+  def method()
+  end
+  
+  def create()
+  end
+  
+  def property
+  end
+  
+  def property = n
+  end
+  
+  private var priv1
+  private const priv2
+  
+  private def priv3()
+  end
+  
+  private def priv4
+  end
+  
+  private def priv4 = n
+  end
+end
+
+
+private class Inherit is MemberTest
+  def method()
+  end
+  
+  def new1()
+  end
+  
+  def new2()
+  end
+end

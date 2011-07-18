@@ -1,0 +1,87 @@
+@head
+@module std
+@title Class <tt>std::Tuple</tt>
+@index Tuple
+
+@class-hidden Tuple
+
+<p>Instances of the <tt>Tuple</tt> class are fixed-length, immutable sequences
+of values.
+
+<p><tt>Tuple</tt> instances are constructed using the comma operator. By
+convention, tuple expressions are often placed within parentheses:
+
+@example
+  (1, 2, "x")    -- 3-tuple with items 1, 2 and "x"
+  1, 2, "x"      -- Equivalent to above, but without parentheses
+@end
+
+<p>There is special syntax for constructing an empty tuple and a single-item
+tuple:
+
+@example
+  ()             -- An empty tuple
+  (True,)        -- A single-item tuple
+@end  
+
+<h2><tt>Tuple</tt> methods</h2>
+
+@fun length()
+@desc Return the length of the tuple.
+@end
+
+@fun iterator()
+@desc Return an iterator object that can be used to sequentially iterate over
+  the tuple items, starting from the first item.
+@end
+
+<h2><tt>Tuple</tt> operations</h2>
+
+<p><tt>Tuple</tt> objects support the following operations:
+
+@op tuple[n]
+@desc Access tuple items with the indexing
+      operator. The index <tt>n</tt> must an integer, and it can be negative.
+      Raise the @ref{IndexError} exception if the index is not within bounds.
+      
+      @example
+        var a = ("a", 1, True)
+        a[0]        -- "a"
+        a[-1]       -- True
+      @end
+@end
+
+@op tuple == x, tuple &lt; x
+@desc Tuples can be compared for equality and for lexicographic order. All the
+  basic comparison operators are supported: ==, !=, &lt;, &lt;=, &gt;
+  and &gt;=. Tuples can be compared with arrays, and an array and a tuple
+  with the same items are equivalent.
+@end
+
+@op x, y, z = tuple
+@desc Tuple objects can be expanded in a multi-assignment or a variable 
+      definition. The number of items
+      in the lvalue must equal the length of the tuple.
+      @example
+        var a = (1, 3, "x")
+        var x, y, z = a    -- x gets 1, y gets 3, z gets "x"
+      @end
+@end
+
+@op for x in tuple
+@desc Tuple items can be enumerated with a for loop, starting from the first
+      item.
+@end
+
+@op x in tuple
+@desc Test whether a tuple contains a specific object. Return a boolean value.
+      The test is not recursive, i.e., tuples within tuples are not searched.
+@end
+
+@op Str(tuple)
+@desc Return a string representation of the tuple contents.
+@end
+
+@op Hash(tuple)
+@desc Return the hash value of a tuple.
+@end

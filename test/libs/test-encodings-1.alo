@@ -1,0 +1,337 @@
+encoding latin1 
+
+module libs
+
+import unittest
+import encodings
+
+
+const Utf8Cases = [
+  ("", ""),
+  ("foo bar", "foo bar"),
+  ("\u007f", "\x7f"),
+  ("<\u0080>", "<\xc2\x80>"),
+  ("<\u0100>", "<\xc4\x80>"),
+  ("<\u07ff>", "<\xdf\xbf>"),
+  ("<\u1000>", "<\xe1\x80\x80>"),
+  ("<\u0800>", "<\xe0\xa0\x80>"),
+  ("<\uffff>", "<\xef\xbf\xbf>"),
+  ("\u05b9\u3c81", "\xd6\xb9\xe3\xb2\x81"),
+]
+
+const Utf16LeCases = [
+  ("",  ""),
+  ("a", "a\x00"),
+  ("abc", "a\x00b\x00c\x00"),
+  ("\u1234", "\x34\x12"),
+  (" \ufedc", " \x00\xdc\xfe"),
+]
+
+const Utf16BeCases = [
+  ("",  ""),
+  ("a", "\x00a"),
+  ("abc", "\x00a\x00b\x00c"),
+  ("\u1234", "\x12\x34"),
+  (" \ufedc", "\x00 \xfe\xdc"),
+]
+
+-- Test cases for various 8-bit codecs. Only a few sample characters are 
+-- tested.
+const EightBitInfo = [
+  (Iso8859_2, "\u0080\u0094\u0106\u0110\u02d9" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_3, "\u0080\u0094\u00ca\u0120\u02d9" : "\x80\x94\xca\xd5\xff", 
+    "\xf0"),
+  (Iso8859_4, "\u0080\u0094\u00c6\u0110\u02d9" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_5, "\u0080\u0094\u0426\u0430\u045f" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_6, "\u0080\u0094\u0646\u0650\u0652" : "\x80\x94\xe6\xf0\xf2", 
+    "\xff"),
+  (Iso8859_7, "\u0080\u20ac\u039a\u03a5\u03ce" : "\x80\xa4\xca\xd5\xfe", 
+    "\xff"),
+  (Iso8859_8, "\u0080\u0094\u05d7\u05e1\u200f" : "\x80\x94\xe7\xf1\xfe", 
+    "\xff"),
+  (Iso8859_9, "\u0080\u0094\u00c6\u011e\u00ff" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_10, "\u0080\u0094\u00c6\u00d0\u0138" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_11, "\u0080\u00a0\u0e01\u0e51\u0e3f" : "\x80\xa0\xa1\xf1\xdf", ""),
+  (Iso8859_13, "\u0080\u0094\u0118\u0160\u2019" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_14, "\u0080\u0094\u00c6\u0174\u00ff" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_15, "\u0080\u0094\u00c6\u00d0\u00ff" : "\x80\x94\xc6\xd0\xff", ""),
+  (Iso8859_16, "\u0080\u00a0\u010c\u00ff\u0218" : "\x80\xa0\xb2\xff\xaa", ""),
+  
+  (Windows1250, "\u20ac\u0160\u02c7\u0119" : "\x80\x8a\xa1\xea", ""),
+  (Windows1251, "\u20ac\u0402\u0456\u044f" : "\x88\x80\xb3\xff", ""),
+  (Windows1252, "\u20ac\u0160\u00c5\u00ff" : "\x80\x8a\xc5\xff", ""),
+  
+  (Cp437, "\u256a\u00c4\u2591\u03a9" : "\xd8\x8e\xb0\xea", ""),
+  (Cp850, "\u00cf\u00c4\u2591\u00db" : "\xd8\x8e\xb0\xea", ""),
+  
+  (Koi8R, "\u2565\u2264\u0401\u0439" : "\xb7\x98\xb3\xca", ""),
+  (Koi8U, "\u0407\u2557\u0401\u0439" : "\xb7\xa8\xb3\xca", "")]
+
+
+class CodecsSuite is Suite
+  def testUtf8Encode()
+    for src, dst in Utf8Cases
+      assertEncode(src, Utf8, dst)
+    end
+  end
+  
+  def testUtf8Decode()
+    for src, dst in Utf8Cases
+      assertDecode(dst, Utf8, src)
+    end
+  end
+  
+  def testUtf8PartialDecode()    
+    var c = Utf8()
+    AssertEqual(c.decode("\u00c2"), "")
+    AssertEqual(c.unprocessed(), "\u00c2")
+    AssertEqual(c.decode("\u0080"), "\u0080")
+    AssertEqual(c.unprocessed(), "")
+    
+    c = Utf8()
+    AssertEqual(c.decode("\u00c2"), "")
+    AssertEqual(c.unprocessed(), "\u00c2")
+    AssertEqual(c.decode("\u0080\u00c2"), "\u0080")
+    AssertEqual(c.unprocessed(), "\u00c2")
+    
+    assertPartialDecode(Utf8, "", "\xc2", "\x80")
+    assertPartialDecode(Utf8, "", "\xe0", "\xa0", "\x80")
+    assertPartialDecode(Utf8, "<", "\xe0", "\xa0", "\x80>")
+    assertPartialDecode(Utf8, "<", "\xe0", "\xa0\x80>")
+    assertPartialDecode(Utf8, "<", "\xe0\xa0", "\x80>")
+  end
+  
+  def testUtf8RoundTrip()
+    for i in 0 to 8192
+      AssertEqual(Decode(Encode(Chr(i), Utf8), Utf8), Chr(i))
+    end
+  end
+  
+  def testUtf8Strictness()
+    var c = Utf8(Strict)
+    AssertRaises(DecodeError, c.decode, ["\u0080"])
+    
+    c = Utf8(Unstrict)
+    AssertEqual(c.decode("\u0080"), "\ufffd")
+    AssertEqual(c.unprocessed(), "")
+    AssertEqual(c.decode("\u00c2a"), "\ufffd")
+    AssertEqual(c.unprocessed(), "")
+  end
+  
+  def testUtf8DecodeErrors()    
+    assertDecodeError(Utf8, "\x80", "\ufffd")
+    assertDecodeError(Utf8, "<\x80>", "<\ufffd>")
+    assertDecodeError(Utf8, "<\x80\x80>", "<\ufffd\ufffd>")
+    assertDecodeError(Utf8, "<\xc2.>", "<\ufffd>")
+    assertDecodeError(Utf8, "<\xc2\xc2>", "<\ufffd>")
+    assertDecodeError(Utf8, "<\xe0..>", "<\ufffd>")
+    assertDecodeError(Utf8, "<\xe0\xa0.>", "<\ufffd>")
+    assertDecodeError(Utf8, "<\xe0\xa0\xc2>", "<\ufffd>")
+    
+    assertDecodeError(Utf8, "<\xc1\x80>", "<\ufffd\ufffd>")
+    assertDecodeError(Utf8, "<\xc1\xbf>", "<\ufffd\ufffd>")
+    assertDecodeError(Utf8, "<\xe0\x80\x80>", "<\ufffd>")
+    assertDecodeError(Utf8, "<\xe0\x9f\x80>", "<\ufffd>")
+    
+    assertDecodeError(Utf8, "..\u0100..", "..\ufffd..")
+  end
+  
+  def testLatin1()
+    AssertEqual(Latin1, Iso8859_1)
+    assertEncode("föö bär", Latin1, "föö bär")
+    assertEncode(WSS("0123456789"), Latin1, "0123456789")
+    assertDecode("föö bär", Latin1, "föö bär")    
+    assertDecode(WSS("0123456789"), Latin1, "0123456789")
+  end
+  
+  def testLatin1Errors()
+    var c = Latin1(Strict)
+    AssertRaises(EncodeError, c.encode, ["..\u0100.."])
+    AssertRaises(DecodeError, c.decode, ["..\u0100.."])
+    
+    c = Latin1(Unstrict)
+    AssertEqual(c.encode("..\u0100.."), "..?..")
+    AssertEqual(c.decode("..\u0100.."), "..\ufffd..")
+  end
+  
+  def testUtf16Le()
+    for src, dst in Utf16LeCases
+      assertEncode(src, Utf16Le, dst)
+      assertDecode(dst, Utf16Le, src)
+    end
+    
+    assertPartialDecode(Utf16Le, "", "\xc2", "\x80")
+    assertPartialDecode(Utf16Le, "", "\xc2", "\x00")
+    assertPartialDecode(Utf16Le, "a\x00", "\xc2", "\x00b\x00")
+  end
+  
+  def testUtf16Be()
+    for src, dst in Utf16BeCases
+      assertEncode(src, Utf16Be, dst)
+      assertDecode(dst, Utf16Be, src)
+    end
+    
+    assertPartialDecode(Utf16Be, "", "\xc2", "\x80")
+    assertPartialDecode(Utf16Be, "", "\xc2", "\x00")
+    assertPartialDecode(Utf16Be, "\x00a", "\x00", "\xc2\x00b")
+  end
+  
+  def testUtf16()
+    -- Only a simple test; the Utf16 class is equivalent to either Utf16Le or
+    -- Utf16Be.
+    var c = Utf16()
+    Assert(c.encode("x") in ["\u0000x", "x\u0000"])
+  end
+  
+  def testDecode()
+    for src, dst in Utf8Cases
+      AssertEqual(Decode(unhexify(dst), Utf8), src)
+    end
+    
+    AssertRaises(DecodeError, Decode, ("\u00c2", Utf8))
+    AssertRaises(DecodeError, Decode, ("\u0080", Utf8))
+    AssertRaises(DecodeError, Decode, ("\u00c2", Utf8, Strict))
+    AssertRaises(DecodeError, Decode, ("\u0080", Utf8, Strict))
+    
+    AssertEqual(Decode("\u00e0\u00a0", Utf8, Unstrict), "\ufffd")
+    AssertEqual(Decode("123\u00c2", Utf8, Unstrict), "123\ufffd")
+    AssertEqual(Decode(".\u0080.", Utf8, Unstrict), ".\ufffd.")
+  end
+  
+  def testStrDecode()
+    for src, dst in Utf8Cases
+      AssertEqual(unhexify(dst).decode(Utf8), src)
+    end
+    
+    AssertRaises(DecodeError, "\u00c2".decode, [Utf8])
+    AssertRaises(DecodeError, "\u0080".decode, [Utf8])
+    AssertRaises(DecodeError, "\u00c2".decode, [Utf8, Strict])
+    AssertRaises(DecodeError, "\u0080".decode, [Utf8, Strict])
+    
+    AssertEqual("\u00e0\u00a0".decode(Utf8, Unstrict), "\ufffd")
+    AssertEqual("123\u00c2".decode(Utf8, Unstrict), "123\ufffd")
+    AssertEqual(".\u0080.".decode(Utf8, Unstrict), ".\ufffd.")
+  end
+  
+  def testEncode()
+    for src, dst in Utf8Cases
+      AssertEqual(Encode(src, Utf8), unhexify(dst))
+    end
+    
+    AssertRaises(EncodeError, Encode, ("\u0100", Latin1))
+    AssertRaises(EncodeError, Encode, ("\u0100", Latin1, Strict))
+
+    AssertEqual(Encode("\u0100", Latin1, Unstrict), "?")
+  end
+  
+  def testStrEncode()
+    for src, dst in Utf8Cases
+      AssertEqual(src.encode(Utf8), unhexify(dst))
+    end
+    
+    AssertRaises(EncodeError, "\u0100".encode, [Latin1])
+    AssertRaises(EncodeError, "\u0100".encode, [Latin1, Strict])
+
+    AssertEqual("\u0100".encode(Latin1, Unstrict), "?")
+  end
+  
+  def testAliases()
+    AssertEqual(Iso8859_1, Latin1)
+    AssertEqual(Iso8859_2, Latin2)
+    AssertEqual(Iso8859_3, Latin3)
+    AssertEqual(Iso8859_4, Latin4)
+    AssertEqual(Iso8859_9, Latin5)
+    AssertEqual(Iso8859_10, Latin6)
+    AssertEqual(Iso8859_13, Latin7)
+    AssertEqual(Iso8859_14, Latin8)
+    AssertEqual(Iso8859_15, Latin9)
+    AssertEqual(Iso8859_16, Latin10)
+  end
+  
+  def testAscii()
+    for c in 0 to 128
+      var ch = Chr(c)
+      AssertEqual(Encode(ch, Ascii), ch)
+      AssertEqual(Decode(ch, Ascii), ch)
+    end
+    AssertRaises(EncodeError, Encode, ("\u0080", Ascii))
+    AssertRaises(DecodeError, Decode, ("\u0080", Ascii))
+    for c in 128 to 256
+      var ch = Chr(c)
+      AssertEqual(Encode(ch, Ascii, Unstrict), "?")
+      AssertEqual(Decode(ch, Ascii, Unstrict), "\ufffd")
+    end
+  end
+  
+  def test8BitCodecs()
+    for codec, enc, inv in EightBitInfo
+      var s = "\u0000foo bar|A\u007f"
+      AssertEqual(Encode(s, codec), s)
+      AssertEqual(Decode(s, codec), s)
+      var dst, src = enc.left, enc.right
+      src = unhexify(src)
+      dst = unhexify(dst)
+      AssertEqual(Decode(src, codec), dst)
+      AssertEqual(Encode(dst, codec), src)
+      if inv != ""
+        var i = unhexify(inv)
+        AssertEqual(Decode(i, codec, Unstrict), "\ufffd")
+        AssertRaises(DecodeError, Decode, (i, codec))
+      end
+      AssertEqual(Encode("\u9abc", codec, Unstrict), "?")
+      AssertRaises(EncodeError, Encode, ("\u9abc", codec))
+    end
+  end
+  
+  private def assertEncode(src, codec, dst)
+    var c = codec()
+    AssertEqual(c.encode(src), unhexify(dst))
+  end
+  
+  private def assertDecode(src, codec, dst)
+    var c = codec()
+    AssertEqual(c.decode(unhexify(src)), dst)
+    AssertEqual(c.unprocessed(), "")
+  end
+  
+  private def assertPartialDecode(codec, fixed, *a)
+    for s in [Strict, Unstrict]
+      var c = codec(s)
+      var c2 = codec(s)
+      AssertEqual(c.decode(unhexify(fixed + a[0])), c2.decode(unhexify(fixed)))
+      var unp = unhexify(a[0])
+      AssertEqual(c.unprocessed(), unp)    
+      for i in 1 to a.length() - 1
+        unp += unhexify(a[i])
+        AssertEqual(c.decode(unhexify(a[i])), "")
+        AssertEqual(c.unprocessed(), unp)
+      end
+      var total = ""
+      for x in a
+        total += unhexify(x)
+      end
+      AssertEqual(c.decode(unhexify(a[a.length() - 1])), c2.decode(total))
+      AssertEqual(c.unprocessed(), "")
+    end
+  end
+  
+  private def assertDecodeError(codec, src, dst)
+    AssertRaises(DecodeError, Decode, (unhexify(src), Utf8))
+    AssertEqual(Decode(unhexify(src), Utf8, Unstrict), dst)
+  end
+    
+  private def unhexify(s)
+    var s2 = ""
+    var i = 0
+    while i < s.length()
+      if s[i] == "\" and s[i + 1] == "x"
+        s2 += Chr(Int(s[i + 2:i + 4], 16))
+        i += 4
+      else
+        s2 += s[i]
+        i += 1
+      end
+    end
+    return s2
+  end
+end

@@ -1,0 +1,6 @@
+﻿encoding ascii
+
+-- File with a BOM and ASCII encoding declaration.
+
+def Main()
+end

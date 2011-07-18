@@ -1,0 +1,141 @@
+module iohelpers
+
+import io
+import string
+import __testc
+
+
+const FileName = "TEMP"
+
+const LineSeparators = (LF, CR, CR + LF)
+
+
+const InputModes = ((Input, Buffered),
+		    (Input, LineBuffered),
+		    (Input, Unbuffered))
+		    
+const OutputModes = ((Output, Buffered),
+                     (Output, LineBuffered),
+                     (Output, Unbuffered))
+
+const NumNarrowStr = 6
+const NumNarrowRealStr = 5
+const NumStr = 10
+
+
+def GetStr(i)
+  if i == 1
+    return ""
+  elif i == 2
+    return "a"
+  elif i == 3
+    return "aapeli"
+  elif i == 4
+    return NarrowSubStr()
+  elif i == 5
+    return LongNarrowStr()
+  elif i == 6
+    return 1023
+  elif i == 7
+    return Chr(999)
+  elif i == 8
+    return Chr(800) + "hup" + Chr(801)
+  elif i == 9
+    return WideSubStr()
+  elif i == 10
+    return LongWideStr()
+  end
+end
+
+
+const NumNewlineStr = 8
+
+
+def GetNewlineStr(i, sep)
+  if i == 1
+    return sep
+  elif i == 2
+    return (Chr(300) + sep)[1:sep.length() + 1]
+  elif i == 3
+    -- Narrow string
+    return "abc" + sep + "xyz"
+  elif i == 4
+    -- Narrow substring
+    return ("abcde" + sep + "1234567890")[1:12]
+  elif i == 5
+    -- Long narrow substring
+    return ("abcde" * 50 + sep + "abcdefg" * 50)[1:500]
+  elif i == 6
+    -- Wide string
+    return Chr(300) + sep + Chr(400)
+  elif i == 7
+    -- Wide substring
+    return ("abcde" + Chr(300) + sep + "xyz")[1:9]
+  elif i == 8
+    -- Long wide substring
+    return ("abcde" * 50 + Chr(300) + sep + "abcdefg" * 50)[1:500]
+  end
+end
+
+
+def NarrowSubStr()
+  var s = ""
+  for i in 32 to 256
+    s += Chr(i)
+  end
+  s = s[19:200]
+  if not IsSubStr(s) or IsWideStr(s)
+    raise Exception("not substring")
+  end
+  return s
+end
+
+
+def WideSubStr()
+  var s = ""
+  for i in 10000 to 10300
+    s += Chr(i)
+  end
+  s = s[19:250]
+  if not IsSubStr(s) or not IsWideStr(s)
+    raise Exception("not substring")
+  end
+  return s
+end
+
+
+def LongNarrowStr()
+  return "abcdefghijklmnopqrstuvwxyz" * 200
+end
+
+
+def LongWideStr()
+  var s = ""
+  for i in 10000 to 10025
+    s += Chr(i)
+  end
+  return s * 100
+end
+
+
+private const Hex = "0123456789abcdef"
+
+
+def WriteEsc(s)
+  for i in 0 to s.length()
+    if Ord(s[i]) >= 32 and Ord(s[i]) < 127
+      Write(s[i])
+    else
+      Write("\u")
+      var x = ""
+      var k = Ord(s[i])
+      for j in 0 to 4
+        x = Hex[k mod 16] + x
+        k = k div 16
+      end
+      Write(x)
+    end
+  end
+end
+
+

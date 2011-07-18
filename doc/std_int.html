@@ -1,0 +1,135 @@
+@head
+@module std
+@title Class <tt>std::Int</tt>
+@index Int
+
+<p>Instances of the <tt>Int</tt> class are integers. Each integer object is
+either negative, zero or positive. Their range is essentially unlimited: they
+can represent both very large and very small integers with thousands of digits.
+
+<p>Integer literals and arithmetic
+operations are the most common ways of constructing integer objects.
+Besides arithmetic, integers are also used for indexing strings and arrays.
+
+@fun Int(x[, base])
+@desc Construct an object of the <tt>Int</tt> type. Call the <tt>_int()</tt>
+    method of the first argument and return a value equal to the result,
+    provided that it is an integer. Of the primitive types, <tt>Str</tt> and 
+    <tt>Float</tt> objects provide an <tt>_int</tt> method. Float arguments are
+    converted to integers by truncating any fractions. String arguments may
+    contain optional blank and tab characters before and after the number,
+    and the number must be in base 10 (decimal) by default.
+    
+    <p>The <tt>base</tt> argument is only valid for conversions from strings.
+    It specifies the base of the string, overriding the default base 10. 
+    Valid values are from 2 to 36, inclusive. Digit values greater than 9 are 
+    represented as letters from "a" to "z", such that "a" or "A" is 10, "b" or 
+    "B" is 11, etc.
+   
+    @see @ref{string::IntToStr} can be used to convert integers to strings in
+      different bases.
+    @end
+@end
+
+<!-- -->
+@see @ref{Float} objects also define operations that accept integer operands.
+      For example, 1.5 + 2 evaluates to 3.5, as expected.
+@end
+
+<h2>Operations</h2>
+
+<p><tt>Int</tt> objects support the following operations (<tt>n</tt> below
+refers to an <tt>Int</tt> value):
+
+@op n + x
+@op n * x
+@desc Perform an addition or multiplication operation. If <tt>x</tt> is an
+  integer,
+  the result is also an integer, and if <tt>x</tt> is a float,
+  the result is a float. If <tt>x</tt> is neither an integer or a float,
+  return <tt>x + n</tt> (or <tt>x * n</tt> for a multiplication operation)
+  instead.
+@end
+
+@op n - x
+@desc Perform a subtraction operation. If <tt>x</tt> is an integer,
+  the result is also an integer, and if <tt>x</tt> is a float,
+  the result is a float.
+@end
+
+@op n / x
+@desc Perform a division operation. The right operand <tt>x</tt> may be an
+  integer or a float. The result will always be a float.
+@end
+
+@op n div x
+@desc Return <tt>n</tt> divided by <tt>x</tt>, rounded down to the nearest
+      integer. If <tt>x</tt> is an integer, the result is an integer,
+      and if <tt>x</tt> is a float, the result is a float.
+@end
+
+@op n mod x
+@desc Perform a modulus operation. The result is chosen so that
+      (<tt>n div x) * x + n mod x</tt> == <tt>n</tt>
+      (the equality is only
+      approximate for a floating point operand <tt>x</tt>). If <tt>x</tt> is
+      an integer, the result is an integer, and if <tt>x</tt> is a
+      float, the result is a float.
+      @example
+        7 div 3    -- 2
+        -4 div 3   -- -2
+      @end
+@end
+
+@op n ** x
+@desc Return <tt>n</tt><sup><tt>x</tt></sup>, i.e., <tt>n</tt> raised to the
+      <tt>x</tt>th 
+      power. If <tt>x</tt> is an integer, the result is an integer, and if
+      <tt>x</tt> is a float, the result is a float.
+      The operator
+      follows the following rules in special conditions:
+      
+      <ul class="sep">
+        <li><tt>0 ** 0</tt> == 1
+        <li><tt>0 ** 0.0</tt> == 1.0
+        <li>If <tt>x</tt> is a negative integer, raise @ref{ArithmeticError}.
+        <li>If <tt>n</tt> &lt; 0 and <tt>x</tt> is not an integer, raise
+          @ref{ArithmeticError}.
+      </ul>
+@end
+
+@op -n
+@desc Return the negation of an integer.
+@end  
+
+@op n == x
+@desc Integers can be compared for equality with arbitrary objects.
+  An integer object is equal to an equivalent integer or float value.
+  If <tt>x</tt> is neither an integer nor a float,
+  the operation is evaluated as <tt>x</tt> == <tt>n</tt> instead.
+  @note The last property enables user-defined types to be compared with
+        integers usefully.
+  @end
+@end
+
+@op n &lt; x, n &gt; x
+@desc Integers can be compared for order with integers and floats.
+  If <tt>x</tt> is neither an integer nor a float,
+  the operation is evaluated as <tt>x</tt> &gt; <tt>n</tt>
+  (for a &lt; operation) or <tt>x</tt> &lt; <tt>n</tt> (for a &gt; operation).
+  @note The last property allows user-defined types to be compared with
+        integers usefully.
+  @end
+@end
+
+@op Str(n)
+@desc Convert an integer to a string in base 10 (decimal).
+@end
+
+@op Float(n)
+@desc Convert an integer to a float.
+@end
+
+@op Hash(n)
+@desc Return the hash value of an integer.
+@end

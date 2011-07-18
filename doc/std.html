@@ -1,0 +1,382 @@
+@head
+@module std
+@title <tt>std</tt>: Basic services
+
+<p>This module defines several basic types, constants and utility functions.
+The types include the primitive types, basic collection types and several
+exception types.
+The <tt>std</tt> module
+is the only module that is always imported without an explicit <tt>import</tt>
+definition,
+and its services are used by practically every Alore program.
+
+<h2>Object type</h2>
+
+<dl>
+  <dt><b>
+    @link std_object.html
+    </b>
+  <dd>The common supertype of every other class
+</dl>
+
+<h2>Primitive types</h2>
+
+<dl>
+  <dt><b>
+    @link std_about_primitive.html
+    </b>
+  <dd>The shared properties of primitive types
+  <dt><b>
+    @link std_int.html
+    </b>
+  <dd>The integer type
+
+  <dt><b>
+    @link std_str.html
+    </b>
+  <dd>The string type
+
+  <dt><b>
+    @link std_float.html
+    </b>
+  <dd>The floating-point number type
+
+  <dt><b>
+    @link std_boolean.html
+    </b>
+  <dd>The Boolean type  
+
+  <dt><b>
+    @link std_type.html
+    </b>
+  <dd>The type of types
+
+  <dt><b>
+    @link std_function.html
+    </b>
+  <dd>The type of functions and bound methods
+
+  <dt><b>
+    @link std_constant.html
+    </b>
+  <dd>The symbolic constant type
+
+  <dt><b>
+    @link std_pair.html
+    </b>
+  <dd>A pair of values
+
+  <dt><b>
+    @link std_range.html
+    </b>
+  <dd>A range of integer values
+</dl>
+
+<h2>Collection types</h2>
+
+<dl>
+  <dt><b>
+    @link std_array.html
+    </b>
+  <dd>A resizable array of values
+  
+  <dt><b>
+    @link std_tuple.html
+    </b>
+  <dd>A fixed-length, immutable sequence of values
+  
+  <dt><b>
+    @link std_map.html
+    </b>
+  <dd>A map of key-value pairs implemented as a hash table
+</dl>
+
+<h2>Functions</h2>
+
+@fun Print(...)
+@desc Write the arguments to the @ref{StdOut} stream, separated by spaces and
+      followed by a line break. Flush the stream afterwards.
+      <tt>Print</tt> is aimed at displaying debugging and diagnostics
+      output, and Alore implementations may allow redirecting the output of
+      <tt>Print</tt> to a log file or an IDE window, for example. 
+      Consider using <tt>WriteLn</tt> or <tt>Write</tt> for displaying normal
+      program output.
+      @example
+        Print(2, "and", [2, 3]) -- Display "2 and [2, 3]" (without quotes)
+      @end
+@end
+
+@fun Write(...)
+@desc Write the arguments to the @ref{StdOut} stream. This is a shorthand
+      for <tt>io::StdOut.write</tt>.
+@end
+  
+@fun WriteLn(...)
+@desc Write the arguments to the @ref{StdOut} stream, followed by a line
+      break. This is a shorthand for <tt>io::StdOut.writeLn</tt>.
+@end
+
+@fun ReadLn()
+@desc Read a line from @ref{StdIn}, and return the line without the line 
+      ending. This is a shorthand for <tt>io::StdIn.readLn</tt>.
+@end
+
+@fun Repr(object)
+@desc Return a representation of the argument as a string. This is similar to
+    the <tt>Str</tt> constructor, but this function may return
+    more detailed information. <tt>Repr</tt> works with objects of all types.
+    First try to return the result of calling the <tt>_repr</tt> method without
+    arguments. If that fails, return the result of the <tt>_str</tt> method.
+    If even that fails, return a generic representation of the argument that
+    indicates the type of the object.
+@end
+  
+@fun Chr(n)
+@desc Return a single-character string with character code <tt>n</tt>.
+    The valid range of values for <tt>n</tt> is from 0 to 65535, inclusive.
+@end
+  
+@fun Ord(ch)
+@desc Return the character code of a single-character string. The return value
+     is an integer in the range from 0 to 65535, inclusive.
+@end
+
+@fun Abs(x)
+@desc Return the absolute value of an integer or a float.
+@end
+
+@fun Min(x, y)
+@desc Return the minimum of two objects.
+@end
+
+<!--
+@fun Min(collection)
+@desc Return the minimal object in a collection. The argument must implement
+      the <tt>iterator</tt> method.
+@end
+-->
+
+@fun Max(x, y)
+@desc Return the maximum of two objects.
+@end
+
+<!--
+@fun Max(collection)
+@desc Return the maximal object in a collection. The argument must implement
+      the <tt>iterator</tt> method.
+@end
+-->
+
+@fun Sort(sequence[, func])
+@desc Return an array that has the items of a sequence sorted in ascending
+    order (by default). The optional argument specifies a function 
+    that can be used for
+    evaluating the order of two items. The function must accept 2 arguments
+    and return a boolean indicating whether the first argument should appear
+    earlier than the second argument in the sorted sequence.
+@end
+
+@fun Reversed(iterable)
+@desc Return an array that has all the items in the iterable in reverse
+      order. Examples:
+      @example
+        Reversed([2, 3, 4])   -- [4, 3, 2]
+        Reversed(0 to 3)      -- [2, 1, 0]
+        Reversed("foo")       -- ["o", "o", "f"]
+      @end
+@end
+
+@fun Hash(object)
+@desc Return the hash value of an object as an integer.
+    If the object has the <tt>_hash()</tt> method, return the result of
+    calling that method with no arguments. This method should return an
+    integer, and all instances that compare equal should receive the same hash
+    value. If the object does not have this method, calculate the hash value
+    based on the identity of the object.
+    <p>The main purpose of the hash value is to spread different objects in
+    different slots of a <i>hash table</i> most of the time, and to collect
+    equal objects in the same slots. Therefore, even though technically
+    all objects of a certain type could have the same hash value, this would
+    result in a dramatic slowdown of certain operations. Due to efficiency
+    reasons, the optimal maximum magnitude of hash values is typically about
+    2**29.
+@end
+  
+@fun Exit([value])
+@desc Exit the program. The optional argument specifies an integer return value
+    to the operating system. The function is implemented by raising an
+    <tt>ExitException</tt>. It can be caught using a <tt>try</tt> statement
+    to prevent the program from exiting.
+@end
+
+<h2>Constants</h2>
+
+<p>This module also defines boolean constants:
+
+@var True
+@desc The boolean true value.
+@end
+
+@var False
+@desc The boolean false value.
+@end
+
+<p>A few string constants are provided as well:
+
+@var Tab
+@desc The tab character (code 9).
+@end
+
+@var Newline
+@desc The platform specific line break string. On Unix-like operating systems
+    it is LF and on Windows CR + LF.
+@end
+
+@var LF
+@desc The line feed character (code 10).
+@end
+
+@var CR
+@desc The carriage return character (code 13).
+@end
+
+<h2>Exceptions</h2>
+
+<p>The exception classes in the <tt>std</tt> module form this inheritance
+hierarchy:
+
+<ul>
+  <li><tt>Exception</tt>
+    <ul type=disc>
+      <li><tt>ValueError</tt>
+        <ul type=disc>
+        <li><tt>TypeError</tt>
+        <li><tt>MemberError</tt>
+        <li><tt>ArithmeticError</tt>
+        <li><tt>IndexError</tt>
+        <li><tt>KeyError</tt>
+        <li><tt>CastError</tt>
+        </ul>
+      <li><tt>ResourceError</tt>
+        <ul type=disc>
+        <li><tt>MemoryError</tt>
+        </ul>
+      <li><tt>RuntimeError</tt>
+      <li><tt>InterruptException</tt>
+      <li><tt>ExitException</tt>
+      <li><tt>IoError</tt>
+    </ul>
+</ul>
+
+<h3>Simple exceptions</h3>
+
+<p>These exception classes have similar functionality inherited from
+<tt>Exception</tt>:
+
+@class Exception([message])
+@desc The base class of all exceptions. <tt>Exception</tt> has a single
+      member, 
+      <tt>message</tt>, that contains the error message argument given to the 
+      constructor, or <tt>nil</tt> if the message argument was omitted.
+@end
+
+@class ValueError([message])
+@desc Raised when the input values of an operation or a function have invalid
+    types or values. Typically, <tt>ValueError</tt> signifies a programming 
+    error, but
+    it can be caught to recover from these situations. The several subclasses
+    of <tt>ValueError</tt> indicate more specific conditions.
+@end
+    
+@class TypeError([message])
+@desc Raised when the inputs of an operation or a function have unsupported
+    types. Note that <tt>MemberError</tt> will be often raised in similar 
+    situations.
+@end
+
+@class MemberError([message])
+@desc Raised when an object does not have a requested member or the member
+    being assigned to cannot be modified.
+@end
+
+@class ArithmeticError([message])
+@desc Raised when an arithmetic operation or function receives invalid inputs.
+    A typical example is division by zero.
+@end
+
+@class IndexError([message])
+@desc Raised when the index of a sequence object such as an array is out of
+    bounds or otherwise invalid.
+@end
+
+@class KeyError([message])
+@desc Raised when a key of a mapping object is not present or is otherwise
+      invalid.
+@end
+
+@class CastError([message])
+@desc Raised when a cast operation fails.
+@end
+
+@class ResourceError([message])
+@desc Raised when a resource is exhausted. This exception can be triggered by
+    lack of disk space or by too many open files, for example.
+@end
+
+@class MemoryError([message])
+@desc Raised when a memory allocation request cannot be fulfilled. This
+    exception may also be raised if only a specific kind of memory pool is
+    exhausted, even though there might be memory available for other purposes.
+@end
+
+@class RuntimeError([message])
+@desc Raised when there is a run-time error during execution that does not have
+      a more specific exception class.
+@end
+
+@class InterruptException([message])
+@desc Raised when the user interrupts the program by pressing Ctrl+C.
+@end
+
+<h3><tt>ExitException</tt></h3>
+
+@class ExitException(code)
+@desc Raised by the <tt>std::Exit</tt> function. The argument specifies the 
+      integer return value reported to the operating system. 
+@end
+
+<h3><tt>IoError</tt></h3>
+
+@class IoError([message[, error]])
+@desc Raised as a response to an operating system error. This
+      exception can be raised by several modules such as @ref{io} and @ref{os}.
+      Typical reasons
+      for raising an <tt>IoError</tt> include a missing file or directory,
+      insufficient access rights to a resource and insufficient
+      free space on a device. The optional <tt>error</tt> argument describes
+      the reason for the error. It can be an integer <tt>errno</tt> value or a
+      symbolic constant.
+      @see The @ref{errno} module defines symbolic constants that can be used
+           to represent errors, and provides conversions between them and
+           integer <tt>errno</tt> values.
+      @end
+@end
+
+<p><tt>IoError</tt> also has the following member constants:
+
+@var code
+@desc The symbolic constant representing the error. If an integer value was
+      passed to the constructor, <tt>IoError</tt> tries to map the integer
+      to a symbolic constant using the @ref{errno} module; failing that, or
+      if the <tt>error</tt> argument was not present, the
+      value is <tt>nil</tt>.
+@end
+
+@var errno
+@desc The integer <tt>errno</tt> value representing the error. If a symbolic
+      constant was passed to the constructor, <tt>IoError</tt> tries to map the
+      constant to an integer value using the @ref{errno} module; failing that,
+      or if the <tt>error</tt> argument was not present, the value is 0.
+@end
+
+@end-class

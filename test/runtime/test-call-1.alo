@@ -1,0 +1,117 @@
+module runtime
+
+-- Function calls.
+
+import unittest
+import calltest
+import helpers
+
+
+-- Test function that takes any number of arguments but has no fixed or default
+-- arguments
+class CallSuite1 is Suite
+  def testT1()
+    CheckVarArgsFunc(F0v)
+    Ok()
+  end
+  
+  -- Test functions that take a fixed number of arguments
+  def testT2()
+    TestFixedArgsFunc0(F0)
+    TestFixedArgsFuncFail0(F0)
+    TestFixedArgsFunc1(F1)
+    TestFixedArgsFuncFail1(F1)
+    TestFixedArgsFunc2(F2)
+    TestFixedArgsFunc7(F7)
+    Ok()
+  end
+  
+  -- Test functions that take default arguments
+  def testT3()
+    TestDefArgsFunc01(F01)
+    TestDefArgsFunc03(F03)
+    TestDefArgsFunc11(F11)
+    TestDefArgsFuncFail11(F11)
+    TestDefArgsFunc34(F34)
+    Ok()
+  end
+  
+  -- Test functions that take variable number of arguments
+  def testT4()
+    TestVarArgFunc01(F01v)
+    TestVarArgFunc03(F03v)
+    TestVarArgFunc11(F11v)
+    TestVarArgFunc34(F34v)
+    TestVarArgFuncFail34(F34v)
+    Ok()
+  end
+end
+
+
+-- Functions to test
+ 
+private def F0()
+  return []
+end
+
+private def F1(a1)
+  return [a1]
+end
+
+private def F2(a1, a2)
+  return (a1, a2)
+end
+
+private def F7(a1, a2, a3, a4, a5, a6, a7)
+  return (a1, a2, a3, a4, a5, a6, a7)
+end
+
+private def F01(a1 = 1)
+  return [a1]
+end
+
+private def F03(a1 = 1, a2 = 2, a3 = 3)
+  return (a1, a2, a3)
+end
+
+private def F11(a1, a2 = 2)
+  return (a1, a2)
+end
+
+private def F34(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7)
+  return (a1, a2, a3, a4, a5, a6, a7)
+end
+
+private def F0v(*a)
+  return a
+end
+
+private def F1v(a1, *a)
+  return CreateArray(a1, *a)
+end
+
+private def F2v(a1, a2, *a)
+  return CreateArray(a1, a2, *a)
+end
+
+private def F7v(a1, a2, a3, a4, a5, a6, a7, *a)
+  return CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+end
+
+private def F01v(a1 = 1, *a)
+  return CreateArray(a1, *a)
+end
+
+private def F03v(a1 = 1, a2 = 2, a3 = 3, *a)
+  return CreateArray(a1, a2, a3, *a)
+end
+
+private def F11v(a1, a2 = 2, *a)
+  return CreateArray(a1, a2, *a)
+end
+
+private def F34v(a1, a2, a3, a4 = 4, a5 = 5, a6 = 6, a7 = 7, *a)
+  return CreateArray(a1, a2, a3, a4, a5, a6, a7, *a)
+end
+
+

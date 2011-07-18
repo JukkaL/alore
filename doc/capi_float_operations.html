@@ -1,0 +1,48 @@
+@head
+@title Float operations
+
+<p>Most of these operations deal with Float objects. A few additional utility
+functions are provided as well. Of course, all standard C functions dealing
+with floating point numbers such as sin and sqrt can be used as well, provided
+that the required headers are included.
+
+<p>Efficiency note: For maximal efficiency, try to avoid conversion and
+creation operations, and perform as many operations as possible directly using
+the C double type.
+
+@see Sections @href{Arithmetic operations} and @href{Comparison operations}
+  describe generic operations that can also be used with Float objects.
+@end
+
+@h2 Creating
+
+@fun AValue AMakeFloat(AThread *t, double f)
+@desc Create a std::Float object. @raise-direct
+@end
+
+@h2 Reading
+
+@fun double AGetFloat(AThread *t, AValue v)
+@desc If v is a Float or Int object, return its value as a double. Otherwise,
+  raise a direct @ref{std::TypeError} exception.
+@end
+
+@h2 Checking
+
+@fun ABool AIsFloat(AValue v)
+@desc Return a boolean indicating whether v is a std::Float object.
+@end
+
+@fun void AExpectFloat(AThread *t, AValue v)
+@desc Check if v is a Float object and raise a direct @ref{std::TypeError}
+      exception if it is not.
+@end
+
+@fun ABool AIsInf(double f)
+@desc Return a boolean indicating whether f represents the positive or negative
+      infinity.
+@end
+
+@fun ABool AIsNaN(double f)
+@desc Return a boolean indicating whether f represents not-a-number.
+@end

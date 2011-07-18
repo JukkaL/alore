@@ -1,0 +1,228 @@
+-- time.alo - Time class
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module time
+
+import __time
+import string
+import math
+
+
+class Time
+  -- Supported calling conventions:
+  --   create()
+  --   create([[[days,] hours,] minutes,] seconds)
+  --   create(str)
+  --   create(str, format)
+  def create(arg1 = nil, arg2 = nil, arg3 = nil, arg4 = nil)
+    -- FIX proper argument count checks
+    if arg1 is Str
+      var tuple
+      if arg2 == nil
+        var fmt = "-d\d h:mm:ss.s"
+        if not "d" in arg1
+          fmt = "-h:mm:ss.s"
+        end
+        tuple = ParseDateTime(Time, arg1, fmt)
+      elif arg2 is Str
+        tuple = ParseDateTime(Time, arg1, arg2)
+      else
+        raise ValueError("Invalid argument type")
+      end
+      var y, m, md, days, mins, hours, sec = tuple
+      secs, nsecs = NormalizeTime(days, mins, hours, sec)
+    elif arg1 != nil
+      if arg2 != nil
+        secs, nsecs = NormalizeTime(arg1, arg2, arg3, arg4)
+      else
+        secs, nsecs = NormalizeTime(0, 0, 0, arg1)
+      end
+    else
+      -- Empty arguments.
+      var h, m, s, us = Now()[3:7]
+      secs, nsecs = NormalizeTime(0, h, m, s + us / 1e6)
+    end
+  end
+  
+  def _str()
+    if day == 0
+      return format("-hh:mm:ss.ss")
+    else
+      return format("-d\d hh:mm:ss.ss")
+    end
+  end
+  
+  def format(f)
+    return FormatDateTime(Time, TimeFormatWrapper(self), f)
+  end
+  
+  def day
+    if nonNegative()
+      return secs div 86400
+    else
+      return -(-secs div 86400)
+    end
+  end
+  
+  def hour
+    if nonNegative()
+      return secs div 3600 mod 24
+    else
+      return -(-secs div 3600 mod 24)
+    end
+  end
+  
+  def minute
+    if nonNegative()
+      return secs div 60 mod 60
+    else
+      return -(-secs div 60 mod 60)
+    end
+  end
+  
+  def second
+    if nonNegative()
+      return secs mod 60 + nsecs / 1e9
+    else
+      return -(-secs mod 60 - nsecs / 1e9)
+    end
+  end
+  
+  def toSeconds()
+    return secs + nsecs / 1e9
+  end
+  
+  def toNanoSeconds()
+    return secs * 10**9 + nsecs
+  end
+  
+  def _float()
+    return self.toSeconds()
+  end
+  
+  def _eq(x)
+    return x is Time and x.day == day and x.hour == hour and 
+      x.minute == minute and x.second == second
+  end
+  
+  def _lt(x)
+    return (day, hour, minute, second) < (x.day, x.hour, x.minute, x.second)
+  end
+  
+  def _gt(x)
+    return (day, hour, minute, second) > (x.day, x.hour, x.minute, x.second)
+  end
+  
+  def _add(x)
+    if x is DateTime
+      return x + self
+    else
+      return Time(x.day, x.hour, x.minute, x.second + secs + nsecs / 1e9)
+    end
+  end
+  
+  def _sub(x)
+    return Time(-x.day, -x.hour, -x.minute, secs + nsecs / 1e9 - x.second)
+  end
+  
+  def _neg()
+    return Time(-day, -hour, -minute, -second)
+  end
+  
+  def _mul(x)
+    return Time((secs + nsecs / 1e9) * x)
+  end
+  
+  def _div(x)
+    return self * (1 / x)
+  end
+  
+  def _hash()
+    return Hash((secs, nsecs))
+  end
+  
+  -- Total number of seconds (Int). The sign is the same as of the time value.
+  private const secs
+  -- Nanooseconds (integer between -10**9 and 10**9, not inclusive). The sign 
+  -- is the same as of the time value.
+  private const nsecs
+  
+  private def nonNegative()
+    return secs >= 0 and nsecs >= 0
+  end
+end
+
+
+private def NormalizeTime(d, h, m, s)
+  -- Integral part of total number of seconds.
+  var secs = Int(d * 86400 + h * 3600 + m * 60 + Int(Trunc(s)))
+  -- Absolute value of the fractional part of s, in nanoseconds.
+  var nsecs = Int((Abs(s) - Int(Abs(s))) * 1e9 + 0.5)
+  
+  -- Limit nanosecond range after rounding.
+  if nsecs == 1000000000
+    nsecs = 0
+    if s >= 0
+      secs += 1
+    else
+      secs -= 1
+    end
+  end
+  
+  if secs < 0 and s > 0 and nsecs > 0
+    secs += 1
+  end
+  if s < 0 and secs > 0 and nsecs > 0
+    secs -= 1
+  end
+  
+  -- Calculate the final nanoseconds value.
+  if nsecs != 0
+    if secs < 0 and s > 0
+      nsecs = -(10**9 - nsecs)
+    elif secs < 0 or (secs == 0 and s < 0)
+      nsecs = -nsecs
+    elif secs > 0 and s < 0
+      nsecs = 10**9 - nsecs
+    end
+  end
+  
+  return secs, nsecs
+end
+
+
+private class TimeFormatWrapper
+  const time
+  
+  def year
+    raise ValueError()
+  end
+  
+  def month
+    raise ValueError()
+  end
+  
+  def weekday
+    raise ValueError()
+  end
+  
+  def day
+    return self.time.day
+  end
+  
+  def hour
+    return self.time.hour
+  end
+  
+  def minute
+    return self.time.minute
+  end
+  
+  def second
+    return self.time.second
+  end
+end

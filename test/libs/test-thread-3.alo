@@ -1,0 +1,43 @@
+module libs
+
+-- Thread tests
+
+import unittest
+import thread
+import gctest
+
+
+class ThreadSuite3 is Suite
+  -- Test simultaneous memory allocation by multiple threads.
+  def testMultipleAllocationThreads()
+    -- Create 5 threads that allocate lots of memory.
+    Thread(Trash)
+    Thread(Trash)
+    Thread(Trash)
+    Thread(Trash)
+    Thread(Trash)
+  
+    -- Allocate lots of memory.
+    Trash()
+    Trash()
+  
+    Ok()
+  end
+end
+
+
+private const N = 100
+
+
+private def Trash()
+  var i = 0
+  var a = [nil] * N
+  while i < 100
+    var j = 0
+    while j < N
+      a[j] = [nil] * 100
+      j += 1
+    end
+    i += 1
+  end
+end

@@ -1,0 +1,1085 @@
+encoding utf8
+
+module libs
+
+-- io module test cases
+
+import unittest
+import io
+import __testc
+import iohelpers
+import os
+import sys
+import encodings
+
+
+class IOSuite2 is Suite
+  -- Test basic file operations with file streams (essentially verify that they
+  -- "kind of" work without trying to be exhaustive).
+  --   * writing
+  --   * reading
+  --   * eof
+  def testBasicOperations()
+    TestBasicOperations(Buffered)
+    TestBasicOperations(LineBuffered)
+    TestBasicOperations(Unbuffered)
+  end
+  
+  -- Test writing to file (buffered, unbuffered).
+  --   * writing several objects at a time
+  --   * writing and converting objects
+  --   * writing long data
+  --   * writes with exactly the same size as buffer
+  def testFileWrite()
+    -- Test lots of different combinations.
+    for i in 1 to NumNarrowStr + 1
+      for j in 1 to NumNarrowStr + 1
+        TestFileWrite([GetStr(i)], [GetStr(j)])
+        TestFileWriteLine([GetStr(i)], [GetStr(j)])
+        TestFileWrite(["a"], (GetStr(i), GetStr(j)), ["b"])
+        TestFileWriteLine(["a"], (GetStr(i), GetStr(j)), ["b"])
+      end
+    end
+    
+    -- Test writing several strings at a time.
+    TestFileWrite((GetStr(1), GetStr(2), GetStr(3), GetStr(4), GetStr(5)))
+    var a = ["abc"] * 1000
+    TestFileWrite(a)
+    
+    -- Test writing exactly the same size as the buffer.
+    TestFileWrite((LongNarrowStr()[0:LineBufferSize], "a"))
+    TestFileWrite((LongNarrowStr()[0:BufferSize], "a"))
+    
+    -- Test writing a narrow substring of a wide string.
+    --TestFileWrite(("foo bar zar", "x"))
+    TestFileWrite((WSS("foo bar zar"), "x"))
+    --TestFileWriteLine(("foo bar zar", "x"))
+    TestFileWriteLine((WSS("foo bar zar"), "x"))
+    
+    TestFileWrite([StrObj(WSS("foo bar zar"))])
+  end
+
+  -- Test reading from a file.  
+  def testFileRead()
+    for i in 2 to NumNarrowRealStr + 1
+      for j in 2 to NumNarrowRealStr + 1
+        TestFileRead(GetStr(i), GetStr(j))
+      end
+    end
+    
+    -- Read from empty file.
+    var f = File("TMP", Output)
+    f.close()
+    for m in InputModes
+      f = File("TMP", *m)
+      AssertEqual(f.read(1), "")
+      f.close()
+    end
+    
+    -- Read from binary file.
+    var s = ""
+    for i in 0 to 256
+      s += Chr(i)
+    end
+    TestFileRead(s)
+  end
+  
+  -- Test reading all the contents of a file.
+  def testFileReadAll()
+    for i in 1 to NumNarrowRealStr + 1
+      TestFileReadAll(GetStr(i))
+    end
+  
+    -- Read binary file.
+    var s = ""
+    for i in 0 to 256
+      s += Chr(i)
+    end
+    TestFileReadAll(s)
+    
+    -- Read all at end of file.
+    var f = File("TMP", Output)
+    f.write("abcdef")
+    f.close()
+    for m in InputModes
+      f = File("TMP", *m)
+      Assert(f.read(6) == "abcdef")
+      Assert(f.read() == "")
+      f.close()
+    end
+  end
+  
+  -- Test reading a file a line at a time.
+  def testFileReadLine()
+    -- Basic operations (different line lengths).
+    for i in 1 to NumNarrowRealStr + 1
+      for j in 1 to NumNarrowRealStr + 1
+        TestFileReadLine(GetStr(i), GetStr(j))
+      end
+    end
+    
+    TestFileReadLine("")
+    
+    -- Line terminator missing at the end of the file.
+    var f = File("TMP", Output)
+    f.write("a")
+    f.close()
+    f = File("TMP", Input)
+    Assert(f.readLn() == "a")
+    Assert(f.eof())
+    f.close()
+    
+    -- Read a line with all possible character codes.
+    var s = ""
+    for r in 0 to 10, 11 to 13, 14 to 256
+      for i in r
+        s += Chr(i)
+      end
+    end
+    TestFileReadLine(s)
+  
+    -- Reading after end of file.
+    for isContent in False, True
+      f = File("TMP", Output)
+      if isContent
+        f.writeLn("abcdef")
+      end
+      f.close()
+      for m in InputModes
+        f = File("TMP", *m)
+        if isContent
+          Assert(f.readLn() == "abcdef")
+        end
+        var e = False
+        try
+          f.readLn()
+        except IoError
+          e = True
+        end
+        Assert(e)
+        f.close()
+      end
+    end
+  end
+  
+  -- Test iterating an empty file.
+  def testIterEmptyFile()
+    var f = File("TMP", Output)
+    f.close()
+    
+    f = File("TMP")
+    var l = []
+    for s in f
+      l.append(s)
+    end
+    
+    f.close()
+    
+    Assert(l == [])
+  end
+  
+  -- Test iterating the lines in a file.
+  def testIterFile()
+    var f = File("TMP", Output)
+    f.writeLn("first line")
+    f.writeLn("second line")
+    f.writeLn("third line")
+    f.close()
+    
+    var l = []
+    f = File("TMP")
+    for s in f
+      l.append(s)
+    end
+    f.close()
+    
+    Assert(l == ("first line", "second line", "third line"))
+  end
+  
+  -- Test the readLines() method with an empty file.
+  def testReadLinesWithEmptyFile()
+    var f = File("TMP", Output)
+    f.close()
+    f = File("TMP")
+    Assert(f.readLines() == [])
+    -- FIX Verify that the stream is actually closed. But how?
+    -- It's still possible to call close.
+    f.close()
+  end
+  
+  -- Test the readLines() method.
+  def testReadLines()
+    var f = File("TMP", Output)
+    for i in 0 to 10000
+      f.writeLn("Line ", i)
+    end
+    f.close()
+    
+    var a = File("TMP").readLines()
+    Assert(a is Array)
+    Assert(a.length() == 10000)
+    for i in 0 to 10000
+      Assert(a[i] == "Line " + Str(i))
+    end
+  end
+  
+  -- Test reading after seeking in a file.
+  def testSeekAndRead()
+    var f = File("TMP", Output)
+    f.write("12345foobar67890")
+    f.close()
+    
+    f = File("TMP")
+    
+    f.seek(5 + 3)
+    Assert(f.read(3) == "bar")
+    f.seek(5)
+    Assert(f.read(7) == "foobar6")
+    f.seek(0)
+    Assert(f.read(1) == "1")
+    f.seek(5 + 6 + 3)
+    Assert(f.read(500) == "90")
+    
+    f.close()
+  end
+  
+  -- Test writing after seeking in a file.
+  def testSeekAndWrite()
+    var f = File("TMP", Output)
+    f.write("12345foobar67890")
+    f.seek(5)
+    f.write("FOOBAR")
+    f.seek(0)
+    f.write("!")
+    f.seek(5 + 6 + 5) -- End of file
+    f.write("xyz")
+    f.close()
+    
+    f = File("TMP")
+    Assert(f.read() == "!2345FOOBAR67890xyz")
+    f.close()
+  end
+  
+  -- Test mixed read/write operations with seeking.
+  def testSeekWithReadAndWrite()
+    var f = File("TMP", Output, Input)
+    f.write("12345foobar67890")
+    f.seek(5)
+    Assert(f.read(6) == "foobar")
+    f.write("()")
+    f.seek(5)
+    f.write("FOOBAR")
+    f.seek(5)
+    Assert(f.read(9) == "FOOBAR678")
+    
+    f.seek(5)
+    f.write("ZAP")
+    f.write("HAP")
+    f.seek(5)
+    Assert(f.read(3) == "ZAP")
+    Assert(f.read(3) == "HAP")
+    
+    f.close()
+  end 
+  
+  -- Test seeking before the start of a file.
+  def testSeekUnderflow()
+    var f = File("TMP")
+    AssertRaises(IoError, f.seek, [-1])
+    AssertRaises(IoError, f.seek, [-2**32])
+    f.close()
+  end
+  
+  -- Test creating a File object with the cosntructor.
+  --def testFileStreamConstructor()
+  --  AssertRaises(ValueError, FileStream, [])
+  --end
+  
+  -- Test querying end-of-file with an output stream.
+  def testEofWithWrite()
+    var f = File("TMP", Output)
+    AssertRaises(IoError, f.eof, [])
+    f.close()
+  end
+
+  -- Test appending to a file that does not exist. It should be created.  
+  def testAppendToEmptyFile()
+    for mode in Unbuffered, LineBuffered, Buffered
+      if IsFile("TMP")
+        Remove("TMP")
+      end
+      var f = File("TMP", Append)
+      f.write("hello")
+      f.close()
+      f = File("TMP", Input)
+      Assert(f.read() == "hello")
+      f.close()
+    end
+  end
+  
+  -- Test appending at the end of an existing file.
+  def testAppendToExistingFile()
+    for mode in Unbuffered, LineBuffered, Buffered
+      var f = File("TMP", Output, mode)
+      f.write("hello")
+      f.close()
+      f = File("TMP", Append)
+      f.write(", world!")
+      f.close()
+      f = File("TMP", Input)
+      AssertEqual(f.read(), "hello, world!")
+      f.close()
+    end
+  end
+  
+  -- Test performing both write and writeLn method calls for the same file.
+  def testMixingWriteAndWriteLine()
+    for mode in Unbuffered, LineBuffered, Buffered
+      var f = File("TMP", Output, mode)
+      f.write("foo")
+      f.writeLn("bar")
+      f.write("a")
+      f.write("b")
+      f.writeLn("c")
+      f.close()
+      Assert(File("TMP").readLines() == ("foobar", "abc"))
+    end
+  end
+  
+  -- Test reading from a stream causes output streams to be flushed.
+  def testWritingNewlineWithLineBuffering()
+    var f = File("TMP", LineBuffered, Output)
+    f.write("foobar" + Newline + "line 2")
+    f.write("tsuppa du")
+    Assert(File("TMP").readLines() == ("foobar", "line 2tsuppa du"))
+    f.close()
+  end
+  
+  -- Test read and readln method calls in sequence.
+  def testMixingReadAndReadLine()
+    var f = File("TMP", Output)
+    f.writeLn("foo bar")
+    f.writeLn("second")
+    f.writeLn("third")
+    f.writeLn("fourth")
+    f.close()
+    f = File("TMP")
+    Assert(f.read(3) == "foo")
+    Assert(f.readLn() == " bar")
+    Assert(f.read(6) == "second")
+    Assert(f.readLn() == "")
+    Assert(f.read(5 + Newline.length()) == "third" + Newline)
+    Assert(f.readLn() == "fourth")
+    f.close()
+  end
+  
+  -- Test that most operations raise exceptions if applied on a closed file 
+  -- stream. The close operation is an exception to this rule.
+  def testOperationsAfterClose()
+    var f = File("TMP", Input, Output)
+    f.close()
+    AssertRaises(IoError, f.read, [])
+    AssertRaises(IoError, f.readLn, [])
+    AssertRaises(IoError, f.readLines, [])
+    AssertRaises(IoError, f.eof, [])
+    AssertRaises(IoError, f.write, ["foo"])
+    AssertRaises(IoError, f.writeLn, ["foo"])
+    AssertRaises(IoError, f.seek, [1])
+    -- Calling close again is ok.
+    f.close()
+  end
+  
+  -- Test the size method.
+  def testSize()
+    var f = File("TMP", Output)
+    AssertEqual(f.size(), 0)
+    f.write("foobar")
+    AssertEqual(f.size(), 6)
+    f.write("x")
+    AssertEqual(f.size(), 7)
+    f.seek(2)
+    AssertEqual(f.size(), 7)
+    f.write("foo")
+    f.write("bar")
+    AssertEqual(f.size(), 8)
+    f.close()
+    
+    f = File("TMP", Input)
+    AssertEqual(f.size(), 8)
+    f.close()
+  end
+  
+  def testPos()
+    var f = File("TMP", Output)
+    AssertEqual(f.pos(), 0)
+    f.write("foobar")
+    AssertEqual(f.pos(), 6)
+    f.write("x")
+    AssertEqual(f.pos(), 7)
+    f.seek(2)
+    AssertEqual(f.pos(), 2)
+    f.write("foo")
+    f.write("bar")
+    AssertEqual(f.pos(), 8)
+    f.flush()
+    AssertEqual(f.pos(), 8)
+    f.close()
+    
+    for mode in [Input], [Input, Output]
+      f = File("TMP", *mode)
+      AssertEqual(f.pos(), 0)
+      f.read(1)
+      AssertEqual(f.pos(), 1)
+      f.read()
+      AssertEqual(f.pos(), 8)
+      f.seek(2)
+      f.read(1)
+      if Output in mode
+        f.flush()
+      end
+      AssertEqual(f.pos(), 3)
+      f.close()
+    end
+  end
+  
+  def testPeek()
+    var f = File("TMP", Output)
+    f.write("hello there")
+    AssertRaises(IoError, f.peek, [])
+    f.close()
+    
+    f = File("TMP")
+    AssertEqual(f.peek(), "")
+    AssertEqual(f.read(5), "hello")
+    AssertEqual(f.peek(), " there")
+    AssertEqual(f.read(1), " ")
+    AssertEqual(f.peek(), "there")
+    AssertEqual(f.read(5), "there")
+    AssertEqual(f.peek(), "")
+    f.close()
+    
+    f = File("TMP", Unbuffered)
+    AssertEqual(f.peek(), "")
+    AssertEqual(f.read(5), "hello")
+    AssertEqual(f.peek(), "")
+    AssertEqual(f.read(6), " there")
+    AssertEqual(f.peek(), "")
+    f.close()
+  end
+  
+  def testStandardRawStreams()
+    AssertType(File, RawStdIn)
+    AssertType(File, RawStdOut)
+    AssertType(File, RawStdErr)
+    Assert(RawStdOut != RawStdErr)
+    Assert(RawStdOut != RawStdIn)
+    Assert(RawStdIn != RawStdErr)
+    
+    -- FIX: More test cases.
+  end
+  
+  def testStandardTextStreams()
+    AssertType(TextStream, StdIn)
+    AssertType(TextStream, StdOut)
+    AssertType(TextStream, StdErr)
+    Assert(StdOut != StdErr)
+    Assert(StdOut != StdIn)
+    Assert(StdIn != StdErr)
+  end
+
+  def testProtected()
+    if IsFile("TMP")
+      Remove("TMP")
+    end
+    
+    var f = File("TMP", Output, Protected)
+    f.close()
+
+    if Platform != "windows"
+      AssertEqual(Stat("TMP").otherPerm, "")
+    
+      -- The file must not exist before creating a protected file.
+      AssertRaises(IoError, File, ["TMP", Output, Protected])
+    end
+    
+    f = File("TMP", Output)
+    f.write("hello")
+    f.close()
+
+    if Platform != "windows"
+      AssertEqual(Stat("TMP").otherPerm, "")
+    end
+    
+    Remove("TMP")
+
+    if Platform != "windows"
+      f = File("TMP", Output)
+      f.write("hello")
+      f.close()
+    
+      Assert(Stat("TMP").otherPerm != "")
+    
+      Remove("TMP")
+    end
+    
+    AssertRaises(ValueError, File, ["TMP", Append, Protected])
+    AssertRaises(ValueError, File, ["TMP", Input, Protected])
+    
+    f = File("TMP", Protected, Output, LineBuffered, Input)
+    f.write("hello")
+    f.seek(0)
+    AssertEqual(f.read(5), "hello")
+    f.close()
+
+    if Platform != "windows"
+      AssertEqual(Stat("TMP").otherPerm, "")
+    end
+  end
+  
+  def testCombinedOptions()
+    var f = File("TMP", Append, LineBuffered)
+    f.write("hello")
+    f.seek(0)
+    AssertRaises(IoError, f.read, [1])
+    f.close()
+  end
+
+  def testReadWrite()
+    if IsFile("TMP")
+      Remove("TMP")
+    end
+
+    var f = File("TMP", Input, Output)
+    f.write("foo")
+    f.seek(0)
+    AssertEqual(f.read(), "foo")
+    f.close()
+
+    f = File("TMP", Input, Output)
+    f.write("x")
+    f.seek(0)
+    AssertEqual(f.read(), "xoo")
+    f.close()
+  end
+  
+  def testHandle()
+    if IsFile("TMP")
+      Remove("TMP")
+    end
+    var f = File("TMP", Output)
+    AssertType(Int, f.__handle())
+    Assert(f.__handle() > 2)
+    f.close()
+  end
+  
+  def testTextStream()
+    var f = File("TMP", Output)
+    var t = TextStream(f, Utf8)
+    t.writeLn("hääyö")
+    t.close()
+    
+    f = File("TMP")
+    t = TextStream(f, Utf8)
+    AssertEqual(t.readLn(), "hääyö")
+    AssertEqual(t.eof(), True)
+    t.close()
+    
+    f = File("TMP", Output)
+    f.write("\u0080ab\u00c2");
+    f.close()
+    
+    f = File("TMP")
+    t = TextStream(f, Utf8)
+    AssertRaises(DecodeError, t.readLn, [])
+    t.close()
+    
+    f = File("TMP")
+    t = TextStream(f, Utf8, Strict)
+    AssertRaises(DecodeError, t.readLn, [])
+    t.close()
+    
+    f = File("TMP")
+    t = TextStream(f, Utf8, Unstrict)
+    AssertEqual(t.readLn(), "\ufffdab\ufffd")
+    t.close()
+    
+    -- Default encoding.
+    f = File("TMP")
+    t = TextStream(f, LineBuffered, Unstrict)
+    AssertType(Str, t.readLn())
+    t.close()
+  end
+  
+  def testTextStreamBuffering()
+    var f = File("TMP", Output)
+    var e = TextStream(f, Utf8, Unbuffered)
+    e.write("foobar")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), ["foobar"])
+    
+    f = File("TMP", Output)
+    e = TextStream(f, Utf8, Buffered)
+    e.writeLn("foobar")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), [])
+    
+    f = File("TMP", Output)
+    e = TextStream(f, Utf8, LineBuffered)
+    e.writeLn("foobar")
+    e.write("foo")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), ["foobar"])
+    
+    f = File("TMP", Output)
+    e = TextStream(f, Utf8)
+    e.writeLn("foobar")
+    e.write("foo")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), [])
+  end
+  
+  -- Test that DefaultEncoding really is an encoding.
+  def testDefaultEncoding()
+    AssertType(Type, DefaultEncoding)
+    var e = DefaultEncoding()
+    AssertType(Str, e.encode("foo"))
+  end
+  
+  def testTextFile()
+    var f = TextFile("TMP", Utf8, Output)
+    f.writeLn("ahääyö")
+    f.close()
+    
+    f = TextFile("TMP", Utf8)
+    AssertEqual(f.readLn(), "ahääyö")
+    AssertEqual(f.eof(), True)
+    f.close()
+    
+    if DefaultEncoding == Utf8
+      -- Test UTF-8 default encoding with TextFile.
+      f = TextFile("TMP", Output)
+      f.writeLn("ahääyö")
+      f.close()
+    
+      f = TextFile("TMP")
+      AssertEqual(f.readLn(), "ahääyö")
+      AssertEqual(f.eof(), True)
+      f.close()
+    
+      f = TextFile("TMP", Utf8)
+      AssertEqual(f.readLn(), "ahääyö")
+      AssertEqual(f.eof(), True)
+      f.close()
+    else
+      -- Test TextFile default encoding using only ASCII characters.
+      -- IDEA: Improve this test to test also non-ASCII characters if possible.
+      f = TextFile("TMP", Output)
+      f.writeLn("foo bar")
+      f.close()
+      
+      f = TextFile("TMP")
+      AssertEqual(f.readLn(), "foo bar")
+      AssertEqual(f.eof(), True)
+      f.close()
+    end
+    
+    f = File("TMP", Output)
+    f.write("\u0080ab\u00c2");
+    f.close()
+    
+    f = TextFile("TMP", Utf8)
+    AssertRaises(DecodeError, f.readLn, [])
+    f.close()
+    
+    f = TextFile("TMP", Utf8, Strict)
+    AssertRaises(DecodeError, f.readLn, [])
+    f.close()
+    
+    f = TextFile("TMP", Utf8, Unstrict)
+    AssertEqual(f.readLn(), "\ufffdab\ufffd")
+    f.close()
+    
+    f = TextFile("TMP", Utf8, Output)
+    f.writeLn("hääyö")
+    f.close()
+    f = TextFile("TMP", Utf8, Append)
+    f.writeLn("café")
+    f.close()
+    
+    f = TextFile("TMP", Utf8)
+    AssertEqual(f.readLines(), ["hääyö", "café"])
+  end
+  
+  def testTextFileClose()
+    var f = TextFile("TMP", Utf8, Output)
+    f.writeLn("ahääyö")
+    f.close()
+    f.close()
+  end
+    
+  def testOpenTextBuffering()
+    -- IDEA: Read contents of TMP before closing the file.
+    
+    var f = TextFile("TMP", Utf8, Unbuffered, Output)
+    f.write("foobar")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), ["foobar"])
+    
+    f = TextFile("TMP", Utf8, Output, Buffered)
+    f.writeLn("foobar")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), ["foobar"])
+    
+    f = TextFile("TMP", Utf8, LineBuffered, Output)
+    f.writeLn("foobar")
+    f.write("foo")
+    f.close()
+    
+    AssertEqual(File("TMP").readLines(), ["foobar", "foo"])
+    
+    -- TextFile with no buffering.
+    f = TextFile("TMP", Utf8, Unbuffered, Output)
+    f.writeLn("hääyö")
+    f.close()
+    
+    f = TextFile("TMP", Utf8, Unbuffered)
+    AssertEqual(f.readLines(), ["hääyö"])
+  end
+  
+  def testAccessingBothTextStreamAndWrappedStream()
+    -- Write data to a file.
+    var of = TextFile("TMP", Utf8, Output)
+    of.writeLn("hääyö")
+    of.writeLn("€€€€")
+    of.close()
+    
+    -- Read the first line using a raw stream.
+    var f = File("TMP")
+    AssertEqual(f.readLn(), Encode("hääyö", Utf8))
+    
+    -- Read the second line using a TextStream. The streams should be
+    -- synchronized (i.e. the TextStream can access the buffer of the
+    -- wrapped stream).
+    --
+    -- Note that the inverse (first reading from a text stream, and then
+    -- from the wrapped stream) is not supported.
+    var f2 = TextStream(f, Utf8)
+    AssertEqual(f2.readLn(), "€€€€")
+    
+    Assert(f2.eof())
+    Assert(f.eof())
+    
+    -- This closes both the streams.
+    f2.close()
+    f2.close()
+  end
+  
+  def testUnprocessedCharacterHandling()
+    -- Write a file with a UTF-8 sequence at a buffer boundary (hopefully).
+    var f = TextFile("TMP", Utf8, Output)
+    f.write("a" * 32767)
+    f.write("ä")
+    f.close()
+    
+    var f2 = TextFile("TMP", Utf8)
+    AssertEqual(f2.read(32767), "a" * 32767)
+    f2.close()
+    
+    var f3 = TextFile("TMP", Utf8)
+    AssertEqual(f3.read(32768), "a" * 32767 + "ä")
+    f3.close()
+  end
+  
+  def testBom()
+    AssertEqual(Bom, "\ufeff")
+  end
+  
+  -- Test a codec whose decode() always returns "".
+  def testBlackHoleCodec()
+    for b in Buffered, Unbuffered
+      writeFile("TMP", "foo bar")
+      var f = TextFile("TMP", BlackHoleCodec, b)
+      -- This results in eof error, since it seems that the file is empty.
+      AssertRaises(IoError, f.readLn, [])
+      f.close()
+    end
+  end
+    
+  -- Test a codec which raises an exception.
+  def testCodecException()
+    for b in Buffered, Unbuffered
+      writeFile("TMP", "foo bar")
+      var f = TextFile("TMP", ExceptionCodec, b)
+      AssertRaises(TypeError, f.readLn, [])
+      f.close()
+    end
+  end
+    
+  -- Test a codec of a wrong type.
+  def testInvalidCodec()
+    for b in Buffered, Unbuffered
+      -- nil as codec.
+      AssertRaises(ValueError, TextFile, ["TMP", nil, b])
+      
+      writeFile("TMP", "foo bar")
+      
+      -- Empty class as codec.
+      var f = TextFile("TMP", EmptyCodec, b)
+      AssertRaises(MemberError, f.readLn, [])
+      f.close()
+      f = TextFile("TMP", EmptyCodec, b, Output)
+      AssertRaises(MemberError, def ()
+                                 f.writeLn("foo")
+                                 f.flush()
+                               end)
+      try 
+        f.close()
+      except MemberError
+        -- Ignore
+      end
+    end
+  end
+  
+  -- Test long unbuffered readLn calls.
+  def testLongUnbufferedReadLine()
+    var s = "\u1234\u4567\u9874" * 7954
+   
+    for sep in CR, LF, CR+LF
+      var f = TextFile("TMP", Utf8, Output)
+      f.write(s, sep)
+      f.close()
+    
+      f = TextFile("TMP", Utf8, Unbuffered)
+      AssertEqual(f.readLn(), s)
+      f.close()
+    end
+  end
+  
+  private def writeFile(fnam, data)
+    var f = File(fnam, Output)
+    f.write(data)
+    f.close()
+  end
+end
+
+
+private const LineBufferSize = 256
+private const BufferSize = 2048 -- FIX: verify that this is ok
+
+
+private def TestBasicOperations(bufMode)
+  var f = File(FileName, Output, bufMode)
+  Assert(f is File)
+  f.write("foo ")
+  f.writeLn("bar")
+  f.write(1, -2, "zop")
+  f.close()
+  if bufMode != Unbuffered
+    f = File(FileName, bufMode)
+    Assert(not f.eof())
+    Assert(f.readLn() == "foo bar")
+    Assert(f.read(2) == "1-")
+    Assert(not f.eof())
+    AssertEqual(f.read(), "2zop")
+    Assert(f.eof())
+  else
+    f = File(FileName, bufMode)
+    Assert(not f.eof())
+    Assert(f.read(2) == "fo")
+    Assert(not f.eof())
+    AssertEqual(f.read(), "o bar" + Newline + "1-2zop")
+    Assert(f.eof())
+    f = File(FileName, bufMode)
+    Assert(f.read(2) == "fo")
+    AssertEqual(f.read(), "o bar" + Newline + "1-2zop")
+    Assert(f.eof())
+  end
+  f.close()
+end
+
+
+private def TestFileWrite(*a)
+  TestFileWriteWithFlags(a, False, Output)
+  TestFileWriteWithFlags(a, False, Output, LineBuffered)
+  TestFileWriteWithFlags(a, False, Output, Unbuffered)
+end
+
+
+private def TestFileWriteLine(*a)
+  TestFileWriteWithFlags(a, True, Output)
+  TestFileWriteWithFlags(a, True, Output, LineBuffered)
+  TestFileWriteWithFlags(a, True, Output, Unbuffered)
+end
+
+
+private def TestFileWriteWithFlags(a, isWriteLine, *flags)
+  var f = File("TMP", *flags)
+  var s = ""
+  for x in a
+    for y in x
+      s += Str(y)
+    end
+    if isWriteLine
+      f.writeLn(*x)
+      s += Newline
+    else
+      f.write(*x)
+    end
+  end  
+  f.close()
+  var f2 = File("TMP")
+  var s2 = f2.read()
+  f2.close()
+  Assert(s == s2)
+end
+
+
+private def TestFileRead(*a)
+  -- Write a file containing some strings.
+  var f = File("TMP", Output)
+  for x in a
+    f.write(x)
+  end
+  f.close()
+  
+  -- Read strings.
+  for m in InputModes
+    f = File("TMP", *m)
+    for x in a
+      if m[1] != Unbuffered
+        Assert(not f.eof())
+      end
+      var s = f.read(x.length())
+      Assert(s == x)
+    end
+    Assert(f.eof())
+    f.close()
+  end
+  
+  -- Read more than is available in the file, read at eof.
+  for m in InputModes
+    f = File("TMP", *m)
+    for i in 0 to a.length() - 1
+      f.read(a[i].length())
+    end
+    var s = a[a.length() - 1]
+    Assert(f.read(s.length() + 1) == s)
+    Assert(f.eof())
+    AssertEqual(f.read(1), "")
+    AssertEqual(f.read(100000), "")
+    f.close()
+  end
+  
+  -- Read at eof.
+  for m in InputModes
+    f = File("TMP", *m)
+    for x in a
+      f.read(x.length())
+    end
+    AssertEqual(f.read(1), "")
+    f.close()
+  end
+end
+
+
+private def TestFileReadAll(*a)
+  -- Write a file containing some strings.
+  var f = File("TMP", Output)
+  var l = 0
+  var acc = ""
+  for x in a
+    f.write(x)
+    acc += x
+  end
+  f.close()
+  
+  -- Read the whole contents of the file using different read modes.
+  for m in InputModes
+    f = File("TMP", *m)
+    if m[1] != Unbuffered and acc.length() > 0
+      Assert(not f.eof())
+    end
+    var s = f.read()
+    Assert(s == acc)
+    f.close()
+  end
+
+  -- Read the rest of the contents of the file using different read modes 
+  -- after having read 1 character.
+  for m in InputModes
+    f = File("TMP", *m)
+    if m[1] != Unbuffered and acc.length() > 0
+      Assert(not f.eof())
+    end
+    var s = f.read()
+    Assert(s == acc)
+    f.close()
+  end
+end
+
+
+private def TestFileReadLine(*a)
+  for sep in LineSeparators
+    -- Write a file containing some strings.
+    var f = File("TMP", Output)
+    for x in a
+      f.write(x, sep)
+    end
+    f.close()
+
+    -- Read strings.
+    for m in InputModes
+      f = File("TMP", *m)
+      for x in a
+	if m[1] != Unbuffered
+	  Assert(not f.eof())
+	end
+	var s = f.readLn()
+	Assert(s == x)
+      end
+      Assert(f.eof())
+      f.close()
+    end
+  end
+end
+
+
+private class StrObj
+  const str
+  
+  def _str()
+    return str
+  end
+end
+
+
+private class BlackHoleCodec
+  def decode(s)
+    return ""
+  end
+  
+  def unprocessed()
+    return ""
+  end
+end
+
+
+private class ExceptionCodec
+  def decode(s)
+    raise TypeError("foo")
+  end
+  
+  def unprocessed()
+    raise TypeError("foo")
+  end
+end
+
+
+private class EmptyCodec
+end

@@ -1,0 +1,164 @@
+@head
+@module time
+@title Class <tt>time::Date</tt>
+@index Date
+
+<p>The <tt>Date</tt> class represents a date or a day. <tt>Date</tt> instances
+are immutable.
+
+@class Date()
+@desc Construct a <tt>Date</tt> object representing the current date (today)
+      in local time.
+@end
+
+@class Date(year, month, day)
+@desc Construct a <tt>Date</tt> object representing a specific day. All
+      arguments must
+      be integers. Month and day values are not restricted to any specific
+      range. If they are outside the valid range of values, they are
+      normalized and the excess is moved to the month or year values. So if
+      month is 14, the actual month value becomes 2 and year is incremented by
+      one; if day is 0, the resulting day will be the last day of the previous
+      month, etc.
+      @example
+        Date(2010, 3, 8)           -- 8th of March, 2010
+      @end
+@end
+
+@class Date(string[, format])
+@desc Construct a <tt>Date</tt> object from a string. The format argument
+      specifies the format of the string.
+      If the format is omitted, the default format is "YYYY-MM-DD".
+      <p>The format must contain <i>format sequences</i> for all
+      date components (day, month, year). A format sequence matches a date
+      component in the string. The following list contains all the
+      available format sequences and examples of valid values:
+      
+      <table class="no-border" summary="Format sequences">
+        <tr>
+          <td>D
+          <td>day of month (1, 2, ...,  31)
+        <tr>
+          <td>DD
+          <td>day of month, at least 2 digits (01, 02, ... 31)
+        <tr>
+          <td>M
+          <td>month (1, 2, ..., 12)
+        <tr>
+          <td>MM
+          <td>month, at least 2 digits (01, 02, ... 12)
+        <tr>
+          <td>MMM
+          <td>abbreviated name of month (Jan, Feb, ..., Dec)
+        <tr>
+          <td>MMMM&nbsp;
+          <td>name of month (January, February, ..., December) 
+        <tr>
+          <td>YY
+          <td>year, 2 digits (00, 01, ... 99)
+        <tr>
+          <td>YYYY
+          <td>year, 4 digits (1978, 2010, ...)
+      </table>
+
+      <p>Case is not significant in the month names and abbreviations.
+      The YY values 69-99 are mapped to years 1969-1999, and 00-68 are mapped
+      to years 2000-2068. You should generally use the YYYY format for
+      years so that years before 1969 and after 2068 can be represented.
+
+      <p>Any other characters in the format must be matched by the same
+      character in the string. As an exception, a backslash \ followed by a
+      character <i>c</i> must be matched by <i>c</i>.
+@end
+
+<h2>Members</h2>
+
+@var day
+@desc Day of month (the first day of the month is 1)
+@end
+  
+@var month
+@desc Month number (1 = January, 2 = February, ...).
+@end
+  
+@var year
+@desc Year number (e.g. 2010)
+@end
+  
+@var weekday
+@desc Weekday of the date (1 = Monday, 2 = Tuesday, ..., 7 = Sunday).
+@end
+  
+@fun week([rule])
+@desc Return the week number. The rule argument specifies how the week number
+      is calculated. It can be one of
+      @ref{FirstWeek}, @ref{FirstFourDayWeek} or
+      @ref{FirstFullWeek}. If unspecified,
+      <tt>FirstFourDayWeek</tt> is assumed. Sunday is considered to be the
+      last day of the week and Monday the first.
+@end
+
+@fun format(template)
+@desc <p class="trim">Format the date as a string.
+      The template string defines the format of
+      the result. The following <i>formatting sequences</i> in the template
+      are replaced with formatted <tt>Date</tt> components (examples within
+      parentheses):
+      
+      <table class="no-border" summary="Format sequences">
+        <tr>
+          <td>D
+          <td>day of month (5)
+        <tr>
+          <td>DD
+          <td>day of month, at least 2 digits (05)
+        <tr>
+          <td>M
+          <td>month (5)
+        <tr>
+          <td>MM
+          <td>month, at least 2 digits (05)
+        <tr>
+          <td>MMM
+          <td>abbreviated name of month (Feb)
+        <tr>
+          <td>MMMM&nbsp;
+          <td>name of month (February) 
+        <tr>
+          <td>YY
+          <td>year, 2 digits (09)
+        <tr>
+          <td>YYYY
+          <td>year, 4 digits (2009)
+        <tr>
+          <td>WWW
+          <td>abbreviation of weekday (Wed)
+        <tr>
+          <td>WWWW&nbsp;
+          <td>weekday (Wednesday)
+      </table>
+      <p>Other characters in the template are copied as such to the result.
+        As an exception, a backslash \ followed by a character <i>c</i> is
+        replaced with <i>c</i>.
+@end
+
+<h2>Operations</h2>
+
+@op date + n
+@desc Integers representing a number of days can added to and subtracted from
+      dates. <tt>Date() + 1</tt>, for example, refers to tomorrow.
+@end
+
+@op Str(date)
+@desc Convert a date to a string of the form "YYYY-MM-DD".
+@end
+
+@op date1 == date2
+@op date1 &lt; date2
+@desc Dates can be compared for equality and order. An earlier date is smaller
+      than a later date.
+@end
+
+@op Hash(date)
+@desc Return the hash value of a <tt>Date</tt> object.
+@end

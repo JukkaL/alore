@@ -1,0 +1,6 @@
+module runtime::traceback
+
+
+def RaiseError1()
+  RaiseError2()
+end

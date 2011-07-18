@@ -1,0 +1,260 @@
+module runtime
+
+-- Garbage collector tests
+
+import unittest
+import gctest
+import __testc
+
+
+private const L1 = 500
+private const L2 = L1 div 2
+
+
+class GCSuite1 is Suite
+  -- Test creating lots of short array objects.
+  def testLotsOfArrayGarbage()
+    var i = 0
+    while i < 7
+      var t = ArrayTree(14)
+      if i == 5
+        CollectAllGarbage()
+      end
+      CheckArrayTree(t, 14)
+      i += 1
+    end
+    Ok()
+  end
+  
+  -- Test creating lots of short array objects.
+  def testLotsOfArrayGarbage2()
+    var i = 0
+    while i < 7
+      var t = ArrayTreeRev(14)
+      if i == 5
+        CollectAllGarbage()
+      end
+      CheckArrayTree(t, 14)
+      i += 1
+    end
+    Ok()
+  end
+
+  -- Create lots of class instances.
+  def testLotsOfInstanceGarbage()
+    var i = 0
+    while i < 7
+      var t = InstTree(14)
+      if i == 5
+        CollectAllGarbage()
+      end
+      CheckInstTree(t, 14)
+      i += 1
+    end
+    Ok()
+  end
+
+  -- Create lots of class instances.
+  def testLotsOfInstanceGarbage2()
+    var i = 0
+    while i < 7
+      var t = InstTreeRev(14)
+      CheckInstTree(t, 14)
+      i += 1
+    end
+    Ok()
+  end
+
+  def testCollectingGarbage()
+    CollectAllGarbage()
+  
+    Assert(c1.length() == 2)
+    Assert(c1[0] == 1)
+    Assert(c2[1] == 3)
+    Assert(c3[0] == 3)
+    Assert(c4[0] == 4)
+    Assert(c4[1] == 5)
+    Assert(c5[0] == 5)
+    Assert(c6[0] == 1)
+    Assert(c7[1] == 3)
+    Assert(c8[0] == 3)
+    Assert(c9.length() == 2)
+    Assert(c9[0] == 4)
+    Assert(c10[1] == 6)
+    Assert(c11[0] == 1)
+    Assert(c12[0] == 2)
+  
+    Assert(v1.length() == 2)
+    Assert(v1[0] == 1)
+    Assert(v2[1] == 3)
+    Assert(v3[0] == 3)
+    Assert(v4[0] == 4)
+    Assert(v4[1] == 5)
+    Assert(v5[0] == 5)
+    Assert(v6[0] == 1)
+    Assert(v7[1] == 3)
+    Assert(v8[0] == 3)
+    Assert(v9.length() == 2)
+    Assert(v9[0] == 4)
+    Assert(v10[1] == 6)
+    Assert(v11[0] == 1)
+    Assert(v12[0] == 2)
+  
+    Ok()
+  end
+            
+  -- Test retiring of short and long arrays.
+  def testRetiringArrays()
+    var a = [nil] * 100000
+    var i = 0
+    while i < 100000
+      a[i] = i
+      i += 1
+    end
+  
+    var short = [nil] * 20
+    i = 0
+    while i < 20
+      short[i] = i
+      i += 1
+    end
+  
+    CollectAllGarbage()
+  
+    i = 0
+    while i < 100000
+      Assert(a[i] == i)
+      i += 1
+    end
+    
+    i = 0
+    while i < 20
+      Assert(short[i] == i)
+      i += 1
+    end
+  
+    Ok()
+  end
+  
+  -- Test tracing of stack.
+  def testStackTracing()
+    RecurseAndCollect(5000)
+    Ok()
+  end
+
+  -- Test tracing of a long chain.
+  def testTracingLongChain()
+    var j = 0
+    while j < 3
+      var a = [1, 2]
+      var c = a
+  
+      var i = 0
+      while i < 30000
+        c = [c, 7]
+        i += 1
+      end
+  
+      CollectAllGarbage()
+  
+      i = 0
+      while i < 30000
+        Assert(c.length() == 2 and c[1] == 7)
+        c = c[0]
+        i += 1
+      end
+  
+      Assert(c.length() == 2 and c[1] == 2 and c == a)
+  
+      j += 1
+    end
+  
+    Ok()
+  end
+    
+  def testMutatingAndGc()
+    var a1 = [nil] * L1
+    var a2 = [nil] * L1
+  
+    -- Allocate lots of stuff
+    var i = 0
+    while i < L2
+      a1[i] = [nil] * L1
+      a1[i][5] = 888
+      i += 1
+    end
+  
+    -- Shuffle stuff
+    var j = 0
+    while j < 20
+      i = 0
+      while i < L2
+        a2[i] = [nil] * L1
+  
+        a1[i + L2] = a1[i]
+        a1[i] = 0
+        i += 1
+      end
+  
+      i = 0
+      while i < L2
+        a2[i + L2] = [nil] * L1
+  
+        a1[i] = a1[i + L2]
+        a1[i + L2] = 0
+        i += 1
+      end
+  
+      j += 1
+    end
+  
+    CollectAllGarbage()
+  
+    i = 0
+    while i < L2
+      Assert(a1[i][5] == 888)
+      i += 1
+    end
+  
+    Ok()
+  end
+end
+
+
+const c1 = [1, 2]
+const c2 = [2, 3]
+const c3 = [3, 4]
+const c4 = [4, 5]
+const c5 = [5, 6]
+const c6 = [1, 2]
+const c7 = [2, 3]
+const c8 = [3, 4]
+const c9 = [4, 5]
+const c10 = [5, 6]
+const c11 = [1, 2]
+const c12 = [2, 3]
+
+
+var v1 = [1, 2]
+var v2 = [2, 3]
+var v3 = [3, 4]
+var v4 = [4, 5]
+var v5 = [5, 6]
+var v6 = [1, 2]
+var v7 = [2, 3]
+var v8 = [3, 4]
+var v9 = [4, 5]
+var v10 = [5, 6]
+var v11 = [1, 2]
+var v12 = [2, 3]
+
+
+private def RecurseAndCollect(n)
+  if n > 0
+    var a = [2, 3, 4]
+    RecurseAndCollect(n - 1)
+    Assert(a.length() == 3 and a[0] == 2 and a[2] == 4)
+  else
+    CollectAllGarbage()
+  end
+end

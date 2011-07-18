@@ -1,0 +1,151 @@
+@head
+@module http
+@title <tt>http</tt>: HTTP client
+
+<p>This module implements a simple HTTP client.
+
+<p>Here is a short example of making a HTTP GET request:
+
+@example
+  var h = Http("www.example.com")
+  h.request("GET", "/index.html")
+  var r = h.response()
+  r.status                     -- 200
+  r.reason                     -- "OK"
+  r.headers["content-length"]  -- "438"
+  r.readLn()                   -- "&lt;HTML&gt;" (first line of response body)
+  r.read()                     -- "&lt;HEAD&gt;..." (rest of the body)
+  h.close()
+@end
+
+<p>Refer to the <a href="http://tools.ietf.org/html/rfc2616">HTTP 1.1
+specification</a> (RFC 2616) for a detailed description of the HTTP protocol.
+
+<h2>Class <tt>Http</tt></h2>
+
+@class Http(host[, port])
+@desc Construct a HTTP connection object that connects to the specified host.
+      Port 80 is used by default. The optional port argument can be used to
+      override this. If this call returns successfully, a TCP connection has
+      been established with the host.
+@end
+
+<h3><tt>Http</tt> methods</h3>
+
+@fun request(method, url[, headers[, body]])
+@desc Send a request to the HTTP connection. The <tt>method</tt> argument
+      must be a
+      valid HTTP method (e.g., "GET" or "POST"). The <tt>url</tt> argument
+      defines the resource to be fetched.
+      <p>The optional <tt>headers</tt> argument should be a
+      sequence of name/value
+      pairs. These are additional headers that will be sent to the server as
+      part of the request. Note that the Host header is automatically sent and
+      should not be included in the headers argument.
+      <p>The <tt>body</tt> argument is the request body that will sent to the
+      server. It can be any narrow string. If the body is non-empty,
+      the Content-Length header is automatically set.
+@end
+
+@fun response()
+@desc Return the response from the server to the oldest sent request as a
+      @ref{HttpResponse} object.
+      Note that you must either read any previous responses entirely or close
+      them before calling <tt>response</tt> again for the same connection.
+@end
+
+@fun close()
+@desc Close the connection and release any allocated system resources. You must
+      call this method for every connection, even if <tt>isOpen</tt> returns
+      <tt>False</tt>.
+      <p>Input operations made on @ref{HttpResponse} objects related to this
+      connection will fail with @ref{IoError} when the connection is closed.
+@end
+
+@fun isOpen()
+@desc Return a boolean indicating if additional requests can be passed to the
+      server using this connection. You must have called <tt>response</tt>
+      before calling <tt>isOpen</tt>.
+@end
+
+@fun auth(username, password)
+@desc Specify the username and password to be used with the following requests
+      performed using this connection. Only HTTP basic authentication is
+      supported.
+      @note The username and password are passed as plaintext and thus can
+            potentially be eavesdropped.
+      @end
+@end
+
+<h2>Class <tt>HttpResponse</tt></h2>
+
+@class-hidden HttpResponse
+
+<p>This class represents a single response stream from a HTTP server.
+It inherits from @ref{io::Stream} and supports all stream input
+operations. It is instantiated by the <tt>Http</tt> class.
+
+<p>Note that you do not generally need to close <tt>HttpResponse</tt> streams.
+
+<p>In addition, it defines the following constant members:
+
+@var headers
+@desc HTTP headers associated with the response an an instance of the Map-like
+      @ref{HttpHeaders} class.
+@end
+
+@var status
+@desc Integer status code of the response. The status codes are described
+      in the HTTP specification.
+@end
+
+@var reason
+@desc Reason phrase returned by the server.
+@end
+
+@var version
+@desc HTTP version used by the server for this response. It is typically
+      "1.1" or "1.0".
+@end
+
+<h2>Class <tt>HttpHeaders</tt></h2>
+
+@class-hidden HttpHeaders
+
+<p>This class implements an immutable map where keys are strings and are
+matched ignoring case. It inherits from @ref{Map}. You should not construct
+<tt>HttpHeader</tt> instances by directly calling the constructor.
+
+<p><tt>HttpHeaders</tt> objects are used to access HTTP response headers:
+
+@example
+  r = conn.response()
+  r.headers.hasKey("content-length")   -- Does the header exist?
+  r.headers["Content-Type"]            -- Value of the Content-Type header
+                                       -- Note: case does not matter
+  r.headers.keys()                     -- Array of defined header names
+@end
+
+<h2>Exceptions</h2>
+
+@class HttpError([message])
+@desc This exception is raised on HTTP-specific error conditions. It inherits
+      from @ref{IoError}.
+@end
+
+@end-class
+
+<h2>Constants</h2>
+
+@var HttpPort
+@desc The default HTTP port (80).
+@end
+
+<h2>Functions</h2>
+
+@fun DefaultProxy()
+@desc Return a tuple (url, port) if a default HTTP proxy is defined using the
+      <tt>http_proxy</tt> environment variable. The url is a string and
+      the port is an integer. Return <tt>nil</tt> if no
+      proxy is defined.
+@end

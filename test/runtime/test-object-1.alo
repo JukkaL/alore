@@ -1,0 +1,52 @@
+module runtime
+
+-- Object test cases
+
+import unittest
+import reflect
+import objecthelpers
+
+
+class ObjectSuite is Suite
+  -- Test Object creation and equality comparison.
+  def testConstructionAndEquality()
+    var o1 = std::Object()
+    var o2 = std::Object()
+    AssertEqual(o1, o1)
+    AssertEqual(o2, o2)
+    AssertNotEqual(o1, o2)
+  end
+  
+  -- Test Object members.
+  def testMembers()
+    var o1 = std::Object()
+    var o2 = std::Object()
+    Assert(o1._eq(o1))
+    Assert(not o1._eq(o2))
+    Assert(HasMember(o1, "_eq"))
+    Assert(not HasMember(o1, "_str"))
+  end
+  
+  -- Test class with name Object defined outside std.
+  def testObjectOutsideStd()
+    var o1 = objecthelpers::Object()
+    var o2 = objecthelpers::Object()
+    AssertEqual(o1, o1)
+    AssertNotEqual(o1, o2)
+    AssertEqual(objecthelpers::Object.supertype(), std::Object)
+  end
+  
+  -- Test class that explicitly inherits from Object.
+  def testExplicitObjectSupertype()
+    var e1 = Explicit()
+    var e2 = Explicit()
+    AssertEqual(e1, e1)
+    AssertNotEqual(e1, e2)
+    AssertEqual(Explicit.supertype(), std::Object)
+  end
+end
+
+
+-- Explicit Object supertype.
+class Explicit is std::Object
+end

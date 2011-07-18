@@ -1,0 +1,7 @@
+module objecthelpers
+
+
+-- Object type defined outside std. This needs to be in a separate module to
+-- avoid name clash with std::Object.
+class Object
+end

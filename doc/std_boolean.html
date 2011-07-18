@@ -1,0 +1,42 @@
+@head
+@module std
+@title Class <tt>std::Boolean</tt>
+@index Boolean
+
+<p>The class <tt>Boolean</tt> has only two instances, the objects
+<tt>True</tt> and <tt>False</tt>.
+These are the only values
+returned by boolean operations such as <tt>==</tt> and <tt>not</tt>. Boolean
+values are used as conditions in if statements and loops.
+
+@class Boolean
+@desc The <tt>Boolean</tt> type. This type object cannot be used to create
+  instances of the type.
+@end
+
+<h2>Operations</h2>
+
+@op Str(boolean)
+@desc Return the string <tt>"True"</tt> or <tt>"False"</tt>.
+@end
+
+@op boolean == x
+@desc A boolean is equal only to itself.
+@end
+
+@op not boolean
+@desc Return the boolean negation of the value.
+@end
+
+@op b1 and b2
+@desc Return the boolean <i>and</i> of the booleans <tt>b1</tt> and
+      <tt>b2</tt>. The right
+      operand expression if evaluated only if <tt>b1</tt> evaluates to
+      <tt>True</tt>.
+@end
+
+@op b1 or b2
+@desc Return the boolean <i>or</i> of the booleans <tt>b1</tt> and
+      <tt>b2</tt>. The right operand
+      expression is evaluated only if <tt>b1</tt> evaluates to <tt>False</tt>.
+@end

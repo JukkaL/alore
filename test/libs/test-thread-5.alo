@@ -1,0 +1,133 @@
+module libs
+
+-- Thread tests
+
+-- FIX: check the contents of the Counts array
+
+import unittest
+import thread
+
+
+private const NumThreadIter = 10
+private const NumThreads = 20
+
+private var Counts = [nil] * NumThreadIter
+private var CountMutex = Mutex()
+
+private var TheQueue = Queue(4)
+
+
+class ThreadSuite5 is Suite
+  -- Test producer/consumer threads (mutexes and condition variables).
+  def testProducerConsumer()
+    var t = [nil] * NumThreads
+  
+    var i = 0
+    while i < NumThreads
+      t[i] = Thread(Consume)
+      i += 1
+    end
+  
+    i = 0
+    while i < NumThreads
+      Thread(Produce)
+      i += 1
+    end
+  
+    i = 0
+    while i < NumThreads
+      t[i].join()
+      i += 1
+    end
+  end
+end
+
+
+private def Produce()
+  var i = 1
+  while i <= NumThreadIter
+    TheQueue.put(i)
+    i += 1
+  end
+end
+
+
+private def Consume()
+  var i = 0
+  while i < NumThreadIter
+    var o = TheQueue.remove()
+    CountMutex.lock()
+    --Counts[o] = Counts[o] + 1
+    CountMutex.unlock()
+    i += 1
+  end
+end
+
+
+-- Fixed size queue for transferring data between threads.
+private class Queue
+  private var queueMutex
+  private var putCond
+  private var numPutWaiters
+  private var removeCond
+  private var numRemoveWaiters
+  private var buf
+  private var size
+  private var pos
+  private var num
+
+  def create(s)
+    queueMutex = thread::Mutex()
+    putCond = thread::Condition()
+    numPutWaiters = 0
+    removeCond = thread::Condition()
+    numRemoveWaiters = 0
+    buf = [nil] * s
+    size = s
+    pos = 0
+    num = 0
+  end
+
+  def put(o)
+    queueMutex.lock()
+    try
+      while num == size
+        numRemoveWaiters += 1
+        removeCond.wait(queueMutex)
+      end
+      buf[ind(pos + num)] = o
+      num += 1
+      if numPutWaiters > 0
+        numPutWaiters -= 1
+        putCond.signal()
+      end
+    finally
+      queueMutex.unlock()
+    end
+  end
+
+  def remove()
+    var o
+    queueMutex.lock()
+    try
+      while num == 0
+        numPutWaiters += 1
+        putCond.wait(queueMutex)
+      end
+      o = buf[pos]
+      pos = ind(pos + 1)
+      num -= 1
+      if numRemoveWaiters > 0
+        numRemoveWaiters -= 1
+        removeCond.signal()
+      end
+    finally
+      queueMutex.unlock()
+    end
+    return o
+  end
+
+  def ind(n)
+    return n mod size
+  end
+end

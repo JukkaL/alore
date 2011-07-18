@@ -1,0 +1,50 @@
+@head
+@title Using standard C libraries in modules
+
+<p>Standard C libraries, i.e. functions declared in standard headers such as
+stdio.h and stdlib.h, can be used in Alore C libraries. There are, however,
+some additional issues that need to addressed and that require some additional
+effort from the programmer in order to avoid problems in Alore C modules.
+
+<p>Most of these issues have already been discussed in this document. This
+section contains an overview of these issues and links to additional
+information if it can be found somewhere else in this document.
+
+@h2 Freeing resources allocated by standard C library functions
+
+<p>The Alore garbage collector cannot see or automatically free memory
+and resources allocated using
+basic C functions such as malloc or fopen. The following
+issues are related to this:
+
+<ul>
+  <li>Objects that contain references to resources allocated using malloc or
+    another function should define a finalization method @ref{#f} and
+    set the external data size using @ref{ASetExternalDataSize}.
+  <li>Resources allocated using ordinary C memory allocation functions are not
+    automatically freed in the presence of direct exceptions. See section
+    @href{Direct exceptions and freeing resources} for a more detailed
+    discussion.
+</ul>
+
+@h2 Using file operations
+
+<p>Basic C file operations such as <tt>printf</tt>, <tt>fopen</tt> and
+<tt>read</tt> can be used in Alore C libraries, but the following issues
+should be addressed:
+
+<ul>
+  <li>When writing to standard output using C functions, you must first
+    flush the corresponding Alore stream @ref{io::StdOut}. After having
+    written data to stdout, you must flush the C stream, for example by using
+    <tt>fflush</tt>. Otherwise output may not appear in the expected order.
+  <li>When reading from stdin using both the Alore @ref{io::StdIn} stream and
+    the C stdin stream, buffering may cause unexpected behavior, since both of
+    the stream implementations have independent and separate buffering
+    mechanisms.
+</ul>
+
+@h2 Performing blocking or long-running operations
+
+<p>Long-running or blocking C calls, for example file input/output, need
+to be surrounded with @ref{AAllowBlocking} and @ref{AEndBlocking} macros.

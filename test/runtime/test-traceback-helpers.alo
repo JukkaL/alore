@@ -1,0 +1,272 @@
+module runtime
+import __testc
+
+def RaiseTypeError()
+  if 2 > 1
+    raise TypeError("error")
+  end
+end
+
+
+class TracebackClass
+  def raiseTypeError()
+    if 2 > 1
+      return 1 + "a"
+    end
+  end
+  
+  def base1()
+    base2()
+  end
+  
+  def base2()
+    [1, 2][3]
+  end
+  
+  def overload()
+    return self + 1
+  end
+  
+  def _add(x)
+    return nil + x
+  end
+end
+
+
+class TracebackDerivedClass is TracebackClass
+  def base1()
+    callBase2()
+  end
+  
+  def callBase2()
+    base2()
+  end
+end
+
+
+class RaiseConstructorExceptionClass
+  var mvar = 1
+  
+  def create()
+    raise TypeError()
+  end
+end
+
+
+class RaiseMemberInitializerExceptionClass
+  var mvar = 1 / 0
+  
+  def create()
+  end
+end
+
+
+def DefaultArgError(a = 1 / 0)
+end
+
+
+var TracebackCounter
+
+def RaiseSimpleErrorWithFinally()
+  var a = 1
+  try
+    RaiseTypeError()
+  finally
+    TracebackCounter += 1
+  end
+end
+
+
+def RaiseErrorWithFinally()
+  try
+    var a = 1
+    try
+      try
+        ErrorWithFinally2()
+        TracebackCounter = 3
+      except TypeError
+        TracebackCounter += 1000
+        return 2
+      end
+    finally
+      TracebackCounter += 1
+    end
+  finally
+    TracebackCounter += 10
+  end      
+end
+def ErrorWithFinally2()
+  var a = 1
+  try
+    1 / 0
+    TracebackCounter = 2
+  finally
+    TracebackCounter += 100
+  end
+end
+
+
+def Reraise()
+  try
+    RaiseTypeError()
+    TracebackCounter += 1
+  except e is TypeError
+    TracebackCounter += 10
+    raise e
+  end
+  TracebackCounter += 100
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def DeepTraceback(depth)
+  if depth <= 1
+    return 3.length()
+  else
+    return DeepTraceback2(depth - 1)
+  end
+end
+
+
+def DeepTraceback2(depth)
+  if depth <= 1
+    return Map("3")
+  else
+    return DeepTraceback(depth - 1)
+  end
+end
+
+
+def DivFunc(a, b)
+  return a / b
+end
+
+
+def RaiseError3()
+  1 / 0
+end
+
+
+def ComplexTraceback1()
+  ComplexTraceback2(True)
+end
+
+
+class ComplexTraceback2
+  def create(first)
+    if first
+      ComplexTraceback2(False).complexTraceback3()
+    end
+  end
+  
+  def complexTraceback3()
+    ComplexTraceback4()
+  end
+end
+
+
+class ComplexTraceback4
+  var x = ComplexTraceback5(1, 2, 3, 4, 5)
+end
+
+
+def ComplexTraceback5(a, b, c, *d)
+  Call(ComplexTraceback6, [])
+end
+
+
+def ComplexTraceback6()
+  return Ord(1)
+end
+
+
+-- Be careful when editing these empty lines, since without them the line
+-- numbers in test-traceback-1.alo will not match.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class InOperatorClass
+  def overload()
+    return nil in self
+  end
+  
+  def _in(x)
+    1 / 0
+  end
+end
+
+
+def AnonTraceback()
+  var f = def ()
+    1 + "a"
+  end
+  f()
+end
+
+
+class AnonMethodClass
+  def raiseError()
+    var f = def (x, y)
+      x + y
+    end
+    f(1, "a")
+  end
+end
+
+
+def NestedAnonTraceback()
+  var f1 = def (a)
+    var f2 = def (b)
+      a + b
+    end
+    f2(5)
+  end
+  f1("a")  
+end

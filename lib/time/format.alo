@@ -1,0 +1,150 @@
+-- format.alo - Convert Time, Date and DateTime values to formatted strings
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module time
+
+import string
+import math
+import set
+
+
+private const FormatSymbolMap = 
+  Map(Date : Set(["Y", "M", "D", "W"]), 
+      Time : Set(["d", "h", "m", "s", "p", "P", "H"]),
+      DateTime : Set(["Y", "M", "D", "W", "h", "m", "s", "p", "P", "H"]))
+
+
+private def FormatDateTime(cl, d, f)
+  var l = []
+  var symbols = FormatSymbolMap[cl]
+  var is12Hour = False
+  
+  -- Check if we should use 12 hour clock (if there's something resembling 
+  -- [../..] in the string).
+  var i = 0
+  while i < f.length()
+    if f[i] == "["
+      is12Hour = True
+    elif f[i] == "\"
+      -- \[ does not imply 12 hour clock.
+      i += 1
+    end
+    i += 1
+  end
+  
+  i = 0
+  while i < f.length()
+    if f[i] in symbols
+      var n = 1
+      var fract = nil
+      while i + n < f.length() and f[i + n] == f[i]
+        n += 1
+      end
+      -- Is it seconds with a fraction?
+      if f[i] == "s" and i + n < f.length() and f[i + n] in (".", ",")
+        fract = 0
+        while i + n + 1 + fract < f.length() and f[i + n + 1 + fract] == "s"
+          fract += 1
+        end
+        if fract == 0
+          raise ValueError("Invalid format ({})".format(f))
+        end
+      end
+      switch f[i]
+        case "Y"
+          if n == 2
+            l.append("{00}".format(d.year mod 100))
+          elif n == 4
+            l.append("{0000}".format(d.year))
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "M"
+          if n in (1, 2)
+            l.append(("{" + "0" * n + "}").format(d.month))
+          elif n == 3
+            l.append(MonthShortNames[d.month - 1])
+          elif n == 4
+            l.append(MonthNames[d.month - 1])
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "D"
+          if n in (1, 2)
+            l.append(("{" + "0" * n + "}").format(d.day))
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "W"
+          if n == 3
+            l.append(WeekdayShortNames[d.weekday - 1])
+          elif n == 4
+            l.append(WeekdayNames[d.weekday - 1])
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "d"
+          if n >= 1
+            l.append(("{" + "0" * n + "}").format(Abs(d.day)))
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "h"
+          var h = Abs(d.hour)
+          if is12Hour and h == 0
+            h = 12
+          elif is12Hour and h > 12
+            h -= 12
+          end
+          if n in (1, 2)
+            l.append(("{" + "0" * n + "}").format(h))
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "m"
+          if n in (1, 2)
+            l.append(("{" + "0" * n + "}").format(Abs(d.minute)))
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+        case "s"
+          if n in (1, 2)
+            if fract == nil
+              l.append(("{" + "0" * n + "}").format(Trunc(Abs(d.second))))
+            else
+              l.append(("{" + "0" * n + "." + "0" * fract + "}").format( 
+                              TruncN(Abs(d.second), fract)))
+              i += 1 + fract
+            end
+          else
+            raise ValueError("Invalid format ({})".format(f))
+          end
+      end
+      i += n
+    elif f[i] == "\" and i < f.length() - 1
+      l.append(f[i + 1])
+      i += 2
+    elif f[i] == "-" and cl == Time
+      if d.day < 0 or d.hour < 0 or d.minute < 0 or d.second < 0
+         l.append("-")
+       end
+      i += 1
+    elif f[i] == "[" and (cl == Time or cl == DateTime)
+      var am, pm
+      am, pm, i = ParseAmPm(f, i)
+      if d.hour < 12
+        l.append(am)
+      else
+        l.append(pm)
+      end
+    else
+      l.append(f[i])
+      i += 1
+    end
+  end
+  return "".join(l)
+end

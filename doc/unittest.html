@@ -1,0 +1,190 @@
+@head
+@module unittest
+@title <tt>unittest</tt>: Unit testing framework
+
+<p>This module contains a simple unit testing framework that can be
+used for implementing automated unit tests for Alore programs.
+
+<h2>Introduction</h2>
+
+<p>A test case tests a single feature of a program. A suite is a collection
+of related test cases. Typically test cases are implemented as methods of a
+test suite class. A test suite class must be a subclass of @ref{Suite}.
+
+<p>The class below is a simple test suite that tests functions in the 
+<tt>mymodule</tt> module, which we assume to define the function
+<tt>Add</tt> and <tt>Multiply</tt>:
+
+@example
+import unittest
+import mymodule
+
+class MySuite is Suite
+  def testAdd()
+    AssertEqual(Add(1, 1), 2)
+  end
+  
+  def testMultiply()
+    AssertEqual(Multiply(2, 3), 6)
+  end
+end
+@end
+
+<p>Only methods whose names start with "test" become test cases of a suite.
+The @ref{AssertEqual} function can be used to verify that two values are
+equal.
+
+<p>The @ref{RunTest} function is used to execute a test suite:
+
+@example
+  RunTest(MySuite())
+@end
+
+<p>The above program executes the two test cases <tt>testAdd</tt> and 
+<tt>testMultiply</tt>. Any
+test cases that raise an uncaught exception due to an assertion failure or
+any other reason are reported to the programmer.
+
+<p>If we save the program above as <tt>test.alo</tt>, we can run the
+test cases like this:
+
+@example
+  $ alore test.alo
+  2 test cases run, all passed.
+  *** OK ***
+  $
+@end
+
+<h2>Class <tt>Suite</tt></h2>
+
+@class Suite()
+@desc Construct a <tt>Suite</tt> object. All members defined in subclasses 
+      that start 
+      with <tt>test</tt> are assumed to represent test cases or child suites.
+      Members that are instances of <tt>Suite</tt> represent
+      child suites and other members are assumed to represent test cases.
+@end
+
+<h3><tt>Suite</tt> methods</h3>
+
+@fun addTest(testcase)
+@desc Add a test case to the suite. This method can be used to add
+      manually constructed instances of the @ref{TestCase} class or its
+      subclass as members of a suite.
+@end
+
+@fun setUp()
+@desc This method is called before executing each test case in the suite. 
+      The default implementation does nothing. Override this to setup member
+      variables, files and other common state needed by test cases.
+@end
+
+@fun tearDown()
+@desc This method is usually called after executing each test case in the 
+      suite, even if the test case failed.
+      The default implementation does nothing. Override this to clean up the
+      results of the <tt>setUp</tt> method or test cases.
+@end
+
+@fun skip()
+@desc Skip the current test case. The number of skipped test cases is reported
+      by @ref{RunTest}, and if the <tt>"-v"</tt> flag is present, they are
+      also marked in the list of executed test cases as skipped.
+@end
+
+<h2>Class <tt>TestCase</tt></h2>
+
+@class TestCase(name[, suite[, function]])
+@desc Construct a test case object. The optional suite argument defines the
+      test suite that contains this test case. The optional function argument,
+      a callable object that accepts no arguments, will be called
+      when the case is run.
+@end
+
+<h3><tt>TestCase</tt> methods</h3>
+
+@fun setUp()
+@desc If suite is defined, calls the <tt>setUp</tt>
+      method of the suite. <tt>setUp</tt> is called before running the test 
+      case.
+@end
+
+@fun tearDown()
+@desc If suite is defined, calls the <tt>tearDown</tt>
+      method of the suite. <tt>tearDown</tt> is called after running the test 
+      case even if the test case failed.
+@end
+
+@fun run()
+@desc Run the test case. By default, calls the function given to the 
+      constructor or does nothing if the function was not provided. This method
+      should raise an exception on test case failure.
+@end
+
+@end-class
+
+<h2>Functions</h2>
+
+@fun RunTest(test[, args])
+@desc Run a test case or a test suite. The optional args parameter may be a
+      sequence of strings that represent the command line arguments to the
+      tester. Status information is displayed on the <tt>StdOut</tt>
+      stream.
+      <p>The args array optionally starts with a "-v" flag. If present, it
+      causes the function to display the names of all test cases as they are
+      being run. Finally, the args array may contain a test case filter
+      pattern.
+      The pattern may contain asterisks (*) as wild card characters. It is 
+      used to specify the names of test cases to run.
+      <p>Member <tt>test...</tt> of a test suite is named <tt>test..</tt>, 
+      unless the test suite
+      is a child suite, in which case the name is prefixed with the name of the
+      parent test suite and a dot (.).
+      <p>For example, if args is <tt>["testChild.*"]</tt>, only the test cases
+      in the <tt>testChild</tt> child suite are run.
+@end
+
+@fun Fail()
+@desc Fail a test case by raising @ref{AssertionFailure}.
+@end
+
+@fun Assert(bool[, message])
+@desc Raise @ref{AssertionFailure} if bool is not <tt>True</tt>. If the 
+      message is provided, it is associated with the exception.
+@end
+
+@fun AssertEqual(a, b)
+@desc Raise @ref{AssertionFailure} if a != b.
+@end
+
+@fun AssertNotEqual(a, b)
+@desc Raise @ref{AssertionFailure} if a == b.
+@end
+
+@fun AssertRaises(exception[, message], function, arguments = [])
+@desc Call the function with the given arguments. Raise @ref{AssertionFailure}
+      if the function does not raise an exception of the type specified
+      by <i>exception</i>. Additionally, if the <i>message</i> argument is
+      given, verify that the <tt>message</tt> member of the exception is
+      equal to the message argument. Example:
+      @example
+        AssertRaises(TypeError, Ord, [5]) -- Verify that Ord does not accept
+                                          -- an integer argument.
+      @end
+@end
+
+@fun AssertType(type, x)
+@desc Raise @ref{AssertionFailure} if x is not an instance of the specified
+      type.
+      @note Instances of subclasses of the type are not accepted.
+      @end
+@end
+
+<h2>Exceptions</h2>
+
+@class AssertionFailure([message])
+@desc This exception is raised when an assertion is failed in a test case.
+      This class is derived from @ref{std::Exception}.
+@end
+
+@end-class

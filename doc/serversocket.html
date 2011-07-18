@@ -1,0 +1,37 @@
+@head
+@module serversocket
+@title <tt>serversocket</tt>: Network server
+
+<p>This module supports creating TCP servers that listen on a specified port
+and accept incoming connections.
+
+@see The <a href="socket.html">socket</a> module allows creating TCP clients.
+@end
+
+<h2>Class <tt>ServerSocket</tt></h2> 
+
+@class ServerSocket(port[, address])
+@desc Construct a TCP/IP server socket listening on the specified port of the 
+      local host. If the address argument is omitted or is <tt>nil</tt>,
+      the server
+      socket will listen to all the network interfaces. Otherwise, only the
+      specified IP address will be listened to. The address must be of
+      the form "123.45.67.89" (in decimal). 
+@end
+
+<h3><tt>ServerSocket</tt> methods</h3>
+
+@fun accept([buffering])
+@desc Wait for an incoming connection. Return a @ref{socket::Socket} object
+      that represents the new connection.
+      <p>The <i>buffering</i> parameter specifies
+      the buffering mode of the socket. If omitted, the connection is
+      unbuffered. Valid values for the parameter are
+      @ref{io::Buffered}, @ref{io::LineBuffered} and @ref{io::Unbuffered}.
+@end
+
+@fun close()
+@desc Close the socket. Free any resources allocated to the socket.
+@end
+
+@end-class

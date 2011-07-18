@@ -1,0 +1,910 @@
+encoding latin1
+
+module runtime
+
+-- String tests
+
+import unittest
+import __testc
+import libs
+import string
+import reflect
+
+
+const wstr = Chr(10000) + "ab" + Chr(256) + Chr(0)
+const hello = "hello world"
+const whello = "hello " + Chr(999) + " world"
+
+const w1 = Chr(1000)
+const w2 = Chr(2000)
+
+
+class StrSuite is Suite
+  -- Test basic operations.
+  def testStringBasics()
+    Assert(IsWideStr(wstr))
+    Assert(not IsWideStr(hello))
+    Assert(IsWideStr(whello))
+    Assert(IsWideStr(w1))
+
+    -- Ord and Chr basic
+    var i = 0
+    while i < 65536
+      Assert(Ord(Chr(i)) == i)
+      i += 1
+    end
+    Assert(Chr(65) == "A")
+    Assert(Chr(32) == " ")
+    Assert(Ord("a") == 97)
+    VerifyNot("A" == "B")
+
+    -- Concat basics
+    Assert("abba" + "" + "yeah!!" == "abbayeah!!")
+
+    -- Substring basics
+    Assert(IsSubStr("hello world hello world"[1:10]))
+    if not Is64BitArch
+      Assert(IsSubStr("hello world"[1:7]))
+    end
+    Assert("hello world"[1:7] == "ello w")
+    Assert("world"[2] == "r")
+
+    -- Comparison basics
+    Assert("AA" < "AAA")
+    VerifyNot("AAA" < "AA")
+    Assert("b" > "azzz")
+    VerifyNot("azzz" > "b")
+
+    Assert("b" != "B")
+    VerifyNot("a" != "a")
+
+    Assert("A" >= "A")
+    Assert("AA" >= "A")
+    VerifyNot("A" >= "AA")
+
+    Assert("A" <= "A")
+    Assert("A" <= "AA")
+    VerifyNot("AA" <= "A")
+
+    -- length()
+    Assert("".length() == 0)
+    Assert("a".length() == 1)
+    Assert("hello world".length() == 11)
+    Assert(wstr.length() == 5)
+
+    -- Verify wstr
+    Chk(wstr, (Chr(10000), "a", "b", Chr(256), Chr(0)))
+
+    Ok()
+  end
+  
+  def testNegativeIndex()
+    var s = "foobar"
+    AssertEqual(s[-1], "r")
+    AssertEqual(s[-6], "f")
+    
+    s = SS("foobar123")
+    AssertEqual(s[-1], "3")
+    AssertEqual(s[-9], "f")
+    
+    s = "fooba\u1234"
+    AssertEqual(s[-1], "\u1234")
+    AssertEqual(s[-6], "f")
+    
+    s = WSS("fooba\u1234")
+    AssertEqual(s[-1], "\u1234")
+    AssertEqual(s[-6], "f")
+  end
+
+  -- Test concatenation.
+  def testConcatenation()
+    -- Narrow str + narrow str
+    Assert("" + "" + "" == "")
+    Assert("" + "a" == "a")
+    Chk("a" + " BA()BAA " + Chr(10) + "98",
+	("a", " ", "B", "A", "(", ")", "B", "A", "A", " ", Chr(10), "9", "8"))
+
+    -- Narrow str + narrow substr
+    Assert("joopa joo" + hello[2:8] == "joopa joollo wo")
+
+    -- Narrow substr + narrow str
+    Assert(hello[5:11] + "funny" == " worldfunny")
+
+    -- Narrow substr + narrow substr
+    Assert(hello[2:8] + hello[5:11] == "llo wo world")
+
+    -- Wide str + narrow str
+    Chk((w1 + w2) + "hello", (w1, w2, "h", "e", "l", "l", "o"))
+
+    -- Narrow str + wide str
+    Chk("hello" + (w1 + w2), ("h", "e", "l", "l", "o", w1, w2))
+
+    -- Wide substr + narrow str
+    Assert(IsSubStr(whello[2:8]))
+    Chk(whello[2:9] + "foobar", ("l", "l", "o", " ", Chr(999), " ", "w",
+			         "f", "o", "o", "b", "a", "r"))
+
+    -- Wide str + wide substr
+    Chk((w1 + w2) + whello[2:8], (w1, w2, "l", "l", "o", " ", Chr(999), " "))
+
+    -- Narrow substr + wide substr
+    Chk(hello[2:8] + whello[2:8], ("l", "l", "o", " ", "w", "o",
+				   "l", "l", "o", " ", Chr(999), " "))
+
+    -- Wide str + Wide str
+    Chk((w1 + w2) + (w2 + w1), (w1, w2, w2, w1))
+
+    Ok()
+  end
+
+  -- Test substrings.
+  def testSubstring()
+    -- Single character narrow substr
+    Assert(hello[4] == "o")
+    Assert(hello[2:8][2] == "o")
+
+    -- Single character wide substr
+    Assert(whello[4] == "o")
+    Assert(whello[6] == Chr(999))
+    Assert(whello[2:8][2] == "o")
+    Assert(whello[2:8][4] == Chr(999))
+
+    -- Range narrow substr
+    Assert(hello[2:8] == "llo wo")
+    Assert(hello[4:5] == "o")
+    Assert(hello[0:hello.length()] == hello)
+    Assert(hello[0:0] == "")
+    Assert(hello[4:4] == "")
+    Assert(hello[1:8][1:7] == "llo wo")
+    Assert(hello[1:8][0:0] == "")
+    Assert(hello[0:100] == hello)
+    Assert(hello[1:8][0:100] == hello[1:8])
+    Assert(hello[100:110] == "")
+
+    -- Range wide substr
+    Assert(whello[2:8] == "llo " + Chr(999) + " ")
+    Assert(whello[4:5] == "o")
+    Assert(whello[6:7] == Chr(999))
+    Assert(whello[0:whello.length()] == whello)
+    Assert(whello[0:0] == "")
+    Assert(whello[4:4] == "")
+    Assert(whello[1:8][1:7] == "llo " + Chr(999) + " ")
+    Assert(whello[0:100] == whello)
+    Assert(whello[1:8][0:100] == whello[1:8])
+    Assert(whello[100:110] == "")
+    
+    AssertEqual(""[100:120], "")
+
+    -- Type errors
+
+    Ok()
+  end
+
+  def testNegativeIndexSubStr()
+    var s = "foobar"
+    AssertEqual(s[1:-1], "ooba")
+    AssertEqual(s[-2:6], "ar")
+    AssertEqual(s[-7:2], "fo")
+    AssertEqual(s[-100:1], "f")
+    AssertEqual(s[0:-100], "")
+    AssertEqual(s[-100:-50], "")
+    
+    s = SS("foobar123")
+    AssertEqual(s[1:-1], "oobar12")
+    AssertEqual(s[-2:9], "23")
+    AssertEqual(s[-10:2], "fo")
+    AssertEqual(s[-100:1], "f")
+    AssertEqual(s[0:-100], "")
+    AssertEqual(s[-100:-50], "")
+    
+    s = "fooba\u1234"
+    AssertEqual(s[1:-1], "ooba")
+    AssertEqual(s[-2:6], "a\u1234")
+    AssertEqual(s[-7:2], "fo")
+    AssertEqual(s[-100:1], "f")
+    AssertEqual(s[0:-100], "")
+    AssertEqual(s[-100:-50], "")
+    
+    s = WSS("fooba\u1234")
+    AssertEqual(s[1:-1], "ooba")
+    AssertEqual(s[-2:6], "a\u1234")
+    AssertEqual(s[-7:2], "fo")
+    AssertEqual(s[-100:1], "f")
+    AssertEqual(s[0:-100], "")
+    AssertEqual(s[-100:-50], "")
+  end
+  
+  def testSubStringWithNil()
+    var s = "foobar"
+    AssertEqual(s[:2], "fo")
+    AssertEqual(s[nil:2], "fo")
+    AssertEqual(s[:-1], "fooba")
+    AssertEqual(s[0:], "foobar")
+    AssertEqual(s[1:], "oobar")
+    AssertEqual(s[1:nil], "oobar")
+    AssertEqual(s[-1:], "r")
+    
+    s = SS("foobar123")
+    AssertEqual(s[:2], "fo")
+    AssertEqual(s[:-1], "foobar12")
+    AssertEqual(s[0:], "foobar123")
+    AssertEqual(s[1:], "oobar123")
+    AssertEqual(s[-1:], "3")
+    
+    s = "fooba\u1234"
+    AssertEqual(s[:2], "fo")
+    AssertEqual(s[:-1], "fooba")
+    AssertEqual(s[0:], "fooba\u1234")
+    AssertEqual(s[1:], "ooba\u1234")
+    AssertEqual(s[-1:], "\u1234")
+    
+    s = WSS("fooba\u1234")
+    AssertEqual(s[:2], "fo")
+    AssertEqual(s[:-1], "fooba")
+    AssertEqual(s[0:], "fooba\u1234")
+    AssertEqual(s[1:], "ooba\u1234")
+    AssertEqual(s[-1:], "\u1234")
+  end
+  
+  -- Test string comparisons.
+  def testComparison()
+    -- Narrow str + narrow str
+    Assert("" == "")
+    Assert("hello" == "h" + "ello")
+    Assert("Hello" != "hello")
+    Assert("AAAAA" < "AAAAAA")
+    Assert("BBBBBB" > "BBBBB")
+    Assert("" < Chr(0))
+    Assert("aab" > "aaaba")
+
+    -- FIX a lot is missing
+    -- Narrow str + narrow substr
+
+    -- Narrow substr + narrow str
+
+    -- Narrow substr + narrow substr
+
+    -- Wide str + narrow str
+
+    -- Narrow str + wide str
+
+    -- Wide substr + narrow str
+
+    -- Wide str + wide substr
+
+    -- Narrow substr + wide substr
+
+    -- Type errors
+
+    Ok()
+  end
+
+  -- Test multiplication of strings and integers.
+  def testMultiplication()
+    -- Narrow strings
+    Assert("" * 99999 == "")
+    Assert("a" * 5 == "aaaaa")
+    Assert(0 * "aaa" == "")
+    Assert("Abc" * 3 == "AbcAbcAbc")
+    Assert("hmm!" * 1 == "hmm!")
+
+    -- Narrow substr
+    Assert(hello[2:8] * 3 == "llo wollo wollo wo")
+
+    -- Wide strings
+    Chk(6 * w1, (w1, w1, w1, w1, w1, w1))
+    Chk(("a" + w1) * 4, ("a", w1, "a", w1, "a", w1, "a", w1))
+
+    -- Wide substrs
+    Chk(whello[4:9] * 2,
+	("o", " ", Chr(999), " ", "w", "o", " ", Chr(999), " ", "w"))
+
+    -- Errors
+    -- FIX
+
+    Ok()
+  end
+
+  -- Test Int<->Str conversion.
+  def testIntConversion()
+    Assert(Int("3") == 3)
+    Assert(Int(" " + Chr(9) + "  -987448   ") == -987448)
+    Assert(Int("0000000000000000000000000000000000000000000000000000") == 0)
+    Assert(Int("102937410298374198273490827349082740901927340928739087") ==
+	   102937410298374198273490827349082740901927340928739087)
+    Assert(Int(" -9857489236598732658973462589734658923645892346 ") ==
+	   -9857489236598732658973462589734658923645892346)
+
+    Assert(Str(0) == "0")
+    Assert(Str(9) == "9")
+    Assert(Str(4893) == "4893")
+    Assert(Str(-2342387) == "-2342387")
+    Assert(Str(5342759803475098374950273094739047905874592375907) ==
+	   "5342759803475098374950273094739047905874592375907")
+    Assert(Str(-8572376873658263487563784562736583645823658) ==
+	   "-8572376873658263487563784562736583645823658")
+
+    -- Type errors
+    -- FIX
+
+    Ok()
+  end
+
+  -- Do some simple stress tests.
+  def testStressTest()
+    var i = 0
+    var s = ""
+    while i < 2000
+      s += "ab"
+      i += 1
+    end
+    i = 0
+    while i < 2000
+      Assert(s[2*i:2*i+2] == "ab")
+      i += 1
+    end
+
+    Ok()
+  end
+  
+  -- Test string literals with unicode character sequences.
+  def testUnicodeLiterals()
+    Assert(Ord("\u0000") == 0)
+    Assert(Ord("\u006a") == 106)
+    Assert(Ord("\u00ff") == 255)
+    Assert(Ord("\u0200") == 512)
+    Assert(Ord("\uffff") == 65535)
+    Assert(Ord("\uFffF") == 65535)
+    var s = "a\u0040\uffffb"
+    Assert(s[0] == "a")
+    Assert(s[1] == "@")
+    Assert(s[2] == Chr(65535))
+    Assert(s[3] == "b")
+    
+    Assert(Ord("\") == 92)
+    Assert("\u" == "\" + "u")
+    Assert("\u1" == "\" + "u1")
+    Assert("\u12" == "\" + "u12")
+    Assert("\u123" == "\" + "u123")
+  end
+  
+  def testIn()
+    Assert("o" in "foo")
+    Assert("f" in "foo")
+    Assert(not "F" in "foo")
+    Assert(not " " in "foo")
+    
+    Assert(not "x" in "")
+    
+    Assert("o" in "foo\u1234")
+    Assert("\u1234" in "foo\u1234")
+    
+    Assert("foo" in "foo")
+    Assert("foo" in "xfoox")
+    Assert(not "foo" in "foO")
+    Assert(not "foo" in "fo")
+  end
+  
+  def testCount()
+    var s = "foo"
+    Assert(s.count("f") == 1)
+    Assert(s.count("o") == 2)
+    Assert(s.count("x") == 0)
+    AssertEqual("foo\u1234bar".count("\u0034"), 0)
+    AssertEqual("foo\u1234bar".count("\u1234"), 1)
+    AssertEqual("xfofo".count("fo"), 2)
+    AssertEqual("xfofo".count("Fo"), 0)
+    AssertEqual("oooooooox".count("ooo"), 2)
+  end
+  
+  def testReplace()
+    -- A few basic cases.
+    AssertEqual("xfoyyfo".replace("fo", "bar"), "xbaryybar")
+    AssertEqual("xfoyyfo".replace("fo", "bar", 1), "xbaryyfo")
+    
+    -- Single-character replace.
+    Assert("a".replace("a", "b") == "b")
+    
+    -- Source is empty.
+    AssertEqual("".replace("", ""), "")
+    AssertEqual("abc".replace("", "."), "abc")
+    
+    -- A large number of replacements.
+    AssertEqual(("a" * 10000).replace("a", "foo"), "foo" * 10000)
+    AssertEqual(("\u1234" * 10000).replace("\u1234", "foo"), "foo" * 10000)
+    
+    for w in 1 to 3
+      for f1 in SandSSFunc(w)
+        -- Simple replace.
+        Assert(f1("Abcdefghi").replace("b", ".") == f1("A.cdefghi"))
+        
+        for f2 in SandSSFunc(w)
+          -- Replace from an empty string.
+          Assert("".replace(f1("Abcdefghij"), f1("Bcdefghij")) == "")
+          -- Replace with an empty string.
+          Assert(f1("-AbcdEfghibcdEfghiAbcdEfghi").replace(
+                         f2("AbcdEfghi"), "") ==
+                 f1("-bcdEfghi"))
+          -- Replace the whole string with an empty string.
+          Assert(f1("Abdefghij").replace(f2("Abdefghij"), "") == "")
+          
+          for f3 in SandSSFunc(w)
+            -- Replace nothing.
+            Assert(f1("Ab1234cde").replace(f2("Ab1234cdf"),
+                           f3("Xxxxxxxxxx")) == f1("Ab1234cde"))
+            -- Replace the whole string.
+            Assert(f1("Ab1234cde").replace(f2("Ab1234cde"),
+                           f3("aB5678CDEf")) == f1("aB5678CDEf"))
+            -- Replace a part of a string.
+            AssertEqual(f1("-.-Ab1234cde/-").replace(f2("Ab1234cde"),
+                                f3("aB5678CDE")), f1("-.-aB5678CDE/-"))
+            -- Replace multiple instances.
+            Assert(f1("-AB1234CDEF-AB1234CDEFAB1234CDEF").replace(
+                           f2("AB1234CDEF"), f3("ab5678cdQ")) ==
+                   f1("-ab5678cdQ-ab5678cdQab5678cdQ"))
+            -- Replace the leftmost match.
+            Assert(f1("-AAAAAAAAAAAAA-").replace(f2("AAAAAAAAA"),
+                           f3("aBcdefghi")) ==
+                   f1("-aBcdefghiAAAA-"))
+          end
+        end
+      end
+    end
+    
+    -- Mix wide and narrow strings.
+    Assert("-abaacbba-ab".replace("ab", W("AB")) == W("-ABaacbba-AB"))
+    Assert(W("-abaaCbba-ab").replace("ab", W("AB")) == W("-ABaaCbba-AB"))
+    Assert(W("-Cb-").replace(W("Cb"), "c") == "-c-")
+    
+    -- Test overflow check (only on 32-bit architectures).
+    if not Is64BitArch
+      AssertRaises(RuntimeError, def ()
+                                  ("a" * 100000).replace("a", "b" * 100000)
+                                end)
+    end
+  end
+  
+  -- Test the count argument of replace.
+  def testReplaceWithCount()
+    AssertEqual("a".replace("x", "y", 1), "a")
+    AssertEqual("a".replace("x", "y", 0), "a")
+    AssertEqual("a".replace("x", "y", 12345678), "a")
+    
+    AssertEqual("aa".replace("a", "b", 0), "aa")
+    AssertEqual("aa".replace("a", "b", 1), "ba")
+    AssertEqual("aa".replace("a", "b", 2), "bb")
+    AssertEqual("aa".replace("a", "b", 3), "bb")
+    
+    AssertEqual("--foo-foo---".replace("foo", "12", 0), "--foo-foo---")
+    AssertEqual("--foo-foo---".replace("foo", "12", 1), "--12-foo---")
+    AssertEqual("--foo-foo---".replace("foo", "12", 2), "--12-12---")
+    AssertEqual("--foo-foo---".replace("foo", "12", 3), "--12-12---")
+  end
+  
+  def testSplit()
+    -- A few basic cases.
+    AssertEqual(" f   oo   ".split(), ["f", "oo"])
+    AssertEqual("f,oo,fo".split(","), ["f", "oo", "fo"])
+    AssertEqual("f,oo,fo".split(",", 1), ["f", "oo,fo"])
+    
+    -- Split empty string.
+    Assert("".split() == [])
+    Assert("".split("x") == [""])
+    
+    -- Special cases.
+    Assert("  ".split() == [])
+    Assert("x".split("x") == ["", ""])
+    Assert("xy".split("xy") == ["", ""])
+    
+    -- Split string that cannot be splitted.
+    Assert("a".split() == ["a"])
+    Assert(W("Abc-Def").split() == [W("Abc-Def")])
+    Assert("a".split("ab") == ["a"])
+    Assert(W("A").split(W("Ab")) == [W("A")])
+    
+    -- Test splitting using whitespace as separator.
+    Assert("a b".split() == ("a", "b"))
+    Assert("   abc-d   def   ".split() == ("abc-d", "def"))
+    Assert((Tab + "a" + CR + "b" + LF + "c").split() == ("a", "b", "c"))
+    Assert(W("   Abc-d   def   ").split() == (W("Abc-d"), "def"))
+    Assert(WSS(Tab + "A" + CR + "b" + LF + "C").split() == 
+           (W("A"), "b", W("C")))
+    
+    -- Test splitting with a custom separator.
+    Assert("a b:c d".split(":") == ("a b", "c d"))
+    AssertEqual("a,b, c,d, e".split(", "), ("a,b", "c,d", "e"))
+    Assert(WSS("A,b, c,d, e").split(", ") == (W("A,b"), "c,d", "e"))
+    Assert(WSS("aXbXYc").split(W("XY")) == (W("aXb"), "c"))
+    
+    -- Test splitting with empty parts.
+    Assert(",a,,".split(",") == ("", "a", "", ""))
+    Assert(W("Abcdef").split(WSS("Abcdef")) == ("", ""))
+    
+    -- Test splitting with a maximum split count.
+    AssertEqual("a  bc  de".split(nil, 1), ("a", "bc  de"))
+    AssertEqual(" a  bc  de ".split(nil, 1), ("a", "bc  de "))
+    AssertEqual("a  bc  de f".split(nil, 2), ("a", "bc", "de f"))
+    AssertEqual("a,bc,de".split(",", 1), ("a", "bc,de"))
+    AssertEqual("a,b,d,e".split(",", 2), ("a", "b", "d,e"))
+    AssertEqual("a,b".split(",", 5), ("a", "b"))
+    AssertEqual("a,b".split(",", 0), ["a,b"])
+    
+    AssertRaises(ValueError, def ()
+                              "xy".split("")
+                            end)
+  end
+  
+  def testJoin()
+    -- A few basic cases.
+    AssertEqual("".join([]), "")
+    AssertEqual(", ".join(["a", "bc", ""]), "a, bc, ")
+    
+    -- Empty joins.
+    Assert("".join([]) == "")
+    Assert(",".join([]) == "")
+    Assert("".join(("", "", "")) == "")
+    
+    -- Simple join.
+    Assert("".join(["a"]) == "a")
+    Assert(",".join(["a"]) == "a")
+    
+    -- Narrow string join.
+    Assert(SS(",-------'").join(["abc", SS("defghi123")]) ==
+           "abc,-------'defghi123")
+    -- Wide string join.
+    Assert(WSS("--A--").join([W("Abc"), WSS("defgHI")]) == 
+           W("Abc--A--defgHI"))
+
+    -- Combining narrow and wide strings.
+    Assert(WSS("--A--").join(["ab", "cd", "ef"]) == W("ab--A--cd--A--ef"))
+    Assert(SS(",--,12,--").join([W("Ab"), W("Cd"), W("Ef")]) == 
+           W("Ab,--,12,--Cd,--,12,--Ef"))
+    Assert("".join(["abc", W("CDE")]) == W("abcCDE"))
+  end
+  
+  -- Test Joining non-Array objects.
+  def testJoinWithNonArrays()
+    AssertEqual(",".join(JoinArray1("a", "bb", "ccc", "dd", "e")), 
+                "a,bb,ccc,dd,e")
+    AssertEqual(",".join(JoinArray2(3)), "0,1,2")
+  end
+  
+  -- Test startsWith.
+  def testStartsWith()
+    for w in 1 to 3
+      for s1 in SandSS("aBcdefgH-=", w)
+        for f in SandSSFunc(w)
+	  Assert(s1.startsWith(f("aBcdefgH-")))
+	  Assert(s1.startsWith(f("aBcdefgH-=")))
+	  Assert(not s1.startsWith(f("aBcdefgH-=i")))
+	  Assert(not s1.startsWith(f("BBcdefgH-")))
+	end
+      end
+    end
+    
+    Assert("".startsWith(""))
+    Assert("a".startsWith("a"))
+    Assert(not "".startsWith("a"))
+    Assert("abcdefgh".startsWith(""))
+    Assert(W("Abcdefgh").startsWith(""))
+    
+    Assert(W("abC").startsWith("ab"))
+    Assert(WSS("abcdefghiC").startsWith(SS("abcdefghi")))
+    Assert(not "Abc".startsWith(W("Ab")))
+  end
+  
+  -- Test endsWith.
+  def testEndsWith()
+    for w in 1 to 3
+      for s1 in SandSS("aBcdefgH-=", w)
+        for f in SandSSFunc(w)
+	  Assert(s1.endsWith(f("BcdefgH-=")))
+          Assert(s1.endsWith(f("aBcdefgH-=")))
+	  Assert(not s1.endsWith(f("aaBcdefgH-=")))
+	  Assert(not s1.endsWith(f("aBcdefgH--")))
+	end
+      end
+    end
+    
+    Assert("".endsWith(""))
+    Assert("a".endsWith("a"))
+    Assert(not "".endsWith("a"))
+    Assert("abcdefgh".endsWith(""))
+    Assert(W("Abcdefgh").endsWith(""))
+    
+    Assert(W("Abc").endsWith("bc"))
+    Assert(WSS("Abcdefghijk").endsWith(SS("bcdefghijk")))
+    Assert(not "abC".endsWith(W("bC")))
+  end
+  
+  -- Test find.
+  def testFind()
+    for w in 1 to 3
+      for s1 in SandSS("<Abcdefghi ABCDEFGHI>", w)
+        for f in SandSSFunc(w)
+          -- Match not at the start or the end of a string.
+	  Assert(s1.find(f("Abcdefghi")) == 1)
+	  -- Match at the start of a string.
+	  Assert(s1.find(f("<Abcdefghi")) == 0)
+	  -- Match at the end of a string.
+	  Assert(s1.find(f("ABCDEFGHI>")) == 11)
+	  -- No match, but almost all characters match.
+	  Assert(s1.find(f("Abcdefghij")) == -1)
+	end
+	-- Match at multiple places, return the first. Search for a single
+	-- character.
+        Assert(s1.find(SorWS("A", w)) == 1)
+      end
+      Assert(SorWS("Abc", w).find("") == 0)
+      Assert("".find(SorWS("Abc", w)) == -1)
+    end
+    Assert("".find("") == 0)
+    
+    -- Search for a narrow string a from wide string.
+    Assert(WSS("AbcdE").find("bcd") == 1)
+    -- Search for a wide string from a narrow string.
+    Assert("abcdefgh".find(WSS("cdefg")) == 2)
+  end
+  
+  -- Test index.
+  def testIndex()
+    -- Only basic test cases are included since the implementation is assumed
+    -- to be almost identical to that of find.
+    
+    AssertEqual("a".index("a"), 0)
+    AssertEqual("ba".index("a"), 1)
+    AssertEqual("bba".index("a"), 2)
+    AssertEqual("baa".index("a"), 1)
+    
+    AssertEqual("".index(""), 0)
+    AssertEqual("a".index(""), 0)
+    
+    for s, ss in ("", "a"), ("a", "aa"), ("a", "b")
+      AssertRaises(ValueError, def (); s.index(ss); end)
+    end
+  end
+  
+  -- Test find with the optional start argument.
+  def testFindWithStart()
+    AssertEqual("x".find("x", 0), 0)
+    AssertEqual("x".find("x", 1), -1)
+    AssertEqual("xy".find("x", 1), -1)
+    AssertEqual("xxfoo".find("foo", 0), 2)
+    AssertEqual("xxfoo".find("foo", 2), 2)
+    AssertEqual("xxfoo".find("foo", 3), -1)
+    AssertEqual("xxfooyyfoo".find("foo", 2), 2)
+    AssertEqual("xxfooyyfoo".find("foo", 3), 7)
+    
+    AssertRaises(ValueError, def (); "foo".find("f", -1); end)
+    AssertRaises(ValueError, def (); "foo".find("o", -2); end)
+    
+    AssertEqual("".find("", 0), 0)
+    AssertEqual("".find("", 1), -1)
+    AssertEqual("xx".find("", 1), 1)
+    AssertEqual("xx".find("", 2), 2)
+    AssertEqual("xx".find("", 3), -1)
+  end
+  
+  -- Test strip.
+  def testStrip()
+    -- Strip empty string.
+    Assert("".strip() == "")
+    
+    -- Strip string without whitespace at the beginning, but whitespace in the
+    -- middle.
+    AssertEqual("a".strip(), "a")
+    Assert("x yy z".strip() == "x yy z")
+    Assert(WSS("A b C").strip() == W("A b C"))
+    
+    -- Strip whitespace string.
+    Assert(" ".strip() == "")
+    Assert(Tab.strip() == "")
+    Assert(CR.strip() == "")
+    Assert(LF.strip() == "")
+    Assert(("   " + Tab).strip() == "")
+    
+    -- Strip whitespace at the beginning of a string.
+    Assert(" a".strip() == "a")
+    Assert((CR + LF + Tab + "abc def").strip() == "abc def")
+    Assert((CR + LF + Tab + WSS(" Abc Def")).strip() == W("Abc Def"))
+    
+    -- Strip whitespace at the end of a string.
+    Assert("a ".strip() == "a")
+    Assert(SS("abc def" + CR + LF + Tab).strip() == "abc def")
+    Assert((W("Abc Def ") + CR + LF + Tab).strip() == W("Abc Def"))
+    
+    -- Strip whitespace at the beginning and at the end of a string.
+    Assert(" a ".strip() == "a")
+    Assert(SS("  abc def" + Tab).strip() == "abc def")
+    Assert(WSS("  A  ").strip() == W("A"))
+  end
+
+  -- Test Upper.  
+  def testUpper()
+    Assert("".upper() == "")
+    Assert("a".upper() == "A")
+    Assert("A".upper() == "A")
+    Assert("Foo Bar".upper() == "FOO BAR")
+    Assert("\u012bä".upper() == "\u012aÄ")
+    Assert("`az{".upper() == "`AZ{")
+    Assert(SS("Foo Bar ss").upper() == "FOO BAR SS")
+    Assert(WSS("7oo \u012bar").upper() == "7OO \u012aAR")
+  end
+  
+  -- Test Lower.
+  def testLower()
+    Assert("".lower() == "")
+    Assert("A".lower() == "a")
+    Assert("a".lower() == "a")
+    Assert("Foo Bar".lower() == "foo bar")
+    Assert("\u012aÄ".lower() == "\u012bä")
+    Assert("@AZ[".lower() == "@az[")
+    Assert(SS("Foo Bar ss").lower() == "foo bar ss")
+    Assert(WSS("7ÖÖ \u012aaÅ").lower() == "7öö \u012baå")
+  end
+
+  -- Test for loop over string.
+  def testFor()  
+    assertStrFor("")
+    for w in 1 to 3
+      for s in SandSS("aBcdefgH-=", w)
+        assertStrFor(s)
+      end
+    end
+    assertStrFor("xyz" * 10000)
+  end
+  
+  private def assertStrFor(s)
+    var a = []
+    for ch in s
+      a.append(ch)
+    end
+    for i in 0 to s.length()
+      AssertEqual(a[i], s[i])
+    end
+  end
+  
+  -- Test the iterator() method.
+  def testIteration()
+    var s = ""
+    var e = s.iterator()
+    Assert(not e.hasNext())
+    Assert(not e.hasNext())
+    AssertRaises(ValueError, def ()
+                              e.next()
+                            end)
+                            
+    s = "a"
+    e = s.iterator()
+    Assert(e.hasNext())
+    Assert(e.hasNext())
+    AssertEqual(e.next(), "a")
+    Assert(not e.hasNext())
+    Assert(not e.hasNext())
+    AssertRaises(ValueError, def ()
+                               e.next()
+                             end)
+                             
+    e = "\u0000".iterator()
+    AssertEqual(e.next(), "\u0000")
+                             
+    e = "\u1234a".iterator()
+    AssertEqual(e.next(), "\u1234")
+    AssertEqual(e.next(), "a")
+    Assert(not e.hasNext())
+                             
+    e = "\u9abc\u0000".iterator()
+    AssertEqual(e.next(), "\u9abc")
+    AssertEqual(e.next(), "\u0000")
+  end
+  
+  def testMembers()
+    var s = "foo"
+    for m in "length", "_add", "_mul", "_get", "_eq", "_lt", "_gt", "_in", 
+             "_repr", "_hash", "_int", "_float"
+      AssertEqual(HasMember(s, m), True)
+    end
+    AssertEqual(HasMember(s, "foo"), False)
+    
+    AssertEqual(s.length(), 3)
+    
+    AssertEqual(s._add("bar"), "foobar")
+    AssertRaises(TypeError, def (); s._add(StrOps()); end)
+    AssertEqual(s._mul(2), "foofoo")
+    AssertRaises(TypeError, def (); s._mul(StrOps()); end)
+    AssertEqual(s._get(2), "o")
+    AssertEqual(s._get(-1), "o")
+    AssertEqual(s._get(0:2), "fo")
+    AssertEqual(s._get(0:-1), "fo")
+    AssertEqual(s._get(-3:-1), "fo")
+    AssertEqual(s._get(nil:2), "fo")
+    AssertEqual(s._get(1:nil), "oo")
+    AssertEqual(s._eq("foo"), True)
+    AssertEqual(s._eq("foob"), False)
+    AssertEqual(s._eq(2), False)
+    AssertEqual("x"._eq(OpOverload()), False)
+    AssertEqual(s._lt("fooo"), True)
+    AssertEqual(s._lt("foo"), False)
+    AssertEqual(s._gt("foo"), False)
+    AssertEqual(s._gt("fon"), True)
+    AssertEqual(s._in("f"), True)
+    AssertEqual(s._in("F"), False)
+    AssertEqual(s._repr(), "'foo'")
+    AssertEqual(s._hash(), Hash(s))
+    AssertEqual("12"._int(), 12)
+    AssertEqual("12"._float(), 12)
+    Assert("12"._int() is Int)
+    Assert("12"._float() is Float)
+    
+    AssertRaises(IndexError, s._get, [-4])
+    AssertRaises(IndexError, s._get, [3])
+    
+    var m
+    m = s.length
+    AssertEqual(m(), 3)
+    AssertEqual(Repr(m), "length of Str")
+    m = s._get
+    AssertEqual(m(2), "o")
+    
+    m = GetMember(s, "length")
+    AssertEqual(m(), 3)
+  end
+  
+  def testLongStrLiteral()
+    var a = "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789"
+    AssertEqual(a.length(), 4572)
+    AssertEqual(a, "abcdefghijklmnopqrstuvwxyz0123456789" * 127)
+  end
+end
+
+
+private def Chk(s1, a)
+  Assert(s1.length() == a.length())
+
+  var i = 0
+  while i < s1.length()
+    Assert(s1[i] == a[i])
+    i += 1
+  end
+end
+
+
+private class StrOps
+  def _add(x)
+    return "a" + x
+  end
+  
+  def _mul(x)
+    return 2 * x
+  end
+end
+
+
+private class JoinArray1
+  private var a
+  
+  def create(*a)
+    self.a = a
+  end
+  
+  def length()
+    return a.length()
+  end
+  
+  def _get(x)
+    return a[x]
+  end
+end
+
+
+private class JoinArray2 is Array
+  def create(n)
+    for i in 0 to n
+      append(nil)
+    end
+  end
+
+  def _get(x)
+    return Str(x)
+  end
+end

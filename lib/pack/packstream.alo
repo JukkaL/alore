@@ -1,0 +1,258 @@
+-- packstream.alo - PackFile and PackStream classes
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module pack
+
+import io
+
+
+class PackFile is PackStream
+  def create(path, *args)
+    var args2 = args
+    if args2.length() > 0 and not args2[0] is Constant
+      args2 = args2[1:]
+    end
+    var stream = File(path, *args2)
+    -- Remove extra flags from args.
+    for flag in Append, Output, Input
+      if flag in args
+        args.removeAt(args.index(flag))
+      end
+    end
+    super.create(stream, *args)
+  end
+end
+
+
+class PackStream is Stream
+  private var packer
+  private var stream
+
+  def create(stream, *args)
+    if args.length() > 0 and not args[0] is Constant
+      packer = args[0]
+      args = args[1:]
+    else
+      packer = Packer()
+    end
+    self.stream = stream
+    if Append in args or Output in args or Input in args
+      raise ValueError("Input/output mode flags not accepted")
+    end
+    args.append(Input)
+    args.append(Output)
+    super.create(*args)
+  end
+
+  def writeByte(x)
+    write(packer.packByte(x))
+  end
+
+  def readByte()
+    return packer.unpackByte(readExactly(1))
+  end
+
+  def writeBytes(a)
+    write(packer.packBytes(a))
+  end
+
+  def readBytes(n)
+    return packer.unpackBytes(readExactly(1 * n))
+  end
+
+  def writeInt8(x)
+    write(packer.packInt8(x))
+  end
+
+  def readInt8()
+    return packer.unpackInt8(readExactly(1))
+  end
+
+  def writeInts8(a)
+    write(packer.packInts8(a))
+  end
+
+  def readInts8(n)
+    return packer.unpackInts8(readExactly(1 * n))
+  end
+
+  def writeWord16(x)
+    write(packer.packWord16(x))
+  end
+
+  def readWord16()
+    return packer.unpackWord16(readExactly(2))
+  end
+
+  def writeWords16(a)
+    write(packer.packWords16(a))
+  end
+
+  def readWords16(n)
+    return packer.unpackWords16(readExactly(2 * n))
+  end
+
+  def writeInt16(x)
+    write(packer.packInt16(x))
+  end
+
+  def readInt16()
+    return packer.unpackInt16(readExactly(2))
+  end
+
+  def writeInts16(a)
+    write(packer.packInts16(a))
+  end
+
+  def readInts16(n)
+    return packer.unpackInts16(readExactly(2 * n))
+  end
+
+  def writeWord32(x)
+    write(packer.packWord32(x))
+  end
+
+  def readWord32()
+    return packer.unpackWord32(readExactly(4))
+  end
+
+  def writeWords32(a)
+    write(packer.packWords32(a))
+  end
+
+  def readWords32(n)
+    return packer.unpackWords32(readExactly(4 * n))
+  end
+
+  def writeInt32(x)
+    write(packer.packInt32(x))
+  end
+
+  def readInt32()
+    return packer.unpackInt32(readExactly(4))
+  end
+
+  def writeInts32(a)
+    write(packer.packInts32(a))
+  end
+
+  def readInts32(n)
+    return packer.unpackInts32(readExactly(4 * n))
+  end
+
+  def writeWord64(x)
+    write(packer.packWord64(x))
+  end
+
+  def readWord64()
+    return packer.unpackWord64(readExactly(8))
+  end
+
+  def writeWords64(a)
+    write(packer.packWords64(a))
+  end
+
+  def readWords64(n)
+    return packer.unpackWords64(readExactly(8 * n))
+  end
+
+  def writeInt64(x)
+    write(packer.packInt64(x))
+  end
+
+  def readInt64()
+    return packer.unpackInt64(readExactly(8))
+  end
+
+  def writeInts64(a)
+    write(packer.packInts64(a))
+  end
+
+  def readInts64(n)
+    return packer.unpackInts64(readExactly(8 * n))
+  end
+
+  def writeFloat32(x)
+    write(packer.packFloat32(x))
+  end
+
+  def readFloat32()
+    return packer.unpackFloat32(readExactly(4))
+  end
+
+  def writeFloats32(a)
+    write(packer.packFloats32(a))
+  end
+
+  def readFloats32(n)
+    return packer.unpackFloats32(readExactly(4 * n))
+  end
+
+  def writeFloat64(x)
+    write(packer.packFloat64(x))
+  end
+
+  def readFloat64()
+    return packer.unpackFloat64(readExactly(8))
+  end
+
+  def writeFloats64(a)
+    write(packer.packFloats64(a))
+  end
+
+  def readFloats64(n)
+    return packer.unpackFloats64(readExactly(8 * n))
+  end
+  
+  def writeStr(s, len)
+    write(packer.packStr(s, len))
+  end
+  
+  def readStr(len)
+    return readExactly(len)
+  end
+  
+  def writeStrs(a, len)
+    write(packer.packStrs(a, len))
+  end
+  
+  def readStrs(n, len)
+    var a = []
+    for i in 0 to n
+      a.append(readExactly(len))
+    end
+    return a
+  end
+  
+  private def readExactly(n)
+    var s = read(n)
+    if s.length() != n
+      raise IoError("Read at end of file")
+    end
+    return s
+  end
+  
+  def _read(n)
+    return stream._read(n)
+  end
+  
+  def _write(*a)
+    stream._write(*a)
+  end
+  
+  def close()
+    super.close()
+    stream.close()
+  end
+  
+  def seek(offset)
+    flush()
+    -- Discard any data in the input buffer.
+    read(peek().length())
+    stream.seek(offset)
+  end
+end

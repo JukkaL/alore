@@ -1,0 +1,3 @@
+module bar::zar
+
+var Global = 5

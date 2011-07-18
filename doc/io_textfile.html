@@ -1,0 +1,27 @@
+@head
+@module io
+@title Class <tt>io::TextFile</tt>
+@index TextFile
+
+<p>The TextFile class represents an open encoded text file as a stream.
+It allows accessing the contents of an ordinary binary file as a 16-bit
+Unicode stream.
+
+@class TextFile(path[, encoding], ...)
+@desc Open an encoded text file. If the encoding is not specified, the encoding
+      will be @ref{DefaultEncoding}. The rest of the arguments are options.
+      All the options for @ref{io::File} are supported.
+      Additionally @ref{encodings::Strict} or @ref{encodings::Unstrict} may be
+      specified (<tt>Strict</tt> is the default). Example:
+      @example
+      var f = TextFile("file.txt", Utf8)
+      var s = f.readLn()
+      f.close()
+      @end
+      <p><tt>TextFile</tt> inherits from @ref{TextStream}.
+@end
+
+<p>All Stream operations are supported for TextFile objects. See the
+descriptions of @ref{Stream} and @ref{TextStream} for details.
+
+@end-class

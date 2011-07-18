@@ -1,0 +1,139 @@
+@head
+@title Data model
+
+@h2 Values and objects
+
+<p>Values are a primitive building block of Alore programs. A value is a
+reference to an object, i.e. it names a single object. A value always refers to
+an object &#8212; there is no notion of empty values. Alore programs can
+access objects only through values: an object is only visible to the program if
+there is a value that refers to it. Any number of values may refer to the same 
+object.
+
+<p>Each instance of a variable is represented by a single value. Objects
+typically contain values as well. A <tt>Pair</tt> object, for
+example, 
+contains two values. Not all objects are composite objects. An integer object, 
+for example, is not a composite object.
+
+@h2 Objects and types
+
+<p>All data processed by an Alore program is stored in objects or referenced
+by objects. Each object has a specific type that is constant across the 
+life-time of the object, and usually some <i>state</i>, that may be mutable 
+or immutable (constant). The state of an object differentiates the object
+from other objects of the same type. All types are represented by objects as
+well.
+
+<p>The type of <tt>nil</tt> is the only exception: it does not have a
+type object
+associated with it. The <tt>nil</tt> object behaves otherwise like
+a @ref{std::Constant} object and supports the same operations.
+
+<p>For example, the type of the object 15 is @ref{std::Int} and its state is
+the value fifteen. This object, like all integers, is immutable. Therefore the 
+object 15 cannot be modified to value 7 (or any other value).
+
+<p>In contrast, the
+type of the object <tt>[1, 2]</tt> is @ref{std::Array} and its state is
+composed of its length (2) and two references to <tt>Int</tt> objects 
+(1 and 2). Array objects are mutable: their length and the objects they contain
+can be changed, but only by using the methods provided by the <tt>Array</tt>
+type.
+
+@h2 Types
+
+<p>Each type is represented by a class. Classes and types are sometimes used
+as synonyms, but note that a type may also refer to all subclasses of the
+related class.
+
+<p>Objects that have the class X as their type may be referred to in several
+more or less equivalent ways:
+
+<ul>
+  <li>instances of X
+  <li>X objects
+  <li>X instances
+  <li>objects of type X (this can also refer to objects of subtypes)
+</ul>
+
+<p>Class objects have several uses:
+
+<ul>
+  <li>A class specifies the structure of all instances of the class. For 
+    example,
+    it specifies which methods and members are included in the public
+    interface of the instances, and it also specifies their behavior.
+    Additionally, it defines
+    how the state of the instances is represented.
+  <li>Instances of a class can (usually) be constructed by calling the class
+    object.
+  <li>The <tt>is</tt> operator can be used with the class object to test if a 
+    object is an instance of the class or any subclass of the class.
+</ul>
+
+<p>Classes can also be <i>inherited</i> from to form subtypes.
+A subclass inherits
+the behavior of its <i>superclass</i>, but it may add or override some
+functionality.
+
+<p>The following types are called <i>primitive types</i>: @ref{Int}, @ref{Str},
+@ref{Float}, @ref{Boolean}, @ref{Type}, @ref{Function}, @ref{Constant},
+@ref{Tuple}, @ref{Pair} and
+@ref{Range}. They are all defined in the @ref{std} module, and they cannot
+be superclasses of other classes. All other classes can act as superclasses.
+
+@h2 Global definitions
+
+<p>Global definitions include all global variables, global
+constants, function definitions and class definitions in every module of a
+program. Each global definition refers to a single value. Function definitions,
+class definitions and uninitialized global constant definitions are
+automatically initialized before the program is run. Other global definitions
+refer to the <tt>nil</tt> object when the program is started.
+
+@h2 Local variables
+
+<p>Local variables are defined within functions or methods. New instances
+of local variables are created every time a function or a method is called,
+and they are garbage collected some time after they can no longer be
+referenced within the invocation that defined them or any anonymous function
+created during the invocation. As a special case, if a local variable is not
+referenced by any anonymous function, it will be destroyed, at the latest,
+when the function invocation that holds the variable is exited. Note that
+only the value is destroyed; the object referred to by the value may not be
+freed immediately, even if the local variable was the last reference to this
+object.
+
+<p>Each instance of a local variable is represented by a separate, independent
+value.
+
+@h2 Member variables
+
+<p>Each class may define one or more explicit member variables (or constants).
+For each explicit member variable or constant, there is a corresponding value
+slot in every instance of the classes that contain the definition. A value slot
+behaves like a variable, but unlike local
+variables and global definitions, member value slots cannot be accessed
+directly, but are always accessed through <i>accessor methods</i>:
+<i>getters</i> and <i>setters</i> (see
+@href{Class definitions} for details).
+
+@h2 Garbage collection
+
+<p>The <i>root set</i> of the object graph contains global definitions,
+local variables and any temporary values needed while evaluating statements.
+The <i>live object set</i> contains all objects reachable from the root set.
+The live object set contains
+
+<ol>
+<li>objects directly referenced by the root set
+<li>all objects referenced by other objects in the live set.
+</ol>
+
+<p>All objects not within the live object set are destroyed and freed
+automatically by the run-time system. It is undefined when this happens, but
+the run-time should, in general, try to free them as early as possible.
+
+<p>Other objects that can be shown not to affect the execution of a program
+can be freed automatically as well.

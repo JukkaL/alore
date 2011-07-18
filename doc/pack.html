@@ -1,0 +1,271 @@
+@head
+@module pack
+@title <tt>pack</tt>: Binary encoding and decoding
+
+<p>This module provides low-level facilities for converting Alore objects to
+and from packed binary representations (this is called <i>packing</i> and
+<i>unpacking</i>, respectively). The packed representations are
+<i>narrow strings</i> that can written to files, sockets and other narrow
+streams. Strings containing character codes larger than 255 (wide strings) must
+be encoded before passing them to the
+packing methods (using the @ref{encodings} module, for example).
+
+<p>This module is typically used for accessing and generating binary data
+using standard binary formats, for implementing binary network
+protocols and interoperating with lower-level languages such as C.
+
+<h2>Pack formats</h2>
+
+<p>Binary data can be packed in several different formats. Some formats can
+only pack integer data, others floating point numbers, and finally there
+is a format for string data. There are no separate formats for different
+endiannesses &#8212; instead there are separate classes for packing and
+unpacking big endian and little endian data. 
+
+<p>The table below contains descriptions of the supported formats, including
+sizes of the packed representations and the corresponding Alore types that
+can be packed into and unpacked from using each format (note that N in a format
+name must be replaced by a valid integer):
+
+<table id="pack-formats" class="with-border" summary="Pack formats">
+<tr>
+  <th>Format
+  <th>Description
+  <th>Packed bits
+  <th>Packed bytes
+  <th>Alore type
+<tr>
+  <td><tt>Byte</tt>
+  <td>unsigned byte<sup>1</sup>
+  <td>8
+  <td>1
+  <td>@ref{Int}
+<tr>
+  <td><tt>WordN</tt>
+  <td>unsigned integer
+  <td>N (16, 32 or 64)
+  <td>2, 4, or 8
+  <td>@ref{Int}
+<tr>
+  <td><tt>IntN</tt>
+  <td>signed integer<sup>2</sup>
+  <td>N (8, 16, 32 or 64)
+  <td>1, 2, 4 or 8
+  <td>@ref{Int}
+<tr>
+  <td><tt>FloatN</tt>
+  <td>floating point number<sup>3</sup>
+  <td>N (32 or 64)
+  <td>4 or 8
+  <td>@ref{Float}
+<tr>
+  <td><tt>Str</tt>
+  <td>narrow string
+  <td>variable<sup>4</sup>
+  <td>variable<sup>4</sup>
+  <td>@ref{Str}
+</table>
+
+<p>Notes:
+<table class="no-border" summary="">
+<tr>
+  <td>&nbsp;<sup>1</sup>&nbsp;&nbsp;
+  <td>The <tt>Byte</tt> format is thus named for convenience; for consistency's
+      sake it could equivalently have been named <tt>Word8</tt>.
+<tr>
+  <td>&nbsp;<sup>2</sup>&nbsp;&nbsp;
+  <td>Signed
+      integer formats (<tt>Int8</tt> to <tt>Int64</tt>) are encoded using the
+      standard 2's complement encoding.
+<tr>
+  <td>&nbsp;<sup>3</sup>&nbsp;&nbsp;
+  <td>The <tt>Float32</tt> and <tt>Float64</tt> formats correspond to single
+      and double precision IEEE floating point numbers, respectively.
+<tr>
+  <td>&nbsp;<sup>4</sup>&nbsp;&nbsp;
+  <td>The width of a <tt>Str</tt> format is always specified with an additional
+      integer argument specifying the length of the packed string in bytes.
+      When packing, input strings may be smaller than the length; they will be
+      padded with spaces so that the desired length is reached.
+</table>
+
+<h2>Packer classes</h2>
+
+<p>There are two packer classes, one for the big-endian (network) byte order
+and other for the little-endian byte order. They both support the same methods.
+
+@class Packer()
+@desc Construct a packer that packs and unpacks data in the big-endian
+      (network) byte order.
+@end
+
+@class LittleEndianPacker()
+@desc Construct a packer that packs and unpacks data in the little-endian byte
+      order.
+@end
+
+<h3>Methods</h3>
+
+@note Instances of N in method names below must be replaced with an integer
+      valid
+      for the format. See the above table for details. For example, the actual
+      methods for packing words are <tt>packWord16</tt>, <tt>packWord32</tt> and
+      <tt>packWord64</tt>.
+@end      
+
+@fun packByte(int)
+@fun packWordN(int)
+@fun packIntN(int)
+@fun packFloatN(float)
+@fun packStr(str, len)
+@desc Pack a value in a specific format. The argument must have a compatible
+      Alore type for the format (integers are also valid when floats are
+      expected). The result is a narrow string.
+@end
+
+@fun packBytes(array)
+@fun packWordsN(array)
+@fun packIntsN(array)
+@fun packFloatsN(array)
+@fun packStrs(array, len)
+@desc Pack an array of values in a specific format. The argument must be an
+      array, and each array item must have a compatible Alore type for the
+      format. The result is a narrow string that is the concatenation of the
+      packed items.
+@end
+
+@fun unpackByte(str)
+@fun unpackWordN(str)
+@fun unpackIntN(str)
+@fun unpackFloatN(str)
+@fun unpackStr(str)
+@desc Unpack a narrow string encoded in the format specified by the method
+      name. The
+      argument must have the correct length for the format. The Alore type of
+      the result value is specified by the format.
+@end
+
+@fun unpackBytes(array)
+@fun unpackWordsN(array)
+@fun unpackIntsN(array)
+@fun unpackFloatsN(array)
+@fun unpackStrs(array, len)
+@desc Unpack a narrow string that contains any number of values encoded in the
+      format specified by the method name. The argument must have a valid
+      length for the format (any multiple of the single item length). The
+      result is an array of values whose type is specified by the format.
+@end
+
+<h3>Examples</h3>
+
+@example
+var p = Packer()
+p.packWord16(7)               -- Result: "\u0000\u0007"
+p.packBytes([16, 128])        -- Result: "\u0010\u0080"
+p.unpackBytes("\u0010\u0080") -- Result: [16, 128]
+
+var pl = LittleEndianPacker()
+pl.packWord16(7)              -- Result: "\u0007\u0000"
+@end
+
+<h2>Class <tt>PackStream</tt></h2>
+
+@class PackStream(stream[, packer][, bufMode])
+@desc Construct a <tt>PackStream</tt> instance that uses another stream for 
+      input/output. Inherits from @ref{Stream}. The <i>packer</i> argument,
+      if present, must be a packer object. If omitted, the big endian packer
+      will be used. The <i>bufMode</i> argument may be @ref{Buffered},
+      @ref{LineBuffered} or @ref{Unbuffered}. If omitted, full buffering will
+      be used.
+@end
+
+<h3><tt>PackStream</tt> methods</h3>
+
+@note Instances of N in method names below must be replaced with an integer
+      valid
+      for the format. See the above table for details. For example, the actual
+      methods for writing words are <tt>writeWord16</tt>, <tt>writeWord32</tt>
+      and <tt>writeWord64</tt>.
+@end
+
+@fun writeByte(int)
+@fun writeWordN(int)
+@fun writeIntN(int)
+@fun writeFloatN(float)
+@fun writeStr(str, int)
+@desc Pack data and write to the stream. The arguments are similar to the
+      corresponding <tt>pack*</tt> methods (see above).
+@end
+
+@fun writeBytes(array)
+@fun writeWordsN(array)
+@fun writeIntsN(array)
+@fun writeFloatsN(array)
+@fun writeStrs(array, int)
+@desc Pack an array and write to the stream. The arguments are similar to the 
+      corresponding <tt>pack*</tt> methods (see above).
+@end
+
+@fun readByte()
+@fun readWordN()
+@fun readIntN()
+@fun readFloatN()
+@desc Read and unpack data from the stream. The format specifies the number of
+      characters (bytes) to read and the type of the return value. 
+@end
+
+@fun readBytes(n)
+@fun readWordsN(n)
+@fun readIntsN(n)
+@fun readFloatsN(n)
+@fun readStrs(n, len)
+@desc Read and unpack multiple data items from the stream. The format and the
+      length argument
+      specify the number of characters (bytes) to read and the length of the
+      @ref{Array} return value and the type of its items.
+@end
+
+@fun eof()
+@fun seek(n)
+@fun close()
+@desc Call the corresponding method of the underlying stream (if it is
+      supported).
+@end
+
+<p>The inherited writing and reading methods (<tt>write</tt>,
+<tt>readLn</tt>, etc.) behave normally and can be used in addition to the
+<tt>PackStream</tt> specific input/output methods.
+
+<h2>Class <tt>PackFile</tt></h2>
+
+@class PackFile(path[, packer], ...)
+@desc Open a binary file for reading and/or writing. The supported additional
+      arguments are the same as for @ref{io::File}. The <i>packer</i>
+      argument, if present, must be a packer object (see above). If omitted,
+      the big endian packer will be used.
+      <p><tt>PackFile</tt> inherits from @ref{PackStream}.
+      
+      <p>Example:
+      @example
+        var f = PackFile("file.bin", Output)
+        f.writeWord32(1234)
+        f.writeBytes([1, 2, 3, 4])
+        f.close()
+      @end
+@end
+
+@end-class
+
+<h2>Constants</h2>
+
+@var HostByteOrderPacker
+@desc This constant refers to either @ref{Packer} or @ref{LittleEndianPacker}
+      depending on the native byte order of the host system.
+@end
+
+<h2>Exceptions</h2>
+
+@class PackError
+@desc Raised when a packer class gets invalid input and cannot perform
+      packing or unpacking. Inherits from @ref{std::ValueError}.
+@end

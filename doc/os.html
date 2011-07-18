@@ -1,0 +1,367 @@
+@head
+@module os
+@title <tt>os</tt>: Operating system services
+
+<p>This module provides basic operating system services such as file and
+directory manipulation. The path arguments expected by many operations must be
+strings. The functions in this module raise @ref{std::IoError} on error
+conditions.
+
+@see File input/output is included in the @ref{io} module.
+@end
+
+<h2>File and directory operations</h2>
+
+@fun Remove(path)
+@desc Remove a file or a directory. Only an empty directory can be removed.
+@end
+  
+@fun Rename(sourcepath, targetpath)
+@desc Rename a file or a directory. The operation may fail if the source and
+    target directories differ.
+@end
+
+@fun MakeDir(path<!--[, option]-->)
+@desc Create a directory. Raise @ref{IoError} if the directory already exists.
+      <!--If the optional argument is present, its value must
+      be @ref{io::Protected}. Normally, other users will be given read
+      permissions to read the created directory. With the <tt>Protected</tt>
+      option, only the current user may access the contents of the
+      directory.-->
+@end
+
+@fun MakeDirs(path)
+@desc Create a directory and any missing parent directories. If
+      the directory already exists or if the argument is an empty string,
+      do nothing. Example:
+      @example
+        MakeDirs("dir1/dir2")  -- Create both dir1 and dir1/dir2 (if they don't exist)
+      @end
+@end
+
+@fun ChangeDir(path)
+@desc Change the current working directory.
+@end
+
+@fun CurrentDir()
+@desc Return the current working directory.
+@end
+
+@fun Exists(path)
+@desc Return a boolean indicating whether the path target exists. The path
+      target may be a file, a directory, a symbolic link or a special directory
+      entry such as a device.
+@end
+
+@fun IsDir(path)
+@desc Return a boolean indicating whether the path refers to a directory or a
+      symbolic link to a directory.
+@end
+  
+@fun IsFile(path)
+@desc Return a boolean indicating whether the path refers to an ordinary file
+      or a symbolic link to an ordinary file.
+@end
+  
+@fun IsLink(path)
+@desc Return a boolean indicating whether the path refers to a symbolic link.
+@end
+ 
+@fun ListDir(path[, mask])
+@desc Return the names of the directory entries in the directory as an array.
+    The "." and ".." directory entries are omitted. The order of the entries is
+    arbitrary.
+    <p>If the mask is specified, only entries whose names match the file mask
+      are included. The mask may contain the wild cards * and ?. * matches
+      any substring and ? matches any character in the entry names.
+@end
+
+@fun WalkDir(path[, mask])
+@desc Return the names of the directory entries in the directory and
+    recursively in all subdirectories as an array. The "." and ".." directory
+    entries are omitted. The entries are ordered so that contents of
+    a directory are directly after the directory entry. Otherwise, the order
+    of the entries is arbitrary. The entries in subdirectories include the
+    relative path from the initial directory.
+    <p>If the mask is specified, only entries whose names match the file mask
+      are included. The mask may contain the wild cards * and ?. The mask 
+      does not affect descending into subdirectories.
+
+    <p>As an example, the call
+    @example
+      WalkDir("/home/mary", "*.doc")
+    @end
+    <p>may produce the result
+    @example
+      ["essay.doc", "work/study plan.doc"]
+    @end    
+@end
+
+@fun MakeSymLink(sourcepath, linkpath)
+@desc Create a symbolic link at the target path that points to the source.
+@end
+
+@fun ReadSymLink(path)
+@desc Return the path to which a symbolic link points.
+@end
+
+<!-- -->
+@note Symbolic links are not supported in Windows; the above two functions
+      just raise @ref{RuntimeError}.
+@end
+
+<h2>Path operations</h2>
+  
+@fun Join(component, ...)
+@desc Join one or more path components with the directory separator character
+    ("/" or "\"). Examples:
+    @example
+    Join("work", "texts")  -- Result: "work/texts" (Posix) or
+                           --         "work\texts" (Windows)
+    Join("/usr/bin", "ls") -- Result: "/usr/bin/ls" (Posix)
+    Join("a\", "b\c")      -- Result: "a\b\c" (Windows)
+    @end    
+@end
+
+@fun DirName(path)
+@desc Return the directory portion of a path, i.e. the last component in the
+      path is removed. The return value does not have a trailing directory
+      separator unless the value refers to the root directory. Example:
+      @example
+      DirName("/usr/bin") -- Result: "/usr"
+      @end
+@end
+  
+@fun BaseName(path)
+@desc Return the last component in a path. Example:
+      @example
+      BaseName("/usr/bin") -- Result: "bin"
+      @end
+@end
+  
+@fun FileExt(path)
+@desc Return the file extension of a path. The dot in the extension is
+      included. If there is no extension, return an empty string. If there
+      are multiple extensions, only the last one is returned. Examples:
+      @example
+      FileExt("/usr/bin")             -- Result: ""
+      FileExt("/home/mary/essay.doc") -- Result: ".doc"
+      FileExt("archive.tar.gz")       -- Result: ".gz"
+      @end
+@end
+
+@fun FileBase(path)
+@desc Return the path without the file extension. If there is no extension,
+    return the path unmodified. If there are multiple extensions, only the last
+    one is removed. Example:
+    @example
+    FileBase("work/essay.doc") -- Result: "work/essay"
+    @end    
+@end
+
+@fun IsAbs(path)
+@desc Return a boolean indicating whether the path is absolute (i.e. not
+      relative to the current working directory).
+@end
+
+@fun NormPath(path)
+@desc Normalize a path. Convert all directory separators to the canonical
+      ones. Remove extra directory separators and unnecessary
+      <tt>.</tt> and <tt>..</tt> path components. Example:
+
+      @example
+        NormPath("./foo//bar/../x") -- Result: "foo/x" (Posix)
+      @end
+      
+      @note The returned path may refer to a different location if some 
+            path components are symbolic links, as
+            symbolic links receive no special processing.
+      @end
+@end
+
+@fun AbsPath(path)
+@desc Convert the path to a normalized absolute path.
+      @note Symbolic links are not recognized, as with @ref{NormPath}.
+      @end
+@end
+
+@fun ExpandUser(path)
+@desc Replace a <tt>~</tt> or <tt>~user</tt> prefix in the path with the
+      home directory of a user (the current user for <tt>~</tt>).
+      Return the path unmodified if there is no prefix or if
+      unsuccessful. On Posix systems consult the
+      <tt>HOME</tt> environment variable and, failing that, the password
+      database.
+@end
+      
+<h2>Path constants</h2>
+
+@var Separator
+@desc The path name component separator of the operating system (<tt>"/"</tt>
+      for Posix and <tt>"\"</tt> for Windows).
+@end
+
+@var AltSeparator
+@desc The alternate path name component separator, or <tt>nil</tt> if only
+      one separator exists (<tt>"/"</tt> for Windows and <tt>nil</tt>
+      for other operating systems).
+@end
+
+@var PathSeparator
+@desc The separator used in the PATH environment variable (<tt>":"</tt> for
+      Posix and <tt>";"</tt> for Windows).
+@end
+
+<h2>Class <tt>Stat</tt></h2>
+
+@class Stat(path)
+@desc Construct an object containing information on the path target. Raise an
+     @ref{std::IoError} if the path target does not exist.
+@end
+
+<h3><tt>Stat</tt> members</h3>
+
+<p>Stat has the following constant members:
+
+@var size
+@desc Size of the file, in bytes. If the path refers to a directory or a 
+      special file, the value is undefined.
+@end
+
+@var isFile
+@desc Boolean indicating whether the path refers to an ordinary file or a
+      symbolic link to an ordinary file.
+@end
+
+@var isDir
+@desc Boolean indicating whether the path refers to a directory or a symbolic
+      link to a directory.
+@end
+
+@var isLink
+@desc Boolean indicating whether the path refers to a symbolic link.
+@end
+
+@var isSpecial
+@desc Boolean indicating whether the path refers to a special file. Special
+      files are operating system dependent. Typical special files are Unix
+      device files such as /dev/null.
+@end
+
+@var modificationTime
+@desc Last modification time of the path target as a string of form
+      "YYYY-MM-DD hh:mm:ss" (optionally followed by a fraction).
+      It is suitable for passing to the @ref{time::DateTime} constructor.
+      Example:
+
+      @example
+        var s = Stat("file.ext")
+        var t = DateTime(s.modificationTime)
+      @end
+@end
+
+@var accessTime
+@desc Last access time of the path target as a string of form
+      "YYYY-MM-DD hh:mm:ss"  (optionally followed by a fraction).
+      It is suitable for passing to the @ref{time::DateTime} constructor.
+@end
+
+@var isReadable
+@desc Boolean indicating whether the path target is readable by the current
+      user.
+@end
+
+@var isWritable
+@desc Boolean indicating whether the path target is writable by the
+      current user.
+@end
+
+@var owner
+@desc User name of the path target owner. The value is an empty string if
+      there is no owner.
+@end
+
+@var ownerPerm
+@desc Access permissions for the owner of the path target. This is a string
+      that may contain some of these characters: <tt>r</tt> for read access,
+      <tt>w</tt> for write access and <tt>x</tt> for executable access, in
+      that order.
+@end
+
+@var otherPerm
+@desc Access permissions for other users. The format is the same as for
+      <tt>ownerPerm</tt>.
+@end
+
+@var groupPerm
+@desc Access permissions for the group of the file. The format is the same
+      as for <tt>ownerPerm</tt>.
+@end
+
+@end-class
+
+<h2>File status change operations</h2>
+
+@fun SetPerm(path, owner[, other[, group]])
+@desc Change the permissions of a directory entry. Permissions are defined
+  using a string which may have any subset of the characters <tt>r</tt> 
+  (read permission), <tt>w</tt> (write permission) and <tt>x</tt>
+  (execute permission). If only owner permissions are specified, other users
+  will receive the same permissions minus write permission. Group
+  permissions default to other user permissions.
+  @example
+    SetPerm("essay.txt", "rw", "")  -- Owner will receive read and write
+                                    -- access, others cannot access at all.
+  @end
+@end
+
+@fun SetModificationTime(path, datetime)
+@desc Change the modification time of a directory entry. The <tt>datetime</tt>
+      parameter must be compatible with the @ref{time::DateTime} class.
+@end
+
+@fun SetAccessTime(path, datetime)
+@desc Change the access time of a directory entry. The <tt>datetime</tt>
+      parameter must be compatible with the @ref{time::DateTime} class.
+@end
+
+<h2>Miscellaneous operations</h2>
+
+@fun GetEnv(variable[, default])
+@desc Return the value of an environment variable, or <tt>default</tt> if the
+      environment variable is not defined. If <tt>default</tt> is not given,
+      it defaults to <tt>nil</tt>. Both the variable and the value are
+      strings.
+@end
+
+@fun SetEnv(variable, value)
+@desc Change the value of an environment variable. Both the variable and the
+      value should be strings. As an exception, if the value is
+      <tt>nil</tt>, remove the variable from the environment.
+@end
+  
+@fun ListEnv()
+@desc Return an array containing the names of all environment variables in the
+      current environment.
+@end
+
+@fun System(command)
+@desc Execute a shell command and return the status of the command. The
+    execution of the current thread is paused until the command has finished
+    executing. Example:
+    @example
+    System("ls > list.txt")
+    @end
+    @note The syntax of shell commands depends on the current operating
+          system.
+    @end
+@end
+  
+@fun Sleep(seconds)
+@desc Pause for the specified number of seconds. The seconds may be an integer
+    or a float. Only the current thread is paused.
+@end
+
+@fun User()
+@desc Return the login user name of the current user.
+@end

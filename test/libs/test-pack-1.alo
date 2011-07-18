@@ -1,0 +1,439 @@
+module libs
+
+import unittest
+import pack
+import string
+import io
+import reflect
+
+
+private const ByteTests = [
+  ("0", "00"), ("ff", "ff"), ("7a", "7a")]
+private const Int8Tests = [
+  ("0", "00"), ("7f", "7f"), ("-80", "80"), ("-1", "ff"), ("-1a", "e6")]
+private const Word16Tests = [
+  ("0", "0000"), ("ffff", "ffff"), ("1abc", "1abc")]
+private const Int16Tests = [
+  ("0", "0000"), ("7fff", "7fff"), ("-8000", "8000"), ("-1", "ffff"), 
+  ("1abc", "1abc"), ("-1abc", "e544")]
+private const Word32Tests = [
+  ("0", "00000000"), ("1abc", "00001abc"), 
+  ("ffffffff", "ffffffff"), ("1abc0598", "1abc0598")]  
+private const Int32Tests = [
+  ("0", "00000000"), ("1abc", "00001abc"),
+  ("7fffffff", "7fffffff"), ("-80000000", "80000000"),
+  ("-1", "ffffffff"), ("1abc0598", "1abc0598"),
+  ("-1abc0598", "e543fa68")]
+private const Word64Tests = [
+  ("0",     "0000000000000000"),
+  ("1abcd", "000000000001abcd"),
+  ("ffffffffffffffff", "ffffffffffffffff"),
+  ("1abc0598cd801234", "1abc0598cd801234")]
+private const Int64Tests = [
+  ("0",     "0000000000000000"),
+  ("1abcd", "000000000001abcd"),
+  ("7fffffffffffffff", "7fffffffffffffff"),
+  ("1abc0598cd801234", "1abc0598cd801234"),
+  ("-8000000000000000", "8000000000000000"),
+  ("-1abc0598cd801234", "e543fa67327fedcc"),
+  ("-1", "ffffffffffffffff")]
+private const Float32Tests = [
+  (0.0, "00000000"), (1.0, "3f800000"), 
+  (-1.0, "bf800000"), (16.0, "41800000"),
+  (1.0 / 7, "3e124925")]
+private const Float64Tests = [
+  (0.0,  "0000000000000000"), 
+  (1.0,  "3ff0000000000000"),
+  (-1.0, "bff0000000000000"),
+  (16.0, "4030000000000000"),
+  (1.0 / 13, "3fb3b13b13b13b14")]
+
+
+class PackSuite is Suite
+  private var packer
+  private var packerLe
+
+  def setUp()
+    packer = Packer()
+    packerLe = LittleEndianPacker()
+  end
+
+  def testBytePack()
+    assertPack("Byte", ByteTests)
+  end
+  
+  def testInt8Pack()
+    assertPack("Int8", Int8Tests)
+  end
+  
+  def testWord16Pack()
+    assertPack("Word16", Word16Tests)
+  end
+  
+  def testInt16Pack()
+    assertPack("Int16", Int16Tests)
+  end
+  
+  def testWord32Pack()
+    assertPack("Word32", Word32Tests)
+  end
+  
+  def testInt32Pack()
+    assertPack("Int32", Int32Tests)
+  end
+  
+  def testWord64Pack()
+    assertPack("Word64", Word64Tests)
+  end
+  
+  def testInt64Pack()
+    assertPack("Int64", Int64Tests)
+  end
+  
+  def testFloat32Pack()
+    assertPack("Float32", Float32Tests)
+  end
+  
+  def testFloat64Pack()
+    assertPack("Float64", Float64Tests)
+  end
+  
+  def testPackRangeErrors()
+    assertPackErrors("Byte", [-1, 256, 2**128, -2**128])
+    assertPackErrors("Int8", [-129, 128, 2**128, -2**128])
+    assertPackErrors("Word16", [-1, 65536, 2**128, -2**128])
+    assertPackErrors("Int16", [-32769, 32768, 2**128, -2**128])
+    assertPackErrors("Word32", [-1, 2**32, 2**128, -2**128])
+    assertPackErrors("Int32", [-2**31-1, 2**31, 2**128, -2**128])
+    assertPackErrors("Word64", [-1, 2**64, 2**128, -2**128])
+    assertPackErrors("Int64", [-2**63-1, 2**63, 2**128, -2**128])
+  end
+  
+  def testUnpackErrors()
+    assertUnpackErrors("Byte", ["", "xy"])
+    assertUnpackErrors("Int8", ["", "xy"])
+    assertUnpackErrors("Word16", ["x", "xyz"])
+    assertUnpackErrors("Int16", ["x", "xyz"])
+    assertUnpackErrors("Word32", ["xyz", "xyz12"])
+    assertUnpackErrors("Int32", ["xyz", "xyz12"])
+    assertUnpackErrors("Word64", ["xyz1234", "xyz123456"])
+    assertUnpackErrors("Int64", ["xyz1234", "xyz123456"])
+    assertUnpackErrors("Float32", ["xyz", "xyz12"])
+    assertUnpackErrors("Float64", ["xyz1234", "xyz123456"])
+  end
+  
+  def testPackStrErrors()    
+    AssertRaises(PackError, packer.packStr, ["foo", 2])
+    AssertRaises(PackError, packer.packStrs, [["foo"], 2])
+  end
+  
+  def testUnpackStrErrors()
+    AssertRaises(PackError, packer.unpackStrs, [["foo"], 2])
+  end
+  
+  def testStrPack()
+    for p in packer, packerLe
+      AssertEqual(p.packStr("foo", 3), "foo")
+      AssertEqual(p.packStr("foo", 4), "foo ")
+      AssertEqual(p.packStr("foo", 6), "foo   ")
+      AssertEqual(p.packStr("", 6), "      ")
+      
+      AssertEqual(p.unpackStr(""), "")
+      AssertEqual(p.unpackStr("foo"), "foo")
+      
+      AssertEqual(p.packStrs([], 3), "")
+      AssertEqual(p.unpackStrs("", 3), [])
+      
+      AssertEqual(p.packStrs(["", "foo", "a"], 3), "   fooa  ")
+      AssertEqual(p.unpackStrs("   fooa  ", 3), ["   ", "foo", "a  "])
+    end
+  end
+  
+  def testPackFile()
+    var f = PackFile("TMP", Output)
+    f.writeByte(100)
+    f.close()
+    
+    f = PackFile("TMP")
+    AssertEqual(f.readByte(), 100)
+    Assert(f.eof())
+    f.close()
+  end
+  
+  def testPackFileMultipleclose()
+    var f = PackFile("TMP", Output)
+    f.writeByte(100)
+    f.close()
+    f.close()
+  end
+  
+  def testPackStream()
+    var f = File("TMP", Output)
+    var s = PackStream(f)
+    s.writeByte(100)
+    s.close()
+    
+    f = File("TMP")
+    s = PackStream(f)
+    AssertEqual(s.readByte(), 100)
+    Assert(s.eof())
+    s.close()
+  end
+  
+  def testPackStreamMultipleClose()
+    var f = File("TMP", Output)
+    var s = PackStream(f)
+    s.writeByte(100)
+    s.close()
+    s.close()
+  end
+  
+  def testOpenPackedLittleEndian()
+    var f = PackFile("TMP", LittleEndianPacker(), Output)
+    f.writeWord16(1)
+    f.close()
+    
+    f = PackFile("TMP")
+    AssertEqual(f.readWord16(), 256)
+    f.close()
+    
+    f = PackFile("TMP", LittleEndianPacker())
+    AssertEqual(f.readWord16(), 1)
+    f.close()
+  end
+  
+  def testPackStreamLittleEndian()
+    var f = File("TMP", Output)
+    var s = PackStream(f, LittleEndianPacker())
+    s.writeWord16(1)
+    s.close()
+    
+    f = PackFile("TMP")
+    AssertEqual(f.readWord16(), 256)
+    f.close()
+    
+    f = File("TMP")
+    s = PackStream(f, LittleEndianPacker())
+    AssertEqual(s.readWord16(), 1)
+    s.close()
+  end
+  
+  def testPackStreamSeek()
+    var f = PackFile("TMP", Output)
+    f.writeWord32(1)
+    f.writeByte(16)
+    f.writeByte(22)
+    f.write("x" * 30000) -- Make the file larger.
+    f.seek(3)
+    f.writeByte(2)
+    f.close()
+    f = PackFile("TMP")
+    f.seek(4)
+    AssertEqual(f.readByte(), 16)
+    f.seek(0)
+    AssertEqual(f.readWord32(), 2)
+    f.close()
+  end
+  
+  def testPackStreamReadAfterEof()
+    var f = PackFile("TMP", Output)
+    f.writeByte(22)
+    f.close()
+    f = PackFile("TMP")
+    AssertRaises(IoError, f.readWord32, [])
+    f.close()
+    f = PackFile("TMP")
+    AssertRaises(IoError, f.readBytes, [2])
+    f.close()
+  end
+  
+  def testPackStreamWithByte()
+    assertWrite("Byte", ByteTests)
+  end
+  
+  def testPackStreamWithInt8()
+    assertWrite("Int8", Int8Tests)
+  end
+  
+  def testPackStreamWithWord16()
+    assertWrite("Word16", Word16Tests)
+  end
+  
+  def testPackStreamWithInt16()
+    assertWrite("Int16", Int16Tests)
+  end
+  
+  def testPackStreamWithWord32()
+    assertWrite("Word32", Word32Tests)
+  end
+  
+  def testPackStreamWithInt32()
+    assertWrite("Int32", Int32Tests)
+  end
+  
+  def testPackStreamWithWord64()
+    assertWrite("Word64", Word64Tests)
+  end
+  
+  def testPackStreamWithInt64()
+    assertWrite("Int64", Int64Tests)
+  end
+  
+  def testPackStreamWithFloat32()
+    assertWrite("Float32", Float32Tests)
+  end
+  
+  def testPackStreamWithFloat64()
+    assertWrite("Float64", Float64Tests)
+  end
+  
+  def testPackStreamWithStr()
+    var f = PackFile("TMP", Output)
+    f.writeStr("foo", 5)
+    f.writeStrs(["", "a", "bart"], 4)
+    f.close()
+    f = PackFile("TMP")
+    AssertEqual(f.readStr(5), "foo  ")
+    AssertEqual(f.readStrs(3, 4), ["    ", "a   ", "bart"])
+    f.close()
+  end
+  
+  private def assertPack(type, values)
+    var p = GetMember(packer, "pack" + type)
+    var up = GetMember(packer, "unpack" + type)
+    var p2 = GetMember(packerLe, "pack" + type)
+    var up2 = GetMember(packerLe, "unpack" + type)
+    for src, dst in values
+      var s = getSrc(src)
+      var d = unpackHex(dst)
+      AssertEqual(p(s), d)
+      AssertEqual(p2(s), ''.join(Reversed(d)))
+      AssertEqual_Fuzzy(up(d), s)      
+      AssertEqual_Fuzzy(up2(''.join(Reversed(d))), s)      
+    end
+    
+    p = GetMember(packer, "pack" + many(type))
+    up = GetMember(packer, "unpack" + many(type))
+    AssertEqual(p([]), "")
+    AssertEqual(up(""), [])
+    var a = []
+    var s = ""
+    for src, dst in values
+      a.append(getSrc(src))
+      s += unpackHex(dst)
+    end
+    AssertEqual(p(a), s)
+    AssertEqual_Fuzzy(up(s), a)
+  end
+  
+  private def assertWrite(type, values)
+    var f = PackFile("TMP", Output)
+    var w = GetMember(f, "write" + type)
+    var w2 = GetMember(f, "write" + many(type))
+    
+    w(getSrc(values[1][1]))
+    var a = []
+    for src, dst in values
+      a.append(getSrc(src))
+    end
+    w2(a)
+    
+    f.close()
+    
+    f = PackFile("TMP")
+    var r = GetMember(f, "read" + type)
+    var r2 = GetMember(f, "read" + many(type))
+    
+    AssertEqual(r(), getSrc(values[1][1]))
+    AssertEqual_Fuzzy(r2(a.length()), a)
+    
+    f.close()
+  end
+  
+  private def assertPackErrors(type, values)
+    for p in packer, packerLe
+      var pack = GetMember(p, "pack" + type)
+      for v in values
+        AssertRaises(PackError, pack, [v])
+      end
+      pack = GetMember(packer, "pack" + many(type))
+      AssertRaises(PackError, pack, [values])
+    end
+  end
+  
+  private def assertUnpackErrors(type, values)
+    for p in packer, packerLe
+      var unpack = GetMember(p, "unpack" + type)
+      for v in values
+        AssertRaises(PackError, unpack, [v])
+      end
+      if not type in ("Byte", "Int8")
+        unpack = GetMember(packer, "unpack" + many(type))
+        AssertRaises(PackError, unpack, [[values[1]]])
+      end
+    end
+  end
+  
+  private def getSrc(x)
+    if x is Str
+      return Int(x, 16)
+    else
+      return x
+    end
+  end
+    
+  private def unpackHex(h)
+    var s = ""
+    var i = 0
+    while i < h.length()
+      var c1 = h[i]
+      var c2 = h[i + 1]
+      s += Chr(hexDigit(c1) * 16 + hexDigit(c2))
+      i += 2
+    end
+    return s
+  end
+  
+  private def hexDigit(c)
+    if c >= "0" and c <= "9"
+      return Int(c)
+    else
+      return 10 + Ord(c.lower()) - Ord("a")
+    end
+  end
+  
+  private def many(type)
+    if IsDigit(type[-2])
+      return type[:-2] + "s" + type[-2:]
+    elif IsDigit(type[-1])
+      return type[:-1] + "s" + type[-1]
+    else
+      return type + "s"
+    end
+  end
+end
+
+
+private def IsEqFloat_Fuzzy(a, b)
+  return a is Float and b is Float and (a == b or (a/b >= 0.999 and 
+                                                   a/b <= 1.001))
+end
+
+
+private def AssertEqual_Fuzzy(a, b)
+  if IsEqFloat_Fuzzy(a, b)
+    return
+  end
+  if a is Array and a.length() == b.length()
+    var ok = True
+    for i in 0 to a.length()
+      if not IsEqFloat_Fuzzy(a[i], b[i])
+        ok = False
+      end
+    end
+    if ok
+      return
+    end
+  end
+  AssertEqual(a, b)
+end

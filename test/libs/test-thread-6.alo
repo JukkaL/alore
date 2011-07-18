@@ -1,0 +1,57 @@
+module libs
+
+-- Thread tests
+
+import unittest
+import thread
+
+
+private const nthr6 = 20
+
+
+private var m1 = Mutex()
+private var c1 = Condition()
+private var c2 = Condition()
+private var waiters = 0
+
+
+class ThreadSuite6 is Suite
+  def testConditionVariables()
+    var i = 0
+    while i < nthr6
+      Thread(Waiter)
+      i += 1
+    end
+  
+    m1.lock()
+    while waiters < nthr6
+      c1.wait(m1)
+    end
+    m1.unlock()
+  
+    -- Now we have nthr6 waiters on c2. Wake them all.
+    c2.broadcast()
+  
+    -- Wait until they all have acknowledged that they aren't waiting any more.
+    m1.lock()
+    while waiters > 0
+      c1.wait(m1)
+    end
+    m1.unlock()
+  
+    Ok()  
+  end
+end
+
+
+private def Waiter()
+  m1.lock()
+  waiters += 1
+  c1.signal()
+  c2.wait(m1)
+  waiters -= 1
+  if waiters == 0
+    c1.signal()
+  end
+  m1.unlock()
+end

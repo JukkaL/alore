@@ -1,0 +1,893 @@
+encoding latin1
+
+module libs
+
+import unittest
+import os, io, time, sys, string, set
+
+
+class OSSuite is Suite
+  def setUp()
+    if IsFile("TMP-LINK")
+      Remove("TMP-LINK")
+    end
+    if IsDir("TMPDIR")
+      for f in Reversed(WalkDir("TMPDIR"))
+        Remove(Join("TMPDIR", f))
+      end
+      Remove("TMPDIR")
+    end
+  end
+
+  -- Test the value of Separator.
+  def testSeparator()
+    if Platform == "windows"
+      AssertEqual(os::Separator, "\")
+    else
+      AssertEqual(os::Separator, "/")
+    end
+  end
+  
+  -- Test the value of AltSeparator.
+  def testAltSeparator()
+    if Platform == "windows"
+      AssertEqual(os::AltSeparator, "/")
+    else
+      AssertEqual(os::AltSeparator, nil)
+    end
+  end
+
+  -- Test the value of PathSeparator.
+  def testPathSeparator()
+    if Platform == "windows"
+      AssertEqual(os::PathSeparator, ";")
+    else
+      AssertEqual(os::PathSeparator, ":")
+    end
+  end
+
+  -- Test creating and then removing a file.
+  def testRemoveFile()
+    MakeFile("TMP")
+    Assert(IsFile("TMP"))
+    Remove("TMP")
+    Assert(not IsFile("TMP"))
+  end
+  
+  -- Test creating and then removing a directory.
+  def testMakeAndRemoveDir()
+    Assert(not IsDir("TMPDIR"))
+    MakeDir("TMPDIR")
+    Assert(IsDir("TMPDIR"))
+    Remove("TMPDIR")
+    Assert(not IsDir("TMPDIR"))
+  end
+  
+  -- Test MakeDirs.
+  def testMakeDirs()
+    Assert(not IsDir("TMPDIR"))
+    var d1 = Join("TMPDIR", "foo")
+    var d2 = Join("TMPDIR", "bar", "zar")
+    var d3 = Join("TMPDIR", "z")
+    MakeDirs(d1)
+    Assert(IsDir(d1))
+    MakeDirs(d2)
+    Assert(IsDir(d2))
+    MakeDirs(d2)
+    Assert(IsDir(d2))
+    MakeDirs(d3)
+    Assert(IsDir(d3))
+    
+    -- Calling with an empty arguments is a no-op.
+    MakeDirs('')
+  end
+
+  -- Test renaming a file.  
+  def testRenameFile()
+    MakeFile("TMP")
+    Rename("TMP", "TMP-2")
+    Assert(not IsFile("TMP"))
+    Assert(IsFile("TMP-2"))
+    Remove("TMP-2")
+    Assert(not IsFile("TMP-2"))
+  end
+  
+  -- Test renaming a directory.
+  def testRenameDir()
+    MakeDir("TMPDIR")
+    Rename("TMPDIR", "TMPDIR-2")
+    Assert(not IsDir("TMPDIR"))
+    Assert(IsDir("TMPDIR-2"))
+    Remove("TMPDIR-2")
+    Assert(not IsDir("TMPDIR-2"))
+  end
+  
+  -- Test executing external commands.
+  def testSystem()
+    if IsFile("TMP")
+      Remove("TMP")
+    end
+    Assert(not IsFile("TMP"))
+    System("echo x > TMP")
+    Assert(IsFile("TMP"))
+    Remove("TMP")
+    
+    Assert(not IsDir("TMPDIR"))
+    System("mkdir TMPDIR")
+    Assert(IsDir("TMPDIR"))
+    Remove("TMPDIR")
+  end
+  
+  -- Test querying whether a name refers to a directory (or a symlink pointing
+  -- to a directory).
+  def testIsDir()
+    Assert(not IsDir("TMPDIR"))
+    Assert(not IsDir("TMPDIR" + Separator))
+    
+    -- Nonexistent name.
+    Assert(not IsDir("TMP-FOO"))
+    
+    Assert(not IsDir(""))
+    Assert(IsDir("."))
+    Assert(IsDir(".."))
+    
+    MakeFile("TMP")
+    MakeDir("TMPDIR")
+    Assert(IsDir("TMPDIR"))
+    Assert(not IsDir("TMP"))
+    
+    Assert(IsDir("TMPDIR" + Separator))
+    if AltSeparator != nil
+      Assert(IsDir("TMPDIR" + AltSeparator))
+    end    
+
+    if Platform != "windows"
+      -- Test symbolic links.
+      System("ln -s TMPDIR TMPDIR-LINK")
+      System("ln -s TMP TMP-LINK")
+      Assert(IsDir("TMPDIR-LINK"))
+      Assert(not IsDir("TMP-LINK"))
+    end
+    
+    Remove("TMP")
+    Remove("TMPDIR")
+
+    if Platform != "windows"
+      Remove("TMP-LINK")
+      Remove("TMPDIR-LINK")
+    end
+  end
+  
+  -- Test querying whether a name refers to a regular file (or a symlink 
+  -- pointing to a regular file).
+  def testIsFile()
+    Assert(not IsDir("TMPDIR"))
+    
+    -- Nonexistent name.
+    Assert(not IsFile("TMP-FOO"))
+    
+    MakeFile("TMP")
+    MakeDir("TMPDIR")
+    Assert(not IsFile("TMPDIR"))
+    Assert(IsFile("TMP"))
+
+    if Platform != "windows"
+      -- Test symbolic links.
+      System("ln -s TMPDIR TMPDIR-LINK")
+      System("ln -s TMP TMP-LINK")
+      Assert(not IsFile("TMPDIR-LINK"))
+      Assert(IsFile("TMP-LINK"))
+    end
+    
+    Remove("TMP")
+    Remove("TMPDIR")
+
+    if Platform != "windows"
+      Remove("TMP-LINK")
+      Remove("TMPDIR-LINK")
+    end
+  end
+  
+  -- Test querying whether a name refers to a symbolic link.
+  def testIsLink()
+    Assert(not IsDir("TMPDIR"))
+    
+    -- Nonexistent name.
+    Assert(not IsLink("TMP-FOO"))
+    
+    MakeFile("TMP")
+    MakeDir("TMPDIR")
+    Assert(not IsLink("TMPDIR"))
+    Assert(not IsLink("TMP"))
+
+    if Platform != "windows"
+      -- Test symbolic links.
+      System("ln -s TMPDIR TMPDIR-LINK")
+      System("ln -s TMP TMP-LINK")
+      Assert(IsLink("TMPDIR-LINK"))
+      Assert(IsLink("TMP-LINK"))
+    end
+    
+    Remove("TMP")
+    Remove("TMPDIR")
+
+    if Platform != "windows"
+      Remove("TMP-LINK")
+      Remove("TMPDIR-LINK")
+    end
+  end
+  
+  -- Test changing current working directory and querying current working 
+  -- directory.
+  def testChangeDirAndCurrentDir()
+    var dir = CurrentDir()
+    Assert(dir is Str)
+    try
+      MakeDir("TMPDIR")
+      ChangeDir("TMPDIR")
+      AssertEqual(CurrentDir(), Join(dir, "TMPDIR"))
+      ChangeDir("..")
+      Assert(CurrentDir() == dir)
+      Remove("TMPDIR")
+    finally
+      ChangeDir(dir)
+    end
+  end
+  
+  -- Test sleeping for a period of time. Only the fact that the Sleep() 
+  -- function call is successful is tested, though.
+  def testSleep()
+    Sleep(0)
+    Sleep(0.0)
+    Sleep(0.05)
+  end
+
+  -- Test the IsAbs function.
+  def testIsAbs()
+    Assert(IsAbs("/"))
+    Assert(IsAbs("/foo/bar"))
+    Assert(not IsAbs("x"))
+    Assert(not IsAbs("x/"))
+    Assert(not IsAbs("./"))
+    Assert(not IsAbs("xy/"))
+    Assert(not IsAbs("foo/bar"))
+
+    if Platform == "windows"
+      Assert(IsAbs("\"))
+      Assert(IsAbs("\foo"))
+      Assert(not IsAbs("xy\"))
+      Assert(IsAbs("a:\foo"))
+      Assert(IsAbs("Z:\"))
+      Assert(IsAbs("a:/"))
+      Assert(not IsAbs("a:foo"))
+      Assert(not IsAbs(".:foo"))
+    else
+      Assert(not IsAbs("\"))
+      Assert(not IsAbs("a:/"))
+    end
+  end
+  
+  -- Test the DirName() function.
+  def testDirName()
+    Assert(DirName("") == "")
+    Assert(DirName("x") == "")
+    Assert(DirName("x.y") == "")
+    
+    Assert(DirName("x/y") == "x")
+    Assert(DirName("x////y") == "x")
+    Assert(DirName("x/") == "x")
+    Assert(DirName("/x") == "/")
+    AssertEqual(DirName("/"), "/")
+    AssertEqual(DirName("////"), "/")
+    Assert(DirName("/foo/bar/file.ext") == "/foo/bar")
+    Assert(DirName("/föö/bär/") == "/föö/bär")
+    if Platform == "windows"
+      AssertEqual(DirName("\bar"), "\")
+      AssertEqual(DirName("bar\"), "bar")
+      AssertEqual(DirName("foo\bar"), "foo")
+      AssertEqual(DirName("foo\\bar"), "foo")
+      AssertEqual(DirName("c:\zyzzy/foo\bar"), "c:\zyzzy/foo")
+      AssertEqual(DirName("c:\bar"), "c:\")
+      AssertEqual(DirName("c:/bar"), "c:/")
+      AssertEqual(DirName("c:bar"), "c:")
+    end
+  end
+  
+  -- Test the BaseName() function.
+  def testBaseName()
+    Assert(BaseName("") == "")
+    Assert(BaseName("x") == "x")
+    Assert(BaseName("foobar") == "foobar")
+    Assert(BaseName("foobar.html") == "foobar.html")
+    
+    Assert(BaseName("x/y") == "y")
+    Assert(BaseName("/foo/bar/file.ext") == "file.ext")
+    Assert(BaseName("/") == "")
+    Assert(BaseName("/foo/bar/") == "")
+    if Platform == "windows"
+      AssertEqual(BaseName("\bar"), "bar")
+      AssertEqual(BaseName("bar\"), "")
+      AssertEqual(BaseName("foo\zar"), "zar")
+      AssertEqual(BaseName("foo\\bart"), "bart")
+      AssertEqual(BaseName("c:\zyzzy/foo\Bar"), "Bar")
+      AssertEqual(BaseName("c:\yar"), "yar")
+      AssertEqual(BaseName("c:/tar"), "tar")
+      AssertEqual(BaseName("c:bar"), "bar")
+    end
+  end
+  
+  -- Test the FileExt() function.
+  def testFileExt()
+    -- Empty extension
+    Assert(FileExt("") == "")
+    Assert(FileExt("a") == "")
+    Assert(FileExt("foobar") == "")
+    Assert(FileExt("foo.x/bar") == "")
+    -- Non-empty extension
+    Assert(FileExt(".c") == ".c")
+    Assert(FileExt("foo.c") == ".c")
+    Assert(FileExt("x.this-is-it.html") == ".html")
+    Assert(FileExt("/usr/lib/foobar-1.0.so") == ".so")
+    Assert(FileExt("foobar.") == ".")
+    if Platform == "windows"
+      AssertEqual(FileExt("foo\bar.c"), ".c")
+      AssertEqual(FileExt("foo.c\bar"), "")
+    end
+  end
+  
+  -- Test the Join() function.
+  def testJoin()
+    AssertJoin([""], "")
+    AssertJoin(["a"], "a")
+    AssertJoin(["foo/bar-x y/z"], "foo/bar-x y/z")
+    AssertJoin(["/x"], "/x")
+    
+    AssertJoin(["a", "b"], "a/b")
+    AssertJoin(["föö", "bärz", "x-y-å"], "föö/bärz/x-y-å")
+    AssertJoin(["/x", "y/z"], "/x/y/z")
+    
+    AssertJoin(["x/xx/", "y"], "x/xx/y")
+    AssertJoin(["x", "/y", "z"], "/y/z")
+    AssertJoin(["/x", "xx", "/y", "z"], "/y/z")
+    
+    if Platform == "windows"
+      AssertJoin(["c:\x", "xx", "D:\y", "z"], "D:\y\z")
+      AssertEqual(Join("a:", "foo"), "a:foo")
+      AssertEqual(Join("c:", "foo"), "c:foo")
+      AssertEqual(Join("Z:", "foo"), "Z:foo")
+      AssertEqual(Join("c:\", "foo"), "c:\foo")
+      AssertEqual(Join("c:/", "foo"), "c:/foo")
+      AssertEqual(Join("c:a", "foo"), "c:a\foo")
+      AssertEqual(Join("c:", ""), "c:")
+    end
+    
+    AssertJoin(["", "x"], "x")
+    AssertJoin(["", ""], "")
+    AssertJoin(["x", ""], "x/")
+    AssertJoin(["x", "", "", "y"], "x/y")
+    AssertJoin(["x/", "", "", "y"], "x/y")
+  end
+  
+  -- Test the Stat() class.
+  def testStat()
+    var f = File("TMP", Output)
+    f.write("foobar")
+    f.close()
+    var s = Stat("TMP")
+    AssertEqual(s.size, 6)
+    Assert(s.isFile)
+    Assert(not s.isDir)
+    Assert(not s.isLink)
+    Assert(not s.isSpecial)
+    Assert(s.modificationTime is Str)
+    Assert(s.accessTime is Str)
+    Assert(DateTime(s.modificationTime) is DateTime)
+    Assert(DateTime(s.accessTime) is DateTime)
+    Assert(s.isWritable)
+    Assert(s.isReadable)
+    Assert(s.owner is Str)
+
+    if Platform == "windows"
+      AssertEqual(s.ownerPerm, nil)
+      AssertEqual(s.otherPerm, nil)
+      AssertEqual(s.groupPerm, nil)
+    else
+      Assert("r" in s.ownerPerm)
+      Assert("w" in s.ownerPerm)
+      Assert(s.otherPerm is Str)
+      Assert(s.groupPerm is Str)
+    end
+
+    if Platform != "windows"
+      System("ln -s TMP TMP-LINK")
+      s = Stat("TMP-LINK")
+      Assert(s.size == 6)
+      Assert(s.isFile)
+      Assert(not s.isDir)
+      Assert(s.isLink)
+      Assert(not s.isSpecial)
+      Assert(s.modificationTime is Str)
+      Assert(s.accessTime is Str)
+      Assert(s.isWritable)
+      Assert(s.isReadable)
+    end
+    
+    AssertRaises(IoError, def (); Stat("TMP/"); end)
+      
+    MakeDir("TMPDIR")
+    s = Stat("TMPDIR")
+    Assert(not s.isFile)
+    Assert(s.isDir)
+    Assert(not s.isLink)
+    Assert(not s.isSpecial)
+    Assert(s.modificationTime is Str)
+    Assert(s.accessTime is Str)
+    Assert(s.isWritable)
+    Assert(s.isReadable)
+
+    if Platform != "windows"
+      System("ln -s TMPDIR TMPDIR-LINK")
+      s = Stat("TMPDIR-LINK")
+      Assert(not s.isFile)
+      Assert(s.isDir)
+      Assert(s.isLink)
+      Assert(not s.isSpecial)
+    end
+    
+    Assert(Stat("TMPDIR" + Separator).isDir)
+    if AltSeparator != nil
+      Assert(Stat("TMPDIR" + AltSeparator).isDir)
+    end
+    
+    Remove("TMP")
+    Remove("TMPDIR")
+
+    if Platform != "windows"
+      Remove("TMP-LINK")
+      Remove("TMPDIR-LINK")
+    end
+    
+    AssertRaises(IoError, Stat, ["NONEXISTENT"])
+    
+    -- FIX: Better test cases for isWritable and isReadable
+  end
+  
+  -- Test the ListDir() function.
+  def testListDir()
+    MakeDir("TMPDIR")
+    MakeFile("TMPDIR/a")
+    MakeFile("TMPDIR/b.c")
+    MakeDir("TMPDIR/dir")
+    
+    var l = ListDir("TMPDIR")
+    Assert(l.length() == 3)
+    Assert("a" in l)
+    Assert("b.c" in l)
+    Assert("dir" in l)
+    Assert(not "A" in l)
+    
+    Remove("TMPDIR/dir")
+    Remove("TMPDIR/b.c")
+    Remove("TMPDIR/a")
+    Remove("TMPDIR")
+  end
+  
+  -- Test the SetEnv() and GetEnv() functions.
+  def testEnv()
+    AssertEqual(GetEnv("XYZXYZ", "bar"), "bar")
+    SetEnv("FOO", "foo bar")
+    AssertEqual(GetEnv("FOO"), "foo bar")
+    AssertEqual(GetEnv("FOO", "bar"), "foo bar")
+    SetEnv("FOO", nil)
+    AssertEqual(GetEnv("FOO"), nil)
+    -- It should be possible to clear an envinronment variable even if it
+    -- is not defined.
+    SetEnv("XYZXYZsdfasdf", nil)
+  end
+  
+  -- Test the ListEnv() function.
+  def testListEnv()
+    var e1 = ListEnv()
+    Assert(not "FOO" in e1)
+    
+    for v in e1
+      AssertType(Str, v)
+      AssertType(Str, GetEnv(v))
+    end
+    
+    SetEnv("FOO", "foo bar")
+    var e2 = ListEnv()
+    AssertEqual(e2.length(), e1.length() + 1)
+    Assert("FOO" in e2)
+    SetEnv("FOO", nil)
+    var e3 = ListEnv()
+    AssertEqual(e3.length(), e1.length())
+    Assert(not "FOO" in e3)
+  end
+  
+  -- Test the Exists() function.
+  def testExists()
+    Assert(not Exists("TMPDIR"))
+    Assert(not Exists("TMP"))
+    
+    MakeFile("TMP")
+    MakeDir("TMPDIR")
+    
+    Assert(Exists("TMP"))
+    Assert(not Exists("TMP/"))
+    Assert(Exists("TMPDIR"))
+    Assert(Exists("TMPDIR" + Separator))
+    Assert(Exists("TMPDIR" + Separator * 2))
+    
+    if Platform != "windows"
+      System("ln -s TMPDIR TMPDIR-LINK")
+      Assert(Exists("TMPDIR-LINK"))
+      Remove("TMPDIR-LINK")
+    end
+    
+    if AltSeparator != nil
+      Assert(Exists("TMPDIR" + AltSeparator))
+      Assert(Exists("TMPDIR" + AltSeparator * 2))
+    end
+    
+    if Platform == "windows"
+      Assert(Exists("c:\"))
+      Assert(Exists("c:/"))
+    end
+    
+    Remove("TMP")
+    Remove("TMPDIR")
+  end
+  
+  -- Test the SetPerm() function.
+  def testSetPerm()
+    MakeFile("TMP")
+
+    if Platform != "windows"
+      SetPerm("TMP", "")
+      AssertEqual(Stat("TMP").ownerPerm, "")
+      AssertEqual(Stat("TMP").otherPerm, "")
+      AssertEqual(Stat("TMP").groupPerm, "")
+      SetPerm("TMP", "r")
+      AssertEqual(Stat("TMP").ownerPerm, "r")
+      SetPerm("TMP", "w")
+      AssertEqual(Stat("TMP").ownerPerm, "w")
+      SetPerm("TMP", "x")
+      AssertEqual(Stat("TMP").ownerPerm, "x")
+      SetPerm("TMP", "rwx")
+      AssertEqual(Stat("TMP").ownerPerm, "rwx")
+      AssertEqual(Stat("TMP").otherPerm, "rx")
+      AssertEqual(Stat("TMP").groupPerm, "rx")
+
+      SetPerm("TMP", "rwx", "")
+      AssertEqual(Stat("TMP").ownerPerm, "rwx")
+      AssertEqual(Stat("TMP").otherPerm, "")
+      AssertEqual(Stat("TMP").groupPerm, "")
+      SetPerm("TMP", "rwx", "r")
+      AssertEqual(Stat("TMP").otherPerm, "r")
+      SetPerm("TMP", "rwx", "w")
+      AssertEqual(Stat("TMP").otherPerm, "w")
+      SetPerm("TMP", "rwx", "x")
+      AssertEqual(Stat("TMP").otherPerm, "x")
+      SetPerm("TMP", "rwx", "rwx")
+      AssertEqual(Stat("TMP").otherPerm, "rwx")
+      
+      SetPerm("TMP", "r", "w", "rwx")
+      AssertEqual(Stat("TMP").ownerPerm, "r")
+      AssertEqual(Stat("TMP").otherPerm, "w")
+      AssertEqual(Stat("TMP").groupPerm, "rwx")
+    else
+      -- These do nothing.
+      SetPerm("TMP", "")
+      SetPerm("TMP", "rwx", "rwx")
+      SetPerm("TMP", "rwx", "rwx", "")
+    end
+    
+    Remove("TMP")
+  end
+  
+  -- Test the SetModificationTime() function.
+  def testSetModificationTime()
+    MakeFile("TMP")
+    
+    var t = DateTime("2001-02-03 10:11:12")
+    
+    var s1 = Stat("TMP")    
+    SetModificationTime("TMP", t)
+    var s2 = Stat("TMP")
+    
+    AssertEqual(DateTime(s2.modificationTime), t)
+    AssertEqual(s2.accessTime, s1.accessTime)
+    
+    
+    Remove("TMP")
+  end
+  
+  -- Test the SetAccessTime() function.
+  def testSetAccessTime()
+    MakeFile("TMP")
+    
+    var t = DateTime("2001-02-03 10:11:12")
+    var t2 = DateTime("2001-02-03 00:00:00") -- FAT can't do any better
+    
+    var s1 = Stat("TMP")    
+    SetAccessTime("TMP", t)
+    var s2 = Stat("TMP")
+    
+    Assert(DateTime(s2.accessTime) in (t, t2))
+    AssertEqual(s2.modificationTime, s1.modificationTime)
+    
+    Remove("TMP")
+  end
+  
+  -- Test the FileBase() function.
+  def testFileBase()
+    -- Empty extension
+    Assert(FileBase("") == "")
+    Assert(FileBase("a") == "a")
+    Assert(FileBase("foobar") == "foobar")
+    Assert(FileBase("foo.x/bar") == "foo.x/bar")
+    -- Non-empty extension
+    Assert(FileBase(".c") == "")
+    Assert(FileBase("foo.c") == "foo")
+    Assert(FileBase("x.this-is-it.html") == "x.this-is-it")
+    Assert(FileBase("/usr/lib/foobar-1.0.so") == "/usr/lib/foobar-1.0")
+    Assert(FileBase("foobar.") == "foobar")
+    if Platform == "windows"
+      AssertEqual(FileBase("foo.x\bar"), "foo.x\bar")
+    end
+  end
+  
+  -- Test NormPath().
+  def testNormPath()
+    -- Several cases that do nothing.
+    for orig, norm in ('x', 'x'),
+                      ('/', '/'),
+                      ('x/y', 'x/y'),
+                      ('foo', 'foo'),
+                      ('FOO', 'FOO'),
+                      ('/x', '/x'),
+                      ('..', '..'),
+                      ('.', '.'),
+                      ('../x', '../x'),
+                      ('//fo/ba', '//fo/ba'),
+                      ('\u1234', '\u1234')
+      AssertEqual(NormPath(native(orig)), native(norm))
+    end
+    
+    -- These actually perform normalization.
+    for orig, norm in ('x//y///z', 'x/y/z'),
+                      ('x/', 'x'),
+                      ('x/y//', 'x/y'),
+                      ('./', '.'),
+                      ('../', '..'),
+                      ('./x', 'x'),
+                      ('.//x', 'x'),
+                      ('x/./y', 'x/y'),
+                      ('x//.///./y', 'x/y'),
+                      ('x/..', '.'),
+                      ('x/../', '.'),
+                      ('x/../../', '..'),
+                      ('x/y/..', 'x'),
+                      ('x/y/../..', '.'),
+                      ('x/y/../z', 'x/z'),
+                      ('', '.')
+      AssertEqual(NormPath(native(orig)), native(norm))
+    end
+    
+    -- UNC paths.
+    for orig, norm in ('//x', '//x'),
+                      ('//', '//')
+      AssertEqual(NormPath(native(orig)), native(norm))
+    end
+    
+    -- Special cases.
+    AssertEqual(NormPath(native('///x')), native('/x'))
+    AssertEqual(NormPath(native('///')), native('/'))
+    
+    if Platform == "windows"
+      AssertEqual(NormPath('//x/Foo'), '\\x\Foo')
+      AssertEqual(NormPath('c:Foo'), 'c:Foo')
+      AssertEqual(NormPath('C:\\Foo'), 'C:\Foo')
+      AssertEqual(NormPath('c:..//foo'), 'c:..\foo')
+      AssertEqual(NormPath('foo/bar\zar'), 'foo\bar\zar')
+    end
+  end
+  
+  -- Test AbsPath().
+  def testAbsPath()
+    var cur = CurrentDir()
+    
+    AssertEqual(AbsPath('.'), cur)
+    AssertEqual(AbsPath(''), cur)
+      
+    if Platform != "windows"
+      AssertEqual(AbsPath(native('foo//bar')), native(Join(cur, 'foo/bar')))
+      AssertEqual(AbsPath(native('/foo//bar')), native('/foo/bar'))
+    end
+    
+    if Platform == "windows"
+      AssertEqual(AbsPath('/foo/bar'), cur[:2] + '\foo\bar')
+      AssertEqual(AbsPath('c:\foo\..//bar'), 'c:\bar')
+      AssertEqual(AbsPath('c:foo')[:3], 'c:\')
+    end
+  end
+  
+  -- Test ExpandUser().
+  def testExpandUser()
+    AssertEqual(ExpandUser(''), '')
+    AssertEqual(ExpandUser(native('foo/bar')), native('foo/bar'))
+    AssertEqual(ExpandUser(native('/foo/bar')), native('/foo/bar'))
+    
+    -- Non-existent user.
+    AssertEqual(ExpandUser('~foobarasdf'), '~foobarasdf')
+    AssertEqual(ExpandUser('~foobarasdf/'), '~foobarasdf/')
+    
+    var user = User()
+    Assert(ExpandUser('~') != '~')
+    AssertEqual(ExpandUser('~'), ExpandUser('~' + user))
+  end
+  
+  private def native(path)
+    return path.replace('/', Separator)
+  end
+  
+  -- Test the User() function.
+  def testUser()
+    Assert(User() is Str)
+
+    if Platform != "windows"
+      MakeFile("TMP")
+      AssertEqual(Stat("TMP").owner, User())
+      Remove("TMP")
+    end
+  end
+  
+  -- Test the mask parameter of the ListDir() function.
+  def testListDirMask()
+    MakeDir("TMPDIR")
+    
+    var files = ["foo", "foo.c", "x.c", "foo.cpp", "Zoo.c"]
+    
+    for f in files
+      MakeFile(Join("TMPDIR", f))
+    end
+    
+    AssertEqual(ListDir("TMPDIR", ""), [])
+    AssertEqual(ListDir("TMPDIR", "foo"), ["foo"])
+    AssertEqual(Sort(ListDir("TMPDIR", "foo.*")), ["foo.c", "foo.cpp"])
+    AssertEqual(Sort(ListDir("TMPDIR", "*.c")), ["Zoo.c", "foo.c", "x.c"])
+    AssertEqual(Sort(ListDir("TMPDIR", "f*c*")), ["foo.c", "foo.cpp"])
+    AssertEqual(Sort(ListDir("TMPDIR", "?oo.?")), ["Zoo.c", "foo.c"])
+    
+    if Platform == "windows"
+      -- Case insensitive matching.
+      AssertEqual(ListDir("TMPDIR", "zoo*C"), ["Zoo.c"])
+    else
+      AssertEqual(ListDir("TMPDIR", "zoo*C"), [])
+    end
+    
+    removeTree("TMPDIR")
+  end
+  
+  -- Test the WalkDir() function.
+  def testWalkDir()
+    MakeDir("TMPDIR")
+    
+    AssertEqual(WalkDir("TMPDIR"), [])
+    
+    MakeFile("TMPDIR/foo.c")
+    AssertEqual(WalkDir("TMPDIR"), ["foo.c"])
+    
+    MakeDir("TMPDIR/abc")
+    MakeFile("TMPDIR/abc/file.c")
+    MakeFile("TMPDIR/abc/book.pdf")
+    
+    MakeDir("TMPDIR/x")
+    MakeFile("TMPDIR/x/flat.c")
+    
+    AssertEqual(Set(WalkDir("TMPDIR")),
+                Set(["foo.c", "abc", Join("abc", "file.c"), 
+                     Join("abc", "book.pdf"), "x", 
+                     Join("x", "flat.c")]))
+    AssertEqual(Set(WalkDir("TMPDIR", "*.c")),
+                Set(["foo.c", Join("abc", "file.c"),
+                     Join("x", "flat.c")]))
+    
+    for f in Reversed(WalkDir("TMPDIR"))
+      Remove(Join("TMPDIR", f))
+    end
+  end
+  
+  def testSymbolicLinks()
+    if Platform != "windows"
+      MakeDir("TMPDIR")
+      
+      -- Create a symbolic link to a file and a directory and an invalid
+      -- symbolic link.
+      fileSymLink("TMPDIR/orig", "TMPDIR/link", "orig")
+      dirSymLink("TMPDIR/dorig", "TMPDIR/dlink", "dorig")
+      MakeSymLink("xxx", "TMPDIR/missing")
+      
+      AssertEqual(ReadSymLink("TMPDIR/link"), "orig")
+      AssertEqual(ReadSymLink("TMPDIR/dlink"), "dorig")
+      AssertEqual(ReadSymLink("TMPDIR/missing"), "xxx")
+      
+      -- Verify that the file contents can be read.
+      var f = File("TMPDIR/link")
+      AssertEqual(f.read(), "x" + Newline)
+      f.close()
+      
+      var stat
+      
+      -- Verify the type of the file symbolic link.
+      
+      Assert(IsFile("TMPDIR/link"))
+      Assert(IsLink("TMPDIR/link"))
+      Assert(not IsDir("TMPDIR/link"))
+      
+      stat = Stat("TMPDIR/link")
+      Assert(stat.isFile)
+      Assert(stat.isLink)
+      Assert(not stat.isDir)
+      
+      -- Verify the type of the directory symbolic link.
+      
+      Assert(IsDir("TMPDIR/dlink"))
+      Assert(IsLink("TMPDIR/dlink"))
+      Assert(not IsFile("TMPDIR/dlink"))
+      
+      stat = Stat("TMPDIR/dlink")
+      Assert(stat.isDir)
+      Assert(stat.isLink)
+      Assert(not stat.isFile)
+      
+      -- Verify the type of the invalid symbolic link.
+      
+      Assert(IsLink("TMPDIR/missing"))
+      Assert(not IsDir("TMPDIR/missing"))
+      Assert(not IsFile("TMPDIR/missing"))
+      
+      AssertRaises(IoError, def (); Stat("TMPDIR/missing"); end)
+      
+      removeTree("TMPDIR")
+    else
+      AssertRaises(RuntimeError, def (); MakeSymLink(".", "xyz"); end)
+    end
+  end
+  
+  private def fileSymLink(source, target, relative = source)
+    MakeFile(source)
+    MakeSymLink(relative, target)
+  end
+  
+  private def dirSymLink(source, target, relative = source)
+    MakeDir(source)
+    MakeSymLink(relative, target)
+  end
+  
+  private def removeTree(path)
+    if not IsDir(path)
+      Remove(path)
+    else
+      for f in ListDir(path)
+        removeTree(Join(path, f))
+      end
+    end
+  end
+end
+
+
+private def MakeFile(fnam)
+  var f = File(fnam, Output)
+  f.writeLn("x")
+  f.close()
+end
+
+
+private def AssertJoin(args, res)
+  for i in 0 to args.length()
+    args[i] = args[i].replace("/", Separator)
+  end
+  AssertEqual(Join(*args), res.replace("/", Separator))
+end

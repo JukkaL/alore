@@ -1,0 +1,202 @@
+@head
+@title Lexical structure
+
+@h2 Tokens
+
+<p>Each source file is divided into tokens, starting from the beginning of the
+file.
+
+<p>Identifiers (<i>id</i>) are case sensitive. Some of them are reserved; see
+section @href{Reserved words} below.
+
+@grammar
+  id :: alpha alphanum+
+  alpha :: "a".."z" | "A".."Z" | "_"
+  alphanum :: alpha | digit
+  digit :: "0".."9"
+@end
+
+<p>Numeric literals (<i>int</i> and <i>float</i>) are entered in base 10.
+Floating point literals can optionally have a fractional part, separated with
+a dot, and an integer exponent, separated with the letter <i>e</i>. If the
+exponent is present, the numeric value 
+before the exponent is multiplied by 10**<i>e</i>, where <i>e</i> is the 
+numeric value of the exponent.
+
+@grammar
+  int :: digit+
+  float :: digit+ exponent | digit* "." digit+ [ exponent ]
+  exponent :: ("e" | "E") ["+" | "-"] digit+
+@end
+
+<p>String literals (<i>str</i>) are entered within single or double quotes.
+The surrounding quotes are not part of the string value. Literal
+double quotes in double-quoted strings and literal single quotes in
+single-quoted strings must be duplicated.
+
+@grammar
+  str :: &lt;&quot;&gt; (&lt;any character except &quot;, CR or LF&gt; | &lt;&quot;&gt; &lt;&quot;&gt;)* &lt;&quot;&gt;
+       | &lt;'&gt; (&lt;any character except ', CR or LF&gt; | &lt;'&gt; &lt;'&gt;)* &lt;'&gt;
+@end
+
+<p>A sequence of form <tt>\uHHHH</tt> within a string literal, where each
+<tt>H</tt> is a hexadecimal digit (0..9, a..f or A..F), is mapped to the
+character code represented by the hexadecimal number. Backslash characters
+are not special within string literals unless immediately followed by
+<tt>"u"</tt> and a 4-digit hexadecimal number.
+
+<p>Various non-alphanumeric operator and punctuator tokens are defined:
+
+@grammar
+  opsym :: "+" | "-" | "*" | "/" | "**" | ":" | "==" | "!=" | "&#60;" | "&#62;" | "&#62;=" | "&#60;="
+  punct :: "(" | ")" | "[" | "]" | "," | "=" | "+=" | "-=" | "*=" | "/=" | "**=" | "::"
+@end
+
+<p>Newlines and semicolons can be used as statement separators (<i>br</i>).
+They are interchangeable. Repeated statement separators behave identically to
+a single statement separator.
+
+@grammar
+  br :: (newline | ";")+
+  newline :: &lt;CR&gt; &lt;LF&gt; | &lt;LF&gt; | &lt;CR&gt;
+@end
+
+<p>Whitespace and comments are ignored before and after tokens. Whitespace
+characters are optional, except between a token ending with an alphanumeric
+character and another token starting with an alphanumeric character, in which
+case they are required. Finally, there must be no whitespace characters before
+the <i>initial-comment</i> and <i>utf8-bom</i> tokens.
+
+@grammar
+  whitespace :: " " | &lt;TAB&gt;
+  comment :: "--" &lt;any character except CR or LF&gt;*
+@end
+
+<p>An initial source line starting with #! is interpreted as a comment:
+
+@grammar
+  initial-comment :: "#!" &lt;any character except CR or LF&gt;*
+@end
+
+<p>The special <i>utf8-bom</i> token may be present at the start of UTF-8
+encoded files:
+
+@grammar  
+  utf8-bom :: &lt;EF&gt; &lt;BB&gt; &lt;BF&gt;
+@end
+
+@h2 Joining lines
+
+<p>Newlines after the following tokens are interpreted as whitespace, not
+as statement separators:
+
+@example
+  + - * / ** div mod and or : to is == != &lt; &lt;= &gt; &gt;= ( [ = += -= *= /= **= ,
+@end
+
+<p>This can be used to divide long lines into multiple shorter lines.
+
+@h2 Reserved words
+
+<p>The following words are reserved and cannot be used as identifiers 
+(i.e. as names of global or local definitions, as member names or as module
+name components):
+
+@example
+  and
+  bind
+  break    
+  case     
+  class    
+  const    
+  def      
+  div
+  dynamic
+  elif     
+  else     
+  encoding 
+  end      
+  except
+  finally  
+  for      
+  if
+  implements
+  import   
+  in
+  interface
+  is       
+  mod      
+  module   
+  nil      
+  not      
+  or       
+  private  
+  raise   
+  repeat  
+  return  
+  self    
+  super   
+  switch  
+  to      
+  try     
+  until   
+  var     
+  while     
+@end
+
+@h2 Restricted names
+
+<p>Module name components and names of global definitions starting with two
+underscores (__) are reserved for internal use by the implementation. The
+implementation may freely define such names for any purpose, but user programs
+should not depend on their presence or absence to remain portable with
+different Alore implementations.
+
+<p>Additionally, it is recommended that the following names not be used as the
+first component of a module name, since they are reserved for use in future
+releases of Alore:
+
+@example
+  compiler
+  crypt
+  email
+  ftp
+  ftpserver
+  httpserver
+  locale
+  postgres
+  process
+  queue
+  serialize
+  smtp
+  sqlite
+  ssl
+  stack
+  timezone
+  udp
+  unicode
+  xml
+  xmltree
+@end
+
+<p>It is likely that some of these names will never be used in any future Alore
+release. Future Alore releases may remove some names from this list; these
+changes are retroactively applied to all earlier Alore versions as well.
+
+@h2 Encoding
+
+<p>Alore source files may be encoded in ASCII, UTF-8 or ISO-8859-1 (Latin 1).
+See section @href{Encoding declaration} for information on specifying the
+encoding of a source file.
+
+<p>All 7-bit character codes except CR and LF (10 and 13, respectively) can be
+used in comments and string literals, including null characters, independent of
+the source file encoding. Quotes, however, may have to be doubled within
+string literals.
+
+<p>In an ISO-8859-1 encoded source file, all character codes in range from 128
+to 255, inclusive, can be used in comments and string literals. Similarly in a
+UTF-8 encoded source file, all valid UTF-8 sequences for code points between
+128 and 65535, inclusive, can be used in comments and string literals.
+Any character code between 0 and 65535 can be entered in a string literal
+using the <tt>\uHHHH</tt> form, independent of the source file encoding.

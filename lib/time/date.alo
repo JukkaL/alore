@@ -1,0 +1,253 @@
+-- date.alo - Date class
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module time
+
+import __time
+import string
+
+
+-- Rules for determining the first week of a year
+const FirstWeek
+const FirstFourDayWeek
+const FirstFullWeek
+
+
+class Date
+  -- Supported calling conventions:
+  --   create()
+  --   create(year, month, day)
+  --   create(str)
+  --   create(str, format)
+  -- type: ()
+  -- type: (Str)
+  -- type: (Str, Str)
+  -- type: (Int, Int, Int)
+  def create(arg1 = nil, arg2 = nil, arg3 = nil)
+    -- FIX proper argument count checks
+    if arg1 is Str
+      var tuple
+      if arg2 is Str
+        tuple = ParseDateTime(Date, arg1, arg2)
+      else
+        tuple = ParseDateTime(Date, arg1, "YYYY-MM-DD")
+      end
+      self.year, self.month, self.day = tuple[0], tuple[1], tuple[2]
+    elif arg1 != nil
+      if arg2 is Int
+        self.year, self.month, self.day = NormalizeDate(arg1, arg2, arg3)
+      else
+        raise ValueError("Invalid types")
+      end
+    else
+      self.year, self.month, self.day = Now()[:3]
+    end
+    if self.year < 1
+      raise ValueError("Year must be at least 1 (given {})".format(year))
+    end
+  end
+  
+  def _str()
+    return "{0000}-{00}-{00}".format(year, month, day)
+  end
+  
+  def format(f)
+    return FormatDateTime(Date, DateFormatWrapper(self), f)
+  end
+  
+  const day
+  const month
+  const year
+  def weekday
+    var y = year
+    var n = y * 365 + day + (y - 1) div 4 - (y - 1) div 100 + (y - 1) div 400
+    for m in 1 to month
+      n += DaysInMonth(year, m)
+    end
+    return (n - 2) mod 7 + 1
+  end
+  
+  def week(rule = FirstFourDayWeek)
+    var d = Date(year, 1, 1)
+    var wday = d.weekday
+    var w
+    switch rule
+      case FirstFourDayWeek
+        if wday > 4
+          -- The next week is the first week
+          w = 0
+        else
+          w = 1
+        end
+      case FirstWeek
+        w = 1
+        d -= w - 1
+      case FirstFullWeek
+        if wday == 1
+          w = 1
+        else
+          w = 0
+        end
+      else
+        raise ValueError("Invalid week rule")
+    end 
+    d += (7 - wday)
+    while self > d
+      d += 7
+      w += 1
+    end
+    if w == 0
+      w = Date(year, month, day - 7).week(rule) + 1
+    else
+      var weekLast = d + (7 - d.weekday)
+      if weekLast.year > year
+        w = weekLast.week(rule)
+      end
+    end
+    return w
+  end
+  
+  def _add(x)
+    return Date(year, month, day + x)
+  end
+  
+  -- type: (Date) -> Int
+  -- type: (Int) -> Date
+  def _sub(x)
+    if x is Int
+      return Date(year, month, day - x)
+    else
+      if self < x
+        return -(x - self)
+      end
+      var d = self
+      var n = 0
+      while d.year - 1 > x.year
+        d -= 365
+        n += 365
+      end
+      while d.year > x.year or d.month > x.month
+        n += d.day
+        d -= d.day
+      end
+      return n + d.day - x.day
+    end
+  end
+  
+  def _eq(d)
+    return d is Date and day == d.day and month == d.month and year == d.year
+  end
+  
+  def _lt(d)
+    return year < d.year or (year == d.year and 
+      (month < d.month or (month == d.month and day < d.day)))
+  end
+  
+  def _gt(d)
+    return year > d.year or (year == d.year and 
+      (month > d.month or (month == d.month and day > d.day)))
+  end
+  
+  def _hash()
+    return Hash((year, month, day))
+  end
+end
+
+
+private const MonthShortNames = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  
+private const MonthNames = ("January", "February", "March", "April", "May", 
+  "June", "July", "August", "September", "October", "November", "December")
+
+private const WeekdayShortNames = (
+  "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+private const WeekdayNames = (
+  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+
+private def NormalizeDate(year, month, day)
+  while month > 12
+    year += 1
+    month -= 12
+  end
+  while month < 1
+    year -= 1
+    month += 12
+  end
+  while day > DaysInMonth(year, month)
+    day -= DaysInMonth(year, month)
+    month += 1
+    if month == 13
+      month = 1
+      year += 1
+    end
+  end
+  while day < 1
+    month -= 1
+    if month == 0
+      month = 12
+      year -= 1
+    end
+    day += DaysInMonth(year, month)
+  end
+  return year, month, day
+end
+
+
+private const MonthDays = Map(1 : 31, 3 : 31, 4 : 30, 5 : 31, 6 : 30, 7 : 31,
+                              8 : 31, 9 : 30, 10 : 31, 11 : 30, 12 : 31)
+
+
+def DaysInMonth(year, month)
+  if month < 1 or month > 12
+    raise ValueError("Invalid month ({})".format(month))
+  end
+  if month == 2
+    if year mod 4 == 0 and (year mod 100 != 0 or year mod 400 == 0)
+      return 29
+    else
+      return 28
+    end
+  else
+    return MonthDays[month]
+  end
+end
+
+
+private class DateFormatWrapper
+  const date
+  
+  def year
+    return self.date.year
+  end
+  
+  def month
+    return self.date.month
+  end
+  
+  def weekday
+    return self.date.weekday
+  end
+  
+  def day
+    return self.date.day
+  end
+  
+  def hour
+    raise ValueError()
+  end
+  
+  def minute
+    raise ValueError()
+  end
+  
+  def second
+    raise ValueError()
+  end
+end

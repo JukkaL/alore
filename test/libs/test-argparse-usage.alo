@@ -1,0 +1,97 @@
+-- Test cases for the argparse module: usage generation.
+
+module libs
+
+import unittest
+import argparse
+import re
+
+
+class ArgparseUsageSuite is Suite
+  def testTrivial()
+    assertUsage([], "test.alo ...")
+  end
+  
+  def testSingleOption()
+    assertUsage(["-x"], "test.alo [-x] ...")
+  end
+  
+  def testMultipleOptions()
+    assertUsage(["-x", "--foo X"], "test.alo [-x] [--foo X] ...")
+  end
+  
+  def testOptionAlternatives()
+    assertUsage(["-x --exclude", "--foo -f X"], "test.alo [-x] [--foo X] ...")
+  end
+  
+  def testWrappingToMultipleLines()
+    assertUsage(["--opt1", "--opt2", "--opt3", "--opt4", "--opt5", "--opt6", 
+                 "--opt7", "--opt8"], 
+    "test.alo [--opt1] [--opt2] [--opt3] [--opt4] [--opt5] [--opt6] [--opt7]" +
+    LF + "          [--opt8] ...")
+  end
+  
+  def testUsageWithHelp()
+    assertUsage(["-x"], "test.alo [-h] [-x] ...", True)
+  end
+  
+  def testUsageWithExplicitHelpOption()
+    assertUsage(["-x", "-h"], "test.alo [-x] [-h] ...", True)
+    assertUsage(["-x", "-h --help"], "test.alo [-x] [-h] ...", True)
+    assertUsage(["-x --help"], "test.alo [-x] ...", True)
+  end
+  
+  def testUsageWithMandatoryPositionalArguments()
+    assertUsage(["foo"], "test.alo foo")
+    assertUsage(["SRC", "DEST"], "test.alo SRC DEST")
+  end
+  
+  def testUsageWithOptionalPositionalArguments()
+    assertUsage(["[foo]"], "test.alo [foo]")
+    assertUsage(["bar", "[foo]"], "test.alo bar [foo]")
+    assertUsage(["[foo]", "[bar]"], "test.alo [foo [bar]]")
+    assertUsage(["[foo]", "bar"], "test.alo [foo] bar")
+    assertUsage(["[foo]", "[x]", "bar"], "test.alo [foo [x]] bar")
+  end
+  
+  def testUsageWithVarArgs()
+    assertUsage(["foo ..."], "test.alo foo ...")
+    assertUsage(["[foo] ..."], "test.alo [foo] ...")
+    assertUsage(["foo", "[bar] ..."], "test.alo foo [bar] ...")
+    assertUsage(["[foo]", "[bar] ..."], "test.alo [foo [bar] ...]")
+    
+    assertUsage(["foo ...", "bar"], "test.alo foo ... bar")
+    assertUsage(["foo ...", "[bar]"], "test.alo foo ... [bar]")
+    assertUsage(["[bar]", "foo ..."], "test.alo [bar] foo ...")
+  end
+  
+  def testCustomUsage()
+    assertUsage(["-x", "foo"], "stuff [option] ... FOO", False,
+                def (p)
+                  p.usage = "Usage: stuff [option] ... FOO"
+                end)
+  end
+  
+  def testCustomProgramName()
+    assertUsage(["-x", "foo"], "thingie [-x] foo", False,
+                def (p)
+                  p.program = "thingie"
+                end)
+  end
+  
+  private def assertUsage(desc, usage, showHelp = False, customize = nil)
+    var parser = ArgumentParser(*desc)
+    if showHelp
+      parser.help = []
+    end
+    var res = []
+    parser.display = def (msg, target)
+      res.append(msg.replace(Newline, LF))
+    end
+    if customize != nil
+      customize(parser)
+    end
+    parser.showUsage(nil)
+    AssertEqual(LF.join(res), "Usage: " + usage)
+  end
+end

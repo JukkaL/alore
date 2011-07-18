@@ -1,0 +1,37 @@
+@head
+@module reflect
+@title <tt>reflect</tt>: Reflection operations
+
+@fun GetMember(instance, id)
+@desc Return a member of an instance. The <tt>id</tt> argument must be a
+    <tt>Str</tt> object. Raise <tt>MemberError</tt> if the member is
+    not defined. Example:
+    @example
+      var range = 2 to 5
+      GetMember(range, "start")  -- 2
+    @end
+@end
+  
+@fun SetMember(instance, id, value)
+@desc Set the value of a member of an instance. The <tt>id</tt> argument must
+    be a <tt>Str</tt> object. Raise <tt>MemberError</tt> if the member
+    is not defined or if it is a method or a constant.
+@end
+  
+@fun HasMember(instance, id)
+@desc Return a boolean indicating whether an instance has a specific member.
+    The <tt>id</tt> argument must be a <tt>Str</tt> object. 
+@end
+
+@fun TypeOf(instance)
+@desc Return a type object representing the class of the argument.
+      <tt>TypeOf</tt> works for all values except <tt>nil</tt>;
+      if the argument is <tt>nil</tt>, raise a @ref{ValueError} exception.
+      The returned object is a type object bound to the relevant class
+      definition. Examples:
+
+      @example
+        TypeOf(1)        -- std::Int
+        TypeOf([1, 2])   -- std::Array
+      @end
+@end

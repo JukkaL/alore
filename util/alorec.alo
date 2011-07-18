@@ -1,0 +1,140 @@
+-- alorec.alo - Alore source file to binary executable compiler
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+-- NOTE: All the source files are included verbatim in the executable! The
+--       code is not compiled to native code or bytecode.
+--
+-- Alorec can be run in several contexts that are detected automatically:
+--
+--  * interpreted in the util directory of the source tree
+--  * compiled in the root of the source tree
+--  * compiled and installed
+
+import compiler
+import string
+import io
+import os
+import sys
+import loader
+import __testc
+
+-- Import all built-in C modules so that they are available (if needed) in 
+-- compiled programs. Dynamic C modules and modules implemented in Alore can
+-- be loaded dynamically.
+import thread
+import math
+import random
+import __time
+import bitop
+import __pack
+import set
+import reflect
+
+
+def Main(args)
+  var programPath = ParseArgs(args)
+  
+  COpts = GetCOpts(Debug)
+  LinkOpts += GetLinkOpts(Debug)
+  
+  if DirName(programPath) == ""
+    ModuleSearchPaths = ["."] + ModuleSearchPaths
+  else
+    ModuleSearchPaths = [DirName(programPath)] + ModuleSearchPaths
+  end
+
+  Msg("Platform: " + Platform)
+  if IsStandalone
+    Msg("Standalone")
+  else
+    Msg("Not standalone")
+  end
+
+  Msg("Compiler path: " + ProgramPath)
+  Msg("Module search path:")
+  for pp in ModuleSearchPaths
+    Msg("  {}".format(pp))
+  end
+
+  -- Find the path to libalorec.a.
+  var path = FindMainLibPath()
+  if path != nil
+    AddLibPath(DirName(path))
+  else
+    Msg("Warning: Could not find libalorec.a")
+  end
+  
+  try
+    Msg("Check syntax")
+    CheckSyntax(programPath, ModuleSearchPathSeparator.join(
+                                  ModuleSearchPaths))
+    Msg("Syntax ok")
+  except e is CompileError
+    for s in e.errorMessages
+      StdErr.writeLn(s)
+    end
+    Exit(1)
+  end
+  
+  try
+    Compile(programPath)
+  finally
+    if not KeepTemps
+      RemoveTempFiles()
+    end
+  end
+end
+
+
+def ParseArgs(args)
+  while args.length() > 0 and args[0].startsWith("-")
+    switch args[0]
+      case "-L"
+        ExpectArgs(args, 2)
+        ModuleSearchPaths.insertAt(0, args[1])
+        AddLibPath(args[1])
+        args = args[2:]
+      case "-v", "--version"
+        WriteLn("Alore Compiler {}".format(AVersion()))
+        WriteLn("Copyright (c) 2010-2011 Jukka Lehtosalo")
+        Exit(0)
+      case "--verbose"
+        Verbose = True
+        args = args[1:]
+      case "--keep-temps"
+        KeepTemps = True
+        args = args[1:]
+      case "-g"
+        Debug = True
+        args = args[1:]
+      else
+        StdErr.writeLn("alorec: Invalid option {}".format(args[0]))
+        StdErr.writeLn()
+        Usage()
+        Exit(1)
+    end
+  end
+  
+  if args.length() != 1
+    Usage()
+    Exit(1)
+  end
+  
+  return args[0]
+end
+
+
+def Usage()
+  StdErr.writeLn("Usage: alorec [option] ... programfile")
+  StdErr.writeLn("Options:")
+  StdErr.writeLn("  -g             Include C debugging information")
+  StdErr.writeLn("  -L path        Add library path")
+  StdErr.writeLn("  -v, --version  Show version information and exit")
+  StdErr.writeLn("  --keep-temps   " +
+                     "Keep temp files created during compilation")
+  StdErr.writeLn("  --verbose      Output lots of additional information")
+end

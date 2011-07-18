@@ -1,0 +1,115 @@
+@head
+@module std
+@title Class <tt>std::Float</tt>
+@index Float
+
+<p>Instances of the <tt>Float</tt> class are floating-point numbers (floats). A
+float is an approximation of a real number, and can represent whole and
+fractional numbers, both small and large in magnitude. Internally
+<tt>Float</tt> objects are 64-bit IEEE double-precision floating-point numbers,
+with up to 15 significant digits of accuracy.
+
+@class Float(x)
+@desc Construct an object of the <tt>Float</tt> type. Call the
+    <tt>_float()</tt> method of the argument and return a value equal to the
+    result, provided that it is a float. Of the primitive types, <tt>Str</tt> 
+    and <tt>Int</tt> objects provide a <tt>_float</tt> method. String arguments 
+    may contain optional blank and tab characters before and after the number.
+    Otherwise, the syntax of the string arguments must follow the Alore float
+    literal syntax.
+@end
+
+<h2>Operations</h2>
+
+<p><tt>Float</tt> objects support the following operations (<tt>f</tt> below
+refers to a <tt>Float</tt> value):
+
+@op f + x
+@op f * x
+@desc Perform an addition or multiplication operation. If the right operand
+      <tt>x</tt> is an integer or a float, the result is a float.
+      If <tt>x</tt> is neither an integer or a float,
+      return <tt>x + n</tt> (or <tt>x * n</tt> for a multiplication operation)
+      instead.
+@end
+
+@op f - x
+@op f / x
+@desc Perform a subtraction or a division operation. The right operands
+      <tt>x</tt> may be an integer or a float, and the result is a float.
+@end
+
+@op f div x
+@desc Perform integer division. The result is <tt>f</tt> / <tt>x</tt> rounded down
+      to the nearest integer represented as a float. The right operand
+      <tt>x</tt> may be an integer or
+      a float.
+      @example
+        7.1 div 3.0     -- 2.0
+        -4.2 div 3.0    -- -2.0
+      @end
+@end
+
+@op f mod x
+@desc Perform the modulus operation. The result is chosen so that
+      (<tt>f div x) * x + f mod x</tt> == <tt>f</tt>
+      (the equality is only
+      approximate due to the inexact nature of floating point numbers).
+      The right operand <tt>x</tt>
+      may be an integer or a float, and the result is a float.
+@end
+
+@op f ** x
+@desc Perform the exponentiation (power) operation. The right operand may be
+      an integer or a float, and the result is a float. The operator
+      follows the following rules in special conditions:
+      
+      <ul class="sep">
+        <li><tt>0.0 ** 0</tt> == 1.0
+        <li><tt>0.0 ** 0.0</tt> == 1.0
+        <li>If <tt>f</tt> &lt; 0 and <tt>x</tt> is not an integer, raise
+          @ref{ArithmeticError}.
+      </ul>
+@end
+
+@op -f
+@desc Return the negation of a float.
+@end  
+
+@op f == x
+@desc Floats can be compared for equality with arbitrary objects.
+  A float object is equal to an equivalent float or integer value.
+  If <tt>x</tt> is neither an integer nor a float,
+  the operation is evaluated as <tt>x</tt> == <tt>f</tt> instead.
+  @note The last property enables user-defined types to be compared with
+        floats usefully.
+  @end
+@end
+
+@op f &lt; x, f &gt; x
+@desc Floats can be compared for order with floats and integers.
+  If <tt>x</tt> is neither a float nor an integer,
+  the operation is evaluated as <tt>x</tt> &gt; <tt>f</tt>
+  (for a &lt; operation) or <tt>x</tt> &lt; <tt>f</tt> (for a &gt; operation).
+  @note The last property allows user-defined types to be compared with
+        floats usefully.
+  @end
+@end
+
+@op Str(f)
+@desc Convert a float to a string. The result contains up to approximately 10
+  significant digits.
+@end
+
+@op Repr(f)
+@desc Convert a float to a string. The result contains up to approximately 16
+  significant digits.
+@end
+
+@op Int(f)
+@desc Convert a float to an integer, truncating any fraction.
+@end
+
+@op Hash(f)
+@desc Return the hash value of a float.
+@end

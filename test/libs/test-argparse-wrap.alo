@@ -1,0 +1,138 @@
+-- Test cases for the argparse module: text wrapping.
+
+module libs
+
+import unittest
+import argparse
+
+
+const TextWrapper = argparse::__TextWrapper
+
+
+class ArgparseWrapSuite is Suite
+  def testEmpty()
+    AssertEqual(wrap(""), [""])
+  end
+  
+  def testSingleWord()
+    AssertEqual(wrap("a"), ["a"])
+    AssertEqual(wrap("ab"), ["ab"])
+  end
+  
+  def testTwoWords()
+    AssertEqual(wrap("a b"), ["a b"])
+    AssertEqual(wrap("ab cd"), ["ab cd"])
+    AssertEqual(wrap("ab  cd"), ["ab  cd"])
+  end
+  
+  def testSimpleIndented()
+    AssertEqual(wrap(" ab cd"), [" ab cd"])
+    AssertEqual(wrap("  a"), ["  a"])
+  end
+  
+  def testSimpleWrapping()
+    AssertEqual(wrap("foo ba7", 7), ["foo ba7"])
+    AssertEqual(wrap("foo ba6", 6), ["foo", "ba6"])
+    AssertEqual(wrap("foo ba5", 5), ["foo", "ba5"])
+    AssertEqual(wrap("foo ba4", 4), ["foo", "ba4"])
+    AssertEqual(wrap("foo ba3", 3), ["foo", "ba3"])
+  end
+  
+  def testThreeLines()
+    AssertEqual(wrap("foo bar zar", 5), ["foo", "bar", "zar"])
+  end
+  
+  def testTwoWordsPerLine()
+    AssertEqual(wrap("hello foo bar zar ba ra", 9), 
+                ["hello foo", "bar zar", "ba ra"])
+  end
+  
+  def testRetainWhiteSpace()
+    AssertEqual(wrap("  hello   foo  bar", 9), 
+                ["  hello", "foo  bar"])
+  end
+  
+  def testStripWhiteSpaceAtEnd()
+    AssertEqual(wrap("x       "),  ["x"])
+    AssertEqual(wrap("hello foo bar              ", 8), 
+                ["hello", "foo bar"])
+  end
+  
+  def testSplitLongLineSimple()
+    AssertEqual(wrap("12345678", 7), ["1234567", "8"])
+  end
+  
+  def testSplitLongLineGeneral()
+    AssertEqual(wrap("foo 123456789 ab c", 6), 
+                ["foo", "123456", "789 ab", "c"])
+    AssertEqual(wrap("foo 123456789 abcd", 6), 
+                ["foo", "123456", "789", "abcd"])
+  end
+  
+  def testTabs()
+    AssertEqual(wrap(Tab + "foobar foobar", 14),
+                ["        foobar", "foobar"])
+  end
+  
+  def testSpaceOnly()
+    AssertEqual(wrap(" " * 100), [""])
+    AssertEqual(wrap(" " * 60), [""])
+    AssertEqual(wrap(" " * 20), [""])
+  end
+  
+  def testLongInitialWhiteSpace()
+    AssertEqual(wrap("        hello hello", 5), ["hello", "hello"])
+  end
+  
+  def testNewlines()
+    AssertEqual(wrap("foo" + CR + "bar" + LF + "zar"),
+                     ["foo bar zar"])
+    AssertEqual(wrap("foo" + CR + "bar" + LF + "zar" + LF + "dar", 7),
+                     ["foo bar",  "zar dar"])
+    AssertEqual(wrap("foo" + CR + LF + "bar"),
+                     ["foo bar"])
+  end
+  
+  def testNoSplitLongWords()
+    var w = TextWrapper()
+    w.splitLongWords = False
+    AssertEqual(w.wrap("foobar", 4), ["foobar"])
+    AssertEqual(w.wrap("c t foobar r t", 4), ["c t", "foobar", "r t"])
+  end
+  
+  def testInitialIndent()
+    var w = TextWrapper()
+    w.initialIndent = Tab
+    AssertEqual(w.wrap("foobar hello foobaz", 16),
+                ["        foobar", "hello foobaz"])
+    AssertEqual(w.wrap(""), [""])
+    AssertEqual(w.wrap("x"), ["        x"])
+  end
+  
+  def testSubsequentIndent()
+    var w = TextWrapper()
+    w.subsequentIndent = Tab
+    AssertEqual(w.wrap("foobar-lo hello foobaz", 14),
+                ["foobar-lo", "        hello", "        foobaz"])
+    w.subsequentIndent = "  "
+    AssertEqual(w.wrap("cat dog"), ["cat dog"])
+    AssertEqual(w.wrap("cat dog", 5), ["cat", "  dog"])
+    AssertEqual(w.wrap("abcd  efghi", 4),
+                ["abcd", "  ef", "  gh", "  i"])
+    AssertEqual(w.wrap("abcdef", 3), ["abc", "  d", "  e", "  f"])
+    AssertRaises(ValueError, def (); w.wrap("", 2); end)
+  end
+  
+  def testVeryNarrowParagraph()
+    AssertEqual(wrap("fo b  c", 1), ["f", "o", "b", "c"])
+  end
+  
+  private def wrap(s, width = nil)
+    var t = TextWrapper()
+    if width == nil
+      return t.wrap(s)
+    else
+      return t.wrap(s, width)
+    end
+  end    
+end

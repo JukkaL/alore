@@ -1,0 +1,195 @@
+-- memstream.alo - Memory-based streams
+--
+-- Copyright (c) 2010-2011 Jukka Lehtosalo
+--
+-- Alore is licensed under the terms of the MIT license.  See the file
+-- LICENSE.txt in the distribution.
+
+module memorystream
+
+import io
+
+
+private const BlockSize = 512     -- Stream block size, in characters
+
+
+-- Memory-based stream
+class MemoryStream is Stream
+  -- An instance can be in three states: append-only, general and closed.
+  -- In the append-only state, the contents of stream are an array of strings
+  -- (blocks) of arbitrary size. In the general state, each block has a fixed
+  -- size BlockSize, expect for the last block which may be shorter. In the
+  -- closed state, the contents are empty. 
+  --
+  -- The append-only state is included for better efficiency in a common
+  -- use case (appending data to an empty stream and then converting it to a 
+  -- string).
+
+  private var data = []          -- Array of Str: contents of the stream
+  private var appendOnly = True  -- True if every mutation has been an append
+  private var isClosed = False
+  
+  private var position = -1      -- Position in the stream, -1 means at end
+                                 -- (only valid in append mode)
+  private var len = 0
+  
+  def create(init = "")
+    super.create(Input, Output)
+    if init != ""
+      _write(init)
+      self.position = 0
+      enableRandomAccess()
+    end
+  end
+  
+  def _write(*a)
+    if self.appendOnly
+      -- Write in append only mode
+      for s in a
+        if s.length() > 0
+          self.data.append(s)
+          self.len += s.length()
+        end
+      end
+    else
+      -- Write in general (random access) mode
+      var s = "".join(a)
+      if s == ""
+        return
+      end
+      emptyInputBuffer()
+      var i1 = blockIndex(self.position)
+      var i2 = blockIndex(self.position + s.length() - 1)
+      var n1 = self.position mod BlockSize
+      -- Add any required additional blocks.
+      while i2 >= self.data.length()
+        self.data.append("")
+      end
+      var pre = self.data[i1][:n1]
+      if i1 == i2
+        -- Write only at a single block.
+        self.data[i1] = pre + s + 
+                        self.data[i1][n1 + s.length():]
+      else
+        -- Update initial block.
+        var si = BlockSize - n1
+        self.data[i1] = pre + s[:si]
+        -- Update middle blocks, if any.
+        var si2 = si
+        for i in i1 + 1 to i2
+          self.data[i] = s[si2:si2 + BlockSize]
+          si2 += BlockSize
+        end
+        -- Update last block.
+        self.data[i2] = s[si2:] + 
+                        self.data[i2][s.length() - si2:]
+      end
+      self.len = Max(self.len, self.position + s.length())
+      self.position += s.length()
+    end
+  end
+  
+  def _read(n)
+    if self.position == self.len or self.position == -1
+      return nil
+    elif n <= 0
+      if n < 0
+        raise IoError("Negative read size")
+      else
+        return ""
+      end
+    else
+      flush()
+      enableRandomAccess()
+      var i1 = blockIndex(self.position)
+      var i2 = Min(blockIndex(self.position + n - 1), self.data.length() - 1)
+      var n1 = self.position mod BlockSize
+      var a = []
+      a.append(self.data[i1][n1:n1 + n - 1])
+      if i2 > i1
+        for i in i1 + 1 to i2
+          a.append(self.data[i])
+        end
+        a.append(self.data[i2][:(self.position + n) mod BlockSize])
+      end
+      var res = "".join(a)      
+      self.position += res.length()
+      return res
+    end
+  end
+  
+  def size()
+    flush()
+    return self.len
+  end
+  
+  def seek(n)
+    verifyNotClosed()
+    if n < 0 or n > size()
+      raise IoError("Invalid seek offset")
+    end
+    -- Seek requires random access.
+    enableRandomAccess()
+    -- Flush output buffers.
+    flush()
+    -- Empty read buffer.
+    read(peek().length())
+    self.position = n
+  end
+  
+  def pos()
+    flush()
+    if self.position == -1
+      return self.len
+    else
+      return self.position - peek().length()
+    end
+  end
+  
+  def close()
+    super.close()
+    self.isClosed = True
+  end
+  
+  def contents()
+    if not self.isClosed
+      flush()
+    end
+    return "".join(self.data)
+  end
+  
+  -- Switch the stream to the general mode (appendOnly == False) if it's
+  -- currently in the append-only mode.
+  private def enableRandomAccess()
+    if not self.appendOnly
+      return
+    end
+    var c = contents()
+    self.data = []
+    for i in 0 to (c.length() + BlockSize - 1) div BlockSize
+      var block = c[i * BlockSize:(i + 1) * BlockSize]
+      self.data.append(block)
+    end
+    self.appendOnly = False
+  end
+  
+  -- Raise an exception if the stream is closed.
+  private def verifyNotClosed()
+    if self.isClosed
+      raise IoError("Stream closed")
+    end
+  end
+  
+  -- Return the block index of an offset (only works in the general mode).
+  private def blockIndex(offset)
+    return offset div BlockSize
+  end
+
+  -- Empty input buffer and update position accordingly.
+  private def emptyInputBuffer()  
+    -- Normalize position if there is data in the input buffer
+    var numBuffered = peek().length()
+    self.position -= numBuffered
+    read(numBuffered)
+  end
+end

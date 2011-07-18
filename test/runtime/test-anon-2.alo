@@ -1,0 +1,713 @@
+-- Test cases for anonymous functions that access exposed local variables or
+-- member variables.
+
+module runtime
+
+import unittest
+import __testc
+
+
+-- Used by testLocalAndGlobalWithSameName
+private var foovar = 6
+
+
+-- Base class for the test suite.
+class AnonFuncSuite2Base is Suite
+  def foo()
+    return 11
+  end
+end
+
+
+class AnonFuncSuite2 is AnonFuncSuite2Base
+  def testReadExposedLocal()
+    TestReadExposedLocal()
+  end
+  
+  def testModifyExposedLocal()
+    TestModifyExposedLocal()
+  end
+  
+  def testExposedFunctionArguments()
+    TestExposedFunctionArguments(5, 6)
+    TestExposedFunctionArguments(5, 6, 7)
+  end
+  
+  def testExposedVarArgs()
+    TestExposedVarArgs(4, 5, 6)
+  end
+  
+  def testExposedVariablesAfterFunctionReturn()
+    TestExposedVariablesAfterFunctionReturn()
+  end
+  
+  def testExposedMultipleInitialization()
+    TestExposedMultipleInitialization()
+  end
+  
+  def testExposedArgumentWithDefaultArgValue()
+    TestExposedArgumentWithDefaultArgvalue(33)
+  end
+  
+  def testComplexAnonWithExposed()
+    TestComplexAnonWithExposed()
+  end
+  
+  def testSelf()
+    var f = def ()
+      var x = self
+      return x.mvar
+    end
+    AssertEqual(f(), 5)
+  end
+  
+  def testMemberVariables()
+    var f = def ()
+      return mvar + pmvar
+    end
+    AssertEqual(f(), 11)
+  end
+  
+  def testMethods()
+    var f = def (x)
+      AssertEqual(method(5), 6)
+      AssertEqual(pmethod(2, 5), 10)
+      return x + "a"
+    end
+    AssertEqual(f("b"), "ba")
+  end
+  
+  def testdAccessors()
+    var f = def ()
+      AssertEqual(getter, 55)
+      setter = 66
+      AssertEqual(x, 67)
+      return 2
+    end
+    AssertEqual(f(), 2)
+    AssertEqual(x, 67)
+  end
+  
+  def testSuper()
+    var f = def ()
+      AssertEqual(foo(), 33)
+      return super.foo()
+    end
+    AssertEqual(f(), 11)
+  end
+  
+  def testLvarsWithinMethod()
+    var x = 5
+    var f = def ()
+      return x
+    end
+    AssertEqual(f(), 5)
+  end
+  
+  def testLvarsAndMembersWithinMethod()
+    var xx = 5
+    var y
+    var z, zz = "a", "b"
+    var f = def ()
+      xx += 1
+      return mvar, z + zz
+    end
+    AssertEqual(f(), (5, "ab"))
+  end
+  
+  -- Test local variable and member with the same name.
+  def testLvarHidingMember()
+    var mvar = "foo"
+    var f = def ()
+      return mvar, self.mvar
+    end
+    AssertEqual(f(), ("foo", 5))
+  end
+  
+  def testLocalAndGlobalWithSameName()
+    var foovar = 5 -- There is also a global with the same name
+    var f = def ()
+      return ::foovar
+    end
+    AssertEqual(foovar, 5)
+    AssertEqual(::foovar, 6)
+    AssertEqual(f(), 6)
+  end
+  
+  -- Test that accessing a member with the same name as a local variable
+  -- using . operator in an anonymous function without accessing the local 
+  -- variable works.
+  def testMemberWithSameNameAsLocal()
+    var mvar = 222
+    
+    var f = def ()
+      return self.mvar
+    end
+    AssertEqual(mvar, 222)
+    AssertEqual(f(), 5)
+  end
+  
+  -- Test nested anonymous functions where the inner function accessed a
+  -- variable defined in the outer anonymous function.
+  def testSimpleNestedAnonymousFunctions()
+    var f = def ()
+      var a = 1
+      var g = def ()
+        a += 1
+      end
+      g()
+      AssertEqual(a, 2)
+      return a
+    end
+    AssertEqual(f(), 2)
+  end
+  
+  -- Test nested anonymous functions where the inner function accessed a
+  -- variable defined in the outermost function.
+  def testSimpleNestedAnonymousFunctions2()
+    var a = 1
+    var f = def ()
+      var g = def ()
+        a += 1
+      end
+      g()
+      AssertEqual(a, 2)
+    end
+    f()
+    AssertEqual(a, 2)
+  end
+  
+  -- Test nested anonymous functions which access variables defined in outer 
+  -- scopes.
+  def testNestedAnonymousFunctions()
+    var l1 = 5
+    var z
+    var l1b = 1
+    var f = def (a1)
+      var x = 55
+      var y
+      var l2 = 6
+      l1b += 1
+      var g = def (a2)
+        var l3 = 7
+        l1 *= 2
+        l2 *= 2
+        l3 *= 2
+        a1 *= 2
+        return l1, l2, l3, a1, a2, l1b
+      end
+      AssertEqual(x, 55)
+      l2 += 2
+      AssertEqual(l2, 8)
+      return g
+    end
+    AssertEqual(f(11)(12), [10, 16, 14, 22, 12, 2])
+    AssertEqual(l1, 10)
+    AssertEqual(l1b, 2)
+  end
+  
+  -- Test multiple nested anonymous functions which access variables defined
+  -- in outer scopes.
+  def testMultiplyNestedAnonymousFunctions()
+    var x = 55
+    var f1 = def ()
+      var f2 = def ()
+      var y = 5
+        var f3 = def ()
+          var f4 = def ()
+            return x + y
+          end
+          return f4()
+        end
+        return f3() + f3()
+      end
+      return f2()
+    end
+    AssertEqual(f1(), (55 + 5) * 2)
+  end
+  
+  -- Test anonymous function within a multiple assignment.
+  def testAnonFunctionWithinMultiAssignment()
+    var out = 999
+    var f = def ()
+      var x = 1
+      var y = 2
+      var a = [4, 5, 6, 9]
+      x, a[def ()
+             var aa, bb, cc
+             cc, bb, aa = 1, 2, 3
+             x = 1 + x - 1
+             return y + 1 -- Evaluates to 3
+           end()] = 7, 8
+      AssertEqual(x, 7)
+      AssertEqual(a[3], 8)
+      AssertEqual(out, 999)
+      out = 0
+    end
+    f()
+    AssertEqual(out, 0)
+  end
+  
+  -- Test anonymous function in the default argument value of an anonymous 
+  -- function.
+  def testAnonFunctionInDefaultArgValue()
+    var c = 55
+    var a, b = 3, 5
+    var f = def ()
+      a += 1
+      var g = def (x = def (); return b; end)
+        return x() + 1
+      end
+      AssertEqual(g(), 6)
+      AssertEqual(b, 5)
+      AssertEqual(a, 4)      
+    end
+  end
+  
+  -- Test accessing loop variable defined in an outside scope within an 
+  -- anonymous function when looping over a range.
+  def testExposedLoopVariableOverRange()
+    var x = 2
+    var f
+    var a = []
+    for i in 1 to 6
+      var y = "x"
+      f = def ()
+        return i * x
+      end
+      a.append(f())
+      AssertEqual(y, "x")
+    end
+    AssertEqual(a, [2, 4, 6, 8, 10])
+    x = 3
+    AssertEqual(f(), 15)
+  end
+  
+  -- Test accessing loop variable defined in an outside scope within an 
+  -- anonymous function when looping over an array.
+  def testExposedLoopVariableOverArray()
+    var x = 2
+    var f
+    var a = []
+    for i in 8, 2, 3, 4
+      var y = "x"
+      f = def ()
+        return i * x
+      end
+      a.append(f())
+      AssertEqual(y, "x")
+    end
+    AssertEqual(a, [16, 4, 6, 8])
+    x = 3
+    AssertEqual(f(), 12)
+  end
+  
+  -- Test accessing multiple for loop variables, some of which are exposed.
+  def testMultipleExposedLoopVariables()
+    -- First variable exposed, the other not
+    var a = []
+    var f
+    for i, j in (8, 2), (1, 4), (5, 7)
+      f = def ()
+        return i * 2
+      end
+      a.append((f(), i, j))
+    end
+    AssertEqual(a, [(16, 8, 2), (2, 1, 4), (10, 5, 7)])
+    AssertEqual(f(), 10)
+    
+    -- First variable not exposed, other 2 are
+    a = []
+    for i, j, k in (4, 7, 6), (1, 2, 5)
+      f = def ()
+        return j * k
+      end
+      a.append(f())
+    end
+    AssertEqual(a, [7 * 6, 2 * 5])
+    AssertEqual(f(), 2 * 5)
+  end
+  
+  -- Test accessing exposed exception variable in try/except.
+  def testExposedExceptionVariable()
+    try
+      raise IoError()
+    except e is IoError
+      var f = def (a)
+        var b = 6
+        return e, a * b + 4
+      end
+      AssertType(IoError, e)
+      AssertEqual(f(5), (e, 34))
+    end
+  end
+  
+  -- Test accessing exposed exception variable in try/except that can catch
+  -- direct exceptions.
+  def testExposedExceptionVariableWithDirectException()
+    try
+      RaiseDirectTypeError()
+    except e is TypeError
+      var f = def ()
+        return e
+      end
+      AssertType(TypeError, e)
+      AssertEqual(f(), e)
+    end
+  end
+  
+  -- Test invalid argument count when calling an anonymous function defined
+  -- within a method.
+  def testInvalidArgCountInMethod()
+    var v
+    var f = def (x)
+      v = 2
+    end
+    AssertRaises(ValueError, "anonymous function expects 1 argument (2 given)",
+                f, [1, 2])
+    AssertRaises(ValueError, "anonymous function expects 1 argument (0 given)",
+                f, [])
+  end
+  
+  -- Test invalid argument count when calling an anonymous function defined
+  -- outside a class.
+  def testInvalidArgCountInFunction()
+    var f = ArgTestFunc()
+    AssertRaises(ValueError,
+                "anonymous function expects at least 2 arguments (1 given)",
+                f, [1])
+    AssertRaises(ValueError,
+                "anonymous function expects at most 3 arguments (4 given)", 
+                f, [1, 2, 3, 4])
+  end
+  
+  -- Test exception raised when trying to perform an invalid operation with
+  -- an anonymous function.
+  def testInvalidOperationExceptions()
+    var v
+    var f = def ()
+      v = 4
+    end
+    AssertRaises(TypeError, 
+                 "Unsupported operand types for * (Function and Int)", 
+                def ()
+                  f * 2
+                end)
+  end
+  
+  -- Test a large number of exposed variables.
+  def testManyExposedVars()
+    var f = FuncWithManyExposedVars()
+    AssertEqual(f(), 150 * (1 + 150) div 2)
+  end
+  
+  -- Test accessing an exposed variable within a getter method.
+  def testExposedInGetter()
+    var f = anonGetter
+    AssertEqual(f(), 3)
+    AssertEqual(f(), 5)
+  end
+  
+  -- Test expossing the argument to a setter method.
+  def testExposedSetterArgument()
+    setterArgTest = 7
+    AssertEqual(setterArgTestAnon(), 8)
+    AssertEqual(setterArgTestAnon(), 9)
+  end
+  
+  -- Test anonymous function defined within class body, i.e. outside method.
+  def testAnonFunctionInClassBody()
+    AssertEqual(anon(6), 10)
+  end
+  
+  -- Test break at two function nesting levels.
+  def testBreakAtTwoLevels()
+    while True
+      break
+      def ()
+        for i in 1 in 5
+          break
+        end
+      end
+    end
+  end
+  
+  -- Test return + finally in anonymous functions.
+  def testReturnAndFinally()
+    var x = 0
+    var foo = def ()
+      try
+        return 5
+        def ()
+          try
+            return 6
+          finally
+          end
+        end
+      finally
+        x = 1
+      end
+    end  
+    AssertEqual(foo(), 5)
+    AssertEqual(x, 1)
+  end
+  
+  -- Some additional definitions are included below that are used by the test 
+  -- cases above.
+  
+  var mvar = 5
+  private var pmvar = 6
+  
+  def method(x)
+    return x + 1
+  end
+  
+  private def pmethod(x, y)
+    return x * y
+  end
+  
+  def getter
+    return 55
+  end
+  
+  def setter
+    raise ValueError() -- Not used
+  end
+  
+  var x
+  def setter = xx
+    x = xx + 1
+  end
+  
+  var setterArgTestAnon
+  def setterArgTest
+    return 0
+  end
+  def setterArgTest = x
+    setterArgTestAnon = def ()
+      x += 1
+      return x
+    end
+  end
+  
+  def anonGetter
+    var x = 1
+    return def ()
+      x += 2
+      return x
+    end
+  end
+  
+  def foo()
+    return 33
+  end
+  
+  private var foovar = 4
+  var anon = def (x)
+    return foovar + x
+  end
+end
+
+
+private def TestReadExposedLocal()
+  var v = 123
+  var f = def (x, y)
+    return x + y + v
+  end
+  AssertEqual(f(3, 4), 3 + 4 + 123)
+  AssertEqual(v, 123)
+end
+
+
+private def TestModifyExposedLocal()
+  var a = 4
+  var v = 123
+  var f = def (x, y)
+    v = x + y
+  end
+  f(3, 4)
+  AssertEqual(v, 7)
+  v = 55
+  AssertEqual(v, 55)
+  f(5, 6)
+  AssertEqual(v, 11)
+  AssertEqual(a, 4) -- Non-exposed
+  a += 1
+  AssertEqual(a, 5)
+end
+
+
+private def TestExposedFunctionArguments(a, b, c = 3 + 4)
+  var f = def ()
+    return a + c
+  end
+  AssertEqual(f(), a + c)
+  AssertEqual(f(), 12)
+  a = 0
+  AssertEqual(f(), c)
+end
+
+
+private def TestExposedVarArgs(x, *a)
+  var t, u
+  var f = def ()
+    t = x
+    u = a
+  end
+  AssertEqual(t, nil)
+  AssertEqual(u, nil)
+  f()
+  AssertEqual(t, x)
+  AssertEqual(u, a)
+end
+
+
+private def TestExposedVariablesAfterFunctionReturn()
+  var f = ExpFunc(3)
+  AssertEqual(f(0), 3)
+  AssertEqual(f(1), 4)
+  AssertEqual(f(2), 6)
+end
+
+
+private def ExpFunc(a)
+  return def (x)
+    a += x
+    return a
+  end
+end
+
+
+private def TestExposedMultipleInitialization()
+  var a, b = 6, 78
+  var f = def ()
+    return a + b
+  end
+  AssertEqual(f(), 6 + 78)
+  AssertEqual(a, 6)
+  AssertEqual(b, 78)
+end
+
+
+private def TestExposedArgumentWithDefaultArgvalue(a, b = def ()
+                                                            return a + 1
+                                                          end)
+  AssertEqual(a, 33)
+  AssertEqual(b(), 34)
+end
+
+
+private def TestComplexAnonWithExposed()
+  var x = "foo"
+  var y = "not exposed"
+  if 2 > 1
+    var a = [3, 8]
+    var n = 5
+    var f = def (b)
+      for i in 1 to 6
+        if a is Array
+          var xx = x[1:3]
+          AssertEqual(xx, "oo")
+        else
+          Assert(False)
+        end
+      end
+      try
+        a[3]
+        Assert(False)
+      except IndexError
+        var i = a.length()
+        AssertEqual(i, 2)
+      end
+      n = b
+    end
+    f(77)
+    AssertEqual(n, 77)
+    x = nil
+    var i = 5
+  end
+  AssertEqual(x, nil)
+  AssertEqual(y, "not exposed")
+end
+
+
+private def ArgTestFunc()
+  var g
+  return def (x, y, z = 4)
+    g = 3
+  end
+end
+
+
+private def FuncWithManyExposedVars()
+  -- Define 150 local variables.
+  var v1 = 1; var v2 = 2; var v3 = 3
+  var v4 = 4; var v5 = 5; var v6 = 6
+  var v7 = 7; var v8 = 8; var v9 = 9
+  var v10 = 10; var v11 = 11; var v12 = 12
+  var v13 = 13; var v14 = 14; var v15 = 15
+  var v16 = 16; var v17 = 17; var v18 = 18
+  var v19 = 19; var v20 = 20; var v21 = 21
+  var v22 = 22; var v23 = 23; var v24 = 24
+  var v25 = 25; var v26 = 26; var v27 = 27
+  var v28 = 28; var v29 = 29; var v30 = 30
+  var v31 = 31; var v32 = 32; var v33 = 33
+  var v34 = 34; var v35 = 35; var v36 = 36
+  var v37 = 37; var v38 = 38; var v39 = 39
+  var v40 = 40; var v41 = 41; var v42 = 42
+  var v43 = 43; var v44 = 44; var v45 = 45
+  var v46 = 46; var v47 = 47; var v48 = 48
+  var v49 = 49; var v50 = 50; var v51 = 51
+  var v52 = 52; var v53 = 53; var v54 = 54
+  var v55 = 55; var v56 = 56; var v57 = 57
+  var v58 = 58; var v59 = 59; var v60 = 60
+  var v61 = 61; var v62 = 62; var v63 = 63
+  var v64 = 64; var v65 = 65; var v66 = 66
+  var v67 = 67; var v68 = 68; var v69 = 69
+  var v70 = 70; var v71 = 71; var v72 = 72
+  var v73 = 73; var v74 = 74; var v75 = 75
+  var v76 = 76; var v77 = 77; var v78 = 78
+  var v79 = 79; var v80 = 80; var v81 = 81
+  var v82 = 82; var v83 = 83; var v84 = 84
+  var v85 = 85; var v86 = 86; var v87 = 87
+  var v88 = 88; var v89 = 89; var v90 = 90
+  var v91 = 91; var v92 = 92; var v93 = 93
+  var v94 = 94; var v95 = 95; var v96 = 96
+  var v97 = 97; var v98 = 98; var v99 = 99
+  var v100 = 100; var v101 = 101; var v102 = 102
+  var v103 = 103; var v104 = 104; var v105 = 105
+  var v106 = 106; var v107 = 107; var v108 = 108
+  var v109 = 109; var v110 = 110; var v111 = 111
+  var v112 = 112; var v113 = 113; var v114 = 114
+  var v115 = 115; var v116 = 116; var v117 = 117
+  var v118 = 118; var v119 = 119; var v120 = 120
+  var v121 = 121; var v122 = 122; var v123 = 123
+  var v124 = 124; var v125 = 125; var v126 = 126
+  var v127 = 127; var v128 = 128; var v129 = 129
+  var v130 = 130; var v131 = 131; var v132 = 132
+  var v133 = 133; var v134 = 134; var v135 = 135
+  var v136 = 136; var v137 = 137; var v138 = 138
+  var v139 = 139; var v140 = 140; var v141 = 141
+  var v142 = 142; var v143 = 143; var v144 = 144
+  var v145 = 145; var v146 = 146; var v147 = 147
+  var v148 = 148; var v149 = 149; var v150 = 150
+
+  -- Return a function that returns the sum of the 150 local variables.
+  return def ()
+    return v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8 + v9 + v10 + 
+      v11 + v12 + v13 + v14 + v15 + v16 + v17 + v18 + v19 + v20 + 
+      v21 + v22 + v23 + v24 + v25 + v26 + v27 + v28 + v29 + v30 + 
+      v31 + v32 + v33 + v34 + v35 + v36 + v37 + v38 + v39 + v40 + 
+      v41 + v42 + v43 + v44 + v45 + v46 + v47 + v48 + v49 + v50 + 
+      v51 + v52 + v53 + v54 + v55 + v56 + v57 + v58 + v59 + v60 + 
+      v61 + v62 + v63 + v64 + v65 + v66 + v67 + v68 + v69 + v70 + 
+      v71 + v72 + v73 + v74 + v75 + v76 + v77 + v78 + v79 + v80 + 
+      v81 + v82 + v83 + v84 + v85 + v86 + v87 + v88 + v89 + v90 + 
+      v91 + v92 + v93 + v94 + v95 + v96 + v97 + v98 + v99 + v100 + 
+      v101 + v102 + v103 + v104 + v105 + v106 + v107 + v108 + v109 + v110 + 
+      v111 + v112 + v113 + v114 + v115 + v116 + v117 + v118 + v119 + v120 + 
+      v121 + v122 + v123 + v124 + v125 + v126 + v127 + v128 + v129 + v130 + 
+      v131 + v132 + v133 + v134 + v135 + v136 + v137 + v138 + v139 + v140 + 
+      v141 + v142 + v143 + v144 + v145 + v146 + v147 + v148 + v149 + v150
+  end  
+end

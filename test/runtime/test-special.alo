@@ -1,0 +1,19 @@
+module runtime
+
+import unittest
+
+
+class SpecialSuite is Suite
+  def testLogicalExpressionAsOperand()
+    AssertRaises(TypeError, def ()
+                               var i = 0
+                               var a = [9]
+                               i += (a != nil)
+                             end)
+    AssertRaises(TypeError, def ()
+                               var i = 0
+                               var a = [9]
+                               i = (a != nil) + i
+                             end)
+  end
+end

@@ -1,0 +1,375 @@
+module libs
+
+import unittest
+
+import http
+import serversocket
+import thread
+import string
+import os
+
+
+-- TODO:
+--  - test closing from a different thread
+--  - test pipelining
+--  - test additional protocol errors
+
+
+private const Method, Path, Body, RequestHeaders, Auth, InData, OutData, 
+              Headers, Content, Version, Status, Reason, ReadMode, IsOpen
+
+private const BasicRead, ChunkRead, LineRead, CloseRead
+
+
+class HttpSuite is Suite
+  def testHeaders()
+    var h = HttpHeaders(["Content-Type: text/html", "Content-Length:  40  "])
+    
+    AssertEqual(h.length(), 2)
+    
+    Assert(h.hasKey("content-type"))
+    Assert(h.hasKey("Content-Type"))
+    Assert(h.hasKey("CONTENT-LENGTH"))
+    Assert(not h.hasKey("contenttype"))
+    
+    AssertEqual(h["content-type"], "text/html")
+    AssertEqual(h["Content-Length"], "40")
+    
+    AssertEqual(h.keys(), ["Content-Type", "Content-Length"])
+    AssertEqual(h.values(), ["text/html", "40"])
+    
+    AssertRaises(ValueError, h._set, ["content-type", "foo"])
+    AssertRaises(ValueError, h.remove, ["content-type"])
+  end
+  
+  def testSplitHeaders()
+    var h = HttpHeaders(["Content-Type: text/html; ",
+                         Tab + " charset=UTF-8",
+                         "Content-Length:",
+                         " 333"])
+    AssertEqual(h["content-type"], "text/html; " + LF + " charset=UTF-8")
+    AssertEqual(h["content-length"], "333")
+  end
+  
+  def testCombinedHeaders()
+    var h = HttpHeaders(["Accept: foo", "Accept:  bar  "])
+    AssertEqual(h["accept"], "foo, bar")
+  end
+  
+  def testHttpPort()
+    AssertEqual(HttpPort, 80)
+  end
+  
+  def testDefaultProxy()
+    SetEnv("http_proxy", nil)
+    AssertEqual(DefaultProxy(), nil)
+    SetEnv("http_proxy", "proxy.foobar.com")
+    AssertEqual(DefaultProxy(), ("proxy.foobar.com", 80))
+    SetEnv("http_proxy", "proxy.foobar.com:1234")
+    AssertEqual(DefaultProxy(), ("proxy.foobar.com", 1234))
+  end
+  
+  def testBasicGet()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                           "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3", 
+                            "content-type" : "text/html"])
+  end
+  
+  def testBasicPost()
+    assertRequest(Method: "POST", Body: "foobar",
+                  InData: ["POST / HTTP/1.1", "Host: localhost:8080", 
+                          "Content-Length: 6", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3"])
+  end
+  
+  def testChunkedEncoding()
+    assertRequest(Path: ["/foo.x?bar=zar&y"],
+                  InData: ["GET /foo.x?bar=zar&y HTTP/1.1", 
+                          "Host: localhost:8080", 
+                          ""],
+                  OutData: ["HTTP/1.1 200 OK", "Transfer-Encoding: chunked", 
+                            "", "a;", "1234567890", "3;xx", "foo", "0;", 
+                            "chunk", "", ""],
+                  Headers: ["transfer-encoding" : "chunked"],
+                  Content: "1234567890foo")
+  end
+  
+  def testBasicAuthentication()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 401 Authorization Required", 
+                           "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3"],
+                  Status: 401,
+                  Reason: "Authorization Required")
+    assertRequest(Auth: ["user", "passw"],
+                  InData: ["GET / HTTP/1.1", "Host: localhost:8080", 
+                         "Authorization: Basic dXNlcjpwYXNzdw==", ""],
+                  OutData: ["HTTP/1.1 200 OK", 
+                           "Content-Length: 4", "", "bart"],
+                  Headers: ["content-length" : "4"],
+                  Content: "bart")
+  end
+  
+  def testRequestHeaders()
+    assertRequest(RequestHeaders: ["User-Agent": "XAZ-bar/2.11 alore/0.0.1",
+                                   "Referer": "http://www.xxx/"],
+                  InData: ["GET / HTTP/1.1", "Host: localhost:8080", 
+                          "User-Agent: XAZ-bar/2.11 alore/0.0.1",
+                          "Referer: http://www.xxx/", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3"])
+  end
+  
+  def testHttp10WithNoContentLength()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.0 200 OK", "Content-Type: text/html", "",
+                           "foo"],
+                  Headers: ["content-type" : "text/html"],
+                  Version: "1.0",
+                  IsOpen: False)
+  end
+  
+  -- Multiple requests can be sent with a single HTTP connection in HTTP 1.1,
+  -- unless the "Connection: close" header was sent by the client.
+  -- HTTP 1.0 clients might use "Connection: Keep-Alive" or the Keep-Alive
+  -- header. We only test HTTP 1.1 compliant persistent connections.
+  def testMultipleRequests()
+    assertRequest(Path: ["/", "/foo.html"],
+                  InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                          ["GET /foo.html HTTP/1.1", 
+                          "Host: localhost:8080", ""]],
+                  OutData: [["HTTP/1.1 200 OK", "Content-Length: 3", "", 
+                             "foo"],
+                          ["HTTP/1.1 200 OK", "Content-Length: 3", "", "zar"]],
+                  Headers: [["content-length" : "3"], 
+                            ["content-length" : "3"]],
+                  Content: ["foo", "zar"])
+
+    assertRequest(Path: ["/", "/foo.html"],
+                  InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                          ["GET /foo.html HTTP/1.1", 
+                           "Host: localhost:8080", ""]],
+                  OutData: [["HTTP/1.1 200 OK", "Transfer-Encoding: chunked", 
+                            "", "3;", "foo", "0;", "chunk", "", ""],
+                          ["HTTP/1.1 200 OK", "Content-Length: 3", "", "zar"]],
+                  Headers: [["Transfer-Encoding" : "chunked"],
+                            ["content-length" : "3"]],
+                  Content: ["foo", "zar"])
+  end
+  
+  def testLongResponse()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                           "Content-Length: 30000", "", "foo" * 10000],
+                  Headers: ["content-length" : "30000", 
+                            "content-type" : "text/html"],
+                  Content: "foo" * 10000)
+  end
+  
+  def testDifferentReadModes()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                           "Content-Length: 30001", "", "<" + "foo" * 10000],
+                  Headers: ["content-length" : "30001", 
+                            "content-type" : "text/html"],
+                  Content: "<" + "foo" * 10000,
+                  ReadMode: ChunkRead)
+                  
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
+                           "Transfer-Encoding: chunked", "",
+                           "5;", "<" + CR + "foo",
+                           "752d;", "foo" * 9999, "0;", "", ""],
+                  Headers: ["transfer-encoding" : "chunked",
+                            "content-type" : "text/html"],
+                  Content: "<" + LF + "foo" * 10000 + LF,
+                  ReadMode: LineRead)
+                  
+    assertRequest(Path: ["/", "/foo.html"],
+                  InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                          ["GET /foo.html HTTP/1.1", 
+                          "Host: localhost:8080", ""]],
+                  OutData: [["HTTP/1.1 200 OK", "Content-Length: 3000", "", 
+                            "foo" * 1000],
+                          ["HTTP/1.1 200 OK", "Content-Length: 3", "", "zar"]],
+                  Headers: [["content-length" : "3000"], 
+                            ["content-length" : "3"]],
+                  Content: ["fo", "za"],
+                  ReadMode: CloseRead)
+  end
+  
+  -- Test invalid response header from the server (i.e., not a HTTP server).
+  def testInvalidResponse()
+    var ss = ServerSocket(8080)
+    var t = Thread(def ()
+                    runServer(ss, [["GET / HTTP/1.1", "Host: localhost:8080", 
+                                     ""]],
+                              [["Invalid response"]], nil)
+                   end)
+    var h = Http("localhost", 8080)
+    h.request("GET", "/")
+    AssertRaises(HttpError, h.response, [])
+    h.close()
+    t.join()
+  end
+  
+  def testInvalidCalls()
+    var ss = ServerSocket(8080)
+    var t = Thread(def ()
+                     runServer(ss, [["GET / HTTP/1.1", "Host: localhost:8080", 
+                                    ""]],
+                        [["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"]], 
+                        nil)
+                   end)
+    var h = Http("localhost", 8080)
+    AssertRaises(HttpError, h.response, [])
+    AssertRaises(HttpError, h.request, ["GET", ""])
+    AssertRaises(HttpError, h.request, ["", "/"])
+    h.request("GET", "/")
+    AssertRaises(HttpError, h.isOpen, [])
+    h.response()
+    h.close()
+    t.join()
+  end
+  
+  -- Test simulated connection through a proxy.
+  def testProxy()
+    assertRequest(Path: ["http://www.foobar.com/"],
+                  InData: ["GET http://www.foobar.com/ HTTP/1.1", 
+                          "Host: www.foobar.com", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                           "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3", 
+                            "content-type" : "text/html"])
+  end
+  
+  def testConnectionCloseHeader()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 200 OK", "Connection: close",
+                           "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3",
+                            "connection" : "close"],
+                  IsOpen: False)
+  end
+  
+  def test1xxResponses()
+    assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
+                  OutData: ["HTTP/1.1 100 Continue", "",
+                           "HTTP/1.1 199 Foo bar", "",
+                           "HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
+                  Headers: ["content-length" : "3"])
+  end
+  
+  private def assertRequest(*args)
+    var m = Map(Method: "GET", Path: ["/"], Body: nil, Auth: nil, 
+                Content: "foo", Version: "1.1", Status: 200, Reason: "OK", 
+                RequestHeaders: nil, ReadMode: BasicRead, IsOpen: True)
+    for p in args
+      m[p.left] = p.right
+    end
+    
+    if m[InData][0] is Str
+      m[InData] = [m[InData]]
+      m[OutData] = [m[OutData]]
+      m[Content] = [m[Content]]
+      m[Headers] = [m[Headers]]
+    end
+  
+    var ss = ServerSocket(8080)
+    var t = Thread(def (); runServer(ss, m[InData], m[OutData], m[Body]); end)
+    var h = Http("localhost", 8080)
+    if m[Auth] != nil
+      h.auth(*m[Auth])
+    end
+    
+    Assert(h.isOpen())
+    
+    for i in 0 to m[Path].length()
+      if m[Body] == nil and m[RequestHeaders] == nil
+        h.request(m[Method], m[Path][i])
+      elif m[Body] == nil
+        h.request(m[Method], m[Path][i], m[RequestHeaders])
+      else
+        var rh = m[RequestHeaders]
+        if rh == nil
+          rh = []
+        end
+        h.request(m[Method], m[Path][i], rh, m[Body])
+      end
+      var r = h.response()
+      AssertEqual(r.headers.length(), m[Headers][i].length())
+      for p in m[Headers][i]
+        AssertEqual(r.headers[p.left], p.right)
+      end
+      AssertEqual(r.version, m[Version])
+      AssertEqual(r.status, m[Status])
+      AssertEqual(r.reason, m[Reason])
+      
+      var content
+      if m[ReadMode] == BasicRead
+        content = r.read()
+      elif m[ReadMode] == ChunkRead
+        Assert(not r.eof())
+        content = r.read(1)
+        Assert(not r.eof())
+        content += r.read(m[Content][i].length() - 1)
+      elif m[ReadMode] == LineRead
+        content = ""
+        while not r.eof()
+          content += r.readLn() + LF
+        end
+      elif m[ReadMode] == CloseRead
+        content = r.read(2)
+        r.close()
+      end
+      Assert(r.eof())
+      AssertEqual(content, m[Content][i])
+    end
+    
+    AssertEqual(h.isOpen(), m[IsOpen])
+    
+    h.close()
+    -- Must be able to close again without problems.
+    h.close()
+    t.join()
+  end
+  
+  private def runServer(ss, input, output, body)
+    var sock = ss.accept()
+    var s = ""
+    var act = []
+    var contentLength
+    var actBody
+    for i in 0 to input.length()
+      act.append([])
+      while True
+        var l = sock.readLn()
+        act[-1].append(l)
+        if l.lower().startsWith("content-length:")
+          contentLength = Int(l.split(":")[1])
+        end
+        s += l + CR + LF
+        if l == ""
+          break
+        end
+      end
+      if contentLength != nil
+        actBody = sock.read(contentLength)
+      end
+      for x in 0 to output[i].length()
+        if x < output[i].length() - 1
+          sock.write(output[i][x], CR+LF)
+        else
+          sock.write(output[i][x])
+        end
+      end
+    end
+    sock.close()
+    ss.close()
+    AssertEqual(act, input)
+    AssertEqual(actBody, body)
+  end
+end
