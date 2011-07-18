@@ -5,6 +5,7 @@ build.h
 config.h
 config.status
 config.log
+autom4te.cache/
 test/TEMP
 test/TMP
 test/TMPDIR/
