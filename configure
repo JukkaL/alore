@@ -3199,21 +3199,21 @@ else
 fi
 
 
-# Check if building from a svn working copy.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are building from a svn working copy" >&5
-$as_echo_n "checking whether we are building from a svn working copy... " >&6; }
-if { test -d .svn; }; then
-  is_svn_wc=yes
+# Check if building from a git working copy.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are building from a git working copy" >&5
+$as_echo_n "checking whether we are building from a git working copy... " >&6; }
+if { test -d .git; }; then
+  is_git_wc=yes
 else
-  is_svn_wc=no
+  is_git_wc=no
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $is_svn_wc" >&5
-$as_echo "$is_svn_wc" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $is_git_wc" >&5
+$as_echo "$is_git_wc" >&6; }
 
-# Check if src/build.h should be generated based on svn working copy version.
+# Check if src/build.h should be generated based on git working copy version.
 
 VERSIONDEP=""
-if test "$is_svn_wc" == yes; then
+if test "$is_git_wc" == yes; then
   VERSIONDEP=buildversion
 fi
 

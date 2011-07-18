@@ -20,19 +20,19 @@ AC_PROG_CC
 #AC_PROG_INSTALL
 AC_PROG_RANLIB
 
-# Check if building from a svn working copy.
-AC_MSG_CHECKING([whether we are building from a svn working copy])
-if { test -d .svn; }; then
-  is_svn_wc=yes
+# Check if building from a git working copy.
+AC_MSG_CHECKING([whether we are building from a git working copy])
+if { test -d .git; }; then
+  is_git_wc=yes
 else
-  is_svn_wc=no
+  is_git_wc=no
 fi
-AC_MSG_RESULT([$is_svn_wc])
+AC_MSG_RESULT([$is_git_wc])
 
-# Check if src/build.h should be generated based on svn working copy version.
+# Check if src/build.h should be generated based on git working copy version.
 AC_SUBST(VERSIONDEP)
 VERSIONDEP=""
-if test "$is_svn_wc" == yes; then
+if test "$is_git_wc" == yes; then
   VERSIONDEP=buildversion
 fi
 

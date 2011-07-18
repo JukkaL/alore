@@ -230,7 +230,12 @@ checklinks: doc
 
 # Always update build.h if building from a svn working copy.
 build.h: $(VERSIONDEP)
-	@printf '#define A_BUILD "'`svnversion .`'"\n' > build.tmp
+	@if [ -d .git ]; \
+	then \
+	  printf '#define A_BUILD "'`git describe`'"\n' > build.tmp; \
+	else \
+	  echo '#define A_BUILD "exported"' > build.tmp; \
+	fi
 	@if [ ! -f build.h ]; \
         then \
 	  cp build.tmp build.h; \
