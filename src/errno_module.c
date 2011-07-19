@@ -16,6 +16,11 @@
 #include "util.h"
 
 
+/* NOTE: The automatically-generated file errno_info.c contains a mapping
+         between errno constants, errno numbers and error messages. */
+
+
+/* Global nums of errno constants (indexed by AErrnoId) */
 static int ErrnoNums[A_ERRNO_LAST + 1];
 
 
@@ -23,6 +28,8 @@ static AValue ErrnoConstFromId(int id);
 static int LookupErrnoTable(int errnoValue);
 
 
+/* errno::ErrnoToCode(errno)
+   Convert an errno number to an errno symbolic constant. */
 static AValue ErrnoToCode(AThread *t, AValue *frame)
 {
     AValue result = AErrnoToConstant(t, frame[0]);
@@ -33,6 +40,8 @@ static AValue ErrnoToCode(AThread *t, AValue *frame)
 }
 
 
+/* errno::CodeToErrno(code)
+   Convert an errno symbolic constant to an errno number. */
 static AValue CodeToErrno(AThread *t, AValue *frame)
 {
     AValue result = AConstantToErrno(t, frame[0]);
@@ -43,6 +52,8 @@ static AValue CodeToErrno(AThread *t, AValue *frame)
 }
 
 
+/* errno::ErrorStr(code)
+   Return a string description of an errno symbolic constant. */
 static AValue ErrorStr(AThread *t, AValue *frame)
 {
     AValue value = AConstantToErrno(t, frame[0]);
@@ -108,12 +119,16 @@ AValue AConstantToErrno(AThread *t, AValue value)
 }
 
 
+/* Return errno constant related an errno value described by an AErrnoId
+   value. */
 static AValue ErrnoConstFromId(int id)
 {
     return AGlobalByNum(ErrnoNums[id]);
 }
 
 
+/* Find the index of an AErrnoTable entry which matches the given errno
+   value. */
 static int LookupErrnoTable(int errnoValue)
 {
     int i;
@@ -130,6 +145,17 @@ static int LookupErrnoTable(int errnoValue)
 }
 
 
+/* Raise an errno-related exception. The exception type is specified by
+   classNum; assume that the constructor is compatible with std::IoError.
+   The path (if != NULL) is included in the message.
+
+   The format of the message can be one of the following:
+   
+     Permission denied [EACCESS]
+     dir/file.ext: Permission denied [EACCESS]
+     [Errno 56]                                      (if unknown errno)
+     dir/file.ext [Errno 56]                         (if unknown errno)
+*/
 AValue ARaiseErrnoExceptionByNum(AThread *t, int classNum, const char *path)
 {
     int i;
@@ -146,6 +172,7 @@ AValue ARaiseErrnoExceptionByNum(AThread *t, int classNum, const char *path)
 
     i = LookupErrnoTable(errnoValue);
     if (i >= 0) {
+        /* The errno was recognized; it is included in AErrnoTable. */
         int num;
         
         msgBase = AErrnoTable[i].message;
@@ -155,11 +182,13 @@ AValue ARaiseErrnoExceptionByNum(AThread *t, int classNum, const char *path)
     }
 
     if (path == NULL) {
+        /* No path */
         if (msgBase != NULL && sym != NULL)
             AFormatMessage(msg, sizeof(msg), "%s [%i]", msgBase, sym);
         else
             AFormatMessage(msg, sizeof(msg), "[Errno %d]", errnoValue);
     } else {
+        /* Path given */
         if (msgBase != NULL && sym != NULL)
             AFormatMessage(msg, sizeof(msg), "%s: %s [%i]", path, msgBase,
                            sym);
