@@ -17,27 +17,36 @@
 #include "internal.h"
 
 
+/* Size of an empty map after construction */
 #define INITIAL_MAP_CAPACITY 4
 
 
+/* Global num of Map iterator type */
 int AMapIterNum;
+/* Global num of constant that marks empty locations in the hash table */
 int AEmptyMarkerNum;
+/* Global num of constant that marks removed locations in the hash table */
 int ARemovedMarkerNum;
 
 
-#define MAP_A 0
+/* Slot ids for std::Map instances */
+#define MAP_A 0            /* The hash table */
 #define MAP_LEN 1          /* Number of items + removed items */
 #define MAP_SIZE 2
 #define MAP_NUM_REMOVED 3  /* Number of removed items */
 
+/* Slot ids for Map iterator instances */
 #define ITER_I 0
 #define ITER_LEN 1
 #define ITER_A 2
 
 
+/* Calculate next index in a hash chain. */
 #define NextIndex(i, size) (((i) * 5 + 1) & (size))
+/* Conveniences */
 #define RemovedMarker AGlobalByNum(ARemovedMarkerNum)
 #define EmptyMarker AGlobalByNum(AEmptyMarkerNum)
+/* Return the number of items in a map. */
 #define MapLen_M(v) \
     (AMemberDirect(v, MAP_LEN) - AMemberDirect(v, MAP_NUM_REMOVED))
 
@@ -46,6 +55,7 @@ static void ResizeMap(AThread *t, AValue *frame);
 static int LongIntHash(AValue v);
 
 
+/* Map create(*items) */
 AValue AMapCreate(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -63,6 +73,8 @@ AValue AMapCreate(AThread *t, AValue *frame)
 }
 
 
+/* Map #i()
+   Initialize map object when create may not have been called. */
 AValue AMapInitialize(AThread *t, AValue *frame)
 {
     AValue a;
@@ -80,6 +92,8 @@ AValue AMapInitialize(AThread *t, AValue *frame)
 }
 
 
+/* Convert a hash value to a C integer. Raise direct exception if v is not an
+   integer value. */
 #define HashToInt(t, v) \
     (AIsShortInt(v) ? AValueToInt(v) : AIsLongInt(v) ? \
      LongIntHash(v) : ARaiseTypeError(t, AMsgIntExpected))
@@ -123,12 +137,14 @@ static AValue MapLookup(AThread *t, AValue *frame, AValue def)
 }
 
 
+/* Map _get(key) */
 AValue AMap_get(AThread *t, AValue *frame)
 {
     return MapLookup(t, frame, AError);
 }
 
 
+/* Map get(key, default) */
 AValue AMapGet(AThread *t, AValue *frame)
 {
     return MapLookup(t, frame, frame[2]);
@@ -147,6 +163,7 @@ AValue AMapGet(AThread *t, AValue *frame)
     } while (0)
 
 
+/* Map _set(key, value) */
 AValue AMap_set(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -185,6 +202,8 @@ AValue AMap_set(AThread *t, AValue *frame)
 }
 
 
+/* Resize a Map object to a new size. Automatically determine the new size
+   based on the current level of emptiness. */
 static void ResizeMap(AThread *t, AValue *frame)
 {
     Assize_t oldSize;
@@ -197,6 +216,7 @@ static void ResizeMap(AThread *t, AValue *frame)
     oldSize = AGetInt(t, AMemberDirect(frame[0], MAP_SIZE));
 
     numItems = AValueToInt(MapLen_M(frame[0]));
+    /* Determine the new size. */
     if (numItems * 3 > oldSize)
         newSize = 2 * oldSize;
     else if (numItems * 6 <= oldSize)
@@ -215,6 +235,7 @@ static void ResizeMap(AThread *t, AValue *frame)
     ASetMemberDirect(t, frame[0], MAP_LEN, AZero);
     ASetMemberDirect(t, frame[0], MAP_NUM_REMOVED, AZero);
 
+    /* Populate the new hash table by copying items from the original one. */
     for (i = 0; i < oldSize * 2; i += 2) {
         AValue v = AFixArrayItem(*oldA, i);
         if (v != EmptyMarker && v != RemovedMarker) {
@@ -228,6 +249,7 @@ static void ResizeMap(AThread *t, AValue *frame)
 }
 
 
+/* Map hasKey(key) */
 AValue AMapHasKey(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -256,12 +278,14 @@ AValue AMapHasKey(AThread *t, AValue *frame)
 }
 
 
+/* Map length() */
 AValue AMapLength(AThread *t, AValue *frame)
 {
     return MapLen_M(frame[0]);
 }
 
 
+/* Map remove(key) */
 AValue AMapRemove(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -295,6 +319,7 @@ AValue AMapRemove(AThread *t, AValue *frame)
 }
 
 
+/* Map items() */
 AValue AMapItems(AThread *t, AValue *frame)
 {
     Assize_t n = AValueToInt(MapLen_M(frame[0]));
@@ -320,6 +345,7 @@ AValue AMapItems(AThread *t, AValue *frame)
 }
 
 
+/* Map keys() */
 AValue AMapKeys(AThread *t, AValue *frame)
 {
     Assize_t n = AValueToInt(MapLen_M(frame[0]));
@@ -341,6 +367,7 @@ AValue AMapKeys(AThread *t, AValue *frame)
 }
 
 
+/* Map values() */
 AValue AMapValues(AThread *t, AValue *frame)
 {
     Assize_t n = AValueToInt(MapLen_M(frame[0]));
@@ -362,6 +389,7 @@ AValue AMapValues(AThread *t, AValue *frame)
 }
 
 
+/* Map _str() */
 AValue AMap_str(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -407,6 +435,7 @@ AValue AMap_str(AThread *t, AValue *frame)
 }
 
 
+/* Map iterator() */
 AValue AMapIter(AThread *t, AValue *frame)
 {
     frame[0] = AMemberDirect(frame[0], MAP_A);
@@ -414,6 +443,7 @@ AValue AMapIter(AThread *t, AValue *frame)
 }
 
 
+/* Map iterator constructor */
 AValue AMapIterCreate(AThread *t, AValue *frame)
 {
     AExpectFixArray(t, frame[1]);
@@ -425,6 +455,7 @@ AValue AMapIterCreate(AThread *t, AValue *frame)
 }
 
 
+/* Map iterator hasNext() */
 AValue AMapIterHasNext(AThread *t, AValue *frame)
 {
     Assize_t i = AValueToInt(AMemberDirect(frame[0], ITER_I));
@@ -443,6 +474,7 @@ AValue AMapIterHasNext(AThread *t, AValue *frame)
 }
 
 
+/* Map iterator next() */
 AValue AMapIterNext(AThread *t, AValue *frame)
 {
     Assize_t i = AValueToInt(AMemberDirect(frame[0], ITER_I));
@@ -466,6 +498,8 @@ AValue AMapIterNext(AThread *t, AValue *frame)
 }
 
 
+/* Calculate the hash value of a long integer object. Assume v is a long
+   integer. */
 static int LongIntHash(AValue v)
 {
     ALongInt *li = AValueToLongInt(v);
