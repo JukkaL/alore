@@ -16,6 +16,7 @@
 
 #ifdef A_DEBUG
 
+/* Headers used in debugging messages */
 #define A_ERR_HEADER "RUNTIME ERROR: "
 #define A_MSG_HEADER "DEBUG: "
 
@@ -96,6 +97,8 @@ int AFormatInstruction(char *buf, AOpcode *code, int ip);
 void AShowGCStats(void);
 
 #else /* !defined(A_DEBUG) */
+
+/* Debugging is not active; include empty definitions for debugging macros. */
 
 #define ADebugPrint(args) /* NOP */
 #define ADebugError(args) /* NOP */

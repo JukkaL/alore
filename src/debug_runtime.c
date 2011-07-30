@@ -24,22 +24,43 @@
 #include "gc_internal.h"
 
 
+/* Only include debugging functions if compiling in debugging mode. */
 #ifdef A_DEBUG
 
 static char FmtBuffer[128];
+/* Do sprintf with format string and a single additional argument, and return
+   a pointer to the target buffer. Note that the buffer has fixed size and this
+   function is not thread-safe as there is only a single global buffer. */
 #define FMT(fmt, val) (sprintf(FmtBuffer, fmt, val), FmtBuffer)
 
 
 static void PrintValueRecursive(AValue v, int depth);
 
 
+/* Number of "instructions" executed since program start. If the value is
+   1000000 or greater, this counts interpreter bytecode instructions. If the
+   value is less than 1M, count different stages of compilation (the
+   instructions in this case are not very well defined). This is used to
+   restrict runtime debugging to certain parts of program execution. */
 unsigned long ADebugInstructionCounter = 0;
+/* Number of allocation operations since program start (approximately), but
+   only for checked instructions. */
 unsigned long ADebugAllocationCounter = 0;
+/* Perform runtime checks every n'th instruction, where this variable is n. */
 unsigned long ADebugCheckEveryNth = 1;
+/* First and last instructions to check (as measured by
+   ADebugInstructionCounter). By default, the values are such that no debugging
+   is performed. */
 unsigned long ADebugCheckFirst = 0x7fffffffUL;
 unsigned long ADebugCheckLast =  0xffffffffUL;
 
 
+/* The functions below are called for certain events, but they only perform
+   non-trivial actions only for checked instructions (ADebugIsOn() returns
+   TRUE). */
+
+
+/* Called for each interpreted instruction. */
 void ADebugNextInstruction(void)
 {
     ADebugInstructionCounter++;
@@ -49,6 +70,7 @@ void ADebugNextInstruction(void)
 }
 
 
+/* Called for each allocation. Perform GC every nth allocation. */
 #ifdef A_DEBUG_GC_EVERY_NTH
 void ADebugNextAllocation(AThread *t)
 {
@@ -63,6 +85,8 @@ void ADebugNextAllocation(AThread *t)
 #endif
 
 
+/* Display a message if debugging is active. The arguments are similar to
+   AFormatMessage, but this function uses a fixed-length internal buffer. */
 void ADebugPrint_F(char *format, ...)
 {
     va_list args;
@@ -77,6 +101,8 @@ void ADebugPrint_F(char *format, ...)
 }
 
 
+/* Display a message and terminate program. Arguments are similar to
+   ADebugPrint_F. */
 void ADebugError_F(char *format, ...)
 {
     va_list args;
@@ -93,6 +119,10 @@ void ADebugError_F(char *format, ...)
 }
 
 
+/* Display a debugging message useful for tracing the execution of a program.
+   Display the name of the current function and the current opcode. The stack
+   argument should point to the topmost stack frame and the ip to the current
+   opcode being executed. */
 void ADebug_Trace(AValue *stack, AOpcode *ip)
 {
     char buf[4096];
@@ -119,12 +149,16 @@ void ADebug_Trace(AValue *stack, AOpcode *ip)
 }
 
 
+/* Pretty-print the contents of a value. Use a compact format that only
+   displays fragments of large values (e.g. strings). */
 void ADebugPrintValue(AValue v)
 {
     PrintValueRecursive(v, 0);
 }
 
 
+/* For nested values, only print values up to this nesting depth. This is used
+   to avoid overly long output. */
 #define MAX_VALUE_PRINT_DEPTH 2
 
 
@@ -141,12 +175,15 @@ static void PrintSubStr(AValue v, int i1, int i2)
 }
 
 
+/* Recursively pretty-print a value. */
 void PrintValueRecursive(AValue v, int depth)
 {
     if (AIsShortInt(v))
         ADebugPrint_F("%d", AValueToInt(v));
     else if (AIsStr(v) || AIsWideStr(v) || AIsSubStr(v)) {
         ADebugPrint_F("\"");
+        /* Display short strings entirely. For long strings, display a prefix
+           and a suffix (and ... between them). */
         if (AStrLen(v) < 60)
             PrintSubStr(v, 1, AStrLen(v));
         else {
@@ -162,6 +199,8 @@ void PrintValueRecursive(AValue v, int depth)
             ADebugPrint_F("(...)", len);
         else {
             ADebugPrint_F("(");
+            /* Display array items. For long arrays, only display a
+               fragment. */
             for (i = 0; i < len; i++) {
                 if (i < 9 || i > len - 3) {
                     PrintValueRecursive(AArrayItem(v, i), depth + 1);
@@ -217,6 +256,7 @@ void PrintValueRecursive(AValue v, int depth)
 }
 
 
+/* Pretty-print a value. Also include the internal representation type. */
 void ADebugPrintValueWithType(AValue v)
 {
     if (AIsShortInt(v))
@@ -248,6 +288,7 @@ void ADebugPrintValueWithType(AValue v)
 }
 
 
+/* Display garbage collector statistics. */
 void AShowGCStats(void)
 {
     fprintf(stderr, "\n");
@@ -277,6 +318,9 @@ void AShowGCStats(void)
 #endif
 
 
+/* This function is called every nth instructions if
+   A_DEBUG_CALL_PERIODIC_CHECK is defined. Modify this function to perform
+   custom debugging operations. */
 #ifdef A_DEBUG_CALL_PERIODIC_CHECK
 void ADebugPeriodicCheck(void)
 {
