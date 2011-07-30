@@ -6,8 +6,6 @@
    LICENSE.txt in the distribution.
 */
 
-/* NOTE: These routines are not optimized for speed. */
-
 #include "int.h"
 #include "value.h"
 #include "gc.h"
@@ -19,6 +17,20 @@
 #include "runtime.h"
 
 #include <math.h>
+
+
+/* Many of the functions may return non-normalized long integer objects (i.e.
+   objects which could be represented as short ints or objects with 0 digits
+   as most significant digits). User code should never see these; high-level
+   functions will normalize these into short integers.
+   
+   The comments do not always indicate whether the result is non-normalized. */
+
+/* These functions do not raise direct exceptions, unless explicitly mentioned
+   otherwise. Some parts of the interpreter may assume that no direct
+   exceptions are raised, so be careful with this when updating the code. */
+
+/* NOTE: These routines are not optimized for speed. */
 
 
 /* Define some alias macros for commonly used constants and macros. */
@@ -57,8 +69,12 @@ static ALongInt *TruncateZeroDigits(AThread *t, ALongInt *li, ABool isNeg);
 
 #if A_VALUE_BITS == 32 && A_LONG_INT_DIGIT_BITS == 32
 
-/* NOTE: This code has not been tested! */
+/* NOTE: This alternative implementation (for 32-bit values and 32-bit
+         long int digits) has not been tested! */
 
+/* Convert a fixed-width integer to a long integer object. This function may
+   create non-normalized long integers that could be represented as short
+   ints. */ 
 AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
 {
     ALongInt *li;
@@ -91,6 +107,9 @@ AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
 #elif (A_VALUE_BITS == 32 && A_LONG_INT_DIGIT_BITS == 16) || \
     (A_VALUE_BITS == 64 && A_LONG_INT_DIGIT_BITS == 32)
 
+/* Convert a fixed-width integer to a long integer object. This function may
+   create non-normalized long integers that could be represented as short
+   ints. */ 
 AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
 {
     ALongInt *li;
@@ -142,6 +161,11 @@ error!;
 #endif
 
 
+/* Compare two long integers. Assume that the arguments are *normalized*
+   long integers. The return value is
+     * positive if aVal > bVal
+     * 0 if aVal == bVal
+     * negative if aVal < bVal. */
 ALongIntSignedDoubleDigit ACompareLongInt(AValue aVal, AValue bVal)
 {
     ALongInt *a;
@@ -159,10 +183,14 @@ ALongIntSignedDoubleDigit ACompareLongInt(AValue aVal, AValue bVal)
 
     signA = Sign(a);
 
+    /* Perform non-trivial comparison if the signs are equal. */
     if (signA == Sign(b)) {
+        /* If lengths are different, use a shortcut. */
         if (lenA != lenB)
             result = lenA - lenB;
         else {
+            /* Perform digit-wise comparison when signs and lengths are
+               equal. */
             int i;
 
             result = 0;
@@ -182,6 +210,7 @@ ALongIntSignedDoubleDigit ACompareLongInt(AValue aVal, AValue bVal)
 }
 
 
+/* Multiply two long integers. Assume that arguments are long integers. */
 AValue AMultiplyLongInt(AThread *t, AValue aVal, AValue bVal)
 {
     ALongInt *a;
@@ -224,6 +253,7 @@ AValue AMultiplyLongInt(AThread *t, AValue aVal, AValue bVal)
 }
 
 
+/* Add two long integers. Assume that the arguments are long integers. */
 AValue AAddLongInt(AThread *t, AValue aVal, AValue bVal)
 {
     ALongInt *a;
@@ -239,6 +269,7 @@ AValue AAddLongInt(AThread *t, AValue aVal, AValue bVal)
 }
 
 
+/* Subtract two long integers. Assume that the arguments are long integers. */
 AValue ASubLongInt(AThread *t, AValue aVal, AValue bVal)
 {
     ALongInt *a;
@@ -254,6 +285,9 @@ AValue ASubLongInt(AThread *t, AValue aVal, AValue bVal)
 }
 
 
+/* Add the absolute values of two long integers which have the same signs.
+   This can be used to add two positive/negative numbers or to subtract
+   numbers with different signs. */
 static AValue AddAbsolute(AThread *t, ALongInt *a, ALongInt *b,
                           ABool isNorm)
 {
@@ -264,6 +298,8 @@ static AValue AddAbsolute(AThread *t, ALongInt *a, ALongInt *b,
     unsigned long carry;
     unsigned long i;
 
+    /* We want that b is not longer than a. Swap a and b if needed to satisfy
+       this condition. */
     if (Len(a) < Len(b)) {
         ALongInt *tmp = a;
         a = b;
@@ -272,6 +308,8 @@ static AValue AddAbsolute(AThread *t, ALongInt *a, ALongInt *b,
 
     lenA = Len(a);
     lenB = Len(b);
+    /* The length of the result is the length of the longest integer + 1 extra
+       digit (for carry). */
     lenD = lenA + 1;
 
     d = CreateLongInt(t, lenD, &a, &b);
@@ -300,6 +338,9 @@ static AValue AddAbsolute(AThread *t, ALongInt *a, ALongInt *b,
 }
 
 
+/* Subtract the absolute values of two long integers. This can be used for
+   subtracting two integers with the same sign or adding two integers with
+   different signs. */
 static AValue SubAbsolute(AThread *t, ALongInt *a, ALongInt *b,
                           ABool isNorm)
 {
@@ -363,6 +404,7 @@ static AValue SubAbsolute(AThread *t, ALongInt *a, ALongInt *b,
 }
 
 
+/* Negate a long integer. Assume that the argument is a long integer. */
 AValue ANegateLongInt(AThread *t, AValue aVal)
 {
     ALongInt *a;
@@ -399,7 +441,8 @@ AValue ANegateLongInt(AThread *t, AValue aVal)
 }
 
 
-/* NOTE: i positive (FIX: why??) */
+/* Add a single digit to a long integer. Assume that aVal is a long integer.
+   NOTE: i must be positive (FIX: why??) */
 AValue AAddLongIntSingle(AThread *t, AValue aVal, unsigned i)
 {
     ALongInt *a;
@@ -413,7 +456,9 @@ AValue AAddLongIntSingle(AThread *t, AValue aVal, unsigned i)
 }
 
 
-/* NOTE: i positive (FIX: why??) */
+/* Subtract a single digit from a long integer. Assume that aVal is a long
+   integer.
+   NOTE: i must be positive (FIX: why??) */
 AValue ASubLongIntSingle(AThread *t, AValue aVal, unsigned i)
 {
     ALongInt *a;
@@ -427,6 +472,7 @@ AValue ASubLongIntSingle(AThread *t, AValue aVal, unsigned i)
 }
 
 
+/* Add a digit to the absolute value of a long integer, preserving sign. */
 static AValue AddAbsoluteSingle(AThread *t, ALongInt *a, unsigned add)
 {
     unsigned long lenA;
@@ -466,6 +512,7 @@ static AValue AddAbsoluteSingle(AThread *t, ALongInt *a, unsigned add)
 }
 
 
+/* Subtract a digit from the absolute value of a long integer. */
 static AValue SubAbsoluteSingle(AThread *t, ALongInt *a, unsigned sub,
                                 ABool isNorm)
 {
@@ -505,7 +552,9 @@ static AValue SubAbsoluteSingle(AThread *t, ALongInt *a, unsigned sub,
 }
 
 
-/* NOTE: b is assumed to be positive. Sign bit of a is ignored. */
+/* Calculate the division of a long integer and a digit. Return the result of
+   the division and store the remainder at *remPtr.
+   NOTE: b is assumed to be positive. Sign bit of a is ignored. */
 ALongInt *ADivModSingle(AThread *t, ALongInt *a, unsigned b, unsigned *remPtr)
 {
     long i;
@@ -532,7 +581,8 @@ ALongInt *ADivModSingle(AThread *t, ALongInt *a, unsigned b, unsigned *remPtr)
 }
 
 
-/* NOTE: Both a, mul and add are assumed to be positive. */
+/* Multiply a long integer by a digit and add a digit to the result.
+   NOTE: Both a, mul and add are assumed to be positive. */
 ALongInt *AMulAddSingle(AThread *t, ALongInt *a, unsigned mul, unsigned add)
 {
     unsigned long lenA;
@@ -561,6 +611,8 @@ ALongInt *AMulAddSingle(AThread *t, ALongInt *a, unsigned mul, unsigned add)
 }
 
 
+/* Shift a long integer left by shift bits. Store the result at dst, modifying
+   it in-place. Assume that dst is long enough to hold the result. */
 static void Shl(ALongInt *src, ALongInt *dst, unsigned long shift)
 {
     unsigned long wordShift;
@@ -598,6 +650,8 @@ static void Shl(ALongInt *src, ALongInt *dst, unsigned long shift)
 }
 
 
+/* Shift a long integer right by shift bits. Store the result at dst, modifying
+   it in-place. Assume that dst is long enough to hold the result. */
 static void Shr(ALongInt *src, ALongInt *dst, unsigned long shift)
 {
     unsigned long wordShift;
@@ -628,7 +682,9 @@ static void Shr(ALongInt *src, ALongInt *dst, unsigned long shift)
 }
 
 
-/* NOTE: b should be at least 2 digits long for decent performance. */
+/* Divide a long integer by another. Return the result of the division and
+   store the remainder at *mod.
+   NOTE: b should be at least 2 digits long for decent performance. */
 AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
                       AValue *mod)
 {
@@ -661,9 +717,13 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
     
     lenB = Len(oldB);
 
+    /* Calculate how many bits the B value need to be shifted left so that
+       the most significant bit of the most significant digit is 1. */
     for (i = BASE / 2, shift = 0; oldB->digit[lenB - 1] < i; i >>= 1, shift++);
 
     if (signOldA ^ signOldB) {
+        /* If the signs differ, tweak a to get the correct rounding
+           behavior. */
         tmp = SubAbsoluteSingle(t, oldB, 1, FALSE);
         if (AIsError(tmp))
             goto OutOfMemory;
@@ -678,6 +738,9 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
         oldA = AValueToLongInt(oldAVal);
         oldB = AValueToLongInt(t->tempStackPtr[-1]);
     }
+
+    /* Shift both operands left so that the divisor has 1 as the msb of the
+       most significant digit. */
     
     a = CreateLongInt(t, Len(oldA) + 1, &oldA, &oldB);
     if (a == NULL)
@@ -697,6 +760,7 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
     if (d == NULL)
         goto OutOfMemory;
 
+    /* Calculate the digits of the result, one digit at a time. */
     for (aInd = lenA, dInd = lenA - lenB; dInd >= 0; aInd--, dInd--) {
         unsigned long aHi;
         unsigned long q;
@@ -760,6 +824,7 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
     t->tempStackPtr[-1] = ALongIntToValue(d);
 
     if (signOldA ^ signOldB) {
+        /* Tweak the remainder if the operands had different signs. */
         AValue tmp;
         
         a = TruncateZeroDigits(t, a, 0);
@@ -825,6 +890,9 @@ ALongInt *CreateLongInt(AThread *t, long len, ALongInt **a, ALongInt **b)
 }
 
 
+/* Return a copy of a long int with leading zero digits truncated. Try to
+   perform the operation in-place whenever possible. If isNeg is TRUE, also
+   set the sign bit of the result. */
 static ALongInt *TruncateZeroDigits(AThread *t, ALongInt *li, ABool isNeg)
 {
     long len = AGetLongIntLen(li);
@@ -877,6 +945,9 @@ static ALongInt *TruncateZeroDigits(AThread *t, ALongInt *li, ABool isNeg)
 }
 
 
+/* Normalize a long integer object. Remove leading zero digits and represent
+   the integer as a short integer if possible. If isNeg is TRUE, assume that
+   the integer is negative (and also set the sign bit of the result). */
 AValue ANormalize(AThread *t, ALongInt *li, ABool isNeg)
 {
     long len;
@@ -919,6 +990,7 @@ AValue ANormalize(AThread *t, ALongInt *li, ABool isNeg)
 }
 
 
+/* Multiple two short integers. The result may be a short or long integer. */
 AValue AMultiplyShortInt(AThread *t, AValue left, AValue right)
 {
     AValue prod;
@@ -1013,7 +1085,8 @@ AValue AMultiplyShortInt(AThread *t, AValue left, AValue right)
 }
 
 
-/* NOTE: baseVal and expVal are expected to be ints or longints */
+/* Return baseVal**expVAl.
+   NOTE: baseVal and expVal are expected to be ints or longints */
 AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 {
     AValue val;
@@ -1136,12 +1209,16 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 }
 
 
+/* Array of digit characters (used for all supported bases) */
 const char ADigits[36] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 
 #define LONGINT_STACK_BUF_SIZE 128
 
 
+/* Convert a long integer to a string with the given radix (base). The result
+   will have at least minWidth digits; if necessary, pad it with zeroes. Return
+   a Str value. Assume that the argument is a long integer. */
 AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
 {
     ALongInt *li;
@@ -1174,7 +1251,8 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
     if (maxLen < minWidth + 1)
         maxLen = minWidth + 1;
     
-    /* Allocate space for the string if necessary or use stack buffer. */
+    /* Allocate space for the string if necessary, or use a fixed-length
+       buffer allocated in the stack (quicker!) when possible. */
     if (maxLen > LONGINT_STACK_BUF_SIZE) {
         AValue *heapBuf;
 
@@ -1193,7 +1271,10 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
         buf = stackBuf;
 
     ind = maxLen;
-    
+
+    /* Process one digit at a time.
+       IDEA: This could be faster by processing more than one digit at a
+             time. */
     do {
         unsigned rem;
         char ch;
@@ -1213,6 +1294,7 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
         buf[--ind] = ch;
     } while (Len(li) > 0 || li->digit[0] != 0);
 
+    /* Insert zeroes as padding if the result is too short. */
     while (maxLen - ind < minWidth)
         buf[--ind] = '0';
 
@@ -1249,6 +1331,7 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
 #define F2LI_BUF_SIZE 64
 
 
+/* Return a long int that represents the truncation of a float. */
 AValue AFloatToLongInt(AThread *t, double f)
 {
     ALongIntDigit digits[F2LI_BUF_SIZE];
@@ -1281,6 +1364,8 @@ AValue AFloatToLongInt(AThread *t, double f)
 }
 
 
+/* Return the hash value of a long integer. Assume the argument is a long
+   integer. */
 AValue ALongIntHashValue(AValue val)
 {
     ALongInt *l = AValueToLongInt(val);
