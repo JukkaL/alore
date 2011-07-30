@@ -79,23 +79,6 @@ static AValue TestC_IsSubStr(AThread *t, AValue *frame)
 }
 
 
-static AValue TestC_PrintFloat(AThread *t, AValue *frame)
-{
-    unsigned *i;
-    
-    if (!AIsFloat(frame[0]))
-        return ARaiseTypeErrorND(t, NULL);
-
-    i = AValueToPtr(frame[0]);
-    printf("ptr %p\n", i);
-    printf("%x %x\n", i[0], i[1]);
-
-    printf("%.15g\n", AValueToFloat(frame[0]));
-
-    return ANil;
-}
-
-
 static AValue TestC_CallTrace(AThread *t, AValue *frame)
 {
     AValue retVal;
@@ -129,20 +112,6 @@ static AValue TestC_CallTrace(AThread *t, AValue *frame)
     ASetArrayItemNewGen(a, 1, t->tempStack[0]);
 
     return a;
-}
-
-
-static AValue TestC_TypeName(AThread *t, AValue *frame)
-{
-    char buf[1024];
-
-    if (!AIsInstance(frame[0]))
-        return ARaiseTypeErrorND(t, NULL);
-    else {
-        AFormatMessage(buf, 1024, "%q",
-                       AGetInstanceType(AValueToInstance(frame[0]))->sym);
-        return AMakeStr(t, buf);
-    }
 }
 
 
@@ -1242,9 +1211,7 @@ A_MODULE(__testc, "__testc")
     A_DEF("AIsLongInt", 1, 0, TestC_AIsLongInt)
     A_DEF("IsWideStr", 1, 0, TestC_IsWideStr)
     A_DEF("IsSubStr", 1, 0, TestC_IsSubStr)
-    A_DEF("PrintFloat", 1, 0, TestC_PrintFloat)
     A_DEF_VARARG("CallTrace", 1, 1, 1, TestC_CallTrace)
-    A_DEF("TypeName", 1, 0, TestC_TypeName)
     A_DEF("CollectGarbage", 0, 0, TestC_CollectGarbage)
     A_DEF("CollectAllGarbage", 0, 0, ATestC_CollectAllGarbage)
     A_DEF("VerifyMemory", 0, 0, TestC_VerifyMemory)
