@@ -7,7 +7,7 @@
 */
 
 /* Code for displaying compiled regular expressions in a human-readable
-   form. */
+   form. This is only included in debugging builds. */
 
 #include "re.h"
 #include "re_internal.h"
@@ -21,6 +21,8 @@
 #ifdef A_DEBUG
 
 
+/* Representations of opcodes. Some opcodes have 0 as the representation to
+   signify a non-standard representation. */
 static char *Name[] = {
     "\\<",
     "\\>",
@@ -60,6 +62,8 @@ static char *Name[] = {
 };
 
 
+/* Descriptions of the representations of characters that are displayed using
+   the \x notation. */
 static unsigned char CharConv[][2] = {
     { '\a', 'a' },
     { '\b', 'b' },
@@ -75,26 +79,30 @@ static unsigned char CharConv[][2] = {
 };
 
 
+/* Display the representation of a single character. */
 static void PrintChar(AWideChar c)
 {
     int i;
 
+    /* Check if we should use a \x form. */
     for (i = 0; CharConv[i][0] != 0; i++) {
         if (CharConv[i][0] == c) {
+            /* Yes. */
             printf("\\%c", CharConv[i][1]);
             return;
         }
     }
     
-   if (c >= 32 && c < 127)
-        printf("%c", c);
-   else if (c < 256)
-       printf("\\x%02x", c);
-   else
-       printf("\\u%04x", c);
+    if (c >= 32 && c < 127)
+        printf("%c", c); /* Ordinary 7-bit character */
+    else if (c < 256)
+        printf("\\x%02x", c); /* \xNN form */
+    else
+        printf("\\u%04x", c); /* \uNNNN form */
 }
 
 
+/* Display a repetition range {...}. */
 void PrintRange(AReOpcode *ptr, ABool isMax)
 {
     int min = ptr[0];
@@ -112,6 +120,8 @@ void PrintRange(AReOpcode *ptr, ABool isMax)
 }
 
 
+/* Display a string encoded as length + contents. Update *ptr to point to the
+   next opcode after the string. */
 void PrintString(AReOpcode **ptr)
 {
     int len;
@@ -129,6 +139,9 @@ void PrintString(AReOpcode **ptr)
 }
 
 
+/* Display a character set [...]. Use the check function to check whether a
+   a character is included in the set.
+   NOTE: Only process character codes that are less than 256. */
 static void DisplaySet(void *set, ABool (*check)(void *, int))
 {
     ABool comp;
@@ -171,6 +184,7 @@ static ABool IsInCharSet(void *set, int i)
 }
 
 
+/* Display the internal structure of a regular expression. */
 void ADisplayRegExp(ARegExp *re)
 {
     AReOpcode *reCode;
@@ -197,9 +211,12 @@ void ADisplayRegExp(ARegExp *re)
     DisplaySet(re->startChar, IsInCharSet);
     printf("\n");
 
+    /* Display opcodes. */
     do {
+        /* Display opcode index. */
         printf("%2d: ", (int)(reCode - reCodeBeg));
 
+        /* Decode and display a single opcode. */
         switch (code = *reCode++) {
         case A_BOW:
         case A_EOW:
@@ -229,6 +246,8 @@ void ADisplayRegExp(ARegExp *re)
             PrintRange(reCode, code == A_LITERAL_REPEAT
                        || code == A_LITERAL_I_REPEAT);
             reCode += 2;
+
+            /* Fall through */
             
         case A_LITERAL:
         case A_LITERAL_I:
@@ -251,6 +270,8 @@ void ADisplayRegExp(ARegExp *re)
             PrintRange(reCode, code == A_SET_REPEAT);
             reCode += 2;
 
+            /* Fall through */
+
         case A_SET:
             DisplaySet(reCode, IsInCharSet);
             reCode += A_SET_SIZE;
@@ -266,6 +287,8 @@ void ADisplayRegExp(ARegExp *re)
                        || code == A_ANY_ALL_REPEAT);
             reCode += 2;
 
+            /* Fall through */
+
         case A_ANY:
         case A_ANY_ALL:
             printf("%s", Name[code]);
@@ -280,7 +303,7 @@ void ADisplayRegExp(ARegExp *re)
             reCode++;
             break;
 
-          default:
+        default:
             fprintf(stderr, "Invalid opcode %d!\n", code);
             return;
         }
