@@ -9,6 +9,10 @@
 /* Miscellaneous functions that are used to test the C API and internal Alore
    issues. You should generally not use this module for any other purpose. */
 
+/* NOTE: Some of these functions do not check the types of the arguments.
+         Calling the functions with invalid arguments may cause segfaults
+         etc. */
+
 #include "alore.h"
 #include "runtime.h"
 #include "class.h"
@@ -39,14 +43,19 @@ static int BinaryDataOffset1;
 static int BinaryDataOffset2;
 
 
+/* __testc::Main() */
 static AValue TestC_Main(AThread *t, AValue *frame)
 {
+    /* Initialize constants. */
     ASetGlobalByNum(ShortIntMaxNum, AIntToValue(A_SHORT_INT_MAX));
     ASetGlobalByNum(ShortIntMinNum, AIntToValue(A_SHORT_INT_MIN));
     return ANil;
 }
 
 
+/* __testc::IsLongInt(v)
+   Is v an integer that has the internal "long" (heap-allocated)
+   representation? */
 static AValue TestC_AIsLongInt(AThread *t, AValue *frame)
 {
     if (AIsLongInt(frame[0]))
@@ -56,6 +65,9 @@ static AValue TestC_AIsLongInt(AThread *t, AValue *frame)
 }
 
 
+/* __testc::IsWideStr(v)
+   Is v a string with the wide internal representation (16-bit chars)? Also
+   return TRUE for the wide substring representation. */
 static AValue TestC_IsWideStr(AThread *t, AValue *frame)
 {
     if (AIsWideStr(frame[0]))
@@ -70,6 +82,8 @@ static AValue TestC_IsWideStr(AThread *t, AValue *frame)
 }
 
 
+/* __testc::IsSubStr(v)
+   Is v a string with the substring internal representation? */
 static AValue TestC_IsSubStr(AThread *t, AValue *frame)
 {
     if (AIsSubStr(frame[0]))
@@ -79,6 +93,12 @@ static AValue TestC_IsSubStr(AThread *t, AValue *frame)
 }
 
 
+/* __testc::CallTrace(func, args)
+   Call func with the given arguments (which should be an array). If the
+   function does not raise an uncaught exception, return array [nil, retval],
+   where retval is the return value of the function. Otherwise, return array
+   [exception, traceback], where exception is the exception object and
+   traceback is a string array containing the stack traceback. */
 static AValue TestC_CallTrace(AThread *t, AValue *frame)
 {
     AValue retVal;
@@ -92,6 +112,7 @@ static AValue TestC_CallTrace(AThread *t, AValue *frame)
     t->contextIndex--;
 
     if (AIsError(retVal)) {
+        /* The function raised an exception. */
         ACreateTracebackArray(t); /* FIX: error handling ? */
 
         /* NOTE: Cannot use tempStack[0], since the array operations may
@@ -102,6 +123,7 @@ static AValue TestC_CallTrace(AThread *t, AValue *frame)
         t->tempStack[0] =
             ASubArray(t, t->tempStack[0], 0, AArrayLen(t->tempStack[0]) - 1);
     } else {
+        /* No exception was raised. */
         t->tempStack[1] = ANil; /* FIX: what about storing retVal? */
         t->tempStack[0] = retVal;
     }
@@ -115,6 +137,9 @@ static AValue TestC_CallTrace(AThread *t, AValue *frame)
 }
 
 
+/* __testc::CollectGarbage()
+   Perform garbage collection unconditionally. Perform a normal gc run: collect
+   nursery and potentially start old gen collection. */
 static AValue TestC_CollectGarbage(AThread *t, AValue *frame)
 {
     ABool status;
@@ -130,6 +155,9 @@ static AValue TestC_CollectGarbage(AThread *t, AValue *frame)
 }
 
 
+/* __testc::CollectAllGarbage()
+   Perform garbage collection unconditionally. Collect the entire heap and only
+   return after the garbage collection is finished. */
 static AValue ATestC_CollectAllGarbage(AThread *t, AValue *frame)
 {
     if (!ACollectAllGarbage())
@@ -139,6 +167,8 @@ static AValue ATestC_CollectAllGarbage(AThread *t, AValue *frame)
 }
 
 
+/* __testc::VerifyMemory()
+   Verify heap structure if debugging is active; otherwise do nothing. */
 static AValue TestC_VerifyMemory(AThread *t, AValue *frame)
 {
 #ifdef A_DEBUG
@@ -148,6 +178,10 @@ static AValue TestC_VerifyMemory(AThread *t, AValue *frame)
 }
 
 
+/* __testc::Call(func, fixedargs[, varargs])
+   Call function with the given arguments. The fixedargs argument should be an
+   array with the fixed arguments; if varargs is present, it should be an array
+   with additional varargs. Return the return value of the function. */
 static AValue TestC_Call(AThread *t, AValue *frame)
 {
     int c1;
@@ -190,6 +224,10 @@ static int GetMembers(MemberStruct *m, ATypeInfo *type);
 static void SortMembers(MemberStruct *m, int n);
 
 
+/* __testc::Members(v)
+   Return an array containing the names of members defined by the type of v.
+   This only works for objects with an instance representation and can only
+   return up to MAX_MEMBERS member names. */
 /* IDEA: This is a temporary solution and not very robust. We should implement
          a real reflection API. */
 static AValue TestC_Members(AThread *t, AValue *frame)
@@ -223,12 +261,14 @@ static AValue TestC_Members(AThread *t, AValue *frame)
 }
 
 
+/* Is a key in a member hash table a proper member id? */
 static ABool IsValidKey(int k)
 {
     return k != AM_NONE && k != AM_INITIALIZER && k != AM_FINALIZER;
 }
 
 
+/* Does a type have a public member with given id? */
 static ABool HasPublicMember(ATypeInfo *type, int key)
 {
     return type != NULL &&
@@ -238,6 +278,8 @@ static ABool HasPublicMember(ATypeInfo *type, int key)
 }
 
 
+/* Return the number of members defined in member table v. Only include
+   members not defined as public members of super. */
 static int NumTableMembers(AValue v, ATypeInfo *super)
 {
     int i;
@@ -256,6 +298,8 @@ static int NumTableMembers(AValue v, ATypeInfo *super)
 }
 
 
+/* Return the number of public member names defined in type (including
+   inherited members). */
 static int NumMembers(ATypeInfo *type)
 {
     int n;
@@ -308,6 +352,7 @@ static int GetTableMembers(MemberStruct *m, int n, AValue v, ABool isMethod)
 }
 
 
+/* Get the public members of a type. */
 static int GetMembers(MemberStruct *m, ATypeInfo *type)
 {
     int i;
@@ -324,6 +369,8 @@ static int GetMembers(MemberStruct *m, ATypeInfo *type)
 }
 
 
+/* This function is used for sorting a member list. This often produces an
+   intuitive ordering, but this is not meant to be robust. */
 static ABool IsLess(MemberStruct m1, MemberStruct m2)
 {
     return m1.classNum < m2.classNum || (m1.classNum == m2.classNum &&
@@ -331,6 +378,7 @@ static ABool IsLess(MemberStruct m1, MemberStruct m2)
 }
 
 
+/* Sort a list of members. */
 static void SortMembers(MemberStruct *m, int n)
 {
     int i, j;
@@ -345,12 +393,16 @@ static void SortMembers(MemberStruct *m, int n)
 }
 
 
+/* __testc::CheckSyntax(path[, modulepath])
+   Compile an Alore source file and raise an exception if there were compile
+   errors. Otherwise discard the compiled program without initialization. */
 static AValue TestC_CheckSyntax(AThread *t, AValue *frame)
 {
     return ALoaderLoadInternal(t, frame, FALSE);
 }
 
 
+/* __testc::RaiseDirectTypeError() */
 static AValue TestC_RaiseDirectTypeError(AThread *t, AValue *frame)
 {
     ARaiseTypeErrorND(t, NULL);
@@ -360,6 +412,7 @@ static AValue TestC_RaiseDirectTypeError(AThread *t, AValue *frame)
 }
 
 
+/* __testc::RaiseDirectMemoryError() */
 static AValue TestC_RaiseDirectMemoryError(AThread *t, AValue *frame)
 {
     ARaiseMemoryErrorND(t);
@@ -369,18 +422,27 @@ static AValue TestC_RaiseDirectMemoryError(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ContextDepth()
+   Return the try statement context depth for the current thread. The context
+   depth is only incremented for try statements that may catch direct
+   exceptions. */
 static AValue TestC_ContextDepth(AThread *t, AValue *frame)
 {
     return AIntToValue(t->contextIndex);
 }
 
 
+/* __testc::TempStackDepth()
+   Return the current depth of the temp stack for the current thread. */
 static AValue TestC_TempStackDepth(AThread *t, AValue *frame)
 {
     return AIntToValue(t->tempStackPtr - t->tempStack);
 }
 
 
+/* __testc::AGetInt(v)
+   Wrapper for AGetInt() C API function. Return a string representation of the
+   integer. */
 static AValue TestC_AGetInt(AThread *t, AValue *frame)
 {
     int i = AGetInt(t, frame[0]);
@@ -390,6 +452,9 @@ static AValue TestC_AGetInt(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGetInt(v)
+   Wrapper for AGetIntU() C API function. Return a string representation of the
+   integer. */
 static AValue TestC_AGetIntU(AThread *t, AValue *frame)
 {
     unsigned i = AGetIntU(t, frame[0]);
@@ -438,6 +503,9 @@ static void Int64ToStr(char *buf, AInt64 i)
 }
 
 
+/* __testc::AGetInt64(v)
+   Wrapper for AGetInt64() C API function. Return a string representation of
+   the integer. */
 static AValue TestC_AGetInt64(AThread *t, AValue *frame)
 {
     AInt64 i = AGetInt64(t, frame[0]);
@@ -450,6 +518,9 @@ static AValue TestC_AGetInt64(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGetIntU64(v)
+   Wrapper for AGetIntU64() C API function. Return a string representation of
+   the integer. */
 static AValue TestC_AGetIntU64(AThread *t, AValue *frame)
 {
     AIntU64 i = AGetIntU64(t, frame[0]);
@@ -462,6 +533,8 @@ static AValue TestC_AGetIntU64(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeInt(v)
+   Wrapper for AMakeInt() C API function. */
 static AValue TestC_AMakeInt(AThread *t, AValue *frame)
 {
     int i = AGetInt(t, frame[0]);
@@ -469,6 +542,8 @@ static AValue TestC_AMakeInt(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeIntU(v)
+   Wrapper for AMakeIntU() C API function. */
 static AValue TestC_AMakeIntU(AThread *t, AValue *frame)
 {
     unsigned i = AGetIntU(t, frame[0]);
@@ -476,6 +551,8 @@ static AValue TestC_AMakeIntU(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeInt64(v)
+   Wrapper for AMakeInt64() C API function. */
 static AValue TestC_AMakeInt64(AThread *t, AValue *frame)
 {
     AInt64 i = AGetInt64(t, frame[0]);
@@ -483,6 +560,8 @@ static AValue TestC_AMakeInt64(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeIntU64(v)
+   Wrapper for AMakeIntU64() C API function. */
 static AValue TestC_AMakeIntU64(AThread *t, AValue *frame)
 {
     AIntU64 i = AGetIntU64(t, frame[0]);
@@ -490,6 +569,7 @@ static AValue TestC_AMakeIntU64(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGetFloat(v) */
 static AValue TestC_AGetFloat(AThread *t, AValue *frame)
 {
     double f = AGetFloat(t, frame[0]);
@@ -499,6 +579,8 @@ static AValue TestC_AGetFloat(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGetStr(v)
+   Wrapper function for testing the AGetStr() C API function. */
 static AValue TestC_AGetStr(AThread *t, AValue *frame)
 {
     char buf[10];
@@ -516,6 +598,8 @@ static AValue TestC_AGetStr(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGetStrW(v)
+   Wrapper function for testing the AGetStrW() C API function. */
 static AValue TestC_AGetStrW(AThread *t, AValue *frame)
 {
     AWideChar buf[10];
@@ -533,6 +617,7 @@ static AValue TestC_AGetStrW(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGetStrUtf8(v) */
 static AValue TestC_AGetStrUtf8(AThread *t, AValue *frame)
 {
     char str[4096];
@@ -543,6 +628,8 @@ static AValue TestC_AGetStrUtf8(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeEmptyStr(len)
+   Function for testing AMakeEmptyStr and ASetStrItem. */
 static AValue TestC_AMakeEmptyStr(AThread *t, AValue *frame)
 {
     int len = AGetInt(t, frame[0]);
@@ -554,6 +641,8 @@ static AValue TestC_AMakeEmptyStr(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeEmptyStrW(len)
+   Function for testing AMakeEmptyStrW and ASetStrItem. */
 static AValue TestC_AMakeEmptyStrW(AThread *t, AValue *frame)
 {
     int len = AGetInt(t, frame[0]);
@@ -565,6 +654,7 @@ static AValue TestC_AMakeEmptyStrW(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeStrUtf8(v) */
 static AValue TestC_AMakeStrUtf8(AThread *t, AValue *frame)
 {
     char str[4096];
@@ -573,12 +663,14 @@ static AValue TestC_AMakeStrUtf8(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AStrLenUtf8(v) */
 static AValue TestC_AStrLenUtf8(AThread *t, AValue *frame)
 {
     return AMakeInt(t, AStrLenUtf8(frame[0]));
 }
 
 
+/* __testc::ASetArrayItem(array, index, v) */
 static AValue TestC_ASetArrayItem(AThread *t, AValue *frame)
 {
     int index = AGetInt(t, frame[1]);
@@ -587,12 +679,14 @@ static AValue TestC_ASetArrayItem(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMakeArray(length) */
 static AValue TestC_AMakeArray(AThread *t, AValue *frame)
 {
     return AMakeArray(t, AGetInt(t, frame[0]));
 }
 
 
+/* __testc::AMakeTuple(array) */
 static AValue TestC_AMakeTuple(AThread *t, AValue *frame)
 {
     Assize_t n = AArrayLen(frame[0]);
@@ -606,6 +700,8 @@ static AValue TestC_AMakeTuple(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ATemps()
+   Test temp stack related C API functions. Return 1 if successful. */
 static AValue TestC_ATemps(AThread *t, AValue *frame)
 {
     AValue *t1;
@@ -643,6 +739,7 @@ static AValue TestC_ATemps(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AIsValue(v, type) */
 static AValue TestC_AIsValue(AThread *t, AValue *frame)
 {
     if (AIsValue(t, frame[0], frame[1]))
@@ -652,6 +749,8 @@ static AValue TestC_AIsValue(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ACall(name, arg)
+   Use the ACall C API function to call a function with a single argument. */
 static AValue TestC_ACall(AThread *t, AValue *frame)
 {
     char func[100];
@@ -660,6 +759,9 @@ static AValue TestC_ACall(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ACallVarArg(name, arg, varargs)
+   Use the ACallVarArg C API function to call a function with a single fixed
+   argument and varargs. */
 static AValue TestC_ACallVarArg(AThread *t, AValue *frame)
 {
     char func[100];
@@ -668,18 +770,25 @@ static AValue TestC_ACallVarArg(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ACallValue(func, arg)
+   Use the ACallValue C API function to call a function with a single
+   argument. */
 static AValue TestC_ACallValue(AThread *t, AValue *frame)
 {
     return ACallValue(t, frame[0], 1, frame + 1);
 }
 
 
+/* __testc::ACallValueVarArg(name, arg, varargs)
+   Use the ACallValueVarArg C API function to call a function with a single
+   fixed argument and varargs. */
 static AValue TestC_ACallValueVarArg(AThread *t, AValue *frame)
 {
     return ACallValueVarArg(t, frame[0], 1, frame + 1);
 }
 
 
+/* __testc::ARaise(typename) */
 static AValue TestC_ARaise(AThread *t, AValue *frame)
 {
     char type[100];
@@ -688,6 +797,7 @@ static AValue TestC_ARaise(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ARaiseByType(type, message) */
 static AValue TestC_ARaiseByType(AThread *t, AValue *frame)
 {
     char msg[100];
@@ -696,12 +806,14 @@ static AValue TestC_ARaiseByType(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ARaiseValue(exception) */
 static AValue TestC_ARaiseValue(AThread *t, AValue *frame)
 {
     return ARaiseValue(t, frame[0]);
 }
 
 
+/* __testc::ARaiseErrnoIoError(errno) */
 static AValue TestC_ARaiseErrnoIoError(AThread *t, AValue *frame)
 {
     errno = AGetInt(t, frame[0]);
@@ -709,6 +821,9 @@ static AValue TestC_ARaiseErrnoIoError(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ATry(bool)
+   Function for testing ATry and AEndTry. If bool is True, return 1 if
+   successful. If bool is False, return 2 if successful. */ 
 static AValue TestC_ATry(AThread *t, AValue *frame)
 {
     if (ATry(t))
@@ -718,10 +833,15 @@ static AValue TestC_ATry(AThread *t, AValue *frame)
         ARaiseTypeError(t, "problem");
 
     AEndTry(t);
-    return AMakeInt(t, 2);    
+    return AMakeInt(t, 2);
 }
 
 
+/* __testc::AIsExceptionType(func, exceptionName)
+   Function for testing AIsExceptionType. Call func and catch exception with
+   the given type. Return True if caught an exception, False if did not catch
+   an exception (but none was raised). Raise exception if the exception was not
+   caught (but one was raised). */
 static AValue TestC_AIsExceptionType(AThread *t, AValue *frame)
 {
     char type[100];
@@ -746,6 +866,7 @@ static AValue TestC_AIsExceptionType(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ACallMethod(member, obj, args...) */
 static AValue TestC_ACallMethod(AThread *t, AValue *frame)
 {
     char member[100];
@@ -758,6 +879,7 @@ static AValue TestC_ACallMethod(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ACallMethodVarArg(member, obj, args) */
 static AValue TestC_ACallMethodVarArg(AThread *t, AValue *frame)
 {
     char member[100];
@@ -766,6 +888,7 @@ static AValue TestC_ACallMethodVarArg(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AMember(obj, name) */
 static AValue TestC_AMember(AThread *t, AValue *frame)
 {
     char member[100];
@@ -774,6 +897,7 @@ static AValue TestC_AMember(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ASetMember(obj, name, v) */
 static AValue TestC_ASetMember(AThread *t, AValue *frame)
 {
     char member[100];
@@ -782,6 +906,7 @@ static AValue TestC_ASetMember(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ASuperMember(obj, name) */
 static AValue TestC_ASuperMember(AThread *t, AValue *frame)
 {
     char member[100];
@@ -790,6 +915,7 @@ static AValue TestC_ASuperMember(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ASetSuperMember(obj, name, v) */
 static AValue TestC_ASetSuperMember(AThread *t, AValue *frame)
 {
     char member[100];
@@ -798,6 +924,7 @@ static AValue TestC_ASetSuperMember(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AGlobal(name) */
 static AValue TestC_AGlobal(AThread *t, AValue *frame)
 {
     char name[200];
@@ -806,6 +933,7 @@ static AValue TestC_AGlobal(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AConcat(a, b) */
 static AValue TestC_AConcat(AThread *t, AValue *frame)
 {
     return AConcat(t, frame[0], frame[1]);
@@ -990,6 +1118,9 @@ static AValue TestC_AIn(AThread *t, AValue *frame)
 }
 
 
+/* __testc::GetCModuleImports(path)
+   Return an array with the names of modules that a C module imports. The path
+   should refer to the C module binary file (e.g. a .so file). */
 static AValue TestC_GetCModuleImports(AThread *t, AValue *frame)
 {
     char path[A_MAX_PATH_LEN];
@@ -1011,13 +1142,16 @@ static AValue TestC_GetCModuleImports(AThread *t, AValue *frame)
 }
 
 
+/* __testc::AVersion()
+   Return the version of the Alore runtime as a string. */
 static AValue TestC_AVersion(AThread *t, AValue *frame)
 {
     return AMakeStr(t, AVersion);
 }
 
 
-/* Return the number of SymbolInfo structures in the symbol table, not
+/* __testc::SymbolInfoCount()
+   Return the number of SymbolInfo structures in the symbol table, not
    including member symbols. This is used to check if symbols are removed
    correctly from the symbol table. */
 static AValue TestC_SymbolInfoCount(AThread *t, AValue *frame)
@@ -1049,6 +1183,8 @@ static AValue TestC_SymbolInfoCount(AThread *t, AValue *frame)
 }
 
 
+/* __testc::GlobalValueCount()
+   Return the number of global values in all dynamic modules. */
 static AValue TestC_GlobalValueCount(AThread *t, AValue *frame)
 {
     int count = ANumMainGlobals;
@@ -1078,7 +1214,16 @@ static AValue TestC_GlobalValueCount(AThread *t, AValue *frame)
 }
 
 
-
+/* __testc::TypeStats(type)
+   Return information about a type as an integer array with these items:
+     [numVars,
+      totalNumVars,
+      dataSize,
+      dataOffset,
+      instanceSize,
+      hasFinalizer,
+      hasFinalizerOrData,
+      extDataMember] */
 static AValue TestC_TypeStats(AThread *t, AValue *frame)
 {
     ATypeInfo *type = AValueToType(frame[0]);
