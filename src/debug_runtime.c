@@ -196,9 +196,9 @@ void PrintValueRecursive(AValue v, int depth)
         int i;
         int len = AArrayLen(v);
         if (depth >= MAX_VALUE_PRINT_DEPTH)
-            ADebugPrint_F("(...)", len);
+            ADebugPrint_F("[...]", len);
         else {
-            ADebugPrint_F("(");
+            ADebugPrint_F("[");
             /* Display array items. For long arrays, only display a
                fragment. */
             for (i = 0; i < len; i++) {
@@ -209,7 +209,7 @@ void PrintValueRecursive(AValue v, int depth)
                 } else if (i == 10)
                     ADebugPrint_F("..., ");
             }
-            ADebugPrint_F(")");
+            ADebugPrint_F("]");
         }
     } else if (AIsGlobalFunction(v)) {
         AFunction *func = AValueToFunction(v);
