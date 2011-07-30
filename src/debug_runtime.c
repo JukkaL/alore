@@ -252,7 +252,7 @@ void PrintValueRecursive(AValue v, int depth)
     } else if (AIsInstance(v))
         ADebugPrint_F("%q", AGetInstanceType(AValueToInstance(v))->sym);
     else
-        ADebugPrint_F("unknown"); /* FIX: support more stuff */
+        ADebugPrint_F("unknown"); /* FIX: support more stuff (tuples etc.) */
 }
 
 
