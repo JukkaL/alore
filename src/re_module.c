@@ -11,18 +11,26 @@
 #include "debug_params.h"
 
 
+/* The re module implementation is divided between modules re (implemented in
+   Alore) and __re (this module). */
+
+
 static AValue BuildMatchObject(AThread *t, AValue *frame, int numGroups,
                               AReRange *subExp);
 static ABool GetArguments(AThread *t, AValue *frame, int *pos);
 
 
-static int MatchResultNum;
-static int IgnoreCaseNum;
-static int RegExpNum;
-int ARegExpErrorNum;
+/* Global nums of definitions */
+static int MatchResultNum; /* __re::MatchResult */
+static int IgnoreCaseNum;  /* __re::IgnoreCase */
+static int RegExpNum;      /* __re::RegExp */
+int ARegExpErrorNum;       /* re::RegExpError */
 
 
 #ifdef A_DEBUG
+/* __re::__Dump(regexp)
+   Debugging helper that dumps the internal structure of a regular expression
+   to stdout. */
 static AValue ReDump(AThread *t, AValue *frame)
 {
     AValue reVal;
@@ -43,6 +51,8 @@ static AValue ReDump(AThread *t, AValue *frame)
 #endif
 
 
+/* __re::Match(regexp, str[, index])
+   Visible to use code as re::Match. */
 static AValue ReMatch(AThread *t, AValue *frame)
 {
     ARegExp *re;
@@ -65,6 +75,8 @@ static AValue ReMatch(AThread *t, AValue *frame)
 }
 
 
+/* __re::Search(regexp, std[, index])
+   Visible to user code as re::Search. */
 static AValue ReSearch(AThread *t, AValue *frame)
 {
     ARegExp *re;
@@ -116,6 +128,7 @@ static ABool GetArguments(AThread *t, AValue *frame, int *pos)
 }
 
 
+/* MatchResult group(n) */
 static AValue MatchResultGroup(AThread *t, AValue *frame)
 {
     AValue a;
@@ -138,6 +151,7 @@ static AValue MatchResultGroup(AThread *t, AValue *frame)
 }
 
 
+/* MatchResult start(n) */
 static AValue MatchResultStart(AThread *t, AValue *frame)
 {
     AValue a;
@@ -153,6 +167,7 @@ static AValue MatchResultStart(AThread *t, AValue *frame)
 }
 
 
+/* MatchResult stop(n) */
 static AValue MatchResultStop(AThread *t, AValue *frame)
 {
     AValue a;
@@ -168,6 +183,7 @@ static AValue MatchResultStop(AThread *t, AValue *frame)
 }
 
 
+/* MatchResult span(n) */
 static AValue MatchResultSpan(AThread *t, AValue *frame)
 {
     AValue a;
@@ -188,7 +204,10 @@ static AValue MatchResultSpan(AThread *t, AValue *frame)
 }
 
 
-/* Frame points to the frame of ReMatch or ReSearch. */
+/* Build a MatchResult object from match results.
+   Frame points to the frame of ReMatch or ReSearch. The subExp argument
+   should have numGroups items that specify the ranges matched by different
+   subexpressions. */
 static AValue BuildMatchObject(AThread *t, AValue *frame,
                               int numGroups, AReRange *subExp)
 {
@@ -218,6 +237,7 @@ static AValue BuildMatchObject(AThread *t, AValue *frame,
 }
 
 
+/* RegExp create(str[, flag]) */
 static AValue RegExpCreate(AThread *t, AValue *frame)
 {
     int flags = 0;
@@ -243,8 +263,10 @@ static AValue RegExpCreate(AThread *t, AValue *frame)
 }
 
 
+/* __re::Main() */
 static AValue ReMain(AThread *t, AValue *frame)
 {
+    /* Initialize global constant. */
     ARegExpErrorNum = AGetGlobalNum(t, "re::RegExpError");
     return ANil;
 }
@@ -260,10 +282,13 @@ A_MODULE(__re, "__re")
 
     A_SYMBOLIC_CONST_P("IgnoreCase", &IgnoreCaseNum)
 
+    /* User code actually sees re::RegExp which is a subclass of this class
+       (__re::RegExp). */
     A_CLASS_PRIV_P("RegExp", 1, &RegExpNum)
       A_METHOD_OPT("create", 1, 2, 0, RegExpCreate)
     A_END_CLASS()
 
+    /* This is the implementation subtype of re::MatchResult. */
     A_CLASS_PRIV_P("MatchResult", 2, &MatchResultNum)
         A_INHERIT("re::MatchResult")
         /* FIX: Constructor? The type object is visible via TypeOf() */
