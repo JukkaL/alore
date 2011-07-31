@@ -23,10 +23,14 @@
 #define INITIAL_APPEND_ARRAY_SIZE 16
 
 
+/* Global num of Array iterator class */
 int AArrayIterNum;
+/* Global num of Tuple iterator class */
 int ATupleIterNum;
 
 
+/* Return a pointer to the first element of an array. The argument should be
+   an Array value. */
 #define ARRAY_ELEM_PTR(a) \
     (AValueToFixArray(AValueToInstance(a)->member[A_ARRAY_A])->elem)
 
@@ -35,14 +39,14 @@ static AValue CompareArraysRecursive(AThread *t, AValue *a,
                                         AOperator operator, int index);
 
 
+/* Slot ids of Array iterator objects */
 #define ARRAY_ITER_I 0
 #define ARRAY_ITER_LEN 1
 #define ARRAY_ITER_A 2
 
 
-#define INITIAL_ARRAY_CAPACITY 4
-
-
+/* Array #i()
+   Initialize an Array instance. */
 AValue AArrayInitialize(AThread *t, AValue *frame)
 {
     AValue a;
@@ -56,6 +60,7 @@ AValue AArrayInitialize(AThread *t, AValue *frame)
 }
 
 
+/* Array create([iterable]) */
 AValue AArrayCreate(AThread *t, AValue *frame)
 {
     AValue v = AArrayInitialize(t, frame);
@@ -77,6 +82,7 @@ AValue AArrayCreate(AThread *t, AValue *frame)
 }
 
 
+/* Array _get(index) */
 AValue AArray_get(AThread *t, AValue *frame)
 {
     if (AIsShortInt(frame[1])) {
@@ -106,6 +112,7 @@ AValue AArray_get(AThread *t, AValue *frame)
 }
 
 
+/* Tuple _get(index) */
 AValue ATuple_get(AThread *t, AValue *frame)
 {
     if (AIsShortInt(frame[1])) {
@@ -125,6 +132,7 @@ AValue ATuple_get(AThread *t, AValue *frame)
 }
 
 
+/* Array _set(index, v) */
 AValue AArray_set(AThread *t, AValue *frame)
 {
     if (AIsShortInt(frame[1])) {
@@ -145,6 +153,7 @@ AValue AArray_set(AThread *t, AValue *frame)
 }
 
 
+/* Array _in(v) */
 AValue AArray_in(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -161,12 +170,14 @@ AValue AArray_in(AThread *t, AValue *frame)
 }
 
 
+/* Array length() */
 AValue AArrayLengthMethod(AThread *t, AValue *frame)
 {
     return AMemberDirect(frame[0], A_ARRAY_LEN);
 }
 
 
+/* Array _add(array) */
 AValue AArray_add(AThread *t, AValue *frame)
 {
     Assize_t len1, len2;
@@ -204,6 +215,7 @@ AValue AArray_add(AThread *t, AValue *frame)
 }
 
 
+/* Array _mul(n) */
 AValue AArray_mul(AThread *t, AValue *frame)
 {
     Assize_t len;
@@ -248,6 +260,9 @@ AValue AArray_mul(AThread *t, AValue *frame)
 }
 
 
+/* Compare an array or tuple (at frame[0]) to a sequence (at frame[1]). The op
+   argument is the comparison operator (OPER_EQ, OPER_LT or OPER_GT). Return a
+   boolean value. */
 static AValue CompareArrayOrder(AThread *t, AValue *frame, int op)
 {
     Assize_t len1 = AGetInt_ssize_t(t, AMemberDirect(frame[0], A_ARRAY_LEN));
@@ -298,6 +313,9 @@ static AValue CompareArrayOrder(AThread *t, AValue *frame, int op)
 }
 
 
+/* Array _eq(x) and
+   Tuple _eq(x)
+   (they share an implementation) */
 AValue AArrayTuple_eq(AThread *t, AValue *frame)
 {
     if (AIsArrayOrTuple(frame[1])) {
@@ -311,6 +329,9 @@ AValue AArrayTuple_eq(AThread *t, AValue *frame)
 }
 
 
+/* Array _lt(x) and
+   Tuple _lt(x)
+   (they share an implementation) */
 AValue AArrayTuple_lt(AThread *t, AValue *frame)
 {
     if (AIsArrayOrTuple(frame[1])) {
@@ -325,6 +346,9 @@ AValue AArrayTuple_lt(AThread *t, AValue *frame)
 }
 
 
+/* Array _gt(x) and
+   Tuple _gt(x)
+   (they share an implementation) */
 AValue AArrayTuple_gt(AThread *t, AValue *frame)
 {
     if (AIsArrayOrTuple(frame[1])) {
@@ -339,6 +363,7 @@ AValue AArrayTuple_gt(AThread *t, AValue *frame)
 }
 
 
+/* Array append(v) */
 AValue AArrayAppend(AThread *t, AValue *frame)
 {
     AValue len = AMemberDirect(frame[0], A_ARRAY_LEN);
@@ -355,6 +380,7 @@ AValue AArrayAppend(AThread *t, AValue *frame)
 }
 
 
+/* Array extend(sequence) */
 AValue AArrayExtend(AThread *t, AValue *frame)
 {
     Assize_t len = AArrayLen(frame[0]);
@@ -397,6 +423,7 @@ AValue AArrayExtend(AThread *t, AValue *frame)
 }
 
 
+/* Array insertAt(index, v) */
 AValue AArrayInsertAt(AThread *t, AValue *frame)
 {
     Assize_t i = AGetInt_ssize_t(t, frame[1]);
@@ -423,6 +450,7 @@ AValue AArrayInsertAt(AThread *t, AValue *frame)
 }
 
 
+/* Array remove(v) */
 AValue AArrayRemove(AThread *t, AValue *frame)
 {
     Assize_t i, numDel, len;
@@ -448,6 +476,7 @@ AValue AArrayRemove(AThread *t, AValue *frame)
 }
 
 
+/* Array removeAt(index) */
 AValue AArrayRemoveAt(AThread *t, AValue *frame)
 {
     Assize_t i = AGetInt_ssize_t(t, frame[1]);
@@ -472,6 +501,7 @@ AValue AArrayRemoveAt(AThread *t, AValue *frame)
 }
 
 
+/* Helper used by Array _str() and Tuple _str(). */
 AValue AArrayTuple_str(AThread *t, AValue *frame, const char *startDelim,
                        const char *endDelim)
 {
@@ -512,18 +542,21 @@ AValue AArrayTuple_str(AThread *t, AValue *frame, const char *startDelim,
 }
 
 
+/* Array _str() */
 AValue AArray_str(AThread *t, AValue *frame)
 {
     return AArrayTuple_str(t, frame, "[", "]");
 }
 
 
+/* Tuple _str() */
 AValue ATuple_str(AThread *t, AValue *frame)
 {
     return AArrayTuple_str(t, frame, "(", ")");
 }
 
 
+/* Array iterator() */
 AValue AArrayIter(AThread *t, AValue *frame)
 {
     frame[2] = AMemberDirect(frame[0], A_ARRAY_LEN);
@@ -532,6 +565,7 @@ AValue AArrayIter(AThread *t, AValue *frame)
 }
 
 
+/* Tuple iterator() */
 AValue ATupleIter(AThread *t, AValue *frame)
 {
     frame[2] = AMemberDirect(frame[0], A_ARRAY_LEN);
@@ -540,6 +574,7 @@ AValue ATupleIter(AThread *t, AValue *frame)
 }
 
 
+/* Array find(v) */
 AValue AArrayFind(AThread *t, AValue *frame)
 {
     Assize_t len, i;
@@ -559,6 +594,7 @@ AValue AArrayFind(AThread *t, AValue *frame)
 }
 
 
+/* Array index(v) */
 AValue AArrayIndex(AThread *t, AValue *frame)
 {
     AValue ret = AArrayFind(t, frame);
@@ -569,6 +605,7 @@ AValue AArrayIndex(AThread *t, AValue *frame)
 }
 
 
+/* Array count(v) */
 AValue AArrayCount(AThread *t, AValue *frame)
 {
     Assize_t len, i, n;
@@ -589,18 +626,21 @@ AValue AArrayCount(AThread *t, AValue *frame)
 }
 
 
+/* Array _hash() */
 AValue AArray_hash(AThread *t, AValue *frame)
 {
     return AArrayTupleHashValue(t, frame);
 }
 
 
+/* Tuple _hash() */
 AValue ATuple_hash(AThread *t, AValue *frame)
 {
     return AArrayTupleHashValue(t, frame);
 }
 
 
+/* Array copy() */
 AValue AArrayCopy(AThread *t, AValue *frame)
 {
     AValue newArray;
@@ -616,6 +656,7 @@ AValue AArrayCopy(AThread *t, AValue *frame)
 }
 
 
+/* The create method of Array and Tuple iterators. */
 AValue AArrayTupleIterCreate(AThread *t, AValue *frame)
 {
     AExpectFixArray(t, frame[1]);
@@ -627,6 +668,7 @@ AValue AArrayTupleIterCreate(AThread *t, AValue *frame)
 }
 
 
+/* The hasNext() method of Array and Tuple iterators. */
 AValue AArrayTupleIterHasNext(AThread *t, AValue *frame)
 {
     Assize_t i = AMemberDirect(frame[0], ARRAY_ITER_I);
@@ -638,6 +680,7 @@ AValue AArrayTupleIterHasNext(AThread *t, AValue *frame)
 }
 
 
+/* The next() method of Array and Tuple iterators. */
 AValue AArrayTupleIterNext(AThread *t, AValue *frame)
 {
     AValue i = AMemberDirect(frame[0], ARRAY_ITER_I);
@@ -673,6 +716,9 @@ AValue AMakeArrayND(AThread *t, Assize_t length)
 }
 
 
+/* Set an item of an Array or Tuple object (val) at the given index. Assume
+   val is a Tuple or an Array, and assume that the index is valid and
+   non-negative. Return FALSE if failed (out of memory). */
 ABool ASetArrayTupleItemND(AThread *t, AValue val, Assize_t index,
                            AValue item)
 {
@@ -867,6 +913,7 @@ void AResizeArray(AThread *t, AValue *frame, Assize_t amount)
 }
 
 
+/* Return the hash value of an Array or a Tuple (frame[0]). */
 AValue AArrayTupleHashValue(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -899,6 +946,8 @@ AValue AArrayTupleHashValue(AThread *t, AValue *frame)
 /* C API functions */
 
 
+/* Set array item at specified index. Assume a refers to an Array and the index
+   is non-negative and valid. */
 void ASetArrayItem(AThread *t, AValue a, Assize_t index, AValue v)
 {
     ABool result;
@@ -915,6 +964,7 @@ void ASetArrayItem(AThread *t, AValue a, Assize_t index, AValue v)
 }
 
 
+/* Make an Array object with given length. All items are initialized to nil. */
 AValue AMakeArray(AThread *t, Assize_t len)
 {
     AValue v = AMakeArrayND(t, len);
@@ -924,6 +974,7 @@ AValue AMakeArray(AThread *t, Assize_t len)
 }
 
 
+/* Construct a subarray of an array. */
 AValue ASubArray(AThread *t, AValue a, Assize_t i1, Assize_t i2)
 {
     AValue sub;
@@ -935,6 +986,8 @@ AValue ASubArray(AThread *t, AValue a, Assize_t i1, Assize_t i2)
 }
 
 
+/* Set the item of a FixArray object at given index. Assume index is
+   non-negative and valid and that a refers to a FixArray instance. */
 void ASetFixArrayItem(AThread *t, AValue a, Assize_t index, AValue v)
 {
     ABool result;
@@ -951,6 +1004,7 @@ void ASetFixArrayItem(AThread *t, AValue a, Assize_t index, AValue v)
 }
 
 
+/* Append an item to an Array. Assume array refers to an Array. */
 void AAppendArray(AThread *t, AValue array, AValue item)
 {
     AValue len = AMemberDirect(array, A_ARRAY_LEN);
@@ -1017,6 +1071,8 @@ AValue AMakeTuple(AThread *t, Assize_t length)
 }
 
 
+/* Initialize the item of a tuple at the specified index. Assume v is a
+   Tuple instance. */
 AValue AInitTupleItem(AThread *t, AValue v, Assize_t index, AValue item)
 {
     return ASetArrayTupleItemND(t, v, index, item);
