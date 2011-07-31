@@ -16,23 +16,29 @@
 #include "gc.h"
 
 
+/* Initial capacity for empty sets */
 #define INITIAL_SET_CAPACITY 4
 
 
+/* Global num of the Set iterator class */
 static int SetIterNum;
 
 
+/* Slot ids for Set objects */
 #define SET_A 0
 #define SET_LEN 1          /* Number of items + removed items */
 #define A_SET_SIZE 2
 #define SET_NUM_REMOVED 3  /* Number of removed items */
 
+/* Slot ids for Set iterator objects */
 #define ITER_I 0
 #define ITER_LEN 1
 #define ITER_A 2
 
 
+/* Next index in hash chain */
 #define NextIndex(i, size) (((i) * 5 + 1) & (size))
+/* Conveniences */
 #define RemovedMarker AGlobalByNum(ARemovedMarkerNum)
 #define EmptyMarker AGlobalByNum(AEmptyMarkerNum)
 
@@ -55,6 +61,7 @@ static void ResizeSet(AThread *t, AValue *frame);
 static int LongIntHash(AValue v);
 
 
+/* Set create([iterable]) */
 static AValue SetCreate(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -91,6 +98,8 @@ static AValue SetCreate(AThread *t, AValue *frame)
 }
 
 
+/* Set #i()
+   Initialize an empty set. */
 static AValue SetInitialize(AThread *t, AValue *frame)
 {
     AValue a;
@@ -110,11 +119,14 @@ static AValue SetInitialize(AThread *t, AValue *frame)
 }
 
 
+/* Convert a hash value (as AValue) to a C integer. Raise a direct exception
+   on errors. */
 #define HashToInt(t, v) \
     (AIsShortInt(v) ? AValueToInt(v) : AIsLongInt(v) ? \
      LongIntHash(v) : ARaiseTypeError(t, AMsgIntExpected))
 
 
+/* Set add(object) */
 static AValue SetAdd(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -154,6 +166,8 @@ static AValue SetAdd(AThread *t, AValue *frame)
 }
 
 
+/* Resize a set. Determine the new size automatically based on current level
+   of emptiness. */
 static void ResizeSet(AThread *t, AValue *frame)
 {
     Assize_t oldSize;
@@ -197,6 +211,7 @@ static void ResizeSet(AThread *t, AValue *frame)
 }
 
 
+/* Set _in(object) */
 static AValue Set_in(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -225,6 +240,7 @@ static AValue Set_in(AThread *t, AValue *frame)
 }
 
 
+/* Set length() */
 static AValue SetLength(AThread *t, AValue *frame)
 {
     return AMemberDirect(frame[0], SET_LEN) -
@@ -232,6 +248,7 @@ static AValue SetLength(AThread *t, AValue *frame)
 }
 
 
+/* Set remove(object) */
 static AValue SetRemove(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -266,6 +283,7 @@ static AValue SetRemove(AThread *t, AValue *frame)
 }
 
 
+/* Set _str() */
 static AValue Set_str(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -304,6 +322,7 @@ static AValue Set_str(AThread *t, AValue *frame)
 }
 
 
+/* Set _eq(object) */
 static AValue Set_eq(AThread *t, AValue *frame)
 {
     int status;
@@ -333,6 +352,7 @@ static AValue Set_eq(AThread *t, AValue *frame)
 }
 
 
+/* Set _hash() */
 static AValue Set_hash(AThread *t, AValue *frame)
 {
     AValue hash;
@@ -365,6 +385,7 @@ static AValue Set_hash(AThread *t, AValue *frame)
 }
 
 
+/* Set copy() */
 static AValue SetCopy(AThread *t, AValue *frame)
 {
     Assize_t i;
@@ -387,6 +408,7 @@ static AValue SetCopy(AThread *t, AValue *frame)
 }
 
 
+/* Set iterator() */
 static AValue SetIter(AThread *t, AValue *frame)
 {
     frame[0] = AMemberDirect(frame[0], SET_A);
@@ -394,6 +416,7 @@ static AValue SetIter(AThread *t, AValue *frame)
 }
 
 
+/* The create method of Set iterator. */
 static AValue SetIterCreate(AThread *t, AValue *frame)
 {
     AExpectFixArray(t, frame[1]);
@@ -405,6 +428,7 @@ static AValue SetIterCreate(AThread *t, AValue *frame)
 }
 
 
+/* Set iterator hasNext() */
 static AValue SetIterHasNext(AThread *t, AValue *frame)
 {
     Assize_t i = AValueToInt(AMemberDirect(frame[0], ITER_I));
@@ -424,6 +448,7 @@ static AValue SetIterHasNext(AThread *t, AValue *frame)
 }
 
 
+/* Set iterator next() */
 static AValue SetIterNext(AThread *t, AValue *frame)
 {
     Assize_t i = AValueToInt(AMemberDirect(frame[0], ITER_I));
@@ -445,6 +470,7 @@ static AValue SetIterNext(AThread *t, AValue *frame)
 }
 
 
+/* Return a hash value of a long integer. */
 static int LongIntHash(AValue v)
 {
     ALongInt *li = AValueToLongInt(v);
