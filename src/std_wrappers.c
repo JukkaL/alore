@@ -6,8 +6,12 @@
    LICENSE.txt in the distribution.
 */
 
-/* Implementations of wrapper class methods. They represent methods of built-in
-   types. */
+/* Implementations of wrapper class methods. They represent methods of objects
+   with special runtime representations.
+
+   These methods get a raw object as self (frame[0]). To generate correct
+   stack traces, the method should replace self with wrapped self (using
+   AWrapObject) if the method can raise an exception. */
 
 #include "alore.h"
 #include "runtime.h"
@@ -19,6 +23,9 @@
 #include "float.h"
 
 
+/* Wrap self and call func(t, self, frame[1]). Assume t and frame are defined.
+   This only works for single-argument operations such as _add. The method
+   argument should be the member id corresponding to the method. */
 #define OP_WRAPPER(method, func) \
     do {                                                \
         frame[0] = AWrapObject(t, frame[0], (method));  \
@@ -26,30 +33,36 @@
     } while (0)
 
 
+/* Wrapper for the _add(x) method. */
 AValue AAddWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_ADD, AAdd);
 }
 
 
+/* Wrapper for the _sub(x) method. */
 AValue ASubWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_SUB, ASub);
 }
 
 
+/* Wrapper for the _mul(x) method. */
 AValue AMulWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_MUL, AMul);
 }
 
 
+/* Wrapper for the _add(x) method. Unlike AAddWrapper, perform concatenation
+   instead of addition (they only differ in efficiency). */
 AValue AConcatWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_ADD, AConcat);
 }
 
 
+/* Wrapper for the _neg() method. */
 AValue ANegWrapper(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], AM_NEGATE);
@@ -57,30 +70,35 @@ AValue ANegWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _div(x) method. */
 AValue ADivWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_DIV, ADiv);
 }
 
 
+/* Wrapper for the _idiv(x) method. */
 AValue AIdivWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_IDIV, AIntDiv);
 }
 
 
+/* Wrapper for the _mod(x) method. */
 AValue AModWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_MOD, AMod);
 }
 
 
+/* Wrapper for the _pow(x) method. */
 AValue APowWrapper(AThread *t, AValue *frame)
 {
     OP_WRAPPER(AM_POW, APow);
 }
 
 
+/* Wrapper for the _get(i) method. */
 AValue AGetItemWrapper(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], AM_GET_ITEM);
@@ -88,6 +106,7 @@ AValue AGetItemWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _set(i, x) method. */
 AValue ASetItemWrapper(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], AM_SET_ITEM);
@@ -95,6 +114,7 @@ AValue ASetItemWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _eq(x) method. */
 AValue AEqWrapper(AThread *t, AValue *frame)
 {
     int ret;
@@ -109,6 +129,7 @@ AValue AEqWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _lt(x) method. */
 AValue ALtWrapper(AThread *t, AValue *frame)
 {
     int ret;
@@ -123,6 +144,7 @@ AValue ALtWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _gt(x) method. */
 AValue AGtWrapper(AThread *t, AValue *frame)
 {
     int ret;
@@ -137,6 +159,7 @@ AValue AGtWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _in(x) method. */
 AValue AInWrapper(AThread *t, AValue *frame)
 {
     int val;
@@ -151,6 +174,7 @@ AValue AInWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _call method. */
 /* NOTE: Requires 1 extra temp in the stack frame. */
 AValue ACallWrapper(AThread *t, AValue *frame)
 {
@@ -159,6 +183,7 @@ AValue ACallWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _str() method. */
 AValue AStrWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
@@ -174,6 +199,7 @@ AValue AStrWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _hash() method. */
 AValue AHashWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
@@ -190,6 +216,7 @@ AValue AHashWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _repr() method. */
 AValue AReprWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
@@ -205,6 +232,7 @@ AValue AReprWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the iterator() method. */
 AValue AIterWrapper(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], AM_ITERATOR);
@@ -212,6 +240,7 @@ AValue AIterWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _int() method. */
 AValue AIntWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
@@ -229,6 +258,7 @@ AValue AIntWrapper(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for the _float() method. */
 AValue AFloatWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
@@ -246,6 +276,8 @@ AValue AFloatWrapper(AThread *t, AValue *frame)
 
 /* Range methods */
 
+
+/* Wrapper for Range start getter. */
 AValue AStdRangeStart(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], -1);
@@ -253,6 +285,7 @@ AValue AStdRangeStart(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for Range stop getter. */
 AValue AStdRangeStop(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], -1);
@@ -262,6 +295,8 @@ AValue AStdRangeStop(AThread *t, AValue *frame)
 
 /* Pair methods */
 
+
+/* Wrapper for Pair left getter. */
 AValue APairLeft(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], -1);
@@ -269,6 +304,7 @@ AValue APairLeft(AThread *t, AValue *frame)
 }
 
 
+/* Wrapper for Pair right getter. */
 AValue APairRight(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0], -1);
@@ -278,36 +314,9 @@ AValue APairRight(AThread *t, AValue *frame)
 
 /* Misc methods */
 
-#if 0
-AValue IntCreate(AThread *t, AValue *frame)
-{
-    if (!AIsInt(frame[1]))
-        return ARaiseTypeError(t, NULL);
 
-    if (AMemberDirect(frame[0], 0) != ANil)
-        return ARaiseValueError(t, AMsgCreateCalled);
-    
-    ASetMemberDirect(t, frame[0], 0, frame[1]);
-    
-    return frame[0];
-}
-
-
-AValue FloatCreate(AThread *t, AValue *frame)
-{
-    if (!AIsFloat(frame[1]))
-        return ARaiseTypeError(t, NULL);
-
-    if (AMemberDirect(frame[0], 0) != ANil)
-        return ARaiseValueError(t, AMsgCreateCalled);
-    
-    ASetMemberDirect(t, frame[0], 0, frame[1]);
-    
-    return frame[0];
-}
-#endif
-
-
+/* A create method that should not be called. Simply raises an exception when
+   called. */
 AValue AHiddenCreate(AThread *t, AValue *frame)
 {
     /* This should never be called, since a class with this method as the
