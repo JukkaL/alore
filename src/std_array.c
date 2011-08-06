@@ -814,7 +814,7 @@ AValue ASubArrayND(AThread *t, AValue arrVal, Assize_t begInd, Assize_t endInd)
 
 /* Compare two array/tuple values using the specified comparison operator
    (OPER_EQ, OPER_NEQ, OPER_LT, OPER_GTE, OPER_GT or OPER_GTE). Return
-   AIntToValue(1) if the comparison is true, ZERO if false, or AError if an
+   AIntToValue(1) if the comparison is true, AZero if false, or AError if an
    exeption was raised. */
 AValue ACompareArrays(AThread *t, AValue a1, AValue a2,
                         AOperator operator)

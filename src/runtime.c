@@ -365,7 +365,7 @@ AValue AIsEqual(AThread *t, AValue left, AValue right)
 }
 
 
-/* Return ZERO / IntToValue(1) depending on whether two Range or Pair
+/* Return AZero / AIntToValue(1) depending on whether two Range or Pair
    values are equal, or AError if an exception was raised. Assumes
    v1 and v2 are both either Range or Pair objects. */
 AValue IsRangeOrPairEqual(AThread *t, AValue v1, AValue v2)

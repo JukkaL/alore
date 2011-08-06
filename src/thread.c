@@ -137,7 +137,7 @@ AThread *ACreateThread(AValue *temp)
     t->untracedPtr = t->untraced->data.val;
     t->untracedEnd = t->untracedPtr + A_GC_LIST_BLOCK_LENGTH;
 
-    /* Add a sentinel ZERO value to mark the top of the stack. */
+    /* Add a sentinel 0 value to mark the top of the stack. */
     t->stackPtr = t->stackTop - 1;
     *t->stackPtr = AZero;
 
