@@ -14,17 +14,32 @@
 #include <math.h>
 
 
+/* Size of the internal buffer used for narrow strings that are short enough. */
 #define FORMAT_BUF_SIZE 512
+/* Flag for FormatOutput index to specify a wide buffer. */
 #define WIDE_BUF_FLAG (1U << 31)
 
 
-/* FormatOutput is a helper struct that contains the accumulated result. */
+/* FormatOutput is a helper struct that contains the accumulated result of
+   format() + some related information. */
 typedef struct {
+    /* The current thread. This is stored here as a convenience to avoid
+       passing it as an extra argument to various functions. */
     AThread *t;
+    /* If the internal buffer cannot be used (the string has wide characters or
+       it is too long), this attribute refers to a string object (narrow or
+       wide) that acts as a variable-sized heap-allocated buffer. This is a
+       pointer to a location that is seen by the garbage collector. */
     AValue *str;
+    /* The internal buffer used for short-enough narrow strings. If the output
+       contains wide characters (index has WIDE_BUF_FLAG set) or is too long
+       for this buffer, the heap-allocated buffer is used instead. */
     unsigned char buf[FORMAT_BUF_SIZE];
-    unsigned index;                      /* Length of output, can be ored with
-                                            WIDE_BUF_FLAG */
+    /* Length of output. It is ORed with WIDE_BUF_FLAG if the output contains
+       wide characters (> 0xff). In this case the heap-allocated buffer is
+       always used. */
+    unsigned index;
+    /* Length of the buffer that is currently being used. */
     unsigned len;
 } FormatOutput;
 
@@ -42,6 +57,8 @@ typedef struct {
      : (Append_(out, ch), 0))
 
 
+/* Append a character to a heap-allocated buffer. Also convert the buffer to
+   a wide buffer, if necessary. Also allocate the buffer, if necessary. */
 static void Append_(FormatOutput *out, int ch)
 {
     if ((out->index & ~WIDE_BUF_FLAG) == out->len) {
@@ -81,6 +98,7 @@ static void Append_(FormatOutput *out, int ch)
 }
 
 
+/* Append a narrow zero-terminated string to the output buffer. */ 
 static void AppendStr(FormatOutput *out, const char *str)
 {
     while (*str != '\0') {
@@ -98,6 +116,11 @@ static void NumberToScientific(FormatOutput *output, AValue num, int numFrac,
                                optFrac);
 
 
+/* Convert a number to a string using a non-scientific format. The num argument
+   is the number to convert, intLen is the minimum number of digits in the
+   integral part of the number, fractionLen is the minimum length of the
+   fraction and optFrac is the number of additional fraction digits to include
+   if they are non-zero. */
 static void NumberToStr(FormatOutput *output, AValue num, int intLen,
                         int fractionLen, int optFrac)
 {
@@ -181,6 +204,12 @@ static void NumberToStr(FormatOutput *output, AValue num, int intLen,
 }
 
 
+/* Convert a number using a scientific format (e.g. 0.00e+00). The num argument
+   is the number to convert. The argument numFrac is the number of digits in
+   the fraction, expLen is the number of digits in the exponent, plusExp
+   defines whether to prefix a positive exponent always with a '+', and optFrac
+   speficies the number of fraction digits that are only generated if they are
+   not zeroes. */
 static void NumberToScientific(FormatOutput *output, AValue num, int numFrac,
                                 int expLen, int expChar, ABool plusExp, int
                                 optFrac)
@@ -256,6 +285,10 @@ static void NumberToScientific(FormatOutput *output, AValue num, int numFrac,
 }
 
 
+/* Str format(...)
+   Format a string based on a format string which may contain formatting
+   sequences of form {...}; these correspond to the arguments of the method.
+   The base string object represents the format string. */
 AValue AFormat(AThread *t, AValue *frame)
 {
     int fi;      /* Format string index */
@@ -272,14 +305,20 @@ AValue AFormat(AThread *t, AValue *frame)
     
     fmtLen = AStrLen(frame[0]);
     ai = 0;
-    
+
+    /* IDEA: Refactor this into multiple functions. */
+
+    /* Iterate over the format string. Handle { sequences and copy other
+       characters directly to the output buffer (} may be duplicated). */
     for (fi = 0; fi < fmtLen; fi++) {
         int ch = AStrItem(frame[0], fi);
         if (ch == '{') {
             if (fi == fmtLen - 1 || AStrItem(frame[0], fi + 1) == '{') {
+                /* Literal '{'. */
                 fi++;
                 Append(&output, ch);
             } else {
+                /* A format sequence {...}. */
                 int negAlign = FALSE;
                 int align = 0;
                 int oldInd;
@@ -331,6 +370,8 @@ AValue AFormat(AThread *t, AValue *frame)
                     for (i = 0; i < AStrLen(frame[3]); i++)
                         Append(&output, AStrItem(frame[3], i));
                 } else {
+                    /* Either format an Int/Float or use the default conversion
+                       by calling std::Str. */
                     int minNumLen = 0;
                     int fractionLen = 0;
                     int optFractionLen = 0;
@@ -371,6 +412,8 @@ AValue AFormat(AThread *t, AValue *frame)
                         NumberToStr(&output, arg, minNumLen, fractionLen,
                                     optFractionLen);
                     else {
+                        /* Not a number formatting sequence. Use std::Str to
+                           convert the argument. */
                         int i;
 
                         frame[3] = arg;
@@ -413,6 +456,7 @@ AValue AFormat(AThread *t, AValue *frame)
                 ai++;
             }
         } else if (ch == '}') {
+            /* Literal '}' can be duplicated (but does not need to be). */
             if (fi < fmtLen - 1 && AStrItem(frame[0], fi + 1) == '}')
                 fi++;
             Append(&output, ch);
@@ -424,9 +468,16 @@ AValue AFormat(AThread *t, AValue *frame)
         ARaiseValueError(t, "Too many arguments");
 
     if (output.index <= FORMAT_BUF_SIZE) {
+        /* The output contains only narrow characters (since the index does not
+           have the WIDE_BUF_FLAG flag) and is short enough to not require a
+           heap-allocated buffer. Create a string based on the internal
+           buffer. */
         AValue res = AMakeEmptyStr(t, output.index);
         ACopyMem(AGetStrElem(res), output.buf, output.index);
         return res;
-    } else
+    } else {
+        /* The output is stored in a heap-allocated buffer (represented as a
+           Str object). Return the initialized part of the buffer. */
         return ASubStr(t, frame[2], 0, output.index & ~WIDE_BUF_FLAG);
+    }
 }
