@@ -34,10 +34,9 @@ static ABool AIsSpecialType(AValue val);
     ((b) ? AIntToValue(1) : AZero)
 
 
-/* Return obj as an instance, wrapping it if necessary. Do not raise a direct
-   expeption. member may be -1.
-   IDEA: is the member argument really relevant? */
-AValue AWrapObject(AThread *t, AValue obj, int member)
+/* Return obj as an instance, wrapping it if necessary. Never raise a direct
+   exception. */
+AValue AWrapObject(AThread *t, AValue obj)
 {
     AInstance *instance;
     ATypeInfo *type;
@@ -47,6 +46,8 @@ AValue AWrapObject(AThread *t, AValue obj, int member)
     
     *t->tempStack = obj;
     instance = AAlloc(t, 2 * sizeof(AValue));
+    if (instance == NULL)
+        return AError;
     obj = *t->tempStack;
     
     if (AIsStr(obj))
@@ -74,7 +75,7 @@ AValue AWrapObject(AThread *t, AValue obj, int member)
         type = ATypeClass;
     else {
         *t->tempStack = AZero;
-        return ARaiseMemberErrorND(t, obj, member);
+        return ARaiseMemberErrorND(t, obj, -1);
     }
                           
     AInitInstanceBlock(&instance->type, type);
@@ -124,7 +125,7 @@ AValue AMemberByNum(AThread *t, AValue val, int member)
     AMemberNode *node;
 
     if (!AIsInstance(val)) {
-        val = AWrapObject(t, val, member);
+        val = AWrapObject(t, val);
         if (AIsError(val))
             return AError;
     }

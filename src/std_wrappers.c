@@ -24,11 +24,10 @@
 
 
 /* Wrap self and call func(t, self, frame[1]). Assume t and frame are defined.
-   This only works for single-argument operations such as _add. The method
-   argument should be the member id corresponding to the method. */
-#define OP_WRAPPER(method, func) \
+   This only works for single-argument methods such as _add. */
+#define OP_WRAPPER(func) \
     do {                                                \
-        frame[0] = AWrapObject(t, frame[0], (method));  \
+        frame[0] = AWrapObject(t, frame[0]);            \
         return (func)(t, A_UNWRAP(frame[0]), frame[1]); \
     } while (0)
 
@@ -36,21 +35,21 @@
 /* Wrapper for the _add(x) method. */
 AValue AAddWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_ADD, AAdd);
+    OP_WRAPPER(AAdd);
 }
 
 
 /* Wrapper for the _sub(x) method. */
 AValue ASubWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_SUB, ASub);
+    OP_WRAPPER(ASub);
 }
 
 
 /* Wrapper for the _mul(x) method. */
 AValue AMulWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_MUL, AMul);
+    OP_WRAPPER(AMul);
 }
 
 
@@ -58,14 +57,14 @@ AValue AMulWrapper(AThread *t, AValue *frame)
    instead of addition (they only differ in efficiency). */
 AValue AConcatWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_ADD, AConcat);
+    OP_WRAPPER(AConcat);
 }
 
 
 /* Wrapper for the _neg() method. */
 AValue ANegWrapper(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], AM_NEGATE);
+    frame[0] = AWrapObject(t, frame[0]);
     return ANeg(t, A_UNWRAP(frame[0]));
 }
 
@@ -73,35 +72,35 @@ AValue ANegWrapper(AThread *t, AValue *frame)
 /* Wrapper for the _div(x) method. */
 AValue ADivWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_DIV, ADiv);
+    OP_WRAPPER(ADiv);
 }
 
 
 /* Wrapper for the _idiv(x) method. */
 AValue AIdivWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_IDIV, AIntDiv);
+    OP_WRAPPER(AIntDiv);
 }
 
 
 /* Wrapper for the _mod(x) method. */
 AValue AModWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_MOD, AMod);
+    OP_WRAPPER(AMod);
 }
 
 
 /* Wrapper for the _pow(x) method. */
 AValue APowWrapper(AThread *t, AValue *frame)
 {
-    OP_WRAPPER(AM_POW, APow);
+    OP_WRAPPER(APow);
 }
 
 
 /* Wrapper for the _get(i) method. */
 AValue AGetItemWrapper(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], AM_GET_ITEM);
+    frame[0] = AWrapObject(t, frame[0]);
     return AGetItem(t, A_UNWRAP(frame[0]), frame[1]);
 }
 
@@ -109,7 +108,7 @@ AValue AGetItemWrapper(AThread *t, AValue *frame)
 /* Wrapper for the _set(i, x) method. */
 AValue ASetItemWrapper(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], AM_SET_ITEM);
+    frame[0] = AWrapObject(t, frame[0]);
     return ASetItem(t, A_UNWRAP(frame[0]), frame[1], frame[2]);
 }
 
@@ -118,7 +117,7 @@ AValue ASetItemWrapper(AThread *t, AValue *frame)
 AValue AEqWrapper(AThread *t, AValue *frame)
 {
     int ret;
-    frame[0] = AWrapObject(t, frame[0], AM_EQ);
+    frame[0] = AWrapObject(t, frame[0]);
     ret = AIsEq(t, A_UNWRAP(frame[0]), frame[1]);
     if (ret < 0)
         return AError;
@@ -133,7 +132,7 @@ AValue AEqWrapper(AThread *t, AValue *frame)
 AValue ALtWrapper(AThread *t, AValue *frame)
 {
     int ret;
-    frame[0] = AWrapObject(t, frame[0], AM_LT);
+    frame[0] = AWrapObject(t, frame[0]);
     ret = AIsLt(t, A_UNWRAP(frame[0]), frame[1]);
     if (ret < 0)
         return AError;
@@ -148,7 +147,7 @@ AValue ALtWrapper(AThread *t, AValue *frame)
 AValue AGtWrapper(AThread *t, AValue *frame)
 {
     int ret;
-    frame[0] = AWrapObject(t, frame[0], AM_GT);
+    frame[0] = AWrapObject(t, frame[0]);
     ret = AIsGt(t, A_UNWRAP(frame[0]), frame[1]);
     if (ret < 0)
         return AError;
@@ -163,7 +162,7 @@ AValue AGtWrapper(AThread *t, AValue *frame)
 AValue AInWrapper(AThread *t, AValue *frame)
 {
     int val;
-    frame[0] = AWrapObject(t, frame[0], AM_IN);
+    frame[0] = AWrapObject(t, frame[0]);
     val = AIn(t, frame[1], A_UNWRAP(frame[0]));
     if (val == 0)
         return AFalse;
@@ -178,7 +177,7 @@ AValue AInWrapper(AThread *t, AValue *frame)
 /* NOTE: Requires 1 extra temp in the stack frame. */
 AValue ACallWrapper(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], AM_CALL);
+    frame[0] = AWrapObject(t, frame[0]);
     return ACallValueVarArg(t, A_UNWRAP(frame[0]), 0, frame + 1);
 }
 
@@ -189,7 +188,7 @@ AValue AStrWrapper(AThread *t, AValue *frame)
     AValue *args;
     AValue v;
     
-    frame[0] = AWrapObject(t, frame[0], AM__STR);
+    frame[0] = AWrapObject(t, frame[0]);
     
     args = AAllocTemp(t, A_UNWRAP(frame[0]));
     v = AStdStr(t, args);
@@ -205,7 +204,7 @@ AValue AHashWrapper(AThread *t, AValue *frame)
     AValue *args;
     AValue v;
     
-    frame[0] = AWrapObject(t, frame[0], AM__HASH);
+    frame[0] = AWrapObject(t, frame[0]);
     
     args = AAllocTemps(t, 3);
     args[0] = A_UNWRAP(frame[0]);
@@ -222,7 +221,7 @@ AValue AReprWrapper(AThread *t, AValue *frame)
     AValue *args;
     AValue v;
     
-    frame[0] = AWrapObject(t, frame[0], AM__REPR);
+    frame[0] = AWrapObject(t, frame[0]);
     
     args = AAllocTemp(t, A_UNWRAP(frame[0]));
     v = AStdRepr(t, args);
@@ -235,7 +234,7 @@ AValue AReprWrapper(AThread *t, AValue *frame)
 /* Wrapper for the iterator() method. */
 AValue AIterWrapper(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], AM_ITERATOR);
+    frame[0] = AWrapObject(t, frame[0]);
     return AIterator(t, A_UNWRAP(frame[0]));
 }
 
@@ -246,7 +245,7 @@ AValue AIntWrapper(AThread *t, AValue *frame)
     AValue *args;
     AValue v;
     
-    frame[0] = AWrapObject(t, frame[0], AM__INT);
+    frame[0] = AWrapObject(t, frame[0]);
     
     args = AAllocTemps(t, 2);
     args[0] = A_UNWRAP(frame[0]);
@@ -264,7 +263,7 @@ AValue AFloatWrapper(AThread *t, AValue *frame)
     AValue *args;
     AValue v;
     
-    frame[0] = AWrapObject(t, frame[0], AM__FLOAT);
+    frame[0] = AWrapObject(t, frame[0]);
     
     args = AAllocTemp(t, A_UNWRAP(frame[0]));
     v = AStdFloat(t, args);
@@ -280,7 +279,7 @@ AValue AFloatWrapper(AThread *t, AValue *frame)
 /* Wrapper for Range start getter. */
 AValue AStdRangeStart(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     return AValueToMixedObject(A_UNWRAP(frame[0]))->data.range.start;
 }
 
@@ -288,7 +287,7 @@ AValue AStdRangeStart(AThread *t, AValue *frame)
 /* Wrapper for Range stop getter. */
 AValue AStdRangeStop(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     return AValueToMixedObject(A_UNWRAP(frame[0]))->data.range.stop;
 }
 
@@ -299,7 +298,7 @@ AValue AStdRangeStop(AThread *t, AValue *frame)
 /* Wrapper for Pair left getter. */
 AValue APairLeft(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     return AValueToMixedObject(A_UNWRAP(frame[0]))->data.pair.head;
 }
 
@@ -307,7 +306,7 @@ AValue APairLeft(AThread *t, AValue *frame)
 /* Wrapper for Pair right getter. */
 AValue APairRight(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     return AValueToMixedObject(A_UNWRAP(frame[0]))->data.pair.tail;
 }
 

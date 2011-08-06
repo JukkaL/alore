@@ -22,7 +22,7 @@ AValue ATypeSupertype(AThread *t, AValue *frame)
         return AGlobalByNum(AStdObjectNum);
 
     /* Create a wrapper instance for the type object. */
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
 
     /* Examine the base type. */
     type = AValueToType(A_UNWRAP(frame[0]));

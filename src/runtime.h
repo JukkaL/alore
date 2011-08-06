@@ -110,7 +110,7 @@ AValue ACoerce(AThread *t, AOperator op, AValue left, AValue right,
 
 AValue AIsIn(AThread *t, AValue left, AValue right);
 
-AValue AWrapObject(AThread *thread, AValue obj, int member);
+AValue AWrapObject(AThread *thread, AValue obj);
 
 
 AValue AGetInstanceCodeMember(AThread *t, AInstance *inst,

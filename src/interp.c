@@ -184,7 +184,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         /* Create a temporary wrapper instance for values with special object
            representations. */
         if (!AIsInstance(val)) {
-            val = AWrapObject(t, val, key);
+            val = AWrapObject(t, val);
             if (AIsError(val))
                 goto ExceptionRaised;
         }
@@ -1025,7 +1025,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             /* Wrap non-instance objects (primitive types such as Int and
                Str). */
             if (!AIsInstance(object)) {
-                object = AWrapObject(t, object, key);
+                object = AWrapObject(t, object);
                 if (AIsError(object))
                     goto ExceptionRaised;
             }

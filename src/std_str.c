@@ -153,7 +153,7 @@ AValue AStdStr(AThread *t, AValue *frame)
 /* Str length() */
 AValue AStrLengthMethod(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], AM_LENGTH);
+    frame[0] = AWrapObject(t, frame[0]);
     return AMakeInt_ssize_t(t, AStrLen(A_UNWRAP(frame[0])));
 }
 
@@ -163,7 +163,7 @@ AValue AStrCount(AThread *t, AValue *frame)
 {
     Assize_t n;
 
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     AExpectStr(t, frame[1]);
     frame[2] = A_UNWRAP(frame[0]);
 
@@ -178,7 +178,7 @@ AValue AStrUpper(AThread *t, AValue *frame)
     Assize_t begIndex;
     Assize_t len;
 
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     frame[1] = A_UNWRAP(frame[0]);
 
     /* Use optimized alternative implementations for different string
@@ -265,7 +265,7 @@ AValue AStrLower(AThread *t, AValue *frame)
     Assize_t begIndex;
     Assize_t len;    
 
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     frame[1] = A_UNWRAP(frame[0]);
 
     /* Use optimized alternative implementations for different string
@@ -341,7 +341,7 @@ AValue AStrStrip(AThread *t, AValue *frame)
     Assize_t i1, i2, len;
     AValue str;
     
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     str = A_UNWRAP(frame[0]);
 
     len = AStrLen(str);
@@ -371,7 +371,7 @@ AValue AStrFind(AThread *t, AValue *frame)
     Assize_t index;
     Assize_t startIndex;
     
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     
     AExpectStr(t, frame[1]);
 
@@ -396,7 +396,7 @@ AValue AStrIndex(AThread *t, AValue *frame)
 {
     Assize_t index;
     
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     
     AExpectStr(t, frame[1]);
 
@@ -412,7 +412,7 @@ AValue AStrIndex(AThread *t, AValue *frame)
 /* Str format(fmt, ...) */
 AValue AStrFormat(AThread *t, AValue *frame)
 {
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     frame[2] = frame[1];
     frame[1] = A_UNWRAP(frame[0]);
     return AFormat(t, frame + 1);
@@ -425,7 +425,7 @@ AValue AStrStartsWith(AThread *t, AValue *frame)
     Assize_t len, prefixLen, i;
     AValue str;
     
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     str = A_UNWRAP(frame[0]);
     AExpectStr(t, frame[1]);
 
@@ -450,7 +450,7 @@ AValue AStrEndsWith(AThread *t, AValue *frame)
     Assize_t len, suffixLen, i;
     AValue str;
     
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     str = A_UNWRAP(frame[0]);
     AExpectStr(t, frame[1]);
 
@@ -479,7 +479,7 @@ AValue AStrReplace(AThread *t, AValue *frame)
     int ch;
     Assize_t n;
 
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     
     AExpectStr(t, frame[1]);
     AExpectStr(t, frame[2]);
@@ -586,7 +586,7 @@ AValue AStrSplit(AThread *t, AValue *frame)
     AValue ss;
     
     frame[3] = frame[0];
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
 
     frame[4] = AMakeArray(t, 0);
 
@@ -671,7 +671,7 @@ AValue AStrJoin(AThread *t, AValue *frame)
     ssize_t sepLen;
 
     frame[3] = frame[0];
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
 
     sepLen = AStrLen(frame[3]);
     isWide = AIsWideStr(frame[3]) || AIsWideSubStr(frame[3]);
@@ -739,7 +739,7 @@ AValue AStrDecode(AThread *t, AValue *frame)
 {
     ABool isStrict = TRUE;
 
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     
     /* Shift arguments by 1. */
     frame[3] = frame[2];
@@ -785,7 +785,7 @@ AValue AStrEncode(AThread *t, AValue *frame)
 {
     ABool isStrict = TRUE;
     
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     
     if (AIsDefault(frame[2]))
         frame[2] = ACallValue(t, frame[1], 0, frame + 2);
@@ -807,7 +807,7 @@ AValue AStrEncode(AThread *t, AValue *frame)
 AValue AStrIter(AThread *t, AValue *frame)
 {
     frame[1] = frame[0];
-    frame[0] = AWrapObject(t, frame[0], -1);
+    frame[0] = AWrapObject(t, frame[0]);
     
     return ACallValue(t, AGlobalByNum(AStrIterNum), 1, frame + 1);
 }

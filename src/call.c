@@ -192,7 +192,7 @@ AValue ACallMethodByNum(AThread *t, int member, int numArgs, AValue *args)
 
     self = args[0];
     if (!AIsInstance(args[0])) {
-        self = AWrapObject(t, args[0], member);
+        self = AWrapObject(t, args[0]);
         if (AIsError(self))
             return AError;
     }
@@ -286,7 +286,7 @@ AValue ACallMethodIndirect(AThread *t, int member, int numArgs,
 
     self = t->stackPtr[argInd[0]];
     if (!AIsInstance(self)) {
-        self = AWrapObject(t, self, member);
+        self = AWrapObject(t, self);
         if (AIsError(self))
             return AError;
     }

@@ -106,7 +106,7 @@ AValue ASetMemberHelper(AThread *t, AValue *frame, int key)
     AValue funcVal;
     
     if (!AIsInstance(frame[0])) {
-        frame[0] = AWrapObject(t, frame[0], key);
+        frame[0] = AWrapObject(t, frame[0]);
         if (AIsError(frame[0]))
             return AError;
     }
