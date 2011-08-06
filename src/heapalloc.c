@@ -6,20 +6,35 @@
    LICENSE.txt in the distribution.
 */
 
-/* Functions for managing heap blocks. Three different implementations are
-   provided: the first is based on mmap/mremap (for Linux), the second uses
-   VirtualAlloc (for Windows), and the last uses ANSI C memory management
-   functions (malloc and friends). */
+/* Functions for managing heap chunks. The Alore heap is a linked list of these
+   chunks; each chunk may contain multiple blocks, free space, Alore objects
+   etc. Having a large number of chunks slows down certain heap operations and
+   may increase heap fragmentation. Additionally, an extra chunk is used for
+   storing the nursery.
+
+   The garbage collector can only process blocks in the Alore heap. Additional
+   blocks that are not part of the Alore heap may be allocated by C modules,
+   for example, but the garbage collector cannot automatically manage these
+   blocks. Normal Alore objects cannot be stored outside the heap, but objects
+   may contain references to blocks outside the heap.
+
+   Three different implementations are provided: the first is based on
+   mmap/mremap (for Linux, at least), the second uses VirtualAlloc (for
+   Windows), and the last uses ANSI C memory management functions (malloc
+   and friends). The first two are generally more efficient, as they usually
+   result in a more contiguous heap (fewer chunks). */
 
 #include "aconfig.h"
 
 #ifdef HAVE_MREMAP
+/* Includes for mmap/mremap implementation */
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/mman.h>
 #endif
 
 #ifdef A_HAVE_VIRTUAL_ALLOC
+/* Includes for VirtualAlloc implementation */
 #include <windows.h>
 #endif
 
@@ -33,14 +48,49 @@
 #define PAGE_SIZE 4096
 
 
+/* Is ptr a valid address for an object stored in the heap? Parts of the
+   address space may not be used due to the value encoding used. */
 #define IsValidAddress(ptr) \
     ((void *)(ptr) >= A_MEM_START && (void *)(ptr) <= A_MEM_END)
 
+/* Are all addresses in the range ptr .. ptr + size valid? */
 #define IsValidAddressRange(ptr, size) \
     (IsValidAddress(ptr) && IsValidAddress(APtrAdd(ptr, size)))
 
 
+/* Heap chunk management is performed using the functions described below. They
+   always have a suffix based on the implementation variant. Currently these
+   suffixes are superfluous, but in the future they may allow e.g. runtime
+   selection of the heap management strategy.
+
+   void *AMoreHeap_xxx(AHeapBlock *block, unsigned long growSize,
+                       unsigned long *realGrow);
+     Allocate at least growSize bytes of additional space for the heap. If
+     block != NULL, try to allocate the new chunk immediately adjacent to this
+     chunk. Return a pointer to the new chunk, and store the actual size in
+     *realGrow (this may by larger than the requested size). Do not initialize
+     the contents of the chunk in any way.
+     
+   void AFreeHeapBlock_xxx(AHeapBlock *block);
+
+     Free a heap chunk.
+   
+   void *AGrowNursery_xxx(void *oldNursery, unsigned long oldSize,
+                          unsigned long newSize);
+     Grow the nursery. If oldNursery != NULL, try to grow the old nursery.
+     oldSize specifies the current size of the nursery, and newSize specifies
+     the new size (both in bytes); it should be larger than the old size.
+                          
+   void AFreeNursery_xxx(void *nursery, unsigned long size);
+     Free the nursery. The size argument should be equal to the size of the
+     nursery.
+*/
+
+
 #ifdef HAVE_MREMAP
+
+
+/* mmap/mremap-based heap chunk allocation */
 
 
 void *AMoreHeap_mmap(AHeapBlock *block, unsigned long growSize,
@@ -99,6 +149,9 @@ void AFreeNursery_munmap(void *nursery, unsigned long size)
 
 
 #elif defined(A_HAVE_VIRTUAL_ALLOC)
+
+
+/* VirtualAlloc-based implementation */
 
 
 #define MINIMUM_RESERVE (128 * 1024 * 1024)
@@ -199,6 +252,9 @@ void AFreeNursery_VirtualAlloc(void *nursery, unsigned long size)
 
 
 #else /* !HAVE_MREMAP && !A_HAVE_VIRTUAL_ALLOC */
+
+
+/* Portable malloc-based implementation */
 
 
 /* Extra space is requested from the OS in multiples of MIN_HEAP_INCREMENT
