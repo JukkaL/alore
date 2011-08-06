@@ -23,13 +23,20 @@ static AValue IsRangeOrPairEqual(AThread *t, AValue v1, AValue v2);
 static ABool AIsSpecialType(AValue val);
 
 
+/* If val is std::True, return the value 1; if val is False, return the value
+   0; otherwise raise a non-direct type error and return AError. */
 #define CheckBoolean(t, val) \
     ((val) == AFalse ? AZero : (val) == ATrue ? AIntToValue(1) : \
      (val) == AError ? (val) : ARaiseTypeErrorND(t, NULL))
 /* FIX: error message */
+
+/* If val is std::True, return the value 0; if val is False, return the value
+   1; otherwise raise a non-direct type error and return AError. */
 #define CheckBooleanNot(t, val) \
     ((val) == ATrue ? AZero : (val) == AFalse ? AIntToValue(1) : \
      (val) == AError ? (val) : ARaiseTypeErrorND(t, NULL))
+
+/* Convert a C boolean to Int value 1 (if true) or 0 (otherwise). */
 #define BoolToIntValue(b) \
     ((b) ? AIntToValue(1) : AZero)
 
@@ -40,7 +47,8 @@ AValue AWrapObject(AThread *t, AValue obj)
 {
     AInstance *instance;
     ATypeInfo *type;
-    
+
+    /* Instances do not need to be wrapped. */
     if (AIsInstance(obj))
         return obj;
     
@@ -49,7 +57,9 @@ AValue AWrapObject(AThread *t, AValue obj)
     if (instance == NULL)
         return AError;
     obj = *t->tempStack;
-    
+
+    /* Determine the corresponding wrapper class. */
+    /* IDEA: Use InternalType instead. */
     if (AIsStr(obj))
         type = AStrClass;
     else if (AIsShortInt(obj) || AIsLongInt(obj))
@@ -77,14 +87,18 @@ AValue AWrapObject(AThread *t, AValue obj)
         *t->tempStack = AZero;
         return ARaiseMemberErrorND(t, obj, -1);
     }
-                          
+
+    /* Initialize the wrapper object. */
     AInitInstanceBlock(&instance->type, type);
     instance->member[0] = *t->tempStack;
+    
     *t->tempStack = AZero;
     return AInstanceToValue(instance);
 }
 
 
+/* Return the internal wrapper type corresponding to an object. Assume that the
+   object is not an instance. */
 static ATypeInfo *InternalType(AValue obj)
 {
     if (AIsStr(obj))
@@ -117,6 +131,7 @@ static ATypeInfo *InternalType(AValue obj)
 }
 
 
+/* Read the member of an object via a member id. */
 AValue AMemberByNum(AThread *t, AValue val, int member)
 {
     AInstance *inst;
@@ -166,6 +181,8 @@ AValue AMemberByNum(AThread *t, AValue val, int member)
 }
 
 
+/* Set member of inst via slot id memberIndex. Assume that inst is an instance
+   and has the specified slot. */
 ABool ASetMemberDirectND(AThread *t, AValue inst, int memberIndex,
                      AValue newVal)
 {
@@ -263,6 +280,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
 }
 
 
+/* Is val a special type object (e.g. std::Int, std::Str, etc.)? */
 ABool AIsSpecialType(AValue val)
 {
     /* IDEA: There could a special flag in Function objects specifying whether
@@ -393,6 +411,9 @@ AValue IsRangeOrPairEqual(AThread *t, AValue v1, AValue v2)
 }
 
 
+/* Compare two objects using one of the operators ==, !=, <, <=, >, >=. Return
+   Int value 1 if the result is True, 0 if the result if False, or AError if
+   a (non-direct) exception was raised. */
 AValue ACompareOrder(AThread *t, AValue left, AValue right,
                      AOperator operator)
 {
@@ -605,6 +626,8 @@ AValue AIsIn(AThread *t, AValue left, AValue right)
 }
 
 
+/* Look up a member of an instance from the specified member table via a member
+   id. */
 int AGetInstanceMember(AInstance *inst, AMemberTableType memberType,
                        unsigned member)
 {
@@ -633,6 +656,8 @@ int AGetInstanceMember(AInstance *inst, AMemberTableType memberType,
 }
 
 
+/* Get the method with given member id or raise an exception. Return a bound
+   method if successful. */
 AValue AGetInstanceCodeMember(AThread *t, AInstance *inst, unsigned member)
 {
     int methodNum;
@@ -645,6 +670,8 @@ AValue AGetInstanceCodeMember(AThread *t, AInstance *inst, unsigned member)
 }
 
 
+/* Create a bound method object for given member id. Assume that inst is an
+   instance with the given method. */
 AValue ACreateBoundMethod(AThread *t, AValue inst, int methodNum)
 {
     AMixedObject *method;
@@ -667,6 +694,7 @@ AValue ACreateBoundMethod(AThread *t, AValue inst, int methodNum)
 }
 
 
+/* Read the data member of an instance. Raise MemberError if failed. */
 AValue AGetInstanceDataMember(AThread *t, AInstance *inst, unsigned member)
 {
     int memberNum;
@@ -713,6 +741,9 @@ ABool AUpdateContext(AThread *t)
 }
 
 
+/* If a direct exception has been raised at the current thread, dispatch it
+   (i.e. do not return normally but jump directly to the next exception
+   handler). Otherwise, do nothing. */
 void ADispatchException(AThread *t)
 {
     if (AIsOfType(t->exception,
@@ -723,6 +754,8 @@ void ADispatchException(AThread *t)
 }
 
 
+/* Initialize the GL_COMMAND_LINE_ARGS global value to contain an array of
+   command line arguments. */
 ABool ASetupCommandLineArgs(AThread *t, int argc, char **argv)
 {
     AValue array;
@@ -749,6 +782,8 @@ ABool ASetupCommandLineArgs(AThread *t, int argc, char **argv)
 }
 
 
+/* Does sym refer to a valid superclass (i.e. a type that is not a primitive
+   one)? */
 ABool AIsValidSuperClass(ASymbolInfo *sym)
 {
     if (sym->type == ID_GLOBAL_CLASS) {
