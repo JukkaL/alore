@@ -63,8 +63,7 @@
    suffixes are superfluous, but in the future they may allow e.g. runtime
    selection of the heap management strategy.
 
-   void *AMoreHeap_xxx(AHeapBlock *block, unsigned long growSize,
-                       unsigned long *realGrow);
+   void *AMoreHeap_xxx(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow);
      Allocate at least growSize bytes of additional space for the heap. If
      block != NULL, try to allocate the new chunk immediately adjacent to this
      chunk. Return a pointer to the new chunk, and store the actual size in
@@ -75,13 +74,12 @@
 
      Free a heap chunk.
    
-   void *AGrowNursery_xxx(void *oldNursery, unsigned long oldSize,
-                          unsigned long newSize);
+   void *AGrowNursery_xxx(void *oldNursery, Asize_t oldSize, Asize_t newSize);
      Grow the nursery. If oldNursery != NULL, try to grow the old nursery.
      oldSize specifies the current size of the nursery, and newSize specifies
      the new size (both in bytes); it should be larger than the old size.
                           
-   void AFreeNursery_xxx(void *nursery, unsigned long size);
+   void AFreeNursery_xxx(void *nursery, Asize_t size);
      Free the nursery. The size argument should be equal to the size of the
      nursery.
 */
@@ -93,8 +91,7 @@
 /* mmap/mremap-based heap chunk allocation */
 
 
-void *AMoreHeap_mmap(AHeapBlock *block, unsigned long growSize,
-                     unsigned long *realGrow)
+void *AMoreHeap_mmap(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow)
 {
     void *preferred;
     void *new;
@@ -123,8 +120,7 @@ void AFreeHeapBlock_munmap(AHeapBlock *block)
 }
 
 
-void *AGrowNursery_mremap(void *oldNursery, unsigned long oldSize,
-                          unsigned long newSize)
+void *AGrowNursery_mremap(void *oldNursery, Asize_t oldSize, Asize_t newSize)
 {
     void *new;
     
@@ -142,7 +138,7 @@ void *AGrowNursery_mremap(void *oldNursery, unsigned long oldSize,
 }
 
 
-void AFreeNursery_munmap(void *nursery, unsigned long size)
+void AFreeNursery_munmap(void *nursery, Asize_t size)
 {
     munmap(nursery, size);
 }
@@ -161,7 +157,7 @@ static void *ReserveStart;
 static void *ReserveEnd;
 
 
-static void *ReserveVirtual(void *start, unsigned long size)
+static void *ReserveVirtual(void *start, Asize_t size)
 {
     void *ptr;
     
@@ -183,20 +179,20 @@ static void *ReserveVirtual(void *start, unsigned long size)
 }
 
 
-static ABool CommitVirtual(void *start, unsigned long size)
+static ABool CommitVirtual(void *start, Asize_t size)
 {
     return VirtualAlloc(start, size, MEM_COMMIT, PAGE_READWRITE) != NULL;
 }
 
 
-static void FreeVirtual(void *start, unsigned long size)
+static void FreeVirtual(void *start, Asize_t size)
 {
     VirtualFree(start, size, MEM_RELEASE);
 }
 
 
-void *AMoreHeap_VirtualAlloc(struct AHeapBlock_ *block, unsigned long growSize,
-                             unsigned long *realGrow)
+void *AMoreHeap_VirtualAlloc(struct AHeapBlock_ *block, Asize_t growSize,
+                             Asize_t *realGrow)
 {
     void *preferred;
     void *new;
@@ -226,8 +222,8 @@ void AFreeHeapBlock_VirtualAlloc(struct AHeapBlock_ *block)
 }
 
 
-void *AGrowNursery_VirtualAlloc(void *oldNursery, unsigned long oldSize,
-                                unsigned long newSize)
+void *AGrowNursery_VirtualAlloc(void *oldNursery, Asize_t oldSize,
+                                Asize_t newSize)
 {
     if (oldNursery == NULL) {
         /* Reserve space for nursery. */
@@ -245,7 +241,7 @@ void *AGrowNursery_VirtualAlloc(void *oldNursery, unsigned long oldSize,
 }
 
 
-void AFreeNursery_VirtualAlloc(void *nursery, unsigned long size)
+void AFreeNursery_VirtualAlloc(void *nursery, Asize_t size)
 {
     FreeVirtual(nursery, size);
 }
@@ -263,8 +259,7 @@ void AFreeNursery_VirtualAlloc(void *nursery, unsigned long size)
 
 
 #if 0
-void *MoreHeap_sbrk(AHeapBlock *block, unsigned long growSize,
-                    unsigned long *realGrow)
+void *MoreHeap_sbrk(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow)
 {
     AHeapBlock *new;
 
@@ -282,8 +277,8 @@ void *MoreHeap_sbrk(AHeapBlock *block, unsigned long growSize,
 
 static void *Align(char *ptr)
 {
-    int padding;
-    int delta;
+    Assize_t padding;
+    Assize_t delta;
 
     if (ptr == NULL)
         return NULL;
@@ -304,8 +299,7 @@ static void *Unalign(void *ptr)
 }
 
 
-void *AMoreHeap_malloc(AHeapBlock *block, unsigned long growSize,
-                       unsigned long *realGrow)
+void *AMoreHeap_malloc(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow)
 {
     AHeapBlock *new;
 
@@ -328,8 +322,7 @@ void AFreeHeapBlock_free(AHeapBlock *block)
 }
 
 
-void *AGrowNursery_realloc(void *oldNursery, unsigned long oldSize,
-                           unsigned long newSize)
+void *AGrowNursery_realloc(void *oldNursery, Asize_t oldSize, Asize_t newSize)
 {
     void *ptr = Align(realloc(Unalign(oldNursery), newSize + A_ALLOC_UNIT));
 
@@ -341,7 +334,7 @@ void *AGrowNursery_realloc(void *oldNursery, unsigned long oldSize,
 }
 
 
-void AFreeNursery_free(void *nursery, unsigned long size)
+void AFreeNursery_free(void *nursery, Asize_t size)
 {
     free(Unalign(nursery));
 }

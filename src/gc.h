@@ -68,12 +68,12 @@ ABool AGrowUntracedList(AThread *t);
 struct AHeapBlock_;
 
 
-extern void *(*AMoreHeap)(struct AHeapBlock_ *block, unsigned long growSize,
-                         unsigned long *realGrow);
+extern void *(*AMoreHeap)(struct AHeapBlock_ *block, Asize_t growSize,
+                          Asize_t *realGrow);
 extern void (*AFreeHeapBlock)(struct AHeapBlock_ * block);
-extern void *(*AGrowNursery)(void *oldNursery, unsigned long oldSize,
-                            unsigned long newSize);
-extern void (*AFreeNursery)(void *nursery, unsigned long size);
+extern void *(*AGrowNursery)(void *oldNursery, Asize_t oldSize,
+                             Asize_t newSize);
+extern void (*AFreeNursery)(void *nursery, Asize_t size);
 
 
 #define AVerifyUntracedList(t) \

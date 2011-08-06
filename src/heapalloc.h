@@ -15,30 +15,28 @@ struct AHeapBlock_;
 
 #ifdef HAVE_MREMAP
 
-void *AMoreHeap_mmap(struct AHeapBlock_ *block, unsigned long growSize,
-                    unsigned long *realGrow);
+void *AMoreHeap_mmap(struct AHeapBlock_ *block, Asize_t growSize,
+                     Asize_t *realGrow);
 void AFreeHeapBlock_munmap(struct AHeapBlock_ *block);
-void *AGrowNursery_mremap(void *oldNursery, unsigned long oldSize,
-                         unsigned long newSize);
-void AFreeNursery_munmap(void *nursery, unsigned long size);
+void *AGrowNursery_mremap(void *oldNursery, Asize_t oldSize, Asize_t newSize);
+void AFreeNursery_munmap(void *nursery, Asize_t size);
 
 #elif defined(A_HAVE_VIRTUAL_ALLOC)
 
-void *AMoreHeap_VirtualAlloc(struct AHeapBlock_ *block, unsigned long growSize,
-                            unsigned long *realGrow);
+void *AMoreHeap_VirtualAlloc(struct AHeapBlock_ *block, Asize_t growSize,
+                             Asize_t *realGrow);
 void AFreeHeapBlock_VirtualAlloc(struct AHeapBlock_ *block);
-void *AGrowNursery_VirtualAlloc(void *oldNursery, unsigned long oldSize,
-                               unsigned long newSize);
-void AFreeNursery_VirtualAlloc(void *nursery, unsigned long size);
+void *AGrowNursery_VirtualAlloc(void *oldNursery, Asize_t oldSize,
+                                Asize_t newSize);
+void AFreeNursery_VirtualAlloc(void *nursery, Asize_t size);
 
 #else
 
-void *AMoreHeap_malloc(struct AHeapBlock_ *block, unsigned long growSize,
-                      unsigned long *realGrow);
+void *AMoreHeap_malloc(struct AHeapBlock_ *block, Asize_t growSize,
+                       Asize_t *realGrow);
 void AFreeHeapBlock_free(struct AHeapBlock_ *block);
-void *AGrowNursery_realloc(void *oldNursery, unsigned long oldSize,
-                          unsigned long newSize);
-void AFreeNursery_free(void *nursery, unsigned long size);
+void *AGrowNursery_realloc(void *oldNursery, Asize_t oldSize, Asize_t newSize);
+void AFreeNursery_free(void *nursery, Asize_t size);
 
 #endif
 
