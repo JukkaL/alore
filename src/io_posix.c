@@ -65,8 +65,10 @@ static ABool FileExists(const char *path);
 #endif
 
 
+/* File create(path, ...) */
 AValue AFileCreate(AThread *t, AValue *frame)
 {
+    /* IDEA: Split this into multiple functions. */
     AInstance *inst;
     ABool isAppend;
     ABool isProtected;
@@ -124,11 +126,12 @@ AValue AFileCreate(AThread *t, AValue *frame)
 
 #ifdef A_HAVE_POSIX
     {
+        /* Posix implementation */
         int fileNum;
         int fileFlags;
         int fileMode;
 
-        /* Call superclass constructor. */
+        /* Call superclass (Stream) constructor. */
         frame[1] = frame[0];
         if (AIsError(AStreamCreate(t, frame + 1)))
             return AError;
@@ -167,11 +170,13 @@ AValue AFileCreate(AThread *t, AValue *frame)
     }
 #else
     {
+        /* Generic portable implementation */
+        /* NOTE: The protected flag is simply ignored. */
         char mode[4];
         FILE *file;
         AValue buf;
         
-        /* Call superclass constructor. */
+        /* Call superclass (Stream) constructor. */
         frame[1] = frame[0];
         if (AIsError(AStreamCreate(t, frame + 1)))
             return AError;
@@ -224,6 +229,7 @@ AValue AFileCreate(AThread *t, AValue *frame)
 }
 
 
+/* File close() */
 AValue AFileClose(AThread *t, AValue *frame)
 {
     int isListed;
@@ -242,6 +248,8 @@ AValue AFileClose(AThread *t, AValue *frame)
 }
 
 
+/* Implementation of close() for File-like classes. The method can be
+   A_FILE_METHOD (for File) or A_SOCKET_METHOD (for Socket). */
 AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
 {
     int retVal;
@@ -259,6 +267,7 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
 
 #if defined(A_HAVE_WINDOWS) && defined(A_HAVE_SOCKET_MODULE)
     if (method == A_SOCKET_METHOD) {
+        /* Windows Socket implementation */
         AAllowBlocking();
         retVal = closesocket(AGetInt(t, AMemberDirect(frame[0], A_FILE_ID)));
         AEndBlocking();
@@ -272,6 +281,7 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
 #endif
     {
 #ifdef A_HAVE_POSIX
+        /* Posix implementation */
         AAllowBlocking();
         retVal = close(AGetInt(t, AMemberDirect(frame[0], A_FILE_ID)));
         AEndBlocking();
@@ -281,6 +291,7 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
         else
             return ANil;
 #else
+        /* Generic portable implementation (for files only) */
         {
             FILE *file;
             GetFILE(frame[0], &file);
@@ -298,12 +309,15 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
 }
 
 
+/* File _write(*args) */
 AValue AFile_Write(AThread *t, AValue *frame)
 {
     return AFile_WriteWithMethod(t, frame, A_FILE_METHOD);
 }
 
 
+/* Implementation of _write() for File-like classes. The method can be
+   A_FILE_METHOD (for File) or A_SOCKET_METHOD (for Socket). */
 AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
 {
     AInstance *inst;
@@ -340,7 +354,8 @@ AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
             frame[2] = AArrayItem(frame[1], i);
 
           TryAgain:
-            
+
+            /* Handle different kinds of string. */
             if (AIsNarrowStr(frame[2])) {
                 s = AValueToStr(frame[2])->elem;
                 len = AGetStrLen(AValueToStr(frame[2]));
@@ -397,6 +412,7 @@ AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
 }
 
 
+/* File _read(n) */
 AValue AFile_Read(AThread *t, AValue *frame)
 {
     /* Flush all output buffers. This is done mainly so that any data written
@@ -411,6 +427,8 @@ AValue AFile_Read(AThread *t, AValue *frame)
 }
 
 
+/* Implementation of _read() for File-like classes. The method can be
+   A_FILE_METHOD (for File) or A_SOCKET_METHOD (for Socket). */
 AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
 {
     AInstance *inst;
@@ -448,6 +466,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
 
 #if defined(A_HAVE_WINDOWS) && defined(A_HAVE_SOCKET_MODULE)
     if (method == A_SOCKET_METHOD) {
+        /* Windows socket implementation */
         AAllowBlocking();
         numRead = recv(fileNum, block + sizeof(AValue), readLen, 0);
         AEndBlocking();
@@ -458,7 +477,8 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
     } else
 #endif
     {
-#ifdef A_HAVE_POSIX    
+#ifdef A_HAVE_POSIX
+        /* Posix implementation */
         AAllowBlocking();
         numRead = read(fileNum, block + sizeof(AValue), readLen);
         AEndBlocking();
@@ -473,6 +493,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
                 return ARaiseErrnoIoError(t, NULL);
         }
 #else
+        /* Generic portable implementation (only for files) */
         {
             FILE *file;
             GetFILE(frame[0], &file);
@@ -528,11 +549,15 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
 }
 
 
+/* Write a single block of data to a File-like object. The method argument can
+   be A_FILE_METHOD (for File) or A_SOCKET_METHOD (for Socket). This performs
+   the actual writing for _write(). */
 static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
-                       int method)
+                        int method)
 {
 #if defined(A_HAVE_WINDOWS) && defined(A_HAVE_SOCKET_MODULE)    
     if (method == A_SOCKET_METHOD) {
+        /* Windows socket implementation */
         int socket = AValueToInt(AValueToInstance(file)->member[A_FILE_ID]);
         
         do {
@@ -557,6 +582,7 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
 #endif
     {
 #ifdef A_HAVE_POSIX
+        /* Posix implementation */
         int fileNum = AValueToInt(AValueToInstance(file)->member[A_FILE_ID]);
         
         do {
@@ -585,6 +611,7 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
         
         return TRUE;
 #else
+        /* Generic portable implementation (for files only) */
         FILE *f;
         
         GetFILE(file, &f);
@@ -618,6 +645,7 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
 }
 
 
+/* File seek(n) */
 AValue AFileSeek(AThread *t, AValue *frame)
 {
     AInt64 offset;
@@ -677,6 +705,7 @@ AValue AFileSeek(AThread *t, AValue *frame)
 }
 
 
+/* File pos() */
 AValue AFilePos(AThread *t, AValue *frame)
 {
     int delta = 0;
@@ -721,6 +750,7 @@ AValue AFilePos(AThread *t, AValue *frame)
 }
 
 
+/* File size() */
 AValue AFileSize(AThread *t, AValue *frame)
 {
     /* Flush if output stream. */
@@ -776,6 +806,7 @@ AValue AFileSize(AThread *t, AValue *frame)
 }
 
 
+/* File __handle() */
 AValue AFile__Handle(AThread *t, AValue *frame)
 {
     /* IDEA: Check that the file is open, as the returned value will otherwise
@@ -813,6 +844,7 @@ static ABool CreateTextStreamWrapper(AThread *t, int wrapperNum, int origNum,
 }
 
 
+/* io::Main() */
 AValue AIoMain(AThread *t, AValue *frame)
 {
     int i;
@@ -827,6 +859,7 @@ AValue AIoMain(AThread *t, AValue *frame)
     frame[1] = AGlobalByNum(AInputNum);
     frame[2] = AGlobalByNum(ANarrowNum);
 
+    /* Determine StdIn buffering mode. */
 #ifdef A_HAVE_POSIX
     if (isatty(STDIN_FILENO))
         stdinBuf = ALineBufferedNum;
@@ -838,6 +871,7 @@ AValue AIoMain(AThread *t, AValue *frame)
 #endif
     frame[3] = AGlobalByNum(stdinBuf);
 
+    /* Initialize io::RawStdIn. */
 #ifdef A_HAVE_POSIX    
     v = CreateFileObject(t, frame, STDIN_FILENO);
 #else
@@ -850,6 +884,7 @@ AValue AIoMain(AThread *t, AValue *frame)
 
     frame[1] = AGlobalByNum(AOutputNum);
 
+    /* Determine StdOut buffering mode. */
 #ifdef A_HAVE_POSIX    
     if (isatty(STDOUT_FILENO))
         stdoutBuf = ALineBufferedNum;
@@ -861,6 +896,7 @@ AValue AIoMain(AThread *t, AValue *frame)
 #endif
     frame[3] = AGlobalByNum(stdoutBuf);
 
+    /* Initialize io::RawStdOut. */
 #ifdef A_HAVE_POSIX    
     v = CreateFileObject(t, frame, STDOUT_FILENO);
 #else
@@ -874,6 +910,7 @@ AValue AIoMain(AThread *t, AValue *frame)
 
     frame[3] = AGlobalByNum(AUnbufferedNum);
 
+    /* Initialize io::RawStdErr. */
 #ifdef A_HAVE_POSIX    
     v = CreateFileObject(t, frame, STDERR_FILENO);
 #else
@@ -964,6 +1001,8 @@ static AValue CreateFileObject(AThread *t, AValue *frame, FILE *file)
 #endif
 
 
+/* Add a stream to the list of output streams. All streams in the list are
+   flushed at program exit. */
 static ABool AddOutputStreamList(AThread *t, AValue *file)
 {
     ALockStreams();
@@ -989,6 +1028,7 @@ static ABool AddOutputStreamList(AThread *t, AValue *file)
 }
 
 
+/* Remove a stream from the output stream list. */
 static ABool RemoveOutputStreamList(AThread *t, AValue *file)
 {
     AValue f;
