@@ -25,12 +25,21 @@
 #include "memberid.h"
 
 
+/* Only include the heap checker if we have a build with extra debugging
+   features. */
+
+
 #ifdef A_DEBUG
 
 extern int NumFreezableThreads;
 
 
+/* Static buffer used by FMT* macros */
 static char FmtBuffer[128];
+
+/* Helper macros that call sprintf with FmtBuffer as the target and return
+   FmtBuffer. Be careful with these since they use a single static buffer!
+   The macros only differ on the number of arguments they accept. */
 #define FMT(fmt, val) (sprintf(FmtBuffer, fmt, val), FmtBuffer)
 #define FMT2(fmt, val, val2) (sprintf(FmtBuffer, fmt, val, val2), FmtBuffer)
 #define FMT3(fmt, val, val2, val3) \
@@ -80,6 +89,10 @@ ABool ADebug_MemoryTrace = 0;
 ABool ADebug_MemoryDump = 0;
 
 
+/* Map from a gc-visible pointer to a block type id. Used to track that all
+   pointers to a block have the same type and that there are no gc-visible
+   pointers to the middle of a block. Implemented as a bitmap with
+   BITS_PER_ENTRY bits per 8 bytes (or block size granularity). */
 static unsigned char *BlockMap;
 static void *BlockMapStartOffset;
 static void *BlockMapEndOffset;
@@ -92,11 +105,17 @@ enum {
     OTHER_BLOCK
 };
 
+/* Bits per entry in the block type map. This must be enough to encode all
+   block types. */
 #define BITS_PER_ENTRY 2
 
 #define IND(p) APtrDiff((p), BlockMapStartOffset)
+/* Query the type of a heap block using the block type map. Do not check that
+   the pointer is valid. */
 #define BlockType(p) \
     ((BlockMap[IND(p) >> 5] >> (((IND(p) & 31) >> 3) * 2)) & 3)
+/* Set the type of a heap block in the block type map. Do not check that the
+   pointer is valid. */
 #define SetBlockType(p, t) \
     (BlockMap[IND(p) >> 5] |= ((t) << (((IND(p) & 31) >> 3) * 2)))
 
@@ -125,6 +144,7 @@ void ADebugVerifyMemory_F(void)
 
     b = AHeap;
 
+    /* Check one heap chunk at a time. */
     while (b != NULL) {
         AValue *data = AGetHeapBlockData(b);
         AValue *end = AGetHeapBlockDataEnd(b);
@@ -136,7 +156,7 @@ void ADebugVerifyMemory_F(void)
         if (ADebug_MemoryDump)
             ADebugPrint(("  Heap block at %s\n", FMT("%p", b)));
         
-        /* Iterate over all the blocks in the heap block and check the blocks
+        /* Iterate over all the blocks in the heap chunk and check the blocks
            individually. */
         while (data < end) {
             prevData = data;
@@ -161,7 +181,8 @@ void ADebugVerifyMemory_F(void)
         b = b->next;
     }
 
-    /* Verify that the free lists have the correct number of free blocks. */
+    /* Verify that the free lists have the correct number of free blocks. We
+       got the correct numbers by traversing the entire heap. */
     VerifyFreeLists(numFreeBlocks);
 
     VerifyGlobals();
@@ -176,7 +197,8 @@ void ADebugVerifyMemory_F(void)
     }
     
     /* IDEA: verify symbol table */
-    /* IDEA: verify modules and other global stuff, including dynamic modules */
+    /* IDEA: verify modules and other global stuff, including dynamic
+       modules */
     /* IDEA: verify static blocks? */
 
     VerifyNursery();
@@ -191,6 +213,10 @@ void ADebugVerifyMemory_F(void)
 }
 
 
+/* Create an empty heap block type map that covers the current heap. The
+   block map has to be re-created if the heap size changes, but this is not
+   necessary during a single heap check since it cannot change the size of the
+   heap. */
 void InitBlockMap(void)
 {
     AHeapBlock *b;
@@ -221,6 +247,7 @@ void InitBlockMap(void)
 }
 
 
+/* Free the block map. */
 void FreeBlockMap(void)
 {
     free(BlockMap);
@@ -396,6 +423,7 @@ void CheckValueBlock(AValue *ptr)
 }
 
 
+/* Check the contents of an instance block. */
 void CheckInstanceBlock(AValue *ptr)
 {
     AInstance *inst;
@@ -428,6 +456,7 @@ void CheckInstanceBlock(AValue *ptr)
 }
 
 
+/* Check the contents of a mixed block. */
 void CheckMixedBlock(AValue *ptr)
 {
     SetAndCheckBlockType(ptr, OTHER_BLOCK);
@@ -436,6 +465,8 @@ void CheckMixedBlock(AValue *ptr)
 }
 
 
+/* Set the type of a block. Also see if the block type had been set previously,
+   and verify that the new type matches the previous one. */
 void SetAndCheckBlockType(AValue *ptr, int type)
 {
     int prevType = BlockType(ptr);
@@ -445,6 +476,9 @@ void SetAndCheckBlockType(AValue *ptr, int type)
 }
 
 
+/* Check that the type of a block referred to by a value is correct. Accept
+   also an unknown block type. As a side effect, set the block type to the
+   expected value. */ 
 void CheckValueTargetType(AValue v)
 {
     int type;
@@ -477,6 +511,8 @@ void CheckValueTargetType(AValue v)
 }
 
 
+/* Report an event for memory location ptr. The msg argument describes the
+   event. This can be used for tracing memory events. */
 void ADebug_MemoryEvent(void *ptr, char *msg)
 {
     if (ADebug_MemoryTrace || ptr == ADebug_WatchLocation)
@@ -553,6 +589,9 @@ void VerifyValue(AValue v)
 }
 
 
+/* Return a pointer to the next block after the given block. Assume that data
+   points to the start of a heap-allocated gc-visible block (i.e. block
+   header). */
 AValue *NextBlock(AValue *data)
 {
     if (data == ACurFreeBlock && ACurFreeBlockSize > 0)
@@ -577,6 +616,7 @@ AValue *NextBlock(AValue *data)
 }
 
 
+/* Get the size of a gc-visible block based on the block header. */
 AValue GetAnyBlockSize(AValue *data)
 {
     if (AIsNonPointerBlock(data))
@@ -594,6 +634,7 @@ AValue GetAnyBlockSize(AValue *data)
 }
 
 
+/* Display information about a block (location, type and size). */
 void DumpBlock(AValue *data)
 {
     ADebugPrint_F("%s: ", FMT("%p", data));
@@ -619,6 +660,7 @@ void DumpBlock(AValue *data)
 }
 
 
+/* Check thread-related information. */
 void VerifyThreads(void)
 {
     AThread *t;
@@ -861,6 +903,7 @@ void VerifyGlobals(void)
 }
 
 
+/* Check a type info structure. */
 void VerifyClass(ATypeInfo *t)
 {
     int i;
@@ -1000,6 +1043,7 @@ void VerifyClass(ATypeInfo *t)
 }
 
 
+/* Dump a type. */
 void DumpClass(ATypeInfo *t)
 {
     ADebugPrint_F("\t  Dump of class %q:\n", t->sym);
@@ -1026,6 +1070,7 @@ void DumpClass(ATypeInfo *t)
 }
 
 
+/* Dump a type member hash table. */
 void DumpMemberHashTable(ATypeInfo *t, AMemberTableType tt, char *msg)
 {
     int i;
@@ -1107,6 +1152,8 @@ void VerifyFinalizeInstances(void)
 }
 
 
+/* Check the nursery. Only blocks whose type is known can be checked in
+   the nursery; others have to be skipped. */
 void VerifyNursery(void)
 {
     void *p;
@@ -1196,6 +1243,7 @@ void *VerifyBlockReferences(void *p)
 }
 
 
+/* Does p point to a free block? */ 
 ABool IsFreeBlock(AValue *p)
 {
     if (AGCState == A_GC_SWEEP && !AIsInNursery(p) && !AIsSwept(p)
@@ -1206,6 +1254,7 @@ ABool IsFreeBlock(AValue *p)
 }
 
 
+/* If cond is FALSE, display message. */
 ABool Assert(ABool cond, char *msg)
 {
     if (!cond)
