@@ -15,8 +15,8 @@
 #include <stdlib.h>
 
 
+/* Usage string shown at the start of cmd line argument help message. */
 #define USAGE "Usage: alore [option] ... programfile [arg] ..."
-#define MORE_INFO "Type \"alore -h\" for a list of options."
 
 
 static void InvalidOption(const char *opt);
@@ -26,6 +26,7 @@ static void ShowVersion(void);
 static ABool ParseSize(const char *s, unsigned long *size);
 
 
+/* The main function of the Alore interpreter. */
 int main(int argc, char **argv)
 {
     int num;
@@ -35,6 +36,10 @@ int main(int argc, char **argv)
     char *file;
     char *interp;
     unsigned long maxHeap = 0;
+
+    /* Some options are only available in builds with extra debugging
+       features. */ 
+    
 #ifdef A_DEBUG    
     ABool checksDefined = FALSE;
     ABool checkFirstDefined = FALSE;
@@ -62,10 +67,12 @@ int main(int argc, char **argv)
             break;
 
         case '-':
+            /* Long argument with -- prefix. */
             if (strcmp(argv[0], "--version") == 0) {
                 ShowVersion();
                 break;
             } else if (strcmp(argv[0], "--max-heap") == 0 && argc > 1) {
+                /* Set the maximum size of the heap. */
                 ABool status = ParseSize(argv[1], &maxHeap);
                 if (!status)
                     InvalidOptionValue(argv[0], argv[1]);
@@ -87,6 +94,7 @@ int main(int argc, char **argv)
             break;
             
         case 'a': {
+            /* Set up debug watch location (FIX: what does it mean) */
             unsigned long ptr;
             argv++;
             argc--;
@@ -98,9 +106,11 @@ int main(int argc, char **argv)
         }
 
         case 'D':
+            /* Set periodic instruction checking options. */
             checksDefined = TRUE;
             switch (argv[0][2]) {
             case 'n':
+                /* Debug every Nth instruction. */
                 argv++;
                 argc--;
                 ADebugCheckEveryNth = atoi(argv[0]);
@@ -108,12 +118,14 @@ int main(int argc, char **argv)
                     ADebugCheckEveryNth = 1;
                 break;
             case 'f':
+                /* Set first instruction to check. */
                 argv++;
                 argc--;
                 ADebugCheckFirst = atoi(argv[0]);
                 checkFirstDefined = TRUE;
                 break;
             case 'l':
+                /* Set last instruction to check. */
                 argv++;
                 argc--;
                 ADebugCheckLast = atoi(argv[0]);
@@ -131,6 +143,7 @@ int main(int argc, char **argv)
     }
         
     if (argc >= 1) {
+        /* Get the name of the program to run. */
         file = argv[0];
         argv++;
         argc--;
@@ -184,6 +197,8 @@ int main(int argc, char **argv)
 }
 
 
+/* Dislay error message about invalid option. Also show general help
+   message. */
 static void InvalidOption(const char *opt)
 {
     if (opt != NULL)
@@ -192,6 +207,7 @@ static void InvalidOption(const char *opt)
 }
 
 
+/* Display error message about invalid value for an option. */
 static void InvalidOptionValue(const char *opt, const char *value)
 {
     if (opt != NULL)
@@ -201,6 +217,7 @@ static void InvalidOptionValue(const char *opt, const char *value)
 }
 
 
+/* Show command line option help and exit with code 1. */
 static void ShowHelp(void)
 {
     fprintf(stderr, "%s\n", USAGE);
@@ -218,6 +235,7 @@ static void ShowHelp(void)
 }
 
 
+/* Show version number and exit with code 0. */
 static void ShowVersion(void)
 {
     printf("Alore %s\n"
