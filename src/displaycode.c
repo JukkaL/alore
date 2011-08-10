@@ -382,7 +382,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
 
                 while (argc > 0) {
                     if (argc == 1 && isVarArg)
-                        Append(buf, "@");
+                        Append(buf, "*");
                     Append(buf, "l%d", code[i++]);
                     argc--;
                     if (argc > 0)
