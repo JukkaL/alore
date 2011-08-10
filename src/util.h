@@ -18,9 +18,10 @@
 AValue ARaiseInternalError(void);
 
 
-A_APIFUNC int AFormatMessage(char *msg, int maxLen, const char *fmt, ...);
-A_APIFUNC int AFormatMessageVa(char *msg, int maxLen, const char *fmt,
-                               va_list args);
+A_APIFUNC Assize_t AFormatMessage(char *buf, Assize_t bufLen,
+                                  const char *fmt, ...);
+A_APIFUNC Assize_t AFormatMessageVa(char *buf, Assize_t bufLen,
+                                    const char *fmt, va_list args);
 
 
 int AEndsWith(const char *str, const char *prefix);

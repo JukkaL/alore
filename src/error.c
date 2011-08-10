@@ -19,13 +19,20 @@
 #include <stdarg.h>
 
 
+/* Pointers to first and last generated compile errors. */
 ACompileError *AFirstError;
 ACompileError *ALastError;
 
 
+/* Keep track of whether we have run out of memory during compilation at some
+   point. */
 ABool AIsOutOfMemoryError;
+/* Keep track whether we have reported an unexpected end of file error. This is
+   used to avoid reporting duplicate error messages. */
 ABool AIsEofError;
 
+
+/* Compile error messages */
 
 const char ErrOutOfMemory[] = "Out of memory during compilation";
 const char ErrInvalidCast[] = "Invalid cast";
@@ -94,6 +101,7 @@ static const char StringLiteral[]  = "string literal";
 static const char NumericLiteral[] = "numeric literal";
 static const char EndOfLine[]       = "end of line";
 
+/* Messages for reporting context of compile error messages */
 static const char ErrFrom[]        = "          imported in %f, line %d%s";
 static const char ErrInFunction[]  = "%f: In function \"%i\":";
 static const char ErrInClass[]     = "%f: In class \"%i\":";
@@ -106,6 +114,8 @@ static const char ErrInFileImportedFrom[] =
                                    "In module imported in %f, line %d%s";
 
 
+/* String representations of non-alphanumeric operators. These are used when
+   generating error messages. */
 /* NOTE: You may need to update these when modifying ATokenType. */ 
 static const char OperatorId[TT_COLON - TT_PLUS + 1][3] = {
     "+",    /* TT_PLUS */
@@ -128,6 +138,7 @@ static const char OperatorId[TT_COLON - TT_PLUS + 1][3] = {
     ":"     /* TT_COLON */
 };
 
+/* String representations of punctuators. */
 /* NOTE: You may need to update these when modifying ATokenType. */ 
 static const char PunctuatorId[TT_SCOPEOP - TT_COMMA + 1][4] = {
     ",", "(", ")", "[", "]", "=", "+=", "-=", "*=", "/=", "**=", ".", "::"
@@ -135,18 +146,23 @@ static const char PunctuatorId[TT_SCOPEOP - TT_COMMA + 1][4] = {
 
 
 static void GenerateErrorVa(int line, const char *format, va_list args);
-static int CopyId(char *msg, int i, int maxLen, ASymbolInfo *sym);
-static int CopyFullyQualifiedId(char *msg, int i, int max, ASymbolInfo *sym);
-static int CopyString(char *msg, int i, int maxLen, const char *str);
-static int CopyToken(char *msg, int i, int maxLen, AToken *tok);
+static Assize_t CopyId(char *buf, Assize_t i, Assize_t maxLen,
+                       ASymbolInfo *sym);
+static Assize_t CopyFullyQualifiedId(char *buf, Assize_t i, Assize_t max,
+                                     ASymbolInfo *sym);
+static Assize_t CopyString(char *buf, Assize_t i, Assize_t maxLen,
+                           const char *str);
+static Assize_t CopyToken(char *buf, Assize_t i, Assize_t maxLen, AToken *tok);
 static char *TrimFileName(char *fnam);
 
 
-/* An upper bound for the number of digits in an int value converted to a
-   decimal string. */
+/* An upper bound for the number of digits in a C int value converted to a
+   decimal string. This is enough for 64-bit ints. */
 #define MAX_INT_DIGITS 32
 
 
+/* Generate a compile error at a specific line of the current file. The format
+   argument and the rest of the arguments are similar to AFormatMessage. */ 
 void AGenerateError(int line, const char *format, ...)
 {
     va_list args;
@@ -157,6 +173,7 @@ void AGenerateError(int line, const char *format, ...)
 }
 
 
+/* This is an alternative to AGenerateError() above. */
 void GenerateErrorVa(int line, const char *format, va_list args)
 {
     /* FIX: use AllocStatic instead? */
@@ -228,6 +245,8 @@ AToken *AGenerateParseError(AToken *tok)
 }
 
 
+/* Generate a parse error message. If the tok argument points to a newline,
+   also skip it. Return tok or the token after tok. */
 AToken *AGenerateParseErrorSkipNewline(AToken *tok)
 {
     tok = AGenerateParseError(tok);
@@ -238,6 +257,8 @@ AToken *AGenerateParseErrorSkipNewline(AToken *tok)
 }
 
 
+/* Generate a compile error. Return the next token after tok if tok points to
+   a newline token. Return tok otherwise. */
 AToken *AGenerateErrorSkipNewline(AToken *tok, const char *message)
 {
     AGenerateError(tok->lineNumber, message);
@@ -247,6 +268,8 @@ AToken *AGenerateErrorSkipNewline(AToken *tok, const char *message)
 }
 
 
+/* Generate an expression parse error. Return the next newline token. Try to
+   generate a useful error message for unbalanced parentheses. */ 
 AToken *AGenerateExpressionParseError(AToken *tok)
 {
     if (tok->type != TT_RPAREN)
@@ -262,26 +285,22 @@ AToken *AGenerateExpressionParseError(AToken *tok)
 }       
 
 
+/* Generate an out of memory error during compilation. */
 void AGenerateOutOfMemoryError(void)
 {
     AIsOutOfMemoryError = TRUE;
 }
 
 
-int AFormatMessage(char *msg, int maxLen, const char *fmt, ...)
-{
-    va_list args;
-    int n;
-    
-    va_start(args, fmt);
-    n = AFormatMessageVa( msg, maxLen, fmt, args);
-    va_end(args);
+/* Format a message to a buffer based on a format, which may have formatting
+   sequences starting with %. This is similar to sprintf, but this supports
+   data types used in the Alore implementation.
 
-    return n;
-}
+   Store the formatted message at buf. Truncate the message so that it fits
+   within bufLen characters (including the null terminator). Return the length
+   of the formatter message.
 
-
-/* Known format specifiers:
+   Recognized formatting sequences:
      %i identifier (SymbolInfo *)
      %q fully qualified identifier (SymbolInfo *) [but omit std:: prefix]
      %m module name (ModuleId *)
@@ -295,9 +314,26 @@ int AFormatMessage(char *msg, int maxLen, const char *fmt, ...)
      %T type of value (AValue)
      %% %
   */
-int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
+Assize_t AFormatMessage(char *buf, Assize_t bufLen, const char *fmt, ...)
 {
-    int i = 0;
+    va_list args;
+    Assize_t n;
+    
+    va_start(args, fmt);
+    n = AFormatMessageVa(buf, bufLen, fmt, args);
+    va_end(args);
+
+    return n;
+}
+
+
+/* This is the implementation of AFormatMessage above. This is also an
+   alternative to the above function. See AFormatMessage for a description of
+   the arguments and the return value. */
+Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
+                          va_list args)
+{
+    Assize_t i = 0;
 
     /* Make sure that there will be enough room for the null terminator. */
     maxLen--;
@@ -309,32 +345,39 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
             fmt++;
             switch (*fmt++) {
             case 'i':
+                /* Short identifier */
                 i = CopyId(msg, i, maxLen, va_arg(args, ASymbolInfo *));
                 break;
 
             case 'q':
+                /* Fully qualified identifier */
                 i = CopyFullyQualifiedId(msg, i, maxLen,
                                          va_arg(args, ASymbolInfo *));
                 break;
                 
             case 'm':
+                /* Module name */
                 i = ACopyModName(msg, i, maxLen, va_arg(args, AModuleId *));
                 break;
                 
             case 't':
+                /* Token */
                 i = CopyToken(msg, i, maxLen, va_arg(args, AToken *));
                 break;
 
             case 's':
+                /* String */
                 i = CopyString(msg, i, maxLen, va_arg(args, char *));
                 break;
 
             case 'f':
+                /* File name */
                 i = CopyString(msg, i, maxLen,
                                TrimFileName(va_arg(args, char *)));
                 break;
 
             case 'F': {
+                /* Function name */
                 AFunction *func = va_arg(args, AFunction *);
                 if (func->sym == NULL)
                     i += AFormatMessage(msg + i, maxLen - i, "at main level");
@@ -371,6 +414,7 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
             }
 
             case 'M': {
+                /* Member name */
                 int key = va_arg(args, int);
                 
                 if (key == AM_NONE)
@@ -386,6 +430,7 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
             }
 
             case 'd': {
+                /* Integer */
                 /* IDEA: This is brain-dead. Use sprintf instead. */
                 
                 char str[MAX_INT_DIGITS];
@@ -414,6 +459,7 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
             }
 
             case 'p': {
+                /* void * */
                 void *ptr = va_arg(args, void *);
                 char s[128];
                 sprintf(s, "%p", ptr);
@@ -422,6 +468,7 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
             }
 
             case 'T': {
+                /* Type of value */
                 AValue val = va_arg(args, AValue);
                 char type[256];
                 
@@ -472,10 +519,12 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
             }                
                 
             case '%':
+                /* Literal '%' */
                 msg[i++] = '%';
                 break;
 
             default:
+                /* Unrecognized character */
                 fmt--;
                 break;
             }
@@ -486,27 +535,31 @@ int AFormatMessageVa(char *msg, int maxLen, const char *fmt, va_list args)
 }
 
 
-static int CopyId(char *msg, int i, int max, ASymbolInfo *sym)
+/* Append a short identifier to a buffer at index i. Return the length of the
+   buffer. */
+static Assize_t CopyId(char *buf, Assize_t i, Assize_t max, ASymbolInfo *sym)
 {
-    int result;
+    Assize_t result;
     
     ALockInterpreter();
-    result = CopyString(msg, i, max, (char *)AGetSymbolName(sym));
+    result = CopyString(buf, i, max, (char *)AGetSymbolName(sym));
     AUnlockInterpreter();
     
     return result;
 }
 
 
-int ACopyModName(char *msg, int i, int max, AModuleId *mod)
+/* Append a module name to a buffer at index i. Return the length of the
+   buffer. */
+Assize_t ACopyModName(char *buf, Assize_t i, Assize_t max, AModuleId *mod)
 {
     int partInd;
 
     for (partInd = 0; partInd < mod->numParts; partInd++) {
-        i = CopyId(msg, i, max, mod->id[partInd]);
+        i = CopyId(buf, i, max, mod->id[partInd]);
         if (partInd < mod->numParts - 1 && i + 1 < max) {
-            msg[i++] = ':';
-            msg[i++] = ':';
+            buf[i++] = ':';
+            buf[i++] = ':';
         }
     }
 
@@ -514,25 +567,30 @@ int ACopyModName(char *msg, int i, int max, AModuleId *mod)
 }
 
 
-static int CopyFullyQualifiedId(char *msg, int i, int max, ASymbolInfo *sym)
+/* Append a fully qualified name to a buffer at index i. Return the length of
+   the buffer. */
+static Assize_t CopyFullyQualifiedId(char *buf, Assize_t i, Assize_t max,
+                                     ASymbolInfo *sym)
 {
     if (sym->sym != NULL && sym->sym->type != ID_GLOBAL_MODULE_MAIN) {
-        int j = CopyFullyQualifiedId(msg, i, max, sym->sym);
+        int j = CopyFullyQualifiedId(buf, i, max, sym->sym);
         /* Omit std:: prefix. */
-        if (j - i != 3 || strncmp(msg + i, "std", 3) != 0) {
+        if (j - i != 3 || strncmp(buf + i, "std", 3) != 0) {
             i = j;
             if (i + 1 < max) {
-                msg[i++] = ':';
-                msg[i++] = ':';
+                buf[i++] = ':';
+                buf[i++] = ':';
             }
         }
     }
 
-    return CopyId(msg, i, max, sym);
+    return CopyId(buf, i, max, sym);
 }
 
 
-static int CopyToken(char *msg, int i, int max, AToken *tok)
+/* Append a description of a token to a buffer at index i. Return the length of
+   the buffer. */
+static Assize_t CopyToken(char *msg, Assize_t i, Assize_t max, AToken *tok)
 {
     ATokenType type = tok->type;
     
@@ -588,18 +646,22 @@ static int CopyToken(char *msg, int i, int max, AToken *tok)
     return i;       
 }
 
-    
-static int CopyString(char *msg, int i, int max, const char *str)
+
+/* Append a string to a buffer at index i. Return the length of the buffer. */
+static Assize_t CopyString(char *buf, Assize_t i, Assize_t max,
+                           const char *str)
 {
     while (*str != '\0' && i < max)
-        msg[i++] = *str++;
+        buf[i++] = *str++;
 
     return i;
 }
 
 
+/* Format and display generated compile error messages. Call the given
+   function to display the messages. */
 ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
-                          void *data)
+                            void *data)
 {
     char buffer[AError_STRING_MAX_LEN];
     
@@ -612,11 +674,13 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
     ACompileError *lastErr = ALastError;
 
     if (curErr != NULL) {
+        /* Loop over the error messages. */
         for (;;) {
             if (curErr->numFiles > 0) {
                 char *file  = curErr->files[curErr->numFiles - 1];
                 int lineNum = curErr->lineNums[curErr->numFiles - 1];
-        
+
+                /* Display file context. */
                 if (strcmp(file, prevFile) != 0) {
                     ABool first = TRUE;
                     int i;
@@ -635,6 +699,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                 }
 
                 if (curErr->class_ != NULL) {
+                    /* Display type context. */
                     ATypeInfo *type = AValueToType(
                         AGlobalByNum(curErr->class_->num));
                     
@@ -704,6 +769,9 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
 }
 
 
+/* If fnam has prefix ./ (or the alternative for the current operating
+   system), return a pointer to the part after the prefix. Otherwise, return
+   fnam. */
 static char *TrimFileName(char *fnam)
 {
     /* FIX: unix specific */
@@ -715,6 +783,8 @@ static char *TrimFileName(char *fnam)
 }
 
 
+/* Display a formatted message to stderr. Arguments are similar to
+   AFormatMessage. */
 void ATrace(const char *format, ...)
 {
     char buf[1024];

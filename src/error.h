@@ -133,7 +133,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
 ABool ADefDisplay(const char *msg, void *data);
 
 
-int ACopyModName(char *buf, int i, int max, AModuleId *mod);
+Assize_t ACopyModName(char *buf, Assize_t i, Assize_t max, AModuleId *mod);
 
 
 /* Generated error messages */
