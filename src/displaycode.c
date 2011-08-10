@@ -1,4 +1,4 @@
-/* displaycode.c - Dissambler for bytecode
+/* displaycode.c - Pretty-printer for bytecode
 
    Copyright (c) 2010-2011 Jukka Lehtosalo
 
@@ -21,15 +21,42 @@
 #include "class.h"
 
 
+/* Information about pretty-printing a single opcode */
 typedef struct {
     AOpcode opcode;
+    /* The format of the pretty-printed output. Sequences of form %X (where X
+       is a character) correspond to one or more arguments of the instruction.
+       Other characters represent themselves.
+
+       For example, "%l -> %l" results in decoding two local variable
+       arguments (%l); the substring " -> " is displayed verbatim. So a
+       bytecode sequence [opc, 4, 5] (where is opc is the correct opcode for
+       the example format) would be pretty-printed as "l4 -> l5".
+
+       The formatting sequences include these:
+         %i   int value literal (interpreted as AValue)
+         %u   integer literal (not valid AValue, no shifting)
+         %l   local value
+         %L   local value, displaced by A_NO_RET_VAL
+         %g   global value
+         %G   global value, include name of global definition
+         %m   member access via local variable
+         %v   slot access via self
+         %o   branch offset
+         %a   function arguments
+         %r   return value location of a call
+
+      Other formatting sequences are described in the comments of
+      FormatOpcode(). */
     char *format;
 } OpcodeInfo;
 
 
+/* Number of opcode pretty-printing structures */
 #define LEN_OPCODES (sizeof(Opcodes) / sizeof(Opcodes[0]))
 
 
+/* Descriptions of how to pretty-print opcodes */
 static OpcodeInfo Opcodes[] = {
     { OP_NOP,           "nop" },
     { OP_ASSIGN_IL,     "%i -> %l" },
@@ -102,6 +129,7 @@ static OpcodeInfo Opcodes[] = {
 };
 
 
+/* Information about pretty-printing operators */
 static OpcodeInfo Operators[]  = {
     { OP_ADD_L,    "+" },
     { OP_SUB_L,    "-" },
@@ -136,6 +164,7 @@ static void Append(char *buf, char *fmt, ...);
 static ABool AppendNameOfGlobalDef(char *buf, int num);
 
 
+/* Return the format string corresponding to an opcode. */
 static char *GetOpcodeStr(OpcodeInfo *info, AOpcode opcode)
 {
     while (info->format != NULL) {
@@ -148,6 +177,7 @@ static char *GetOpcodeStr(OpcodeInfo *info, AOpcode opcode)
 }
 
 
+/* Pretty-print all functions to stdout. */ 
 void ADisplayCode(void)
 {
     int i;
@@ -203,6 +233,7 @@ void ADisplayCode(void)
                     }
                 }
 
+                /* Pretty-print debugging and exception information. */
                 offset = 0;
                 line = 0;
                 while (j <= (AGetNonPointerBlockDataLength(&func->header)
@@ -259,7 +290,8 @@ void ADisplayCode(void)
 }
 
 
-/* FIX replace this with AppendMessage.. don't use vsprintf at all? */
+/* Append the result of sprintf to a string. */
+/* IDEA replace this with AppendMessage.. don't use vsprintf at all? */
 static void Append(char *buf, char *fmt, ...)
 {
     va_list args;
@@ -270,6 +302,7 @@ static void Append(char *buf, char *fmt, ...)
 }
 
 
+/* Append the result of AFormatMessage to a string. */
 static void AppendMessage(char *buf, char *fmt, ...)
 {
     va_list args;
@@ -313,20 +346,29 @@ static ABool AppendNameOfGlobalDef(char *buf, int num)
 }
 
 
+/* Format a bytecode instruction at code to buf using the format fmt. Display
+   the relative value of the instruction pointer (at *ip) and update the
+   instruction pointer to point to the next opcode. */
 void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
 {
     int i = *ip;
 
     buf[0] = '\0';
-    
+
+    /* Go through the format string and parse any formatting sequences. */
     while (*fmt != '\0') {
+        /* Character other than % are passed through verbatim. */
         if (*fmt != '%')
             Append(buf, "%c", *fmt);
         else {
+            /* A formatting sequence %X */
             int flags = 0;
             
             fmt++;
-            
+
+            /* The '-' flag results in displaying a sequence but not advancing
+               the instruction pointer. Note that it's only valid for some
+               instructions. */
             if (*fmt == '-') {
                 flags |= 1;
                 fmt++;
@@ -334,6 +376,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
             
             switch (*fmt) {
             case 'a': {
+                /* Arguments of a function call */
                 ABool isVarArg = code[i] & A_VAR_ARG_FLAG;
                 int argc = code[i++] & ~A_VAR_ARG_FLAG;
 
@@ -399,7 +442,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
             }
                 
             case 'i':
-                /* Integer */
+                /* Integer value (shifted) */
                 Append(buf, "%d", (int)AValueToInt(code[i++]));
                 break;
                 
@@ -435,15 +478,18 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 break;
                 
             case 'o':
+                /* Code offset */
                 Append(buf, "%d", i + (int)code[i] - A_DISPLACEMENT_SHIFT);
                 i++;
                 break;
                 
             case 'p':
+                /* Operator id */
                 Append(buf, "%s", GetOpcodeStr(Operators, code[i + 1]));
                 break;
 
             case 'r':
+                /* Return value location of a call opcode. */
                 if (code[i] != A_NO_RET_VAL)
                     Append(buf, "-> l%d", code[i]);
                 i += 1;
@@ -455,14 +501,18 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 break;
                 
             case 'u':
+                /* Integer */
                 Append(buf, "%d", code[i++]);
                 break;
                 
             case 'v':
+                /* Access a slot via self. */
                 Append(buf, "self.v%d", code[i++]);
                 break;
 
             case 'x': {
+                /* A sequence of local value references. The number of values
+                   is stored initially, followed by the local value numbers. */
                 int j;
 
                 for (j = 0; j < code[i]; j++) {
@@ -476,6 +526,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
             }
                 
             default:
+                /* Unknown formatting sequence */
                 Append(buf, "ERR");
                 break;
             }
@@ -483,10 +534,13 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
         fmt++;
     }
 
+    /* Store the ip of the next opcode. */
     *ip = i;
 }
 
 
+/* Format a single instruction at given ip. Return the ip of the next
+   instruction. */
 int AFormatInstruction(char *buf, AOpcode *code, int ip)
 {
     char *fmt = GetOpcodeStr(Opcodes, code[ip]);
