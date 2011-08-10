@@ -224,6 +224,7 @@ static void ShowHelp(void)
     fprintf(stderr, "Options and arguments:\n"
            "  -v, --version  Show version information and exit\n"
 #ifdef A_DEBUG
+           "  -d             DEBUG: Dump bytecode and exit\n"
            "  -m             DEBUG: Memory dump\n"
            "  -t             DEBUG: Memory trace\n"
            "  -Dn N          DEBUG: Check every Nth instruction\n"
