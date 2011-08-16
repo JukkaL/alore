@@ -182,6 +182,11 @@ ul.sep {
     font-style: italic;
 }
 
+.hiliexample {
+    background-color: #dddddd;
+    padding: 1px;
+}
+
 /* Formatting (specific) */
 
 #contents-lib {
