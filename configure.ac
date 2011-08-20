@@ -192,6 +192,18 @@ AC_MSG_RESULT([$SO])
 AC_DEFINE_UNQUOTED([DYNAMIC_C_MODULE_EXTENSION], ["$SOEXT"],
           [Define to dynamic C module file extension.])
 
+# Determine file system case sensitivity.
+AC_MSG_CHECKING(for case insensitive file names)
+echo > confCaSe.x
+if test -f confcAsE.X; then 
+  AC_DEFINE(HAVE_CASE_INSENSITIVE_FILE_NAMES, 1,
+            [Define to 1 if you have case insensitive file names.])
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+rm -f confCaSe.x
+
 ## Check if we have a good enough x86 assembler that supports the C
 ## preprocessor. This is is needed by the JTI compiler support code.
 #AC_MSG_CHECKING([for supported x86 assembler])

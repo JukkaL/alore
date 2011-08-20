@@ -194,7 +194,7 @@ static int PathCmp(const char *p1, const char *p2, int n)
             if (A_IS_DIR_SEPARATOR(p1[i]) != A_IS_DIR_SEPARATOR(p2[i]))
                 return -1;
         } else {
-#ifdef A_CASE_INSENSITIVE_FILE_NAMES
+#ifdef HAVE_CASE_INSENSITIVE_FILE_NAMES
             if (tolower(p1[i]) != tolower(p2[i]))
                 return p1[i] - p2[i];
 #else

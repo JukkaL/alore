@@ -127,8 +127,6 @@ typedef unsigned long long AIntU64;
 #define A_IS_DRIVE_PATH(path) \
     (((path)[0] | 32) >= 'a' && ((path)[0] | 32) <= 'z' && path[1] == ':')
 
-#define A_CASE_INSENSITIVE_FILE_NAMES
-
 #define A_PATH_SEPARATOR ';'
 #define A_PATH_SEPARATOR_STRING ";"
 

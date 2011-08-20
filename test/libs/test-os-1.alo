@@ -760,7 +760,7 @@ class OSSuite is Suite
     AssertEqual(Sort(ListDir("TMPDIR", "f*c*")), ["foo.c", "foo.cpp"])
     AssertEqual(Sort(ListDir("TMPDIR", "?oo.?")), ["Zoo.c", "foo.c"])
     
-    if Platform == "windows"
+    if Platform in ["windows", "osx"]
       -- Case insensitive matching.
       AssertEqual(ListDir("TMPDIR", "zoo*C"), ["Zoo.c"])
     else

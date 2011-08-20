@@ -27,6 +27,7 @@
 #include "str.h"
 #include "array.h"
 #include "internal.h"
+#include "str_internal.h"
 
 
 #define MKDIR_MODE 0777 /* FIX: what is the correct mode? symbolic? */
@@ -486,8 +487,25 @@ static ABool MatchName(const char *str, const char *mask)
                 return FALSE;
             str++;
         } else {
+#ifndef HAVE_CASE_INSENSITIVE_FILE_NAMES
+            /* Case sensitive matching. */
             if (*mask != *str)
                 return FALSE;
+#else
+            /* Case insensitive matching. */
+            /* IDEA: What about case insensitive matching for character codes 
+               over 127? */
+            int cm = *mask;
+            int cs = *str;
+            if (cm < 128 && cs < 128) {
+                /* Case insensitive matching for ASCII characters. */
+                if (ALower(cm) != ALower(cs))
+                    return FALSE;
+            } else {
+                if (cm != cs)
+                    return FALSE;
+            }
+#endif
             str++;
         }
     }
