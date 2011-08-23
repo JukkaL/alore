@@ -321,5 +321,5 @@ AValue AHiddenCreate(AThread *t, AValue *frame)
     /* This should never be called, since a class with this method as the
        constructor cannot be subtyped and cannot be created like other
        classes. */
-    return ARaiseValueError(t, NULL);
+    return ARaiseValueError(t, "Type \"%T\" is not callable", frame[0]);
 }

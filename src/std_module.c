@@ -32,6 +32,7 @@ static AValue ArrayRepr(AThread *t, AValue *array, AValue *str,
                        AValue *tmp, int *indices, int depth);
 static AValue PairOrRangeHashValue(AThread *t, AValue *frame);
 static AValue ConcatFixArrayAndArray(AThread *t, AValue fixa, AValue a);
+static ASymbolInfo *TypeSymbol(int globalnum);
 
 
 /* Global nums of public types */
@@ -445,36 +446,41 @@ AValue AStdExceptionCreate(AThread *t, AValue *frame)
 /* Function representing std::Type. It cannot be called. */
 static AValue StdType(AThread *t, AValue *frame)
 {
-    return ARaiseValueErrorND(t, NULL);
+    return ARaiseValueErrorND(t, AMsgTypeIsNotCallable,
+                              TypeSymbol(AStdTypeNum));
 }
 
 
 /* Function representing std::Range. It cannot be called. */
 static AValue StdRange(AThread *t, AValue *frame)
 {
-    return ARaiseValueErrorND(t, NULL);
+    return ARaiseValueErrorND(t, AMsgTypeIsNotCallable,
+                              TypeSymbol(AStdRangeNum));
 }
 
 
 /* Function representing std::Function. It cannot be called. */
 static AValue StdFunction(AThread *t, AValue *frame)
 {
-    return ARaiseValueErrorND(t, NULL);
+    return ARaiseValueErrorND(t, AMsgTypeIsNotCallable,
+                              TypeSymbol(AStdFunctionNum));
 }
 
 
 /* Function representing std::Pair. It cannot be called. */
 static AValue StdPair(AThread *t, AValue *frame)
 {
-    return ARaiseValueErrorND(t, NULL);
+    return ARaiseValueErrorND(t, AMsgTypeIsNotCallable,
+                              TypeSymbol(AStdPairNum));
 }
 
 
-/* Function representing std::Pair. It cannot be called. */
+/* Function representing std::Constant. It cannot be called. */
 static AValue StdConstant(AThread *t, AValue *frame)
 {
     /* IDEA: Maybe we should allow creating Constant objects dynamically. */
-    return ARaiseValueErrorND(t, NULL);
+    return ARaiseValueErrorND(t, AMsgTypeIsNotCallable,
+                              TypeSymbol(AStdConstantNum));
 }
 
 
@@ -995,6 +1001,14 @@ static AValue IoErrorCreate(AThread *t, AValue *frame)
         ASetMemberDirect(t, frame[0], A_NUM_EXCEPTION_MEMBER_VARS + 1, ANil);
     }
     return AStdExceptionCreate(t, frame);
+}
+
+
+/* Return the symbol representing the type with the given global num. This
+   only works for primitive type objects represented as functions. */
+static ASymbolInfo *TypeSymbol(int globalnum)
+{
+    return AValueToFunction(AGlobalByNum(globalnum))->sym;
 }
 
 

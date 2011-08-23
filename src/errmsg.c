@@ -30,6 +30,7 @@ const char AMsgNegativeValueNotExpected[]  = "Negative value not expected";
 const char AMsgCallInterface[]             = "Attempted to call an interface";
 const char AMsgSliceIndexMustBeIntOrNil[]  =
     "Slice index neither Int nor nil";
+const char AMsgTypeIsNotCallable[] = "Type \"%q\" is not callable";
 
 const char AMsgIntExpected[]    = "Int expected";
 const char AMsgIntExpectedBut[] = "Int expected (but %T found)";

@@ -727,6 +727,25 @@ class StdSuite is Suite
     AssertType(Function, std::ReadLn)
   end
   
+  -- Try calling non-callable type objects such as Range and check that this 
+  -- raises the correct exception.
+  def testCallErrorsWithNonCallableTypes()
+    AssertRaises(ValueError, "Type ""Range"" is not callable",
+                 def (); Range(); end)
+    AssertRaises(ValueError, "Type ""Type"" is not callable",
+                 def (); Type(); end)
+    AssertRaises(ValueError, "Type ""Pair"" is not callable",
+                 def (); Pair(); end)
+    AssertRaises(ValueError, "Type ""Constant"" is not callable",
+                 def (); Constant(); end)
+    AssertRaises(ValueError, "Type ""Function"" is not callable",
+                 def (); Function(); end)
+    AssertRaises(ValueError, "Type ""Boolean"" is not callable",
+                 def (); Boolean(); end)
+    AssertRaises(ValueError, "Type ""Tuple"" is not callable",
+                 def (); Tuple(); end)
+  end
+  
   private def test(a, b = 2, *c)
     return [a, b] + c
   end

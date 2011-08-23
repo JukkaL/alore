@@ -26,6 +26,7 @@ extern const char AMsgOutOfRange[];
 extern const char AMsgNegativeValueNotExpected[];
 extern const char AMsgCallInterface[];
 extern const char AMsgSliceIndexMustBeIntOrNil[];
+extern const char AMsgTypeIsNotCallable[];
 
 A_APIVAR extern const char AMsgIntExpected[];
 A_APIVAR extern const char AMsgIntExpectedBut[];
