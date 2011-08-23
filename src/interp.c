@@ -1458,6 +1458,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
     }
 
     A_OPCODE(OP_CHECK_TYPE) {
+        /* if not lvar{1} is gvar{2} raise CastError(...) */
         AValue inst = stack[ip[1]];
         AValue type = AGlobalByNum(ip[2]);
         if (AIsOfType(inst, type) != A_IS_TRUE) {
@@ -1469,12 +1470,23 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
     }
 
     A_OPCODE(OP_FOR_INIT) {
+        /* Initialize for lvar{1} in lvar{2}; goto offset{3}
+
+           For arrays, store array at lvar{1} + 1 and current index at
+           lvar{1} + 2.
+
+           For ranges, store lower bound at lvar{1} + 1 and upper bound at
+           lvar{1} + 2.
+           
+           Otherwise, store iterator object at lvar{1} + 1. */
         AValue collection = stack[ip[2]];
 
         if (AIsArray(collection)) {
+            /* Iterator over an array. */
             stack[ip[1] + 1] = collection;
             stack[ip[1] + 2] = AIntToValue(0);
         } else if (!AIsRange(collection)) {
+            /* Generic for loop (call iterator() method). */
             AValue iter;
 
             stack[2] = A_COMPILED_FRAME_FLAG; /* FIX Line number missing */
@@ -1507,6 +1519,8 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
     }
 
     A_OPCODE(OP_FOR_LOOP) {
+        /* Advance an iteration of a for loop. Use optimized special cases for
+           iteration over arrays and ranges. */
         AValue v1 = stack[ip[1] + 1];
 
         if (AIsArray(v1)) {
@@ -1545,7 +1559,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto RaiseException;
             }
         } else {
-            /* Int / LongInt */
+            /* Int / LongInt range */
             
             AValue res = ACompareOrder(t, v1, stack[ip[1] + 2], OPER_LT);
             if (AIsError(res))
@@ -1570,6 +1584,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
     }
 
     A_OPCODE(OP_FOR_LOOP_RANGE) {
+        /* Advance an iteration of a for loop over a range. */
         AValue lo = stack[ip[1]];
         AValue hi = stack[ip[1] + 1];
         if (!(AIsShortInt(lo) && AIsShortInt(hi)
@@ -2109,9 +2124,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             AMixedObject *rng;
             ABool result;
 
-            if (!AIsInt(left) || !AIsInt(right)) {
-                exception = EX_TYPE_ERROR;
-                goto RaiseException;
+            if (!AIsInt(left)) {
+                ARaiseTypeErrorND(t, AMsgInvalidRangeLowerBound, left);
+                goto ExceptionRaised;
+            }
+            if (!AIsInt(right)) {
+                ARaiseTypeErrorND(t, AMsgInvalidRangeUpperBound, right);
+                goto ExceptionRaised;
             }
 
             t->tempStack[0] = left;
@@ -2935,10 +2954,14 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 stack[ip[1]] = left - AIntToValue(1);
                 stack[ip[1] + 1] = right;
             } else {
-                if ((!AIsShortInt(left) && !AIsLongInt(left)) ||
-                    (!AIsShortInt(right) && !AIsLongInt(right))) {
-                    exception = EX_TYPE_ERROR;
-                    goto RaiseException;
+                if (!AIsInt(left)) {
+                    /* Invalid lower bound */
+                    ARaiseTypeErrorND(t, AMsgInvalidRangeLowerBound, left);
+                    goto ExceptionRaised;
+                } else if (!AIsInt(right)) {
+                    /* Invalid upper bound */
+                    ARaiseTypeErrorND(t, AMsgInvalidRangeUpperBound, right);
+                    goto ExceptionRaised;
                 } else {
                     left = ASubInts(t, left, AIntToValue(1));
                     if (AIsError(left))

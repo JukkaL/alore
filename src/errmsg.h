@@ -39,6 +39,8 @@ extern const char AMsgPairExpected[];
 extern const char AMsgRangeExpected[];
 
 extern const char AMsgStrIndexedWithNonInteger[];
+extern const char AMsgInvalidRangeLowerBound[];
+extern const char AMsgInvalidRangeUpperBound[];
 
 extern const char AMsgKeyboardInterrupt[];
 

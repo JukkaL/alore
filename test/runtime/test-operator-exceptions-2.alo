@@ -4,6 +4,7 @@ import unittest
 import libs
 
 
+-- Test case for testing messages of exceptions caused by invalid operations.
 class OperatorExceptionMessagesSuite is Suite
   const anonFunc = def (); end
   const ss = SS("foo bar 123")
@@ -356,6 +357,17 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, "nil is not callable",
                  def (); nil(1); end)
   end
+  
+  def testInvalidRangeOperand()
+    AssertRaises(TypeError, "Non-integer Range lower bound (Str)",
+                 def (); 'x' to 1; end)
+    AssertRaises(TypeError, "Non-integer Range upper bound (Float)",
+                 def (); 0 to 1.0; end)
+    AssertRaises(TypeError, "Non-integer Range lower bound (Str)",
+                 def (); for x in 'x' to 1; end; end)
+    AssertRaises(TypeError, "Non-integer Range upper bound (Float)",
+                 def (); for x in 0 to 1.0; end; end)
+  end 
   
   private def assertBinOpMessage(op, left, right, msg = opMsg(op, left, right))
     try

@@ -44,6 +44,8 @@ const char AMsgRangeExpected[] = "Range expected";
 
 const char AMsgStrIndexedWithNonInteger[] =
     "Str indexed with non-integer (%T)";
+const char AMsgInvalidRangeLowerBound[] = "Non-integer Range lower bound (%T)";
+const char AMsgInvalidRangeUpperBound[] = "Non-integer Range upper bound (%T)";
 
 const char AMsgKeyboardInterrupt[] = "Keyboard interrupt";
 
