@@ -38,6 +38,7 @@ const char AMsgStrExpectedBut[] = "Str expected (but %T found)";
 const char AMsgChrExpected[]   = "Str of length 1 expected";
 const char AMsgArrayExpected[] = "Array expected";
 const char AMsgFloatExpected[] = "Float expected";
+const char AMsgBooleanExpectedBut[] = "Boolean expected (but %T found)";
 const char AMsgTypeExpected[]  = "Type expected";
 const char AMsgPairExpected[]  = "Pair expected";
 const char AMsgRangeExpected[] = "Range expected";

@@ -27,14 +27,16 @@ static ABool AIsSpecialType(AValue val);
    0; otherwise raise a non-direct type error and return AError. */
 #define CheckBoolean(t, val) \
     ((val) == AFalse ? AZero : (val) == ATrue ? AIntToValue(1) : \
-     (val) == AError ? (val) : ARaiseTypeErrorND(t, NULL))
+     (val) == AError ? (val) : \
+     ARaiseTypeErrorND(t, AMsgBooleanExpectedBut, (val)))
 /* FIX: error message */
 
 /* If val is std::True, return the value 0; if val is False, return the value
    1; otherwise raise a non-direct type error and return AError. */
 #define CheckBooleanNot(t, val) \
     ((val) == ATrue ? AZero : (val) == AFalse ? AIntToValue(1) : \
-     (val) == AError ? (val) : ARaiseTypeErrorND(t, NULL))
+     (val) == AError ? (val) : \
+     ARaiseTypeErrorND(t, AMsgBooleanExpectedBut, (val)))
 
 /* Convert a C boolean to Int value 1 (if true) or 0 (otherwise). */
 #define BoolToIntValue(b) \

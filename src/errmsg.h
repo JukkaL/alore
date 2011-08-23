@@ -34,6 +34,7 @@ A_APIVAR extern const char AMsgStrExpectedBut[];
 extern const char AMsgChrExpected[];
 A_APIVAR extern const char AMsgArrayExpected[];
 A_APIVAR extern const char AMsgFloatExpected[];
+extern const char AMsgBooleanExpectedBut[];
 extern const char AMsgTypeExpected[];
 extern const char AMsgPairExpected[];
 extern const char AMsgRangeExpected[];

@@ -367,7 +367,36 @@ class OperatorExceptionMessagesSuite is Suite
                  def (); for x in 'x' to 1; end; end)
     AssertRaises(TypeError, "Non-integer Range upper bound (Float)",
                  def (); for x in 0 to 1.0; end; end)
-  end 
+  end
+
+  -- Test invalid return value from overloaded comparison operator method 
+  -- (e.g. _eq).  
+  def testInvalidOverloadedComparison()
+    var o = InvalidOverload()
+    AssertRaises(TypeError, "Boolean expected (but Int found)",
+                 def (); o == 1; end)
+    AssertRaises(TypeError, "Boolean expected (but Float found)",
+                 def (); o < 1; end)
+    AssertRaises(TypeError, "Boolean expected (but Str found)",
+                 def (); o > 1; end)
+    AssertRaises(TypeError, "Boolean expected (but Int found)",
+                 def (); o != 1; end)
+    AssertRaises(TypeError, "Boolean expected (but Str found)",
+                 def (); o <= 1; end)
+    AssertRaises(TypeError, "Boolean expected (but Int found)",
+                 def (); 1 == o; end)
+    AssertRaises(TypeError, "Boolean expected (but Int found)",
+                 def (); 1 != o; end)
+    AssertRaises(TypeError, "Boolean expected (but Str found)",
+                 def (); 1 < o; end)
+    AssertRaises(TypeError, "Boolean expected (but Float found)",
+                 def (); 1 <= o; end)
+  end
+  
+  def testInvalidOverloadedIn()
+    AssertRaises(TypeError, "Boolean expected (but nil found)",
+                 def (); 1 in InvalidOverload(); end)
+  end
   
   private def assertBinOpMessage(op, left, right, msg = opMsg(op, left, right))
     try
@@ -432,4 +461,21 @@ end
 
 
 class User
+end
+
+
+-- Class that overloads several operations with invalid return types.
+private class InvalidOverload
+  def _eq(x)
+    return 1
+  end
+  def _lt(x)
+    return 1.1
+  end
+  def _gt(x)
+    return 'x'
+  end
+  def _in(x)
+    return nil
+  end
 end
