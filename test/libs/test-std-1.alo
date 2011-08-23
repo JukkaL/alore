@@ -454,6 +454,10 @@ class StdSuite is Suite
     Assert(Hash(HashClass(13)) == 13)
     Assert(Hash(HashClass(l)) == l)
     
+    AssertRaises(TypeError, 
+                 "_hash of libs::HashClass returned non-integer (Float)", 
+                 def (); Hash(HashClass(1.0)); end)
+    
     Assert(Hash((l, 1)) is Int)
     Assert(Hash((l, 1)) == Hash((l * 2 div 2, 1)))
     

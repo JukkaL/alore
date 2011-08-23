@@ -486,9 +486,17 @@ AValue AStdHash(AThread *t, AValue *frame)
     if (AIsShortInt(frame[0])) 
         return frame[0] ^ AIntToValue(frame[0] >> 10);
     else if (AIsInstance(frame[0])) {
-        if (AGetInstanceType(AValueToInstance(frame[0]))->hasHashOverload)
-            return ACallMethodByNum(t, AM__HASH, 0, frame);
-        else
+        if (AGetInstanceType(AValueToInstance(frame[0]))->hasHashOverload) {
+            /* Call the _hash() method to calculate hash value. */
+            AValue hash = ACallMethodByNum(t, AM__HASH, 0, frame);
+            /* The hash value must be an integer. */
+            if (!AIsInt(hash) && !AIsError(hash))
+                return ARaiseTypeError(
+                    t, "_hash of %T returned non-integer (%T)", frame[0],
+                    hash);
+            else
+                return hash;
+        } else
             return AGetIdHashValue(t, frame + 0);
     } else if (AIsWideStr(frame[0]))
         return AStringHashValue(frame[0]);
