@@ -513,7 +513,7 @@ AValue *ASetupMethodFrame(AThread *t, AValue funcVal, AValue instance,
    the actual number of arguments, and minArgs and maxArgs are the number of
    arguments for the function. */
 ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
-                    AValue *dst, int minArgs, int maxArgs)
+                     AValue *dst, int minArgs, int maxArgs)
 {
     int i;
     int maxArgsCnt;
@@ -531,7 +531,9 @@ ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
 
         seqVal = src[ip[argc]];
         if (!AIsArraySubType(seqVal) && !AIsTuple(seqVal)) {
-            ARaiseTypeErrorND(t, NULL); /* FIX: msg? */
+            ARaiseTypeErrorND(t,
+                 "Array or Tuple value expected after * (%T found)",
+                              seqVal);
             return FALSE;
         }
 

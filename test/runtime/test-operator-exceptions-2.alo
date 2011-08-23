@@ -393,9 +393,17 @@ class OperatorExceptionMessagesSuite is Suite
                  def (); 1 <= o; end)
   end
   
+  -- Test invalid return value from the _in method when using the "in" 
+  -- operator.
   def testInvalidOverloadedIn()
     AssertRaises(TypeError, "Boolean expected (but nil found)",
                  def (); 1 in InvalidOverload(); end)
+  end
+  
+  def testInvalidVarArgsArgument()
+    AssertRaises(TypeError, 
+                 "Array or Tuple value expected after * (Str found)",
+                 def (); Int(*'x'); end)
   end
   
   private def assertBinOpMessage(op, left, right, msg = opMsg(op, left, right))
