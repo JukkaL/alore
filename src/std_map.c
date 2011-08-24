@@ -15,6 +15,7 @@
 #include "gc.h"
 #include "mem.h"
 #include "internal.h"
+#include "runtime.h"
 
 
 /* Size of an empty map after construction */
@@ -129,9 +130,10 @@ static AValue MapLookup(AThread *t, AValue *frame, AValue def)
     }
 
     /* Key did not exist. Either raise an exception or return a default
-       value. */
+       value. Include the representation of the key in the exception
+       message. */
     if (def == AError)
-        return ARaiseByNum(t, AErrorClassNum[EX_KEY_ERROR], NULL);
+        return ARaiseKeyErrorWithRepr(t, frame[1]);
     else
         return def;
 }
@@ -315,7 +317,9 @@ AValue AMapRemove(AThread *t, AValue *frame)
         i = NextIndex(i, size);
     }
 
-    return ARaiseByNum(t, AErrorClassNum[EX_KEY_ERROR], NULL);
+    /* Key does not exist. Raise an exception with the representation of the
+       key in the message. */
+    return ARaiseKeyErrorWithRepr(t, frame[1]);
 }
 
 

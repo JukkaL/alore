@@ -66,6 +66,9 @@ class StdMapSuite is Suite
     m[37] = "hup"
     Assert(m.length() == 1)
     Assert(m[37] == "hup")
+    
+    AssertRaises(KeyError, "'foo'",
+                 def (); Map().remove("foo"); end)
   end
   
   -- Test growing the hash table and emptying it after growing.

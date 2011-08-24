@@ -342,7 +342,26 @@ class OperatorExceptionMessagesSuite is Suite
                  def (); "x"[1]; end)
     AssertRaises(IndexError, "String index out of range",
                  def (); "x"[-21]; end)
-    -- Map()[1]
+  end
+  
+  def testInvalidMapKey()
+    AssertRaises(KeyError, "'foo'",
+                 def (); Map()['foo']; end)
+    AssertRaises(KeyError, "3452",
+                 def (); Map()[3452]; end)
+    AssertRaises(KeyError, "('fo\u" + "1234', False, nil, [9])",
+                 def (); Map()[('fo\u1234', False, nil, [9])]; end)
+    -- Invalid Repr return value results in no message.
+    AssertRaises(KeyError, nil,
+                 def (); Map()[InvalidStr(nil)]; end)
+    -- Long representations may be truncated. Check that there is a correct
+    -- suffix.
+    try
+      Map()['fab' * 1000]
+      Assert(False)
+    except e is KeyError
+      Assert(e.message.startsWith("'" + 'fab' * 20))
+    end
   end
   
   def testCallingAnInvalidValue()
