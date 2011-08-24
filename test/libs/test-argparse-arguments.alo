@@ -10,7 +10,7 @@ class ArgparseArgumentsSuite is Suite
   def testHasKey()
     var a1 = args(["-x"])
     Assert(a1.hasKey("-x"))
-    Assert(not a1.hasKey("--exclude"))
+    Assert(a1.hasKey("--exclude"))
     Assert(not a1.hasKey("-y"))
     Assert(not a1.hasKey("--foo-bar"))
     
@@ -28,6 +28,7 @@ class ArgparseArgumentsSuite is Suite
   def testIndexing()
     var a1 = args(["-x"])
     AssertEqual(a1["-x"], nil)
+    AssertEqual(a1["--exclude"], nil)
     
     var a2 = args(["--exclude"])
     AssertEqual(a2["--exclude"], nil)
@@ -39,7 +40,6 @@ class ArgparseArgumentsSuite is Suite
     AssertEqual(a4["--long"], "foo")
     AssertEqual(a4["-y"], "xab")
     
-    AssertRaises(KeyError, def (); a1["--exclude"]; end)
     AssertRaises(KeyError, def (); a1["-y"]; end)
   end
   
@@ -68,7 +68,7 @@ class ArgparseArgumentsSuite is Suite
     var a1 = args(["-x", "--long", "1"])
     AssertEqual(a1.get("-y", "2"), "2")
     AssertEqual(a1.get("-x", "2"), nil)
-    AssertEqual(a1.get("--exclude", "2"), "2")
+    AssertEqual(a1.get("--exclude", "2"), nil)
     AssertEqual(a1.get("--long", "2"), "1")
   end
   
@@ -84,10 +84,13 @@ class ArgparseArgumentsSuite is Suite
     
     var a2 = args(["-x", "-x"])
     AssertEqual(a2.values("-x"), [nil, nil])
+    AssertEqual(a2.values("--exclude"), [nil, nil])
     
     var a3 = args(["-x", "--long=3", "--long", "1", "-x"])
     AssertEqual(a3.values("--long"), ["3", "1"])
     AssertEqual(a3.values("-x"), [nil, nil])
+    
+    AssertRaises(KeyError, "'-y'", def (); a3.values("-y"); end)
   end
   
   def testItems()

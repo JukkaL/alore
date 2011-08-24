@@ -211,6 +211,19 @@ private def NormalizeOptions(opts as Array<Str>) as
 end
 
 
+-- Return a map that maps an option name alternative to the normalized option
+-- name (the first alternative).
+private def OptionNormalizeMap(descriptions as Array<Str>) as Map<Str, Str>
+  var map = Map() as <Str, Str>
+  for alts in NormalizeOptions(descriptions)[0]
+    for alt in alts
+      map[alt] = alts[0]
+    end
+  end
+  return map
+end
+
+
 -- Split an option description string into a list of option variants and
 -- an optional argument name (nil if no argument).
 --

@@ -11,27 +11,33 @@ module argparse
 -- This class represents a parsed command line argument list.
 class Arguments
   private const parser         as Parser
-  -- List of all (option name, value) pairs. Option names are normalized.
+  -- List of (option name, value) pairs. The names are normalized.
   private const opts           as Array<(Str, Str)>
-  private const descriptions   as Array<Str>
-  -- Map from option name to a list of values.
+  -- Map from option name to normalized option name.
+  private const optionNormMap  as Map<Str, Str>
+  -- Map from normalized option name to a list of values.
   private const optMap = Map() as Map<Str, Array<Str>>
   
-  -- The rest of the arguments, if an arbitary-length argument list was
-  -- accepted.
-  const rest           as Array<Str>
+  const rest as Array<Str>     -- The positional arguments.
 
   -- Construct an instance.
   def create(parser as Parser, opts as Array<(Str, Str)>, 
              rest as Array<Str>, descriptions as Array<Str>)
     self.parser = parser
-    self.opts = opts
     self.rest = rest.copy()
-    self.descriptions = descriptions
+    
+    -- Build a map for normalizing option names.
+    self.optionNormMap = OptionNormalizeMap(descriptions)
+
+    -- Normalize option names and store them.
+    self.opts = [] as <(Str, Str)>
+    for opt, value in opts
+      self.opts.append((normalize(opt), value))
+    end
     
     -- Create an option map that collects all values for each option in an
     -- array.
-    for arg, value in opts
+    for arg, value in self.opts
       var a = self.optMap.get(arg, [])
       a.append(value)
       self.optMap[arg] = a
@@ -50,11 +56,11 @@ class Arguments
   
   -- Was the named argument given in the command line?
   def hasKey(name as Str) as Boolean
-    return self.optMap.hasKey(name)
+    return self.optMap.hasKey(normalize(name))
   end
   
   -- Return an iterator that iterates over the options. Each item is a tuple
-  -- (option name, value).
+  -- (normalized option name, value).
   def iterator() as Iterator<(Str, Str)>
     return self.opts.iterator()
   end
@@ -64,7 +70,8 @@ class Arguments
     return self.opts.length()
   end
   
-  -- Return all the options that were provided, e.g. ['-x', '--long'].
+  -- Return all the options that were provided, e.g. ['-x', '--long']. The
+  -- results are normalized.
   def keys() as Array<Str>
     var a = [] as <Str>
     for arg, value in self.opts
@@ -86,7 +93,7 @@ class Arguments
       end
       return a
     elif hasKey(name)
-      var a = self.optMap[name]
+      var a = self.optMap[normalize(name)]
       if a == [nil]
         return []
       else
@@ -97,7 +104,8 @@ class Arguments
     end
   end
   
-  -- Like Map items, but preserve the order of the options.
+  -- Like Map items, but preserve the order of the options. The option names
+  -- are normalized.
   def items() as Array<(Str, Str)>
     return self.opts.copy()
   end
@@ -105,6 +113,8 @@ class Arguments
   -- Look up the argument for an option, or raise KeyError. Return nil if the
   -- option is present, but it does not take an argument.
   def _get(name as Str) as Str
+    -- Normalize option name.
+    name = normalize(name)
     var val = self.optMap.get(name, nil)
     if val == nil
       raise KeyError(Repr(name))
@@ -132,5 +142,11 @@ class Arguments
       end
     end
     return "Arguments({}, {})".format(a, rest)
+  end
+  
+  -- Find the "normative" name for an option (i.e. the first alternative name).
+  -- If the argument is not a valid option, return it unmodified.
+  private def normalize(opt as Str) as Str
+    return self.optionNormMap.get(opt, opt)
   end
 end

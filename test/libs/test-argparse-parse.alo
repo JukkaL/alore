@@ -25,19 +25,19 @@ class ArgparseParseSuite is Suite
   -- Multiple aliases for an argument
   def testAliases()
     assertParse(["-a", "-b"], ["-a -b"], 
-                [("-a", nil), ("-b", nil)], [])
+                [("-a", nil), ("-a", nil)], [])
   end
   
   -- Long argument --foo-bar
   def testLongArgument()
     assertParse(["--foo", "--x-y"], ["-f --foo", "--x-y"], 
-                [("--foo", nil), ("--x-y", nil)], [])
+                [("-f", nil), ("--x-y", nil)], [])
   end
   
   -- Shortening long argument --foo-b
   def testShorteningLongArg()
     assertParse(["--foo-ba", "--fo"], ["-f --foo-bar", "--far"], 
-                [("--foo-bar", nil), ("--foo-bar", nil)], [])
+                [("-f", nil), ("-f", nil)], [])
     assertOptError(["--f"], 
                    ["--foo-bar -f", "--far"], "ambiguous option --f")
   end
@@ -46,7 +46,7 @@ class ArgparseParseSuite is Suite
   --   -a x    -ax   --foo x  --foo=x
   def testOptionArgument()
     assertParse(["-a", "x", "-ayzy"], ["--aaa -a X"],
-                [("-a", "x"), ("-a", "yzy")], [])
+                [("--aaa", "x"), ("--aaa", "yzy")], [])
     assertParse(["--ab", "12", "--ab=ayzy"], ["--ab X"],
                 [("--ab", "12"), ("--ab", "ayzy")], [])
     assertParse(["--a", "x", "--a=ayzy"], ["--ab X"],
@@ -63,7 +63,7 @@ class ArgparseParseSuite is Suite
   -- Combining multiple short arguments -axv
   def testCombiningArguments()
     assertParse(["-axy"], ["--aa -a", "-x", "-y"],
-                [("-a", nil), ("-x", nil), ("-y", nil)], [])
+                [("--aa", nil), ("-x", nil), ("-y", nil)], [])
     assertOptError(["-fa", "x"], 
                    ["-f", "-a X"], 
                    "option -a requires an argument")
@@ -91,7 +91,7 @@ class ArgparseParseSuite is Suite
   -- Test ignoring spaces in option descriptions.
   def testExtraSpacesInDescriptions()
     assertParse(["-a", "foo", "--aa=foo", "z"], ["  -a   --aa   X  "],
-                [("-a", "foo"), ("--aa", "foo")], ["z"])
+                [("-a", "foo"), ("-a", "foo")], ["z"])
   end
   
   -- Test invalid option descriptions.
