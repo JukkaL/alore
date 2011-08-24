@@ -1,8 +1,9 @@
 encoding latin1
 
-module runtime
+-- Test cases for the Alore C API. The API functions are accessed by using the
+-- internal __testc module.
 
--- FIX: May not work with 64-bit values.
+module runtime
 
 import unittest
 import __testc
@@ -908,6 +909,16 @@ class CApiSuite is Suite
     end
     Assert(False)
   end
+  
+  def testARepr()
+    AssertEqual(ARepr(0), "0")
+    AssertEqual(ARepr('foo'), "'foo'")
+    AssertEqual(ARepr([1, False, ()]), "[1, False, ()]")
+    -- ARepr changes direct exceptions raised by _repr to normal ones. We
+    -- cannot easily test that, but test that direct exceptions are propagated
+    -- correctly.
+    AssertRaises(TypeError, def (); ARepr(FailRepr()); end)
+  end
 end
 
 
@@ -1054,5 +1065,13 @@ private class Raiser
   
   def _call()
     ARaiseValue(type())
+  end
+end
+
+
+-- Implementation of _repr that raises a direct exception.
+private class FailRepr
+  def _repr()
+    AGetInt(nil)
   end
 end

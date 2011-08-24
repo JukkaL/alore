@@ -1150,6 +1150,14 @@ static AValue TestC_AVersion(AThread *t, AValue *frame)
 }
 
 
+/* __testc::ARepr(object)
+   Internal API wrapper for std::Repr. */
+static AValue TestC_ARepr(AThread *t, AValue *frame)
+{
+    return ARepr(t, frame[0]);
+}
+
+
 /* __testc::SymbolInfoCount()
    Return the number of SymbolInfo structures in the symbol table, not
    including member symbols. This is used to check if symbols are removed
@@ -1433,6 +1441,7 @@ A_MODULE(__testc, "__testc")
     A_DEF("AIn", 2, 0, TestC_AIn)
     A_DEF("GetCModuleImports", 1, 1, TestC_GetCModuleImports)
     A_DEF("AVersion", 0, 0, TestC_AVersion)
+    A_DEF("ARepr", 1, 0, TestC_ARepr)
 #ifdef HAVE_GETTIMEOFDAY
     A_DEF("Time", 0, 0, TestC_Time)
 #endif

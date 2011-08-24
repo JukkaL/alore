@@ -343,10 +343,6 @@ A_APIFUNC int AIn(AThread *t, AValue a, AValue b);
    exceptions. */
 A_APIFUNC AValue AHash(AThread *t, AValue object);
 
-/* Unofficial operations that rely on implementation details - these may not be
-   portable! */
-#define AMakeShortInt(i) AIntToValue(i)
-
 /* Thread operations */
 A_APIFUNC void AAllowBlocking(void);
 A_APIFUNC void AEndBlocking(void);
@@ -355,6 +351,13 @@ A_APIFUNC void AEndBlocking(void);
 /* Internal functions and definitions - not part of the public API! 
    IDEA: These could be moved to a separate header file for clarity. */
 
+
+/* Unofficial operation that relies on implementation details - these may not
+   be portable! */
+#define AMakeShortInt(i) AIntToValue(i)
+
+/* Unofficial wrapper for calling std::Repr. */
+A_APIFUNC AValue ARepr(AThread *t, AValue object);
 
 /* FIX: Document this, and decide if this is part of the public API. Maybe
         this functionality could be provided by an Alore-accessible module? */

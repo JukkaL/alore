@@ -1240,7 +1240,7 @@ AValue AEpicInternalFailure(const char *message)
 }
 
 
-/* Return the hash value of an object. */
+/* Return the hash value of an object as an Int value. */
 AValue AHash(AThread *t, AValue object)
 {
     AValue hash;
@@ -1252,4 +1252,21 @@ AValue AHash(AThread *t, AValue object)
     AFreeTemps(t, 3);
 
     return hash;
+}
+
+
+/* Return the representation of an object by calling std::Repr. If there was an
+   exception, always produce a non-direct exception (AError return). The return
+   value is a Str object (if successful). */
+AValue ARepr(AThread *t, AValue object)
+{
+    /* Catch direct exceptions and propagate them as normal exceptions. */
+    if (ATry(t))
+        return AError;
+    AValue *args = AAllocTemp(t, object);
+    /* Call std::Repr(object). */
+    AValue repr = ACallValue(t, AGlobalByNum(AStdReprNum), 1, args);
+    AEndTry(t);
+    AFreeTemp(t);
+    return repr;
 }
