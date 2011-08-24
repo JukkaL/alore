@@ -198,6 +198,7 @@ AValue AStdInt(AThread *t, AValue *frame)
 }
 
 
+/* Raise value error related to invalid Str argument to std::Int. */
 static AValue RaiseValueErrorForInvalidIntStr(AThread *t, AValue str)
 {
     char repr[200];
