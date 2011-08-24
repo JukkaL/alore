@@ -18,8 +18,7 @@
 #include <math.h>
 
 
-/* NOTE: There are more Int-related operations in std_int_long.c and
-         aloreapi.c. */
+/* NOTE: There are more Int-related operations in std_int_long.c. */
 
 
 static AValue RadixInt(AThread *t, AValue *frame);
