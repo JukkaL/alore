@@ -323,12 +323,15 @@ class StdSuite is Suite
   
   -- Test the Int constructor with invalid arguments.
   def testIntError()
-    AssertRaises(ValueError, Int, ["x"])
-    AssertRaises(ValueError, Int, ["0x"])
-    AssertRaises(ValueError, Int, ["x0"])
-    AssertRaises(TypeError, Int, [nil])
-    AssertRaises(TypeError, Int, [ErrorConvertible()])
-    AssertRaises(MemberError, Int, [NoStrConv()])
+    AssertRaises(ValueError, "Invalid string argument: 'x'", Int, ["x"])
+    AssertRaises(ValueError, "Invalid string argument: '0x'", Int, ["0x"])
+    AssertRaises(ValueError, "Invalid string argument: 'x0'", Int, ["x0"])
+    AssertRaises(MemberError, 'nil has no member "_int"', Int, [nil])
+    AssertRaises(TypeError, 
+                 '_int of libs::ErrorConvertible returned non-integer (Str)', 
+                 Int, [ErrorConvertible()])
+    AssertRaises(MemberError, 'libs::NoStrConv has no member "_int"', 
+                 Int, [NoStrConv()])
   end
   
   -- Test the Array constructor with integer arguments.

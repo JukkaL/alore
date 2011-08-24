@@ -22,6 +22,7 @@
 
 
 static AValue RadixInt(AThread *t, AValue *frame);
+static AValue RaiseValueErrorForInvalidIntStr(AThread *t, AValue str);
 
 
 /* std::Int(obj[, radix])
@@ -82,12 +83,12 @@ AValue AStdInt(AThread *t, AValue *frame)
                 ind++;
             } while (ind < end && AIsDigit(buf[ind]));
         } else
-            return ARaiseValueErrorND(t, NULL);
+            return RaiseValueErrorForInvalidIntStr(t, frame[0]);
 
         /* Skip whitespace at the end of the string. */
         for (; ind < end; ind++) {
             if (buf[ind] != ' ' && buf[ind] != '\t')
-                return ARaiseValueErrorND(t, NULL);
+                return RaiseValueErrorForInvalidIntStr(t, frame[0]);
         }
 
         /* Construct and return an Int object. */
@@ -121,16 +122,6 @@ AValue AStdInt(AThread *t, AValue *frame)
             return AIntToValue((ASignedValue)f);
         else
             return AFloatToLongInt(t, f);
-    } else if (AIsInstance(frame[0])) {
-        /* Call the _int method of an instance. */
-        AValue v = ACallMethodByNum(t, AM__INT, 0, frame);
-        /* Expect an Int object. */
-        if (AIsShortInt(v) || AIsLongInt(v))
-            return v;
-        else if (AIsError(v))
-            return v;
-        else
-            return ARaiseTypeErrorND(t, NULL);
     } else if (AIsWideStr(frame[0])) {
         /* A wide string object. If it is a valid argument it can be converted
            to a narrow string. */
@@ -156,12 +147,22 @@ AValue AStdInt(AThread *t, AValue *frame)
         frame[0] = n;
         buf = AValueToStr(frame[0])->elem;        
         goto TryConvert;
-    } else if (AIsShortInt(frame[0]) || AIsLongInt(frame[0])) {
-        /* Int arguments are trivial. Note that reusing the argument is fine
-           since integers are immutable. */
+    } else if (AIsInstance(frame[0]) || !AIsInt(frame[0])) {
+        /* Call the _int method of an object. */
+        AValue v = ACallMethodByNum(t, AM__INT, 0, frame);
+        /* Expect an Int object. */
+        if (AIsShortInt(v) || AIsLongInt(v))
+            return v;
+        else if (AIsError(v))
+            return v;
+        else
+            return ARaiseTypeErrorND(t, "_int of %T returned non-integer (%T)",
+                                     frame[0], v);
+    } else {
+        /* Int argument, which is trivial. Note that reusing the argument is
+           fine since integers are immutable. */
         return frame[0];
-    } else
-        return ARaiseTypeErrorND(t, NULL);
+    }
 
   HandleLongInt:
     
@@ -194,6 +195,14 @@ AValue AStdInt(AThread *t, AValue *frame)
         
         return ALongIntToValue(li);
     }
+}
+
+
+static AValue RaiseValueErrorForInvalidIntStr(AThread *t, AValue str)
+{
+    char repr[200];
+    AGetRepr(t, repr, sizeof(repr), str);
+    return ARaiseValueError(t, "Invalid string argument: %s", repr);
 }
 
 
