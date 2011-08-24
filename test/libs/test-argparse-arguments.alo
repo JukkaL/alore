@@ -97,7 +97,7 @@ class ArgparseArgumentsSuite is Suite
   
   def testStrConversion()
     var a1 = args(["-x", "--long", "1", "foo", "bar"])
-    AssertEqual(Str(a1), "Arguments([('-x', nil), ('--long', '1')], " +
+    AssertEqual(Str(a1), "Arguments(['-x', '--long' : '1'], " +
                          "['foo', 'bar'])")
     var a2 = args([])
     AssertEqual(Str(a2), "Arguments([], [])")

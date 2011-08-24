@@ -110,6 +110,20 @@ class Arguments
   -- Return a representation of the arguments as 
   -- "Arguments(array-of-named-args, rest)".
   def _str() as Str
-    return "Arguments({}, {})".format(self.opts, rest)
+    var a = [] as <Object>
+    for k in keys()
+      var v = values(k)
+      if v == [nil]
+        -- If there is no value, add only the key.
+        a.append(k)
+      elif v.length() == 1
+        -- For a single value, add pair (key : value).
+        a.append(k : v[0])
+      else
+        -- For multiple values, add pair (key : values).
+        a.append(k : v)
+      end
+    end
+    return "Arguments({}, {})".format(a, rest)
   end
 end
