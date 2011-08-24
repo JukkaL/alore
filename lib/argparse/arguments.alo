@@ -76,7 +76,8 @@ class Arguments
   end
   
   -- Return the values of all the options that were provided. This preserves
-  -- the order of the options.
+  -- the order of the options. If an option has no value, return []. Also
+  -- include nil values.
   def values(name = nil as Str) as Array<Str>
     if name == nil
       var a = [] as <Str>
@@ -85,7 +86,12 @@ class Arguments
       end
       return a
     elif hasKey(name)
-      return self.optMap[name]
+      var a = self.optMap[name]
+      if a == [nil]
+        return []
+      else
+        return a
+      end
     else
       self[name] -- Fail.
     end
@@ -96,7 +102,8 @@ class Arguments
     return self.opts.copy()
   end
   
-  -- Look up the argument for an option, or raise KeyError.
+  -- Look up the argument for an option, or raise KeyError. Return nil if the
+  -- option is present, but it does not take an argument.
   def _get(name as Str) as Str
     var val = self.optMap.get(name, nil)
     if val == nil
@@ -113,7 +120,7 @@ class Arguments
     var a = [] as <Object>
     for k in keys()
       var v = values(k)
-      if v == [nil]
+      if v == []
         -- If there is no value, add only the key.
         a.append(k)
       elif v.length() == 1

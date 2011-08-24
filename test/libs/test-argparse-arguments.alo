@@ -79,7 +79,7 @@ class ArgparseArgumentsSuite is Suite
   
   def testValuesWithArg()
     var a1 = args(["-x", "--long", "1"])
-    AssertEqual(a1.values("-x"), [nil])
+    AssertEqual(a1.values("-x"), [])
     AssertEqual(a1.values("--long"), ["1"])
     
     var a2 = args(["-x", "-x"])
