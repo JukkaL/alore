@@ -78,28 +78,34 @@ private class ParserHelper
   private def findOpt(opt as Str) as Array<(Str, Str)>
     var matches = [] as <Str>
     
+    -- Option strings must have at least two characters ('-' and another one)
+    -- and they must begin with a dash '-'.
     if opt.length() <= 1 or not opt.startsWith("-")
       return []
     end
     
+    -- If the option does not start with -- but has more than 2 characters,
+    -- it must be of form '-xyz', i.e. multiple short options (the previous
+    -- is equivalent to '-x', '-y', '-z') or a short option with value 
+    -- (equivalent to to '-x', 'yz').
     if not opt.startsWith("--") and opt.length() > 2
       return findLongShortOpt(opt)
     end
     
     -- Now opt is probably the name of an option or a prefix of an option name,
-    -- or an option with "=" in it.
+    -- or a long option with "=" in it.
     
     var optBase = opt    -- Option name without the value
     var withArg = False
     
-    -- Is it of form "-x=y" or "--foo=bar"?
+    -- Is it of form "--foo=bar"?
     if "=" in opt
       optBase = opt[:opt.index("=")]
       withArg = True
     end
     
     -- Go through all the recognized options and find out which of those could
-    -- match.
+    -- match (via matching prefix).
     for o in self.normOpts
       -- Give priority to exact matches.
       if optBase in o
@@ -161,6 +167,8 @@ private class ParserHelper
           if not needsArg(opt2)
             res.append((opt2, nil))
           else
+            -- Multiple combined options are only supported for options which
+            -- do not require an argument.
             raise OptError("option {} requires an argument".format(opt2))
           end
         end
@@ -175,6 +183,7 @@ private class ParserHelper
 end
 
 
+-- Exception raised when the argument list is invalid.
 private class OptError is Exception
 end
 

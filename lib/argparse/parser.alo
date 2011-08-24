@@ -32,15 +32,20 @@ class ArgumentParser
   var showHelp  as def ()            -- Show help and exit.
   var exit      as def (Int)         -- Exit.
 
+  -- Construct an argument parser instance.
   def create(*descriptions as Str)
     if descriptions != [] and not descriptions[0] is Str
       raise TypeError("Arguments must be strings")
     end
     
+    -- Strip descriptions.
     for i in 0 to descriptions.length()
       descriptions[i] = descriptions[i].strip()
     end
     
+    -- Find the number of non-positional/positional arguments. All positional
+    -- arguments must be after non-positional arguments in the description 
+    -- list.
     var i = descriptions.length()
     while i - 1 >= 0 and not descriptions[i - 1].startsWith("-") and
           descriptions[i - 1] != ""       
@@ -59,7 +64,8 @@ class ArgumentParser
     self.exit = defExit
   end
   
-  -- Check that the positional arguments are valid.
+  -- Check that the descriptions of positional arguments are valid.
+  -- Valid forms include 'name', 'name ...', '[name]' and '[name] ...'. 
   private def checkPositionalDescriptions() as void
     for p in self.positional
       -- Remove ... at the end.
@@ -71,6 +77,9 @@ class ArgumentParser
     end
   end
   
+  -- Parse an array of command line arguments, and return an object that can 
+  -- be used to access the parsed arguments. If the argument is not given,
+  -- parse sys::Args instead.
   def parse(args = nil as Array<Str>) as Arguments
     if args == nil
       args = sys::Args

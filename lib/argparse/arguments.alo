@@ -11,8 +11,10 @@ module argparse
 -- This class represents a parsed command line argument list.
 class Arguments
   private const parser         as Parser
+  -- List of all (option name, value) pairs. Option names are normalized.
   private const opts           as Array<(Str, Str)>
   private const descriptions   as Array<Str>
+  -- Map from option name to a list of values.
   private const optMap = Map() as Map<Str, Array<Str>>
   
   -- The rest of the arguments, if an arbitary-length argument list was
@@ -27,6 +29,8 @@ class Arguments
     self.rest = rest.copy()
     self.descriptions = descriptions
     
+    -- Create an option map that collects all values for each option in an
+    -- array.
     for arg, value in opts
       var a = self.optMap.get(arg, [])
       a.append(value)
@@ -34,7 +38,7 @@ class Arguments
     end
   end
 
-  -- Return the argument of an argument, or default if the argument is not
+  -- Return the value of an argument, or default if the argument is not
   -- present.
   def get(name as Str, default as Str) as Str
     if not hasKey(name)
@@ -49,7 +53,8 @@ class Arguments
     return self.optMap.hasKey(name)
   end
   
-  -- Return an iterator that iterates over the options.
+  -- Return an iterator that iterates over the options. Each item is a tuple
+  -- (option name, value).
   def iterator() as Iterator<(Str, Str)>
     return self.opts.iterator()
   end
@@ -59,7 +64,7 @@ class Arguments
     return self.opts.length()
   end
   
-  -- Return all the options that were provided.
+  -- Return all the options that were provided, e.g. ['-x', '--long'].
   def keys() as Array<Str>
     var a = [] as <Str>
     for arg, value in self.opts
@@ -70,7 +75,8 @@ class Arguments
     return a
   end
   
-  -- Return the values of all the options that were provided.
+  -- Return the values of all the options that were provided. This preserves
+  -- the order of the options.
   def values(name = nil as Str) as Array<Str>
     if name == nil
       var a = [] as <Str>
@@ -85,7 +91,7 @@ class Arguments
     end
   end
   
-  -- Like Map items.
+  -- Like Map items, but preserve the order of the options.
   def items() as Array<(Str, Str)>
     return self.opts.copy()
   end
@@ -101,6 +107,8 @@ class Arguments
     end
   end
   
+  -- Return a representation of the arguments as 
+  -- "Arguments(array-of-named-args, rest)".
   def _str() as Str
     return "Arguments({}, {})".format(self.opts, rest)
   end
