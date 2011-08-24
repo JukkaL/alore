@@ -98,11 +98,14 @@ class StdSuite is Suite
   
   -- Test the Float constructor with invalid arguments.
   def testFloatErrors()
-    AssertRaises(TypeError, Float, [nil])
-    AssertRaises(TypeError, Float, [ErrorConvertible()])
-    AssertRaises(MemberError, Float, [NoStrConv()])
-    AssertRaises(ValueError, Float, ["x"])
-    AssertRaises(ValueError, Float, ["1x"])
+    AssertRaises(MemberError, 'nil has no member "_float"', Float, [nil])
+    AssertRaises(TypeError, 
+                 '_float of libs::ErrorConvertible returned non-float (Str)', 
+                 Float, [ErrorConvertible()])
+    AssertRaises(MemberError, 'libs::NoStrConv has no member "_float"', 
+                 Float, [NoStrConv()])
+    AssertRaises(ValueError, "Invalid string argument: 'x'", Float, ["x"])
+    AssertRaises(ValueError, "Invalid string argument: '1x'", Float, ["1x"])
   end
 
   -- Test the Repr function with integers.

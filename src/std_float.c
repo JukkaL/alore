@@ -20,6 +20,7 @@
 
 
 static ABool TryConvertStrToSpecialFloat(char *s, double *f);
+static AValue RaiseValueErrorForInvalidFloatStr(AThread *t, AValue str);
 
 
 AValue AStdFloat(AThread *t, AValue *frame)
@@ -50,12 +51,12 @@ AValue AStdFloat(AThread *t, AValue *frame)
             if (TryConvertStrToSpecialFloat(s, &f))
                 ret = ACreateFloat(t, f);
             else
-                ret = ARaiseValueErrorND(t, NULL);
+                ret = RaiseValueErrorForInvalidFloatStr(t, frame[0]);
         } else {
             while (*end == ' ' || *end == '\t')
                 end++;
             if (*end != '\0')
-                ret = ARaiseValueErrorND(t, NULL);
+                ret = RaiseValueErrorForInvalidFloatStr(t, frame[0]);
             else
                 ret = ACreateFloat(t, f);
         }
@@ -65,7 +66,10 @@ AValue AStdFloat(AThread *t, AValue *frame)
         return ret;
     } else if (AIsFloat(frame[0]))
         return frame[0];
-    else if (AIsInstance(frame[0])) {
+    else if (AIsLongInt(frame[0]))
+        return ACreateFloatFromLongInt(t, frame[0]);
+    else {
+        /* Call the _float method. */
         AValue v = ACallMethodByNum(t, AM__FLOAT, 0, frame);
         /* Expect a Float object. */
         if (AIsFloat(v))
@@ -73,11 +77,18 @@ AValue AStdFloat(AThread *t, AValue *frame)
         else if (AIsError(v))
             return v;
         else
-            return ARaiseTypeErrorND(t, NULL);
-    } else if (AIsLongInt(frame[0]))
-        return ACreateFloatFromLongInt(t, frame[0]);
-    else
-        return ARaiseTypeErrorND(t, NULL);
+            return ARaiseTypeErrorND(t, "_float of %T returned non-float (%T)",
+                                     frame[0], v);
+    }
+}
+
+
+/* Raise value error related to invalid Str argument to std::Float. */
+static AValue RaiseValueErrorForInvalidFloatStr(AThread *t, AValue str)
+{
+    char repr[200];
+    AGetRepr(t, repr, sizeof(repr), str);
+    return ARaiseValueError(t, "Invalid string argument: %s", repr);
 }
 
 
