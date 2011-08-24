@@ -107,7 +107,7 @@ class Arguments
   def _get(name as Str) as Str
     var val = self.optMap.get(name, nil)
     if val == nil
-      raise KeyError(Str(name))
+      raise KeyError(Repr(name))
     else
       -- IDEA: What if there are multiple instance? Should we report an error?
       return val[-1]
