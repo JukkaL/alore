@@ -1270,3 +1270,51 @@ AValue ARepr(AThread *t, AValue object)
     AFreeTemp(t);
     return repr;
 }
+
+
+/* Store the representation of the object to buf (the size of which is bufLen
+   characters) as a zero-terminated string. Produce the representation by
+   calling std::Repr. If Repr fails, store empty string at buf and return
+   FALSE. Otherwise, return TRUE.
+
+   Truncate the result to fit within the buffer, potentially adding '...' at
+   the end of the buffer. Return TRUE even if truncation is necessary.
+
+   Replace character codes larger than 127 with question marks in the
+   result. This does not affect the returned status. */
+ABool AGetRepr(AThread *t, char *buf, Assize_t bufLen, AValue object)
+{
+    Assize_t len;
+    Assize_t i;
+    AValue repr = ARepr(t, object);
+    
+    /* If producing the representation fails, return an empty string and
+       return error status. */
+    if (AIsError(repr)) {
+        *buf= '\0';
+        return FALSE;
+    }
+
+    len = AStrLen(repr);
+
+    /* Copy characters from the representation string, but avoid overflowing
+       the buffer. Replace non-7-bit characters with ? characers. */
+    for (i = 0; i < len && i < bufLen - 1; i++) {
+        int ch = AStrItem(repr, i);
+        if (ch < 128)
+            buf[i] = ch;
+        else
+            buf[i] = '?';
+    }
+
+    /* If we had to truncate the string and the target buffer is long enough,
+       add "..." at the end of the string. */
+    if (len >= bufLen && bufLen > 10) {
+        int j;
+        for (j = 0; j < 3; j++)
+          buf[bufLen - 4 + j] = '.';
+    }
+
+    buf[i] = '\0';
+    return TRUE;
+}

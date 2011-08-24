@@ -356,9 +356,6 @@ A_APIFUNC void AEndBlocking(void);
    be portable! */
 #define AMakeShortInt(i) AIntToValue(i)
 
-/* Unofficial wrapper for calling std::Repr. */
-A_APIFUNC AValue ARepr(AThread *t, AValue object);
-
 /* FIX: Document this, and decide if this is part of the public API. Maybe
         this functionality could be provided by an Alore-accessible module? */
 A_APIFUNC AValue AAddExitHandler(AThread *t, AValue *args);
@@ -383,6 +380,9 @@ A_APIFUNC AValue ARaiseArithmeticErrorND(AThread *t, const char *msg);
 A_APIFUNC AValue ARaiseArgumentErrorND(AThread *t, AValue func, int nargs,
                                        int numHidden);
 
+A_APIFUNC AValue ARepr(AThread *t, AValue object);
+A_APIFUNC ABool AGetRepr(AThread *t, char *buf, Assize_t bufLen,
+                         AValue object);
 A_APIFUNC AValue AWriteRepr(AThread *t, AValue val);
 
 
