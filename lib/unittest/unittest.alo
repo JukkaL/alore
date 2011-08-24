@@ -58,7 +58,7 @@ end
 def AssertRaises(type, *rest)
   -- Parse arguments.
   var msg = nil
-  if rest[0] is Str
+  if rest[0] is Str or rest[0] == nil
     msg = rest[0]
     rest = rest[1:]
   end  
