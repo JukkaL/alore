@@ -154,6 +154,7 @@ class ArgparseParseSuite is Suite
   end
   
   def testRestrictedPositionalArgumentsWithVarArgs()
+    -- Test "foo..." and "[foo]..." forms.
     assertParse([],
                 ["[foo] ..."],
                 [], [])
@@ -175,6 +176,21 @@ class ArgparseParseSuite is Suite
     assertParse(["x", "xx", "xxx", "x4"],
                 ["x", "[foo]...", "[y]"],
                 [], ["x", "xx", "xxx", "x4"])
+    
+    -- Test "..." form.           
+    assertParse([],
+                ["..."],
+                [], [])
+    assertParse(["x", "y"],
+                ["..."],
+                [], ["x", "y"])
+    assertParse(["x"],
+                ["foo", "..."],
+                [], ["x"])
+    assertParse(["x", "y"],
+                ["foo", "..."],
+                [], ["x", "y"])
+                
   end
   
   def testInvalidNumberOfPositionalArguments()
@@ -204,6 +220,9 @@ class ArgparseParseSuite is Suite
                    "too few positional arguments")
     assertOptError(["x"],
                    ["bar", "[foo]...", "zar"],
+                   "too few positional arguments")
+    assertOptError(["x"],
+                   ["bar", "zar", "..."],
                    "too few positional arguments")
   end
   

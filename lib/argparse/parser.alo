@@ -65,14 +65,16 @@ class ArgumentParser
   end
   
   -- Check that the descriptions of positional arguments are valid.
-  -- Valid forms include 'name', 'name ...', '[name]' and '[name] ...'. 
+  -- Valid forms include 'name', 'name ...', '[name]', '[name] ...' and '...'. 
   private def checkPositionalDescriptions() as void
     for p in self.positional
-      -- Remove ... at the end.
-      var pp = Subst(p, " *\.\.\.$", "")
-      if Match("[^-\[.][^ \t\n\r.\]]*$", pp) == nil and
-         Match("\[[^-\[.][^ \t\n\r.\]]*\]$", pp) == nil
-        raise ValueError("Invalid positional argument {}".format(Repr(p)))
+      if p != "..."
+        -- Remove ... at the end.
+        var pp = Subst(p, " *\.\.\.$", "")
+        if Match("[^-\[.][^ \t\n\r.\]]*$", pp) == nil and
+           Match("\[[^-\[.][^ \t\n\r.\]]*\]$", pp) == nil
+          raise ValueError("Invalid positional argument {}".format(Repr(p)))
+        end
       end
     end
   end
@@ -117,7 +119,7 @@ class ArgumentParser
         isVarArg = True
       end
       max += 1
-      if not p.startsWith("[")
+      if not p.startsWith("[") and not p.startsWith(".")
         min += 1
       end
     end
