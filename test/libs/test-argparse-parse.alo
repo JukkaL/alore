@@ -220,7 +220,7 @@ class ArgparseParseSuite is Suite
   private def assertParse(args, descriptions, results, finalArgs)
     var arg = ArgumentParser(*descriptions).parse(args)
     AssertEqual(arg.items(), results)
-    AssertEqual(arg.rest(), finalArgs)
+    AssertEqual(arg.rest, finalArgs)
   end
   
   private def assertOptError(args, descriptions, msg)

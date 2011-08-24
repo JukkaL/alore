@@ -12,16 +12,19 @@ module argparse
 class Arguments
   private const parser         as Parser
   private const opts           as Array<(Str, Str)>
-  private const _rest          as Array<Str>
   private const descriptions   as Array<Str>
   private const optMap = Map() as Map<Str, Array<Str>>
+  
+  -- The rest of the arguments, if an arbitary-length argument list was
+  -- accepted.
+  const rest           as Array<Str>
 
   -- Construct an instance.
   def create(parser as Parser, opts as Array<(Str, Str)>, 
              rest as Array<Str>, descriptions as Array<Str>)
     self.parser = parser
     self.opts = opts
-    self._rest = rest
+    self.rest = rest.copy()
     self.descriptions = descriptions
     
     for arg, value in opts
@@ -49,12 +52,6 @@ class Arguments
   -- Return an iterator that iterates over the options.
   def iterator() as Iterator<(Str, Str)>
     return self.opts.iterator()
-  end
-  
-  -- Return the rest of the arguments, if an arbitary-length argument list was
-  -- accepted.
-  def rest() as Array<Str>
-    return self._rest.copy()
   end
   
   -- Return the number of options in the map.
@@ -105,6 +102,6 @@ class Arguments
   end
   
   def _str() as Str
-    return "Arguments({}, {})".format(self.opts, rest())
+    return "Arguments({}, {})".format(self.opts, rest)
   end
 end

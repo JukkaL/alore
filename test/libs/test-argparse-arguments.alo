@@ -49,19 +49,19 @@ class ArgparseArgumentsSuite is Suite
   end
   
   def testRest()
-    AssertEqual(args([]).rest(), [])
-    AssertEqual(args(["-x"]).rest(), [])
+    AssertEqual(args([]).rest, [])
+    AssertEqual(args(["-x"]).rest, [])
     
-    AssertEqual(args(["x"]).rest(), ["x"])
-    AssertEqual(args(["x", "yy"]).rest(), ["x", "yy"])
+    AssertEqual(args(["x"]).rest, ["x"])
+    AssertEqual(args(["x", "yy"]).rest, ["x", "yy"])
     
-    AssertEqual(args(["-x", "foo"]).rest(), ["foo"])
+    AssertEqual(args(["-x", "foo"]).rest, ["foo"])
     
-    AssertEqual(args(["-y", "1"]).rest(), [])
-    AssertEqual(args(["-y", "1", "foo"]).rest(), ["foo"])
-    AssertEqual(args(["-y", "1", "foo", "bar"]).rest(), ["foo", "bar"])
+    AssertEqual(args(["-y", "1"]).rest, [])
+    AssertEqual(args(["-y", "1", "foo"]).rest, ["foo"])
+    AssertEqual(args(["-y", "1", "foo", "bar"]).rest, ["foo", "bar"])
     
-    AssertEqual(args(["-y", "1", "-x", "foo", "bar"]).rest(), ["foo", "bar"])
+    AssertEqual(args(["-y", "1", "-x", "foo", "bar"]).rest, ["foo", "bar"])
   end
   
   def testGet()
