@@ -92,6 +92,8 @@ AValue ARaiseInvalidCallableErrorND(AThread *t, AValue value);
 
 AValue ARaiseIntExpected(AThread *t, AValue actual);
 
+AValue ARaiseKeyErrorWithRepr(AThread *t, AValue key);
+
 ABool ADisplayStackTraceback(AThread *t,
                              ABool (*display)(const char *msg, void *data),
                              void *data);

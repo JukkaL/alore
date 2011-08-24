@@ -730,6 +730,21 @@ AValue ARaiseArithmeticErrorND(AThread *t, const char *msg)
 }
 
 
+/* Raise a KeyError exception with the representation of key as the message.
+   The message may be truncated. If the representation cannot be produced,
+   omit the message, but still raise KeyError.
+
+   See also ARaiseKeyError. */
+AValue ARaiseKeyErrorWithRepr(AThread *t, AValue key)
+{
+    char msg[200];
+    if (AGetRepr(t, msg, sizeof(msg), key))
+        return ARaiseByNum(t, AErrorClassNum[EX_KEY_ERROR], msg);
+    else
+        return ARaiseByNum(t, AErrorClassNum[EX_KEY_ERROR], NULL);
+}
+
+
 /* Depth indicating no except blocks should be skipped */
 #define NO_SKIP 100000000
 
