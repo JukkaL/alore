@@ -1,10 +1,15 @@
 module runtime
 
+-- Test cases for messages of exceptions caused by invalid operations (e.g.
+-- binary operations, indexing, calls).
+--
+-- The file test-exception-messages.alo contains test cases for additional
+-- cases of exception messages.
+
 import unittest
 import libs
 
 
--- Test case for testing messages of exceptions caused by invalid operations.
 class OperatorExceptionMessagesSuite is Suite
   const anonFunc = def (); end
   const ss = SS("foo bar 123")

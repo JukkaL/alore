@@ -1,5 +1,11 @@
 module runtime
 
+-- Test cases for exception error messages for exceptions produced by 
+-- statements and the std module.
+--
+-- The file test-operator-exceptions-2.alo contains test cases for exception
+-- messages related to operations in expressions.
+
 import unittest
 import libs
 import os, string
