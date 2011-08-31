@@ -4,6 +4,7 @@
 @grammar
   expression :: list-expression | single-expression
   single-expression :: simple-expression
+    | simple-name-expression
     | gvar
     | "(" expression ")"
     | binary-operation
@@ -111,7 +112,7 @@ statements or expressions that are not fully evaluated are terminated.
 @h2 Simple expressions
 
 @grammar
-  simple-expression :: int | float | str | "nil" | id | "self"
+  simple-expression :: int | float | str | "nil" | "self"
 @end
 
 <p>Integer literals evaluate to @ref{Int} objects. Correspondingly, float 
@@ -119,8 +120,14 @@ and string literals evaluate to @ref{Float} and @ref{Str} objects. The
 <tt>nil</tt> expression evaluates to the special <tt>nil</tt> object.
 The <tt>self</tt> expression evaluates to the <tt>self</tt> 
 object, i.e. the object that is bound to the current evaluated method or the
-object whose getter or setter is being evaluated. All of these expressions are
-only valid as rvalues.
+object whose getter, setter or initialization expression is being evaluated.
+All of these expressions are only valid as rvalues.
+
+@h2 Simple name expressions
+
+@grammar
+  simple-name-expression :: id
+@end
 
 <p><i>Id</i> evaluates to either a local variable, a member of <tt>self</tt>, 
 or a global definition. Local definitions take precedence over other 
@@ -128,7 +135,8 @@ definitions and member definitions take precedence over global definitions
 (see @href{Precedence of names} for details). Evaluating a local or global 
 reference results in the value of the variable or constant. Evaluating a
 member 
-reference is equivalent to evaluating the member reference <tt>self.id</tt>.
+reference is equivalent to evaluating the member reference <tt>self.id</tt>
+(and it is an error to access member <tt>create</tt>).
 It results in the evaluation of the getter for <i>id</i> or in the creation of
 a bound method object (see @href{Member references} for the details).
 
@@ -475,8 +483,8 @@ constant). Otherwise, if the member is not defined, raise a
 with a setter  method), or otherwise a @ref{std::MemberError} exception will be
 raised. See section @href{Assignment statement} for details.
 
-<p>It is an error to access the member <tt>create</tt> using a member reference
-unless the left operand is <tt>self</tt>.
+<p>It is an error to access the member <tt>create</tt> using a member
+reference.
 
 <h3>Bound methods</h3>
 
