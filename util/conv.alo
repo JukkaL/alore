@@ -172,7 +172,7 @@ def Convert(path, outDir, release, ignoreBrokenLinks)
             out.append("<dl>")
           end
           out.append("<dt>" + Anchor(anchors, arg, curClass) + 
-                     HighlightDef(arg))
+                     FormatDef(arg))
           AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
         case "@h2"
           if state.top() == "dl"
@@ -186,7 +186,7 @@ def Convert(path, outDir, release, ignoreBrokenLinks)
             out.append("<dl>")
           end
           out.append("<dt>" + Anchor(anchors, arg) + 
-                     HighlightDef("class " + arg))
+                     FormatDef("class " + arg))
           AddIndexItem([DefName(arg), curMod])
           curClass = DefName(arg)
         case "@class-hidden"
@@ -385,13 +385,16 @@ def FindLastChar(s, c)
     end
     i += 1
   end
-  return x    
+  return x
 end
 
 
 -- Return a variable or function declaration modified so that the name of the
--- declaration is within a highlight span and the rest is unmodified.
-def HighlightDef(defn)
+-- declaration is within a highlight span and the rest is unmodified. Also
+-- replace < and > with the corresponding HTML sequences.
+def FormatDef(defn)
+  defn = defn.replace('<', '&lt;')
+  defn = defn.replace('>', '&gt;')
   var pre, base, args = SplitDef(defn)
   return pre + HiliSpan(base) + args
 end
