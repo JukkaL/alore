@@ -91,10 +91,15 @@ encoded files:
 as statement separators:
 
 @example
-  + - * / ** div mod and or : to is == != &lt; &lt;= &gt; &gt;= ( [ = += -= *= /= **= ,
+  + - * / ** div mod and or : to is == != &lt; &lt;= &gt;= ( [ = += -= *= /= **= ,
 @end
 
 <p>This can be used to divide long lines into multiple shorter lines.
+
+<p>A <i>br</i> token after a <tt>&gt;</tt> token is ignored in expressions,
+but not in other contexts. This rule allows a type
+annotation to end with a <tt>'&gt;'</tt> token, even when followed by
+a <i>br</i> token.
 
 @h2 Reserved words
 
