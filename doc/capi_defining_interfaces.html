@@ -1,0 +1,29 @@
+@head
+@title Defining interfaces
+
+<p>C modules may also define interfaces.
+An interface definition starts with the macro A_INTERFACE,
+and ends with A_END_INTERFACE(). The contents of the interface, including
+its members and superinterface (if any), are defined within these macros using
+the same macros that are used for defining classes. These macros are described
+in the previous section.
+
+<p>In particular, the following macros (and their different variants) can be
+used within interfaces:
+
+<ul>
+  <li>@ref{A_DEF} for defining interface methods
+  <li>@ref{A_GETTER} for defining getters
+  <li>@ref{A_SETTER} for defining setters
+  <li>@ref{A_INHERIT} for interface inheritance
+</ul>
+
+@fun A_INTERFACE(name)
+@desc Define a C interface with the given name. The definition of the interface
+      follows this macro, and is terminated with the A_END_INTERFACE macro.
+      Interface definitions cannot be nested.
+@end
+
+@fun A_END_INTERFACE()
+@desc Mark the end of an interface definition.
+@end

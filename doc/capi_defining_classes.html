@@ -159,6 +159,17 @@ definitions in the superclass by using C API functions @ref{ASuperMember} and
       @end
 @end
 
+@h2 Interface implementation
+
+<p>C classes may implement interfaces using the A_IMPLEMENT macro. Any members
+defined in the interface must be implemented in the class.
+
+@fun A_IMPLEMENT(interfaceName)
+@desc Make the current class implement an interface. The name should be the
+      fully qualified name of the interface as a string. The rules for the name
+      are otherwise similar to A_INHERIT.
+@end
+
 @h2 Accessing member variable slots directly
 
 <p>The most efficient way of accessing member variables or constants is by 
