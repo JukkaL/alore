@@ -128,7 +128,7 @@ static ABool (*PushFunc)(AValue *base, unsigned long len);
 static int OldGenGCDisallowCount;
 
 
-void (*AFreeNursery)(void *nursery, unsigned long size);
+void (*AFreeNursery)(void *nursery, Asize_t size);
 
 
 /* List of instances that have a finalizer method. The list also includes all

@@ -38,10 +38,10 @@ void *ALastBlock;
 void *ALastBlockEnd;
 
 
-void *(*AGrowNursery)(void *oldNursery, unsigned long oldSize,
-                      unsigned long newSize);
-void *(*AMoreHeap)(AHeapBlock *block, unsigned long growSize,
-                   unsigned long *realGrow);
+void *(*AGrowNursery)(void *oldNursery, Asize_t oldSize,
+                      Asize_t newSize);
+void *(*AMoreHeap)(AHeapBlock *block, Asize_t growSize,
+                   Asize_t *realGrow);
 void (*AFreeHeapBlock)(AHeapBlock *block);
 
 
@@ -276,9 +276,9 @@ void AFreeHeap(void)
 ABool GrowHeap(unsigned long reqSize)
 {
     AHeapBlock *new;
-    unsigned long size;
-    unsigned long bitInd;
-    unsigned long bitSize;
+    Asize_t size;
+    Asize_t bitInd;
+    Asize_t bitSize;
 
     ADebugStatusMsg(("Grow heap by %d bytes\n", (int)reqSize));
 #ifdef A_DEBUG_VERIFY_MEMORY
@@ -330,8 +330,8 @@ ABool GrowHeap(unsigned long reqSize)
     
     /* Can we grow the last heap block? */
     if (AHeap != NULL && new == AGetHeapBlockEnd(AHeap)) {
-        unsigned long oldBitInd;
-        unsigned long oldBitSize;
+        Asize_t oldBitInd;
+        Asize_t oldBitSize;
         
         oldBitInd  = AGetBitFieldIndex(AHeap->size);
         oldBitSize = AGetBitFieldSize(AHeap->size);
