@@ -1,3 +1,7 @@
+-- Conversion script for Alore documentation. Convert input files (which are
+-- formatted in modified HTML with additional @-prefixed tags) to HTML files. 
+-- Process links to files and definitions; also generate indexes.
+
 import io
 import string
 import re
