@@ -202,7 +202,7 @@ src/std_map.o: src/std_map.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/std_module.h src/array.h src/operator.h src/tuple.h \
  src/int.h src/str.h src/mem.h src/gc.h src/heapalloc.h \
- src/debug_params.h src/internal.h
+ src/debug_params.h src/internal.h src/runtime.h
 src/std_sort.o: src/std_sort.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/std_module.h
@@ -222,7 +222,8 @@ src/std_type.o: src/std_type.c src/alore.h src/value.h src/common.h \
 src/std_int.o: src/std_int.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/runtime.h src/operator.h src/memberid.h src/int.h \
- src/str.h src/mem.h src/internal.h
+ src/str.h src/mem.h src/internal.h src/gc.h src/heapalloc.h \
+ src/debug_params.h
 src/std_int_long.o: src/std_int_long.c src/int.h src/thread.h src/aconfig.h \
  config.h src/value.h src/common.h src/gc.h src/heapalloc.h \
  src/debug_params.h src/globals.h src/mem.h src/float.h src/internal.h \
@@ -312,7 +313,7 @@ src/os_module.o: src/os_module.c src/aconfig.h config.h src/alore.h \
 src/os_posix.o: src/os_posix.c src/aconfig.h config.h src/alore.h src/value.h \
  src/common.h src/module.h src/thread.h src/globals.h src/errmsg.h \
  src/os_module.h src/util.h src/io_module.h src/str.h src/mem.h \
- src/array.h src/operator.h src/internal.h
+ src/array.h src/operator.h src/internal.h src/str_internal.h
 src/os_win32.o: src/os_win32.c src/aconfig.h config.h src/str_internal.h \
  src/value.h src/common.h
 src/set_module.o: src/set_module.c src/alore.h src/value.h src/common.h \
