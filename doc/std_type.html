@@ -20,14 +20,14 @@ and <tt>interface</tt> constructs.
 
 <h2>Methods</h2>
 
-@fun members()
+@fun members() as Array<Str>
 @desc Return an array of all defined public member names for the type. The
       order of the names is arbitrary. The array includes both members defined
       directly in the type and any inherited members.
       <b>Not implemented yet</b>
 @end
 
-@fun supertype()
+@fun supertype() as Type
 @desc Return the supertype of the type, or <tt>nil</tt> if the type has no
       supertype.
 @end

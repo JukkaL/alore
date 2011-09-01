@@ -99,7 +99,7 @@ the second to last character, etc.
     @end
 @end
 
-@fun join(sequence)
+@fun join(sequence as Sequence<Str>) as Str
 @desc Concatenate the strings in a sequence. Use the string as the separator.
       @example
         " ".join(["a", "black", "cat"])  -- Result: "a black cat"
@@ -108,23 +108,23 @@ the second to last character, etc.
       @end
 @end
 
-@fun count(substring)
+@fun count(substring as Str) as Int
 @desc Return the number of times a substring occurs in the string (without
       overlapping).
 @end
 
-@fun iterator()
+@fun iterator() as Iterator<Str>
 @desc Return an iterator object that can be used to sequentially iterate over
   the characters in the string, starting from the first character.
 @end
 
-@fun strip()
+@fun strip() as Str
 @desc Return a copy of the string with leading and trailing whitespace
     characters removed. Only ASCII space, tab, CR and LF characters are 
     removed.
 @end
 
-@fun format(...)
+@fun format(...) as Str
 @desc When this method is called on a format string object, return a string
     constructed according to the format string
     and the optional arguments. Most characters in the format string are

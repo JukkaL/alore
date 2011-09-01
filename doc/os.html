@@ -12,17 +12,17 @@ conditions.
 
 <h2>File and directory operations</h2>
 
-@fun Remove(path)
+@fun Remove(path as Str)
 @desc Remove a file or a directory. Only an empty directory can be removed.
 @end
   
-@fun Rename(sourcepath, targetpath)
+@fun Rename(sourcepath as Str, targetpath as Str)
 @desc Rename a file or a directory. The operation may fail if the source and
     target directories differ.
 @end
 
 <!--IDEA: MakeDir(path[, option])-->
-@fun MakeDir(path)
+@fun MakeDir(path as Str)
 @desc Create a directory. Raise @ref{IoError} if the directory already exists.
       <!--If the optional argument is present, its value must
       be @ref{io::Protected}. Normally, other users will be given read
@@ -31,7 +31,7 @@ conditions.
       directory.-->
 @end
 
-@fun MakeDirs(path)
+@fun MakeDirs(path as Str)
 @desc Create a directory and any missing parent directories. If
       the directory already exists or if the argument is an empty string,
       do nothing. Example:
@@ -40,35 +40,35 @@ conditions.
       @end
 @end
 
-@fun ChangeDir(path)
+@fun ChangeDir(path as Str)
 @desc Change the current working directory.
 @end
 
-@fun CurrentDir()
+@fun CurrentDir() as Str
 @desc Return the current working directory.
 @end
 
-@fun Exists(path)
+@fun Exists(path as Str) as Boolean
 @desc Return a boolean indicating whether the path target exists. The path
       target may be a file, a directory, a symbolic link or a special directory
       entry such as a device.
 @end
 
-@fun IsDir(path)
+@fun IsDir(path as Str) as Boolean
 @desc Return a boolean indicating whether the path refers to a directory or a
       symbolic link to a directory.
 @end
   
-@fun IsFile(path)
+@fun IsFile(path as Str) as Boolean
 @desc Return a boolean indicating whether the path refers to an ordinary file
       or a symbolic link to an ordinary file.
 @end
   
-@fun IsLink(path)
+@fun IsLink(path as Str) as Boolean
 @desc Return a boolean indicating whether the path refers to a symbolic link.
 @end
  
-@fun ListDir(path[, mask])
+@fun ListDir(path as Str[, mask as Str]) as Array<Str>
 @desc Return the names of the directory entries in the directory as an array.
     The "." and ".." directory entries are omitted. The order of the entries is
     arbitrary.
@@ -77,7 +77,7 @@ conditions.
       any substring and ? matches any character in the entry names.
 @end
 
-@fun WalkDir(path[, mask])
+@fun WalkDir(path as Str[, mask as Str]) as Array<Str>
 @desc Return the names of the directory entries in the directory and
     recursively in all subdirectories as an array. The "." and ".." directory
     entries are omitted. The entries are ordered so that contents of
@@ -98,11 +98,11 @@ conditions.
     @end    
 @end
 
-@fun MakeSymLink(sourcepath, linkpath)
+@fun MakeSymLink(sourcepath as Str, linkpath as Str)
 @desc Create a symbolic link at the target path that points to the source.
 @end
 
-@fun ReadSymLink(path)
+@fun ReadSymLink(path as Str) as Str
 @desc Return the path to which a symbolic link points.
 @end
 
@@ -113,7 +113,7 @@ conditions.
 
 <h2>Path operations</h2>
   
-@fun Join(component, ...)
+@fun Join(component as Str, ...) as Str
 @desc Join one or more path components with the directory separator character
     ("/" or "\"). Examples:
     @example
@@ -124,7 +124,7 @@ conditions.
     @end    
 @end
 
-@fun DirName(path)
+@fun DirName(path as Str) as Str
 @desc Return the directory portion of a path, i.e. the last component in the
       path is removed. The return value does not have a trailing directory
       separator unless the value refers to the root directory. Example:
@@ -133,14 +133,14 @@ conditions.
       @end
 @end
   
-@fun BaseName(path)
+@fun BaseName(path as Str) as Str
 @desc Return the last component in a path. Example:
       @example
       BaseName("/usr/bin") -- Result: "bin"
       @end
 @end
   
-@fun FileExt(path)
+@fun FileExt(path as Str) as Str
 @desc Return the file extension of a path. The dot in the extension is
       included. If there is no extension, return an empty string. If there
       are multiple extensions, only the last one is returned. Examples:
@@ -151,7 +151,7 @@ conditions.
       @end
 @end
 
-@fun FileBase(path)
+@fun FileBase(path as Str) as Str
 @desc Return the path without the file extension. If there is no extension,
     return the path unmodified. If there are multiple extensions, only the last
     one is removed. Example:
@@ -160,12 +160,12 @@ conditions.
     @end    
 @end
 
-@fun IsAbs(path)
+@fun IsAbs(path as Str) as Boolean
 @desc Return a boolean indicating whether the path is absolute (i.e. not
       relative to the current working directory).
 @end
 
-@fun NormPath(path)
+@fun NormPath(path as Str) as Str
 @desc Normalize a path. Convert all directory separators to the canonical
       ones. Remove extra directory separators and unnecessary
       <tt>.</tt> and <tt>..</tt> path components. Example:
@@ -180,13 +180,13 @@ conditions.
       @end
 @end
 
-@fun AbsPath(path)
+@fun AbsPath(path as Str) as Str
 @desc Convert the path to a normalized absolute path.
       @note Symbolic links are not recognized, as with @ref{NormPath}.
       @end
 @end
 
-@fun ExpandUser(path)
+@fun ExpandUser(path as Str) as Str
 @desc Replace a <tt>~</tt> or <tt>~user</tt> prefix in the path with the
       home directory of a user (the current user for <tt>~</tt>).
       Return the path unmodified if there is no prefix or if
@@ -197,12 +197,12 @@ conditions.
       
 <h2>Path constants</h2>
 
-@var Separator
+@var Separator as Str
 @desc The path name component separator of the operating system (<tt>"/"</tt>
       for Posix and <tt>"\"</tt> for Windows).
 @end
 
-@var AltSeparator
+@var AltSeparator as Str
 @desc The alternate path name component separator, or <tt>nil</tt> if only
       one separator exists (<tt>"/"</tt> for Windows and <tt>nil</tt>
       for other operating systems).
@@ -215,7 +215,7 @@ conditions.
 
 <h2>Class <tt>Stat</tt></h2>
 
-@class Stat(path)
+@class Stat(path as Str)
 @desc Construct an object containing information on the path target. Raise an
      @ref{std::IoError} if the path target does not exist.
 @end
@@ -224,32 +224,32 @@ conditions.
 
 <p>Stat has the following constant members:
 
-@var size
+@var size as Int
 @desc Size of the file, in bytes. If the path refers to a directory or a 
       special file, the value is undefined.
 @end
 
-@var isFile
+@var isFile as Boolean
 @desc Boolean indicating whether the path refers to an ordinary file or a
       symbolic link to an ordinary file.
 @end
 
-@var isDir
+@var isDir as Boolean
 @desc Boolean indicating whether the path refers to a directory or a symbolic
       link to a directory.
 @end
 
-@var isLink
+@var isLink as Boolean
 @desc Boolean indicating whether the path refers to a symbolic link.
 @end
 
-@var isSpecial
+@var isSpecial as Boolean
 @desc Boolean indicating whether the path refers to a special file. Special
       files are operating system dependent. Typical special files are Unix
       device files such as /dev/null.
 @end
 
-@var modificationTime
+@var modificationTime as Str
 @desc Last modification time of the path target as a string of form
       "YYYY-MM-DD hh:mm:ss" (optionally followed by a fraction).
       It is suitable for passing to the @ref{time::DateTime} constructor.
@@ -261,40 +261,40 @@ conditions.
       @end
 @end
 
-@var accessTime
+@var accessTime as Str
 @desc Last access time of the path target as a string of form
       "YYYY-MM-DD hh:mm:ss"  (optionally followed by a fraction).
       It is suitable for passing to the @ref{time::DateTime} constructor.
 @end
 
-@var isReadable
+@var isReadable as Boolean
 @desc Boolean indicating whether the path target is readable by the current
       user.
 @end
 
-@var isWritable
+@var isWritable as Boolean
 @desc Boolean indicating whether the path target is writable by the
       current user.
 @end
 
-@var owner
+@var owner as Str
 @desc User name of the path target owner. The value is an empty string if
       there is no owner.
 @end
 
-@var ownerPerm
+@var ownerPerm as Str
 @desc Access permissions for the owner of the path target. This is a string
       that may contain some of these characters: <tt>r</tt> for read access,
       <tt>w</tt> for write access and <tt>x</tt> for executable access, in
       that order.
 @end
 
-@var otherPerm
+@var otherPerm as Str
 @desc Access permissions for other users. The format is the same as for
       <tt>ownerPerm</tt>.
 @end
 
-@var groupPerm
+@var groupPerm as Str
 @desc Access permissions for the group of the file. The format is the same
       as for <tt>ownerPerm</tt>.
 @end
@@ -303,7 +303,7 @@ conditions.
 
 <h2>File status change operations</h2>
 
-@fun SetPerm(path, owner[, other[, group]])
+@fun SetPerm(path as Str, owner as Str[, other as Str[, group as Str]])
 @desc Change the permissions of a directory entry. Permissions are defined
   using a string which may have any subset of the characters <tt>r</tt> 
   (read permission), <tt>w</tt> (write permission) and <tt>x</tt>
@@ -316,37 +316,37 @@ conditions.
   @end
 @end
 
-@fun SetModificationTime(path, datetime)
+@fun SetModificationTime(path as Str, datetime)
 @desc Change the modification time of a directory entry. The <tt>datetime</tt>
       parameter must be compatible with the @ref{time::DateTime} class.
 @end
 
-@fun SetAccessTime(path, datetime)
+@fun SetAccessTime(path as Str, datetime)
 @desc Change the access time of a directory entry. The <tt>datetime</tt>
       parameter must be compatible with the @ref{time::DateTime} class.
 @end
 
 <h2>Miscellaneous operations</h2>
 
-@fun GetEnv(variable[, default])
+@fun GetEnv(variable as Str[, default as Str]) as Str
 @desc Return the value of an environment variable, or <tt>default</tt> if the
       environment variable is not defined. If <tt>default</tt> is not given,
       it defaults to <tt>nil</tt>. Both the variable and the value are
       strings.
 @end
 
-@fun SetEnv(variable, value)
+@fun SetEnv(variable as Str, value as Str)
 @desc Change the value of an environment variable. Both the variable and the
       value should be strings. As an exception, if the value is
       <tt>nil</tt>, remove the variable from the environment.
 @end
   
-@fun ListEnv()
+@fun ListEnv() as Array<Str>
 @desc Return an array containing the names of all environment variables in the
       current environment.
 @end
 
-@fun System(command)
+@fun System(command as Str) as Int
 @desc Execute a shell command and return the status of the command. The
     execution of the current thread is paused until the command has finished
     executing. Example:
@@ -358,11 +358,12 @@ conditions.
     @end
 @end
   
-@fun Sleep(seconds)
+@fun Sleep(seconds as Int)
+@fun Sleep(seconds as Float)
 @desc Pause for the specified number of seconds. The seconds may be an integer
     or a float. Only the current thread is paused.
 @end
 
-@fun User()
+@fun User() as Str
 @desc Return the login user name of the current user.
 @end

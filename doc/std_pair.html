@@ -1,6 +1,6 @@
 @head
 @module std
-@title Class <tt>std::Pair</tt>
+@title Class <tt>std::Pair&lt;L, R&gt;</tt>
 @index Pair
 
 <p>Instances of the <tt>Pair</tt> class represent immutable pairs of two
@@ -18,18 +18,19 @@ the @ref{std::Map} class, where pairs represent (key, value) pairs, and in
 
 <h2>Member constants</h2>
 
-@var left
+@var left as L
 @desc The first (left) item in the pair.
 @end
 
-@var right
+@var right as R
 @desc The second (right) item in the pair.
 @end
 
 <h2>Operations</h2>
 
 @op x : y
-@desc Construct a pair with values <tt>x</tt> and <tt>y</tt>.
+@desc Construct a pair with values <tt>x</tt> (<tt>left</tt>) and
+      <tt>y</tt> (<tt>right</tt>).
 @end
 
 @op pair == x

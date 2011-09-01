@@ -1,6 +1,6 @@
 @head
 @module std
-@title Class <tt>std::Array</tt>
+@title Class <tt>std::Array&lt;T&gt;</tt>
 @index Array
 
 <p>The <tt>Array</tt> class is a resizable sequence of items. The items can be
@@ -30,7 +30,7 @@ constructed using the <tt>*</tt> operator. Example:
 <p>You can also create an array from any iterable object using the
 <tt>Array</tt> constructor:
 
-@class Array([iterable])
+@class Array([iterable as Itarable<T>])
 @desc Construct an Array object. If <tt>iterable</tt> is given,
       iterate over it and append all the items to the created
       array. Otherwise, the created array is empty. Example:
@@ -41,16 +41,16 @@ constructed using the <tt>*</tt> operator. Example:
 
 <h2><tt>Array</tt> methods</h2>
 
-@fun length()
+@fun length() as Int
 @desc Return the length of the array.
 @end
 
-@fun append(object)
+@fun append(object as T)
 @desc Add an item at the end of the array. The length of the array is increased
       by one.
 @end
 
-@fun extend(sequence)
+@fun extend(sequence as Sequence<T>)
 @desc Add the items in the sequence to the end of the array. Example:
       @example
         var a = [1, 2]
@@ -58,7 +58,7 @@ constructed using the <tt>*</tt> operator. Example:
       @end
 @end
 
-@fun insertAt(index, object)
+@fun insertAt(index as Int, object as T)
 @desc Insert an item at the specified position. The length of the array is
     increased by one. The index argument is the index of the inserted object:
     for example, <tt>array.insertAt(0, x)</tt> inserts <tt>x</tt> as the first
@@ -66,31 +66,31 @@ constructed using the <tt>*</tt> operator. Example:
     index.
 @end
 
-@fun remove(object)
+@fun remove(object as T)
 @desc Remove all instances of the object from array. The length of array is
       decreased by one for each removed instance.
 @end
 
-@fun removeAt(index)
+@fun removeAt(index as Int) as T
 @desc Remove an item at the specified index, and return the item.
       The length of the array is decreased by one.
 @end
 
-@fun index(item)
+@fun index(item as Object) as Int
 @desc Return the smallest (non-negative) index of the array that contains the
       item, or raise @ref{ValueError} if the array does not contain the item.
 @end
 
-@fun count(item)
+@fun count(item as Object)
 @desc Return the number of times an item is present in the array.
 @end
 
-@fun iterator()
+@fun iterator() as Iterator<T>
 @desc Return an iterator object that can be used to sequentially iterate over
   the array items, starting from the first item.
 @end
 
-@fun copy()
+@fun copy() as Array<T>
 @desc Return a new array object with the same length and the same items as
   the original array.
   @note Only item references are copied to the new array
@@ -98,7 +98,7 @@ constructed using the <tt>*</tt> operator. Example:
   @end
 @end
 
-@fun find(item)
+@fun find(item as Object) as Int
 @desc @deprecated
       Return the smallest (non-negative) index of the array that contains the
       item, or -1 if the array does not contain the item.
