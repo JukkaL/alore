@@ -41,21 +41,21 @@ the second to last character, etc.
 
 <h2>Methods</h2>
 
-@fun length()
+@fun length() as Int
 @desc Return the length of the string.
 @end
 
-@fun lower()
+@fun lower() as Str
 @desc Return a copy of the string with upper case characters converted into
     lower case.
 @end
 
-@fun upper()
+@fun upper() as Str
 @desc Return a copy of the string with lower case characters converted into
     upper case.
 @end
 
-@fun find(substring[, start])
+@fun find(substring as Str[, start as Int])
 @desc Return the index of the first occurrence of a substring in the
     string, or -1 if the substring cannot be found. The
     returned index is the index of the start of the match. If the argument
@@ -63,13 +63,13 @@ the second to last character, etc.
     higher are considered.
 @end
 
-@fun index(substring)
+@fun index(substring as Str) as Int
 @desc Return the index of the first occurrence of a substring in the
     string, or raise @ref{ValueError} if the substring cannot be found. The
     returned index is the index of the start of the match.
 @end
 
-@fun replace(old, new[, max])
+@fun replace(old as Str, new as Str[, max as Int])
 @desc Return a copy of the string with occurrences of <tt>old</tt> replaced
       with <tt>new</tt>, starting from the beginning of the string. If the
       <tt>max</tt> argument is present, only replace up to <tt>max</tt>
@@ -80,7 +80,7 @@ the second to last character, etc.
       @end
 @end
 
-@fun split([separator[, max]])
+@fun split([separator as Str[, max as Int]]) as Array<Str>
 @desc Split the string into fields separated by the separator or by a run of
     whitespace characters, if the separator is not specified or it is
     <tt>nil</tt>. In the latter case, whitespace characters at the start and

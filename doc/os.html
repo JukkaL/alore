@@ -21,7 +21,8 @@ conditions.
     target directories differ.
 @end
 
-@fun MakeDir(path<!--[, option]-->)
+<!--IDEA: MakeDir(path[, option])-->
+@fun MakeDir(path)
 @desc Create a directory. Raise @ref{IoError} if the directory already exists.
       <!--If the optional argument is present, its value must
       be @ref{io::Protected}. Normally, other users will be given read
