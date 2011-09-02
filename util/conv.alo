@@ -53,6 +53,29 @@ def Main(args)
 end
 
 
+-- State of the conversion of a single file. This is stored in a class since
+-- multiple recursive file conversions can be active at a time.
+class ConversionState
+  var out = []
+  var state = Stack()
+  var curMod = nil
+  var curClass = nil
+  var anchors = Set()
+  var sectionType = nil
+  var title = ""
+  var shortTitle = nil
+  var titleIndex = -1
+  var content
+  var topIndex
+  var prev  = ""
+  
+  def create()
+  end
+end
+
+
+-- This class performs the conversion and manages the state of the entire 
+-- conversion process.
 class Converter
   -- Page nesting; each item is a (path, title) pair.
   var hierarchy = Stack() as Stack<(Str, Str)>
@@ -90,20 +113,9 @@ class Converter
       return ""
     end
     var i = 0
-    var out = []
-    var state = Stack()
-    var prev = ""
-    var titleIndex = -1
-    var title = ""
-    var content
-    var topIndex
-    var shortTitle = nil
-    var sectionType = nil
-    var curMod = nil
-    var curClass = nil
-    var anchors = Set()
+    var st = ConversionState()
 
-    state.push("top")
+    st.state.push("top")
 
     while i < a.length()
       var s = a[i]
@@ -120,183 +132,185 @@ class Converter
       if ss.startsWith("@")
         var arg
         tag, arg = ParseTag(ss)
-        switch tag
-          case "@head"
-            for h in HtmlHeader
-              out.append(h)
-            end
-            out.append("")
-            titleIndex = out.length() - 1
-
-            topIndex = out.length()
-
-          case "@module"
-             curMod = arg
-             if arg != "implicit_interfaces"
-               addIndexItem([arg, "module"])
-             end
-          case "@fun", "@exception"
-            if state.top() != "dl"
-              state.push("dl")
-              out.append("<dl>")
-            end
-            out.append("<dt>" + Anchor(anchors, arg, curClass) + 
-                       FormatDef(arg))
-            addIndexItem(IndexItem(DefName(arg), curMod, curClass))
-          case "@h2"
-            if state.top() == "dl"
-              state.pop()
-              out.append("</dl>")
-            end
-            out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
-          case "@class"
-            if state.top() != "dl"
-              state.push("dl")
-              out.append("<dl>")
-            end
-            out.append("<dt>" + Anchor(anchors, arg) + 
-                       FormatDef("class " + arg))
-            addIndexItem([DefName(arg), curMod])
-            curClass = DefName(arg)
-          case "@class-hidden"
-            out.append(Anchor(anchors, arg))
-            addIndexItem([DefName(arg), curMod])
-            curClass = DefName(arg)
-          case "@end-class"
-            curClass = nil
-          case "@op"
-            if state.top() != "dl"
-              state.push("dl")
-              out.append("<dl>")
-            end
-            out.append("<dt>" + HiliSpan(arg))
-          case "@var"
-            if state.top() != "dl"
-              state.push("dl")
-              out.append("<dl>")
-            end
-            out.append("<dt>" + Anchor(nil, arg, curClass) + HiliSpan(arg))
-            addIndexItem(IndexItem(DefName(arg), curMod, curClass))
-          case "@desc"
-            out.append("<dd>" + arg)
-            state.push("dd")
-          case "@end"
-            if prev == "@end" and state.top() == "dl"
-              state.pop()
-              out.append("</dl>")
-            elif state.top() == "pre"
-              for l in RemoveSpacePrefix(content)
-                var ll = l
-                if sectionType == Grammar
-                  ll = FormatGrammar(l, self.nameMap)
-                end
-                out.append(ll)
-              end
-              out.append("</pre>")
-            end
-            state.pop()
-            sectionType = nil
-          case "@shorttitle"
-            shortTitle = arg
-          case "@title"
-            out.append("<h1>" + arg + "</h1>")
-            title = arg
-            arg = arg.replace("<tt>", "")
-            arg = arg.replace("</tt>", "")
-            if shortTitle != nil
-              self.hierarchy.append((path, shortTitle))
-            else
-              self.hierarchy.append((path, arg))
-            end
-            if titleIndex >= 0
-              out[titleIndex] = "  <title>" + arg + "</title>"
-            end
-            var nav = []
-            outputNavToolbar(nav, path, True)
-            out.insertAt(topIndex, Newline.join(nav))
-          case "@index"
-            title = arg
-          case "@example"
-            out.append("<pre class='ex'>")
-            state.push("pre")
-            content = []
-          case "@grammar"
-            out.append("<pre class='ex'>")
-            state.push("pre")
-            sectionType = Grammar
-            content = []
-          case "@see"
-            out.append("<p class='note'>")
-            out.append("<span class='note-header'>See&nbsp;also:</span>")
-            out.append(arg)
-            state.push("p")
-          case "@note"
-            out.append("<p class='note'>")
-            out.append("<span class='note-header'>Note:</span>")
-            out.append(arg)
-            state.push("p")
-          case "@link"
-            var t = convert(arg, outDir, release, ignoreBrokenLinks)
-            if t == ""
-              t = arg
-            end
-            out.append("<a href=""{}"">{}</a>".format(arg, t))
-          case "@complete-grammar"
-            out.append("<pre class='ex'>")
-            for l in RemoveSpacePrefix(self.grammarRules)
-              out.append(l)
-            end
-            out.append("</pre>")
-          case "@alpha-index"
-            outputIndex(out)
-          case "@scope"
-            self.scope = arg
-          case "@indexitem"
-            -- Add an uncategorized indexed item.
-            out.append(Anchor(nil, arg))
-            addIndexItem([arg, "indexitem"])
-        end
+        processTag(tag, arg, st, path, outDir, release, ignoreBrokenLinks)
       else
         if ss != ""
-          if state.top() == "dl"
-            state.pop()
-            out.append("</dl>")
+          if st.state.top() == "dl"
+            st.state.pop()
+            st.out.append("</dl>")
           end
         end
-        if state.top() != "pre"
-          out.append(s)
+        if st.state.top() != "pre"
+          st.out.append(s)
         else
-          content.append(s)
+          st.content.append(s)
         end
       end
       i += 1
       if ss != ""
-        prev = tag
+        st.prev = tag
       end
     end
 
-    while state.top() != "top"
-      if state.top() == "dl"
-        out.append("</dl>")
+    while st.state.top() != "top"
+      if st.state.top() == "dl"
+        st.out.append("</dl>")
       end
-      state.pop()
+      st.state.pop()
     end
 
-    outputNavToolbar(out, path, False)
-    out.append("</body>")
-    out.append("</html>")
+    outputNavToolbar(st.out, path, False)
+    st.out.append("</body>")
+    st.out.append("</html>")
 
     var f = File(Join(outDir, BaseName(path)), Output)
-    for s in out
+    for s in st.out
       f.writeLn(s)
     end
     f.close()
 
-    if title != ""
+    if st.title != ""
       self.hierarchy.pop()
     end
 
-    return title
+    return st.title
+  end
+
+  def processTag(tag, arg, st, path, outDir, release, ignoreBrokenLinks)
+    switch tag
+      case "@head"
+        for h in HtmlHeader
+          st.out.append(h)
+        end
+        st.out.append("")
+        st.titleIndex = st.out.length() - 1
+        st.topIndex = st.out.length()
+      case "@module"
+         st.curMod = arg
+         if arg != "implicit_interfaces"
+           addIndexItem([arg, "module"])
+         end
+      case "@fun", "@exception"
+        if st.state.top() != "dl"
+          st.state.push("dl")
+          st.out.append("<dl>")
+        end
+        st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) + 
+                      FormatDef(arg))
+        addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+      case "@h2"
+        if st.state.top() == "dl"
+          st.state.pop()
+          st.out.append("</dl>")
+        end
+        st.out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
+      case "@class"
+        if st.state.top() != "dl"
+          st.state.push("dl")
+          st.out.append("<dl>")
+        end
+        st.out.append("<dt>" + Anchor(st.anchors, arg) + 
+                      FormatDef("class " + arg))
+        addIndexItem([DefName(arg), st.curMod])
+        st.curClass = DefName(arg)
+      case "@class-hidden"
+        st.out.append(Anchor(st.anchors, arg))
+        addIndexItem([DefName(arg), st.curMod])
+        st.curClass = DefName(arg)
+      case "@end-class"
+        st.curClass = nil
+      case "@op"
+        if st.state.top() != "dl"
+          st.state.push("dl")
+          st.out.append("<dl>")
+        end
+        st.out.append("<dt>" + HiliSpan(arg))
+      case "@var"
+        if st.state.top() != "dl"
+          st.state.push("dl")
+          st.out.append("<dl>")
+        end
+        st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + HiliSpan(arg))
+        addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+      case "@desc"
+        st.out.append("<dd>" + arg)
+        st.state.push("dd")
+      case "@end"
+        if st.prev == "@end" and st.state.top() == "dl"
+          st.state.pop()
+          st.out.append("</dl>")
+        elif st.state.top() == "pre"
+          for l in RemoveSpacePrefix(st.content)
+            var ll = l
+            if st.sectionType == Grammar
+              ll = FormatGrammar(l, self.nameMap)
+            end
+            st.out.append(ll)
+          end
+          st.out.append("</pre>")
+        end
+        st.state.pop()
+        st.sectionType = nil
+      case "@shorttitle"
+        st.shortTitle = arg
+      case "@title"
+        st.out.append("<h1>" + arg + "</h1>")
+        st.title = arg
+        arg = arg.replace("<tt>", "")
+        arg = arg.replace("</tt>", "")
+        if st.shortTitle != nil
+          self.hierarchy.append((path, st.shortTitle))
+        else
+          self.hierarchy.append((path, arg))
+        end
+        if st.titleIndex >= 0
+          st.out[st.titleIndex] = "  <title>" + arg + "</title>"
+        end
+        var nav = []
+        outputNavToolbar(nav, path, True)
+        st.out.insertAt(st.topIndex, Newline.join(nav))
+      case "@index"
+        st.title = arg
+      case "@example"
+        st.out.append("<pre class='ex'>")
+        st.state.push("pre")
+        st.content = []
+      case "@grammar"
+        st.out.append("<pre class='ex'>")
+        st.state.push("pre")
+        st.sectionType = Grammar
+        st.content = []
+      case "@see"
+        st.out.append("<p class='note'>")
+        st.out.append("<span class='note-header'>See&nbsp;also:</span>")
+        st.out.append(arg)
+        st.state.push("p")
+      case "@note"
+        st.out.append("<p class='note'>")
+        st.out.append("<span class='note-header'>Note:</span>")
+        st.out.append(arg)
+        st.state.push("p")
+      case "@link"
+        var t = convert(arg, outDir, release, ignoreBrokenLinks)
+        if t == ""
+          t = arg
+        end
+        st.out.append("<a href=""{}"">{}</a>".format(arg, t))
+      case "@complete-grammar"
+        st.out.append("<pre class='ex'>")
+        for l in RemoveSpacePrefix(self.grammarRules)
+          st.out.append(l)
+        end
+        st.out.append("</pre>")
+      case "@alpha-index"
+        outputIndex(st.out)
+      case "@scope"
+        self.scope = arg
+      case "@indexitem"
+        -- Add an uncategorized indexed item.
+        st.out.append(Anchor(nil, arg))
+        addIndexItem([arg, "indexitem"])
+    end
   end
 
 
