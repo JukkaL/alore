@@ -54,13 +54,30 @@ end
 
 
 class Converter
-  var hierarchy = Stack()
-  var order = []
-  var nameMap = Map()
-  var titles = Set()
-  var modules = Set()
-  var grammarRules = []
-  var indexItems = []
+  -- Page nesting; each item is a (path, title) pair.
+  var hierarchy = Stack() as Stack<(Str, Str)>
+  -- List of processed paths in order; used for generating prev/next links.
+  -- An empty path ("") signifies a break in the chain.
+  var order = []          as Array<Str>
+  -- Map from a link target name (anchor) to a path. The name can be based on
+  -- a short name, a fully qualified name or a heading.
+  var nameMap = Map()     as Map<Str, Str>
+  -- Set of anchors representing headings/titles. This can be used to check if
+  -- a link target is a heading.
+  var titles = Set()      as Set<Str>
+  -- Set of all module names.
+  var modules = Set()     as Set<Str>
+  -- All grammar rules are collected in this list, in the order they appear.
+  -- This is used for producing the grammar definition page.
+  var grammarRules = []   as Array<Str>
+  -- Index items are collected in this list. Each item is in one of the 
+  -- following forms:
+  --   [name, "module",    scope]     (module name)
+  --   [name, moduleName,  className] (function or variable)
+  --   [name, moduleName,  scope]     (class)
+  --   [name, "indexitem", scope]     (uncategorized)
+  var indexItems = []     as Array<Array<Str>>
+  -- The current index scope. This allows generating multiple disjoint indexes.
   var scope = "(undefined)"
 
 
@@ -603,6 +620,9 @@ def FormatDef(defn)
 end
 
 
+-- Modify a string so that it is a valid HTML anchor (link target). The 
+-- resulting string resembles the original string, but it has e.g. spaces
+-- replaced with underscores.
 def NormAnchor(s)
   s = s.replace(" ", "_")
   s = s.replace("*", "_")
