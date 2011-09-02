@@ -24,7 +24,8 @@ class.
 
 <h2>Functions</h2>
 
-@fun Match(regexp, str[, pos])
+@fun Match(regexp as Str, str as Str[, pos as Int]) as MatchResult
+@fun Match(regexp as RegExp, str as Str[, pos as Int]) as MatchResult
 @desc Test if a regular expression matches at the start of the string.
       If the regular
       expression matches a (potentially empty) prefix of the string, return a
@@ -34,7 +35,8 @@ class.
       is provided, start the matching at the specified string index instead.
 @end
 
-@fun Search(regexp, str[, start])
+@fun Search(regexp as Str, str as Str[, start as Int]) as MatchResult
+@fun Search(regexp as RegExp, str as Str[, start as Int]) as MatchResult
 @desc Search a string for a match of a regular expression. Return a
       <a href="#result">match object</a>
       describing the leftmost match or <tt>nil</tt> if no match could
@@ -42,7 +44,8 @@ class.
       matching at the specified string index instead of the string start.
 @end
 
-@fun Subst(str, regexp, new)
+@fun Subst(str as Str, regexp as Str, new) as Str
+@fun Subst(str as Str, regexp as RegExp, new) as Str
 @desc Substitute all non-overlapping occurrences of a regular expression in a
       string with replacement values described by the
       <tt>new</tt> parameter.
@@ -62,7 +65,9 @@ class.
         Subst("foo fox", "fo+", "&lt;\0&gt;")   -- Result: "&lt;foo&gt; &lt;fo&gt;x"
       @end
 
-      <p>If <tt>new</tt> is a callable object, call the object with the
+      <p><tt>New</tt> can also be a callable object
+      (of type <tt>def (MatchResult) as Str</tt>). In this case, call the
+      object with the
       corresponding <a href="#result">match object</a> as the argument for
       each occurrence of the regular expression in the string. The object
       should return the replacement string when called. Example:
@@ -75,7 +80,8 @@ class.
       @end
 @end
 
-@fun Split(str, regexp)
+@fun Split(str as Str, regexp as Str) as Array<Str>
+@fun Split(str as Str, regexp as RegExp) as Array<Str>
 @desc Split the string into fields at each non-overlapping occurrence of the
       regular expression. Return an array containing the fields. Example:
       @example
@@ -83,7 +89,8 @@ class.
       @end
 @end
 
-@fun FindAll(regexp, str)
+@fun FindAll(regexp as Str, str as Str) as Array<MatchResult>
+@fun FindAll(regexp as RegExp, str as Str) as Array<MatchResult>
 @desc Find all non-overlapping matches of a regular expression in a string.
       Return an array of @ref{MatchResult} objects that represent the matches.
       Scan the string from start to end. Include also empty matches, unless
@@ -92,7 +99,7 @@ class.
 
 <h2>Class <tt>RegExp</tt></h2>
 
-@class RegExp(regexp, ...)
+@class RegExp(regexp as Str, ... as Constant)
 @desc Construct a regular expression object. The first parameter
   must be a regular expression string. Optionally, the <tt>IgnoreCase</tt>
   constant can be given as an additional parameter to enable case insensitive
@@ -109,7 +116,7 @@ class.
 
 <h2>Constants</h2>
 
-@var IgnoreCase
+@var IgnoreCase as Constant
 @desc Flag for case insensitive matching, passed to @ref{RegExp}.
 @end
 
@@ -121,14 +128,14 @@ directly. Match result objects have these methods:
 
 @class-hidden MatchResult
 
-@fun group(n)
+@fun group(n as Int) as Str
 @desc Return the substring matched by a specific group. The group 0 is the 
       substring matched by the entire regular expression. Return <tt>nil</tt>
       if the group exists, but it is within a part of the regular expression
       that was not matched.
 @end
 
-@fun start(n)
+@fun start(n as Int) as Int
 @desc Return the start index of the substring matched by a specific group.
       The group 0 refers to the
       substring matched by the entire regular expressions. Return
@@ -138,7 +145,7 @@ directly. Match result objects have these methods:
       stop index.
 @end
 
-@fun stop(n)
+@fun stop(n as Int) as Int
 @desc Return the stop index of the substring matched by a specific group.
       The group 0 refers to the
       substring matched by the entire regular expressions. Return
@@ -148,7 +155,7 @@ directly. Match result objects have these methods:
       stop index.
 @end
 
-@fun span(n)
+@fun span(n as Int) as Pair<Int, Int>
 @desc @deprecated
       Return a @ref{Pair} object representing the (non-negative) start and
       end indices of

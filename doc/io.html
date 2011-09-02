@@ -55,24 +55,24 @@ the following line endings are accepted when reading lines:
 <p>The following constants refer to standard streams. They are available as
 text stream objects using the platform default encoding:
 
-@var StdIn
+@var StdIn as TextStream
 @desc The standard input stream.
 @end
-  
-@var StdOut
+
+@var StdOut as TextStream
 @desc The standard output stream. This stream will be line buffered if
       connected to a terminal, and buffered otherwise.
 @end
-  
-@var StdErr
+
+@var StdErr as TextStream
 @desc The standard error stream. This stream is always unbuffered.
 @end
 
 <p>The standard streams are also available as raw 8-bit streams:
   
-@var RawStdIn
-@var RawStdOut
-@var RawStdErr
+@var RawStdIn as File
+@var RawStdOut as File
+@var RawStdErr as File
 @desc Raw standard streams. The buffering mode is the same as with
       corresponding non-raw streams.
 @end
@@ -82,46 +82,46 @@ text stream objects using the platform default encoding:
 <p>Several options can be used with <tt>Stream</tt> and <tt>File</tt>
 constructors. They are all symbolic constants:
 
-@var Input
+@var Input as Constant
 @desc Stream option for reading.
 @end
   
-@var Output
+@var Output as Constant
 @desc Stream option for writing.
 @end
   
-@var Append
+@var Append as Constant
 @desc <tt>File</tt> option for opening a file for writing. The existing 
       file contents will be kept and the file pointer will be moved to the end 
       of the file when the file is opened.
 @end
 
-@var Unbuffered
+@var Unbuffered as Constant
 @desc Stream option for unbuffered access. The stream will be automatically
       flushed after every output operation and the use of an input buffer is
       minimized.
 @end
   
-@var LineBuffered
+@var LineBuffered as Constant
 @desc Stream option for line buffered access. The stream will be
       automatically flushed after writing a line break. The output and input
       buffer sizes will be small.
 @end
 
-@var Buffered
+@var Buffered as Constant
 @desc Stream option for fully buffered access. All stream input and output
       operations will be buffered. The <tt>flush</tt>
       method (or the <tt>close</tt> method) must be
       called after a set of write operations.
 @end
 
-@var Narrow
+@var Narrow as Constant
 @desc Stream option for creating a <i>narrow stream</i>. Narrow streams 
       only process 8-bit (narrow) strings, i.e. strings with no character codes
       larger than 255.
 @end
 
-@var Protected
+@var Protected as Constant
 @desc File option for creating a file that can only be accessed by the current
       user.
 @end
@@ -130,7 +130,7 @@ constructors. They are all symbolic constants:
   
 <p>The platform default encoding class:
 
-@var DefaultEncoding
+@var DefaultEncoding as encodings::Encoding
 @desc The default system text encoding. Its value depends on the current
       locale settings and the operating system. This object implements the
       @href{Character encoding interface} described in the @ref{encodings}

@@ -7,85 +7,86 @@ constants.
 All operations are implemented using floating point arithmetic, and all
 functions return <tt>Float</tt> values. Functions accept integer arguments in
 addition to floats, but integer arguments are converted to floats internally.
+The argument types below only include <tt>Float</tt> for conciseness.
 
 <p>All angles are in radians.
 
 <h2>Functions</h2>
 
-@fun Sqrt(x)
+@fun Sqrt(x as Float) as Float
 @desc Return the square root of <i>x</i>.
 @end
 
-@fun Sin(x)
+@fun Sin(x as Float) as Float
 @desc Return the sine of <i>x</i>.
 @end
 
-@fun Cos(x)
+@fun Cos(x as Float) as Float
 @desc Return the cosine of <i>x</i>.
 @end
 
-@fun Tan(x)
+@fun Tan(x as Float) as Float
 @desc Return the tangent of <i>x</i>.
 @end
 
-@fun ArcSin(x)
+@fun ArcSin(x as Float) as Float
 @desc Return the arc sine of <i>x</i>.
 @end
 
-@fun ArcCos(x)
+@fun ArcCos(x as Float) as Float
 @desc Return the arc cosine of <i>x</i>.
 @end
 
-@fun ArcTan(y[, x])
+@fun ArcTan(y as Float[, x as Float]) as Float
 @desc Return the arc tangent of <i>y</i> or <i>y / x</i>. If <i>x</i> is 
       negative, the magnitude of the result will be chosen to be 
       between <tt>Pi</tt> / 2 and <tt>Pi</tt>; otherwise,
       the magnitude of the result is at most <tt>Pi</tt> / 2.
 @end
 
-@fun Ceil(x)
+@fun Ceil(x as Float) as Float
 @desc Return <i>x</i> rounded up to the nearest integer.
 @end
 
-@fun Floor(x)
+@fun Floor(x as Float) as Float
 @desc Return <i>x</i> rounded down to the nearest integer.
 @end
 
-@fun Round(x)
+@fun Round(x as Float) as Float
 @desc Return <i>x</i> rounded to the nearest integer.
 @end
 
-@fun Trunc(x)
+@fun Trunc(x as Float) as Float
 @desc Return <i>x</i> rounded to the nearest integer towards zero.
 @end
 
-@fun Exp(x)
+@fun Exp(x as Float) as Float
 @desc Return <i>e</i>**<i>x</i>.
 @end
 
-@fun Log(x)
+@fun Log(x as Float) as Float
 @desc Return the natural logarithm of <i>x</i>.<br>
     @note The logarithm in base <i>y</i> can be calculated as
       <tt>Log(x)</tt> / <tt>Log(y)</tt>.
     @end
 @end
 
-@fun IsInf(x)
+@fun IsInf(x as Float) as Boolean
 @desc Return a boolean indicating whether <i>x</i> is IEEE 754 positive or
       negative infinity.
 @end
 
-@fun IsNaN(x)
+@fun IsNaN(x as Float) as Boolean
 @desc Return a boolean indicating whether <i>x</i> is IEEE 754 NaN
       (Not-a-Number).
 @end
 
 <h2>Constants</h2>
 
-@var Pi
+@var Pi as Float
 @desc The constant <i>pi</i>, approximately 3.14159.
 @end
 
-@var E
+@var E as Float
 @desc The constant <i>e</i>, approximately 2.71828.
 @end

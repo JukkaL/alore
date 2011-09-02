@@ -5,7 +5,7 @@
 
 <p>The <tt>File</tt> class represents an open file as a stream.
 
-@class File(path, ...)
+@class File(path as Str, ... as Constant)
 @desc Open a file for reading and/or writing. This class is a subclass of
       @ref{Stream}.
       The optional arguments may include @ref{Input}, @ref{Output} or
@@ -42,7 +42,7 @@
 @ref{Stream} class (follow the previous link for more information) and these
 additional methods:
 
-@fun seek(offset)
+@fun seek(offset as Int)
 @desc Seek to a specific byte offset in the file. The next read or write
       operation will start at this location. The first byte in the file has the
       offset 0.
@@ -52,12 +52,12 @@ additional methods:
       @end
 @end
 
-@fun pos()
+@fun pos() as Int
 @desc Return the current byte offset in the file. The offset 0 refers to the
       start of the file.
 @end
 
-@fun size()
+@fun size() as Int
 @desc Return the size of the file, in bytes.
 @end
 
@@ -76,7 +76,7 @@ directly:
       must be strings.
 @end
 
-@fun _read(size)
+@fun _read(size as Int) as Str
 @desc Read up to the specified number of bytes from the file directly without
       buffering.
 @end
