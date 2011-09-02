@@ -56,6 +56,11 @@ end
 -- State of the conversion of a single file. This is stored in a class since
 -- multiple recursive file conversions can be active at a time.
 class ConversionState
+  const path
+  const outDir
+  const release
+  const ignoreBrokenLinks
+  
   var out = []
   var state = Stack()
   var curMod = nil
@@ -65,12 +70,9 @@ class ConversionState
   var title = ""
   var shortTitle = nil
   var titleIndex = -1
-  var content
-  var topIndex
+  var topIndex = -1
+  var content = nil
   var prev  = ""
-  
-  def create()
-  end
 end
 
 
@@ -113,7 +115,7 @@ class Converter
       return ""
     end
     var i = 0
-    var st = ConversionState()
+    var st = ConversionState(path, outDir, release, ignoreBrokenLinks)
 
     st.state.push("top")
 
@@ -132,7 +134,7 @@ class Converter
       if ss.startsWith("@")
         var arg
         tag, arg = ParseTag(ss)
-        processTag(tag, arg, st, path, outDir, release, ignoreBrokenLinks)
+        processTag(tag, arg, st)
       else
         if ss != ""
           if st.state.top() == "dl"
@@ -177,7 +179,7 @@ class Converter
   end
 
 
-  def processTag(tag, arg, st, path, outDir, release, ignoreBrokenLinks)
+  def processTag(tag, arg, st)
     switch tag
       case "@head"
         processHead(st)
@@ -208,7 +210,7 @@ class Converter
       case "@shorttitle"
         st.shortTitle = arg
       case "@title"
-        processTitle(arg, st, path)
+        processTitle(arg, st)
       case "@index"
         st.title = arg
       case "@example"
@@ -231,7 +233,7 @@ class Converter
         st.out.append(arg)
         st.state.push("p")
       case "@link"
-        processLink(arg, st, outDir, release, ignoreBrokenLinks)
+        processLink(arg, st)
       case "@complete-grammar"
         st.out.append("<pre class='ex'>")
         for l in RemoveSpacePrefix(self.grammarRules)
@@ -262,21 +264,21 @@ class Converter
 
 
   -- Process @title.
-  def processTitle(arg, st, path)
+  def processTitle(arg, st)
     st.out.append("<h1>" + arg + "</h1>")
     st.title = arg
     arg = arg.replace("<tt>", "")
     arg = arg.replace("</tt>", "")
     if st.shortTitle != nil
-      self.hierarchy.append((path, st.shortTitle))
+      self.hierarchy.append((st.path, st.shortTitle))
     else
-      self.hierarchy.append((path, arg))
+      self.hierarchy.append((st.path, arg))
     end
     if st.titleIndex >= 0
       st.out[st.titleIndex] = "  <title>" + arg + "</title>"
     end
     var nav = []
-    outputNavToolbar(nav, path, True)
+    outputNavToolbar(nav, st.path, True)
     st.out.insertAt(st.topIndex, Newline.join(nav))
   end
   
@@ -366,8 +368,8 @@ class Converter
   
   
   -- Process @link.
-  def processLink(arg, st, outDir, release, ignoreBrokenLinks)
-    var t = convert(arg, outDir, release, ignoreBrokenLinks)
+  def processLink(arg, st)
+    var t = convert(arg, st.outDir, st.release, st.ignoreBrokenLinks)
     if t == ""
       t = arg
     end
