@@ -332,7 +332,7 @@ class Converter
       st.state.push("dl")
       st.out.append("<dl>")
     end
-    st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + HiliSpan(arg))
+    st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + FormatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
   
@@ -654,9 +654,10 @@ def SplitDef(defn)
   var pre = ""
   var base = defn
   var args = ""
-  if "(" in defn
-    base = defn[:defn.index("(")]
-    args = defn[defn.index("("):]
+  var m = Search('[(<]|&lt;| as ', defn)
+  if m != nil
+    base = defn[:m.start(0)]
+    args = defn[m.start(0):]
     if " " in base.strip()
       var i = FindLastChar(base, " ")
       pre = base[:i + 1]
