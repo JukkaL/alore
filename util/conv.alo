@@ -42,8 +42,9 @@ def Main(args)
     args = args[1:]
   end
   
-  Preprocess(args[0])
-  Convert(args[0], args[1], args[2], ignoreBrokenLinks)
+  var conv = Converter()
+  conv.preprocess(args[0])
+  conv.convert(args[0], args[1], args[2], ignoreBrokenLinks)
   if Platform != "windows"
     System("cp alore.css " + args[1])
   else
@@ -52,232 +53,453 @@ def Main(args)
 end
 
 
-var Hierarchy = Stack()
-var Order = []
-var NameMap = Map()
-var Titles = Set()
-var Modules = Set()
-var GrammarRules = []
-var IndexItems = []
-var Scope = "(undefined)"
+class Converter
+  var hierarchy = Stack()
+  var order = []
+  var nameMap = Map()
+  var titles = Set()
+  var modules = Set()
+  var GrammarRules = []
+  var IndexItems = []
+  var Scope = "(undefined)"
 
 
-def Convert(path, outDir, release, ignoreBrokenLinks)
-  var a
-  try
-    a = File(path).readLines()
-  except e is IoError
-    WriteLn("Could not open ", path)
-    return ""
-  end
-  var i = 0
-  var out = []
-  var state = Stack()
-  var prev = ""
-  var titleIndex = -1
-  var title = ""
-  var content
-  var topIndex
-  var shortTitle = nil
-  var sectionType = nil
-  var curMod = nil
-  var curClass = nil
-  var anchors = Set()
-  
-  state.push("top")
-  
-  while i < a.length()
-    var s = a[i]
-    
-    -- Replace certain @ sequences with constant strings.
-    s = ReplaceConstants(s, release)
-    
-    var ss = s.strip()
-    var tag = ""
-    
-    -- Replace href and ref tags with HTML links.
-    s, ss = ReplaceRefs(s, ss, ignoreBrokenLinks, path)
-    
-    if ss.startsWith("@")
-      var arg
-      tag, arg = ParseTag(ss)
-      switch tag
-        case "@head"
-          for h in HtmlHeader
-            out.append(h)
-          end
-          out.append("")
-          titleIndex = out.length() - 1
-          
-          topIndex = out.length()
+  def convert(path, outDir, release, ignoreBrokenLinks)
+    var a
+    try
+      a = File(path).readLines()
+    except e is IoError
+      WriteLn("Could not open ", path)
+      return ""
+    end
+    var i = 0
+    var out = []
+    var state = Stack()
+    var prev = ""
+    var titleIndex = -1
+    var title = ""
+    var content
+    var topIndex
+    var shortTitle = nil
+    var sectionType = nil
+    var curMod = nil
+    var curClass = nil
+    var anchors = Set()
 
-        case "@module"
-           curMod = arg
-           if arg != "implicit_interfaces"
-             AddIndexItem([arg, "module"])
-           end
-        case "@fun", "@exception"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + Anchor(anchors, arg, curClass) + 
-                     FormatDef(arg))
-          AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
-        case "@h2"
+    state.push("top")
+
+    while i < a.length()
+      var s = a[i]
+
+      -- Replace certain @ sequences with constant strings.
+      s = ReplaceConstants(s, release)
+
+      var ss = s.strip()
+      var tag = ""
+
+      -- Replace href and ref tags with HTML links.
+      s, ss = replaceRefs(s, ss, ignoreBrokenLinks, path)
+
+      if ss.startsWith("@")
+        var arg
+        tag, arg = ParseTag(ss)
+        switch tag
+          case "@head"
+            for h in HtmlHeader
+              out.append(h)
+            end
+            out.append("")
+            titleIndex = out.length() - 1
+
+            topIndex = out.length()
+
+          case "@module"
+             curMod = arg
+             if arg != "implicit_interfaces"
+               addIndexItem([arg, "module"])
+             end
+          case "@fun", "@exception"
+            if state.top() != "dl"
+              state.push("dl")
+              out.append("<dl>")
+            end
+            out.append("<dt>" + Anchor(anchors, arg, curClass) + 
+                       FormatDef(arg))
+            addIndexItem(IndexItem(DefName(arg), curMod, curClass))
+          case "@h2"
+            if state.top() == "dl"
+              state.pop()
+              out.append("</dl>")
+            end
+            out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
+          case "@class"
+            if state.top() != "dl"
+              state.push("dl")
+              out.append("<dl>")
+            end
+            out.append("<dt>" + Anchor(anchors, arg) + 
+                       FormatDef("class " + arg))
+            addIndexItem([DefName(arg), curMod])
+            curClass = DefName(arg)
+          case "@class-hidden"
+            out.append(Anchor(anchors, arg))
+            addIndexItem([DefName(arg), curMod])
+            curClass = DefName(arg)
+          case "@end-class"
+            curClass = nil
+          case "@op"
+            if state.top() != "dl"
+              state.push("dl")
+              out.append("<dl>")
+            end
+            out.append("<dt>" + HiliSpan(arg))
+          case "@var"
+            if state.top() != "dl"
+              state.push("dl")
+              out.append("<dl>")
+            end
+            out.append("<dt>" + Anchor(nil, arg, curClass) + HiliSpan(arg))
+            addIndexItem(IndexItem(DefName(arg), curMod, curClass))
+          case "@desc"
+            out.append("<dd>" + arg)
+            state.push("dd")
+          case "@end"
+            if prev == "@end" and state.top() == "dl"
+              state.pop()
+              out.append("</dl>")
+            elif state.top() == "pre"
+              for l in RemoveSpacePrefix(content)
+                var ll = l
+                if sectionType == Grammar
+                  ll = FormatGrammar(l, self.nameMap)
+                end
+                out.append(ll)
+              end
+              out.append("</pre>")
+            end
+            state.pop()
+            sectionType = nil
+          case "@shorttitle"
+            shortTitle = arg
+          case "@title"
+            out.append("<h1>" + arg + "</h1>")
+            title = arg
+            arg = arg.replace("<tt>", "")
+            arg = arg.replace("</tt>", "")
+            if shortTitle != nil
+              self.hierarchy.append((path, shortTitle))
+            else
+              self.hierarchy.append((path, arg))
+            end
+            if titleIndex >= 0
+              out[titleIndex] = "  <title>" + arg + "</title>"
+            end
+            var nav = []
+            outputNavToolbar(nav, path, True)
+            out.insertAt(topIndex, Newline.join(nav))
+          case "@index"
+            title = arg
+          case "@example"
+            out.append("<pre class='ex'>")
+            state.push("pre")
+            content = []
+          case "@grammar"
+            out.append("<pre class='ex'>")
+            state.push("pre")
+            sectionType = Grammar
+            content = []
+          case "@see"
+            out.append("<p class='note'>")
+            out.append("<span class='note-header'>See&nbsp;also:</span>")
+            out.append(arg)
+            state.push("p")
+          case "@note"
+            out.append("<p class='note'>")
+            out.append("<span class='note-header'>Note:</span>")
+            out.append(arg)
+            state.push("p")
+          case "@link"
+            var t = convert(arg, outDir, release, ignoreBrokenLinks)
+            if t == ""
+              t = arg
+            end
+            out.append("<a href=""{}"">{}</a>".format(arg, t))
+          case "@complete-grammar"
+            out.append("<pre class='ex'>")
+            for l in RemoveSpacePrefix(GrammarRules)
+              out.append(l)
+            end
+            out.append("</pre>")
+          case "@alpha-index"
+            outputIndex(out)
+          case "@scope"
+            Scope = arg
+          case "@indexitem"
+            -- Add an uncategorized indexed item.
+            out.append(Anchor(nil, arg))
+            addIndexItem([arg, "indexitem"])
+        end
+      else
+        if ss != ""
           if state.top() == "dl"
             state.pop()
             out.append("</dl>")
           end
-          out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
-        case "@class"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + Anchor(anchors, arg) + 
-                     FormatDef("class " + arg))
-          AddIndexItem([DefName(arg), curMod])
-          curClass = DefName(arg)
-        case "@class-hidden"
-          out.append(Anchor(anchors, arg))
-          AddIndexItem([DefName(arg), curMod])
-          curClass = DefName(arg)
-        case "@end-class"
-          curClass = nil
-        case "@op"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + HiliSpan(arg))
-        case "@var"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + Anchor(nil, arg, curClass) + HiliSpan(arg))
-          AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
-        case "@desc"
-          out.append("<dd>" + arg)
-          state.push("dd")
-        case "@end"
-          if prev == "@end" and state.top() == "dl"
-            state.pop()
-            out.append("</dl>")
-          elif state.top() == "pre"
-            for l in RemoveSpacePrefix(content)
-              var ll = l
-              if sectionType == Grammar
-                ll = FormatGrammar(l)
-              end
-              out.append(ll)
-            end
-            out.append("</pre>")
-          end
-          state.pop()
-          sectionType = nil
-        case "@shorttitle"
-          shortTitle = arg
-        case "@title"
-          out.append("<h1>" + arg + "</h1>")
-          title = arg
-          arg = arg.replace("<tt>", "")
-          arg = arg.replace("</tt>", "")
-          if shortTitle != nil
-            Hierarchy.append((path, shortTitle))
-          else
-            Hierarchy.append((path, arg))
-          end
-          if titleIndex >= 0
-            out[titleIndex] = "  <title>" + arg + "</title>"
-          end
-          var nav = []
-          OutputNavToolbar(nav, path, True)
-          out.insertAt(topIndex, Newline.join(nav))
-        case "@index"
-          title = arg
-        case "@example"
-          out.append("<pre class='ex'>")
-          state.push("pre")
-          content = []
-        case "@grammar"
-          out.append("<pre class='ex'>")
-          state.push("pre")
-          sectionType = Grammar
-          content = []
-        case "@see"
-          out.append("<p class='note'>")
-          out.append("<span class='note-header'>See&nbsp;also:</span>")
-          out.append(arg)
-          state.push("p")
-        case "@note"
-          out.append("<p class='note'>")
-          out.append("<span class='note-header'>Note:</span>")
-          out.append(arg)
-          state.push("p")
-        case "@link"
-          var t = Convert(arg, outDir, release, ignoreBrokenLinks)
-          if t == ""
-            t = arg
-          end
-          out.append("<a href=""{}"">{}</a>".format(arg, t))
-        case "@complete-grammar"
-          out.append("<pre class='ex'>")
-          for l in RemoveSpacePrefix(GrammarRules)
-            out.append(l)
-          end
-          out.append("</pre>")
-        case "@alpha-index"
-          OutputIndex(out)
-        case "@scope"
-          Scope = arg
-        case "@indexitem"
-          -- Add an uncategorized indexed item.
-          out.append(Anchor(nil, arg))
-          AddIndexItem([arg, "indexitem"])
-      end
-    else
-      if ss != ""
-        if state.top() == "dl"
-          state.pop()
-          out.append("</dl>")
+        end
+        if state.top() != "pre"
+          out.append(s)
+        else
+          content.append(s)
         end
       end
-      if state.top() != "pre"
-        out.append(s)
-      else
-        content.append(s)
+      i += 1
+      if ss != ""
+        prev = tag
       end
     end
-    i += 1
-    if ss != ""
-      prev = tag
+
+    while state.top() != "top"
+      if state.top() == "dl"
+        out.append("</dl>")
+      end
+      state.pop()
+    end
+
+    outputNavToolbar(out, path, False)
+    out.append("</body>")
+    out.append("</html>")
+
+    var f = File(Join(outDir, BaseName(path)), Output)
+    for s in out
+      f.writeLn(s)
+    end
+    f.close()
+
+    if title != ""
+      self.hierarchy.pop()
+    end
+
+    return title
+  end
+
+
+  -- Replace @ref and @href tags with HTML links.
+  def replaceRefs(s, ss, ignoreBrokenLinks, path)
+    while True
+      var m = Search("@(h?ref)(l?)\{(.*?)\}", ss)
+      if m == nil
+        break
+      end
+      var t, anchor = NormLinkTarget(m.group(3))
+      if not self.nameMap.hasKey(t)
+        -- Invalid link target
+        if not ignoreBrokenLinks
+          WriteLn("{}: Missing link target {}".format(path, t))
+          Exit(1)
+        else
+          ss = ss.replace(m.group(0), m.group(0)[1:])
+          var ref = m.group(0)
+          ref = ref[ref.index("{") + 1:ref.index("}")]
+          s = s.replace(m.group(0), ref)
+        end
+      else
+        -- Valid link target
+        var url = self.nameMap[t]
+        if not t in self.modules and not t in self.titles
+          url += "#" + BaseName(anchor)
+        end
+        var st, et = "", ""
+        if m.group(1) == "ref"
+          st, et = "<span class='ref'>", "</span>"
+        end
+        var text = m.group(3).replace(".", "&nbsp;")
+        if m.group(2) == "l"
+          text = text.lower()
+        end
+        var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
+        ss = ss.replace(m.group(0), ref)
+        s = s.replace(m.group(0), ref)
+      end
+    end
+    return s, ss
+  end
+
+
+  -- Output the navigation toolbar.
+  def outputNavToolbar(out, path, isTop)
+    if isTop
+      out.append("</head>")
+      out.append("<body>")
+      out.append("<div id='navi-top'>")
+    else
+      out.append("</div></div>")
+      out.append("<div id='navi-bottom'>")
+    end
+    out.append("  <div class='navi-trail'>")
+
+    var l = []
+    for url, title in self.hierarchy[0:-1]
+      l.append("<a href=""{}"">{}</a>".format(url, title))
+    end
+    l.append(self.hierarchy[-1][1])
+
+    out.append("    " + " &gt; ".join(l))
+
+    out.append("  </div>")
+    out.append("  <div class='navi-browse'>")
+
+    l = []
+    var o = PathOrder(self.order, path)
+    if o > 0 and self.order[o - 1] != ""
+      l.append("&lt; <a href='{}'>Previous</a>".format(self.order[o - 1]))
+    end
+    if o < self.order.length() - 1 and self.order[o + 1] != ""
+      l.append("<a href='{}'>Next</a> &gt;".format(self.order[o + 1]))
+    end
+    out.append("  " + " | ".join(l))
+    out.append("  </div>")
+    out.append("  <div class='clear'></div>")
+    out.append("</div>")
+    if isTop
+      out.append("<div id='wrapper'><div id='content'>")
     end
   end
-  
-  while state.top() != "top"
-    if state.top() == "dl"
-      out.append("</dl>")
+
+
+  -- Preprocess a file (and recursively all linked files). Record all 
+  -- reference targets.
+  def preprocess(path, depth = 1)
+    var i, curMod
+    var sectionType = nil
+
+    self.order.append(path)
+
+    if not IsFile(path)
+      raise IoError("{} missing".format(path))
     end
-    state.pop()
+    var l = File(path).readLines()
+    for s in l
+      var ss = s.strip()
+      if ss.startsWith("@link ")
+        if depth == 1
+          self.order.append("")
+        end
+        var target = ss[6:]
+        preprocess(target, depth + 1)
+      elif ss.startsWith("@fun ") or ss.startsWith("@class ") or
+           ss.startsWith("@module ") or ss.startsWith("@var") or
+           ss.startsWith("@exception") or ss.startsWith("@class-hidden")
+        var tag, rest = ss.split(" ", 1)
+        var name = NormAnchor(DefName(rest))
+        if not self.nameMap.hasKey(name)
+          self.nameMap[name] = path
+        end
+        if curMod != nil
+          self.nameMap[curMod + "::" + name] = path
+        end
+        if tag == "@module"
+          curMod = rest
+          self.modules.add(rest)
+        end
+      elif ss.startsWith("@h2 ")
+        var tag, rest = ss.split(" ", 1)
+        self.nameMap[NormAnchor(rest)] = path
+      elif ss.startsWith("@title ") or ss.startsWith("@indexitem ")
+        var tag, rest = ss.split(" ", 1)
+        var anchor = NormAnchor(rest)
+        self.nameMap[anchor] = path
+        self.titles.add(anchor)
+      elif ss == "@grammar"
+        sectionType = Grammar
+      elif ss.startsWith("@end")
+        sectionType = nil
+      elif sectionType == Grammar
+        if Match("[a-z0-9-]+ ?::", ss) != nil
+          self.nameMap[ss.split("::")[0].strip() + "::"] = path
+        end
+        GrammarRules.append(s)
+      end
+    end
   end
-  
-  OutputNavToolbar(out, path, False)
-  out.append("</body>")
-  out.append("</html>")
-  
-  var f = File(Join(outDir, BaseName(path)), Output)
-  for s in out
-    f.writeLn(s)
+
+
+  -- Output an alphabetical index. It contains all index items defined in the 
+  -- current scope, including modules, classes, functions and constants.
+  def outputIndex(out)
+    -- Sort index items.
+    var items = Uniq(Sort(IndexItems, IndexComp))
+    -- These are all the alphabetical categories.
+    var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#"
+
+    -- Output each alphetical category separately.
+    for i in 0 to alpha.length()
+      -- Get the prefix character of this category (e.g. A or _).
+      var c = alpha[i]
+
+      -- Within the capi scope, all items start with A (e.g. AAdd).
+      if Scope == "capi" and c != "#"
+        c = "A" + c
+      end
+
+      -- Filter all items in this category to res.
+      var res = []
+      for x, y, scope in items
+        if x.upper().startsWith(c) and scope == Scope
+          res.append([x, y])
+        end
+      end
+
+      -- Output category only if it's not empty.
+      if res.length() > 0
+        -- Output title.
+        var title = c
+        if title == "_"
+          title = "_ (underscore)"
+        end
+        out.append("<h2>{}</h2>".format(title))
+
+        -- Output index items.
+        out.append("<p>")
+        var j = 0
+        while j < res.length()
+          var x, y = res[j]
+          var ref = "#{}".format(NormAnchor(x))
+          if y == "module"
+            ref = ""
+          end
+          var hh = " ({})".format(y)
+          if "implicit_interfaces" in y
+            hh = " (implicit interface)"
+          end
+          if (j == 0 or res[j - 1][0] != x) and 
+             (j == res.length() - 1 or res[j + 1][0] != x)
+            hh = ""
+          end
+          if not self.nameMap.hasKey(NormAnchor(x))
+            WriteLn(x)
+          end
+          var url = self.nameMap[NormAnchor(x)]
+          if "::" in y and y.lower() != y
+            -- Get class name.
+            var cl = y.replace("<tt>", "")
+            cl = cl.replace("</tt>", "")
+            url = self.nameMap[cl]
+            ref += "-" + cl.split("::")[-1]
+          end
+          out.append("<a href='{}{}'>{}</a>{}<br>".format(url, ref, x, hh))
+          j += 1
+        end
+      end
+    end
   end
-  f.close()
-  
-  if title != ""
-    Hierarchy.pop()
+
+
+  def addIndexItem(item)
+    if item.length() < 3
+      item += [Scope]
+    end
+    IndexItems.append(item)
   end
-  
-  return title
 end
 
 
@@ -292,48 +514,6 @@ def ReplaceConstants(s, release)
   s = s.replace("@release", release)
   s = s.replace("@email", ObfuscateEmail(EmailAddress))
   return s
-end
-
-
--- Replace @ref and @href tags with HTML links.
-def ReplaceRefs(s, ss, ignoreBrokenLinks, path)
-  while True
-    var m = Search("@(h?ref)(l?)\{(.*?)\}", ss)
-    if m == nil
-      break
-    end
-    var t, anchor = NormLinkTarget(m.group(3))
-    if not NameMap.hasKey(t)
-      -- Invalid link target
-      if not ignoreBrokenLinks
-        WriteLn("{}: Missing link target {}".format(path, t))
-        Exit(1)
-      else
-        ss = ss.replace(m.group(0), m.group(0)[1:])
-        var ref = m.group(0)
-        ref = ref[ref.index("{") + 1:ref.index("}")]
-        s = s.replace(m.group(0), ref)
-      end
-    else
-      -- Valid link target
-      var url = NameMap[t]
-      if not t in Modules and not t in Titles
-        url += "#" + BaseName(anchor)
-      end
-      var st, et = "", ""
-      if m.group(1) == "ref"
-        st, et = "<span class='ref'>", "</span>"
-      end
-      var text = m.group(3).replace(".", "&nbsp;")
-      if m.group(2) == "l"
-        text = text.lower()
-      end
-      var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
-      ss = ss.replace(m.group(0), ref)
-      s = s.replace(m.group(0), ref)
-    end
-  end
-  return s, ss
 end
 
 
@@ -493,108 +673,10 @@ def RemoveSpacePrefix(a)
 end
 
 
--- Output the navigation toolbar.
-def OutputNavToolbar(out, path, isTop)
-  if isTop
-    out.append("</head>")
-    out.append("<body>")
-    out.append("<div id='navi-top'>")
-  else
-    out.append("</div></div>")
-    out.append("<div id='navi-bottom'>")
-  end
-  out.append("  <div class='navi-trail'>")
-  
-  var l = []
-  for url, title in Hierarchy[0:-1]
-    l.append("<a href=""{}"">{}</a>".format(url, title))
-  end
-  l.append(Hierarchy[-1][1])
-  
-  out.append("    " + " &gt; ".join(l))
-  
-  out.append("  </div>")
-  out.append("  <div class='navi-browse'>")
-  
-  l = []
-  var o = PathOrder(path)
-  if o > 0 and Order[o - 1] != ""
-    l.append("&lt; <a href='{}'>Previous</a>".format(Order[o - 1]))
-  end
-  if o < Order.length() - 1 and Order[o + 1] != ""
-    l.append("<a href='{}'>Next</a> &gt;".format(Order[o + 1]))
-  end
-  out.append("  " + " | ".join(l))
-  out.append("  </div>")
-  out.append("  <div class='clear'></div>")
-  out.append("</div>")
-  if isTop
-    out.append("<div id='wrapper'><div id='content'>")
-  end
-end
-
-
-def PathOrder(path)
-  for i in 0 to Order.length()
-    if Order[i] == path
+def PathOrder(order, path)
+  for i in 0 to order.length()
+    if order[i] == path
       return i
-    end
-  end
-end
-
-
--- Preprocess a file (and recursively all linked files). Record all reference 
--- targets.
-def Preprocess(path, depth = 1)
-  var i, curMod
-  var sectionType = nil
-
-  Order.append(path)
-  
-  if not IsFile(path)
-    raise IoError("{} missing".format(path))
-  end
-  var l = File(path).readLines()
-  for s in l
-    var ss = s.strip()
-    if ss.startsWith("@link ")
-      if depth == 1
-        Order.append("")
-      end
-      var target = ss[6:]
-      Preprocess(target, depth + 1)
-    elif ss.startsWith("@fun ") or ss.startsWith("@class ") or
-         ss.startsWith("@module ") or ss.startsWith("@var") or
-         ss.startsWith("@exception") or ss.startsWith("@class-hidden")
-      var tag, rest = ss.split(" ", 1)
-      var name = NormAnchor(DefName(rest))
-      if not NameMap.hasKey(name)
-        NameMap[name] = path
-      end
-      if curMod != nil
-        NameMap[curMod + "::" + name] = path
-      end
-      if tag == "@module"
-        curMod = rest
-        Modules.add(rest)
-      end
-    elif ss.startsWith("@h2 ")
-      var tag, rest = ss.split(" ", 1)
-      NameMap[NormAnchor(rest)] = path
-    elif ss.startsWith("@title ") or ss.startsWith("@indexitem ")
-      var tag, rest = ss.split(" ", 1)
-      var anchor = NormAnchor(rest)
-      NameMap[anchor] = path
-      Titles.add(anchor)
-    elif ss == "@grammar"
-      sectionType = Grammar
-    elif ss.startsWith("@end")
-      sectionType = nil
-    elif sectionType == Grammar
-      if Match("[a-z0-9-]+ ?::", ss) != nil
-        NameMap[ss.split("::")[0].strip() + "::"] = path
-      end
-      GrammarRules.append(s)
     end
   end
 end
@@ -607,7 +689,7 @@ def BaseName(id)
 end
 
 
-def FormatGrammar(s)
+def FormatGrammar(s, nameMap)
   var pre = ""
   var post = s
   if "::" in s
@@ -630,10 +712,10 @@ def FormatGrammar(s)
     r += post[i]
     if m != nil
       var key = m.group(1) + "::"
-      if not NameMap.hasKey(key)
+      if not nameMap.hasKey(key)
         WriteLn("Missing: ", m.group(1))
       end
-      var url = NameMap[key] + "#" + m.group(1)
+      var url = nameMap[key] + "#" + m.group(1)
       r += "<a href=""{}"">{}</a>".format(url, m.group(1))
       i += m.group(0).length() - 1
     else
@@ -642,85 +724,6 @@ def FormatGrammar(s)
   end
   
   return pre + r[:-1]
-end
-
-
-def AddIndexItem(item)
-  if item.length() < 3
-    item += [Scope]
-  end
-  IndexItems.append(item)
-end
-
-
--- Output an alphabetical index. It contains all index items defined in the 
--- current scope, including modules, classes, functions and constants.
-def OutputIndex(out)
-  -- Sort index items.
-  var items = Uniq(Sort(IndexItems, IndexComp))
-  -- These are all the alphabetical categories.
-  var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#"
-  
-  -- Output each alphetical category separately.
-  for i in 0 to alpha.length()
-    -- Get the prefix character of this category (e.g. A or _).
-    var c = alpha[i]
-    
-    -- Within the capi scope, all items start with A (e.g. AAdd).
-    if Scope == "capi" and c != "#"
-      c = "A" + c
-    end
-    
-    -- Filter all items in this category to res.
-    var res = []
-    for x, y, scope in items
-      if x.upper().startsWith(c) and scope == Scope
-        res.append([x, y])
-      end
-    end
-    
-    -- Output category only if it's not empty.
-    if res.length() > 0
-      -- Output title.
-      var title = c
-      if title == "_"
-        title = "_ (underscore)"
-      end
-      out.append("<h2>{}</h2>".format(title))
-      
-      -- Output index items.
-      out.append("<p>")
-      var j = 0
-      while j < res.length()
-        var x, y = res[j]
-        var ref = "#{}".format(NormAnchor(x))
-        if y == "module"
-          ref = ""
-        end
-        var hh = " ({})".format(y)
-        if "implicit_interfaces" in y
-          hh = " (implicit interface)"
-        end
-        if (j == 0 or res[j - 1][0] != x) and 
-           (j == res.length() - 1 or res[j + 1][0] != x)
-          hh = ""
-        end
-        if not NameMap.hasKey(NormAnchor(x))
-          WriteLn(x)
-        end
-        var url = NameMap[NormAnchor(x)]
-        if "::" in y and y.lower() != y
-          -- Get class name.
-          var cl = y.replace("<tt>", "")
-          cl = cl.replace("</tt>", "")
-          url = NameMap[cl]
-          ref += "-" + cl.split("::")[-1]
-        end
-        out.append("<a href='{}{}'>{}</a>{}<br>".format(url, ref, x, hh))
-        j += 1
-      end
-    end
-  end
 end
 
 
