@@ -139,8 +139,30 @@ h3 tt {
     color: black;
 }
 
+/* Function, class and variable names */
 .hili {
     font-weight: bold;
+}
+
+/* Keyword (e.g. 'as') in function/variable/class definition */
+.hili2 {
+    color: #282850;
+}
+
+/* Unknown type id in function/variable/class definition */
+.hili3 {
+    color: black;
+}
+
+/* Linked type id in function/variable/class definition */
+a.annref {
+    text-decoration: none;
+    font-family: monospace;
+    line-height: 1em;
+}
+
+a.annref:hover {
+    text-decoration: underline;
 }
 
 .author {

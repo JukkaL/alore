@@ -290,7 +290,7 @@ class Converter
       st.out.append("<dl>")
     end
     st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) + 
-                  FormatDef(arg))
+                  formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
   
@@ -302,7 +302,7 @@ class Converter
       st.out.append("<dl>")
     end
     st.out.append("<dt>" + Anchor(st.anchors, arg) + 
-                  FormatDef("class " + arg))
+                  formatDef("class " + arg))
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
   end
@@ -332,7 +332,7 @@ class Converter
       st.state.push("dl")
       st.out.append("<dl>")
     end
-    st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + FormatDef(arg))
+    st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
   
@@ -397,24 +397,33 @@ class Converter
         end
       else
         -- Valid link target
-        var url = self.nameMap[t]
-        if not t in self.modules and not t in self.titles
-          url += "#" + BaseName(anchor)
-        end
-        var st, et = "", ""
-        if m.group(1) == "ref"
-          st, et = "<span class='ref'>", "</span>"
-        end
-        var text = m.group(3).replace(".", "&nbsp;")
-        if m.group(2) == "l"
-          text = text.lower()
-        end
-        var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
+        var ref = makeLink(m.group(3), m.group(1) == "ref", m.group(2) == "l")
         ss = ss.replace(m.group(0), ref)
         s = s.replace(m.group(0), ref)
       end
     end
     return s, ss
+  end
+  
+  
+  def makeLink(target, isIdRef = True, isLower = False, isAnn = False)
+    var t, anchor = NormLinkTarget(target)
+    var url = self.nameMap[t]
+    if not t in self.modules and not t in self.titles
+      url += "#" + BaseName(anchor)
+    end
+    var st, et, aclass = "", "", ""
+    if isAnn
+      aclass = 'class="annref" '
+    end
+    if isIdRef
+      st, et = "<span class='ref'>", "</span>"
+    end
+    var text = target.replace(".", "&nbsp;")
+    if isLower
+      text = text.lower()
+    end
+    return "<a {}href=""{}"">{}{}{}</a>".format(aclass, url, st, text, et)
   end
 
 
@@ -593,6 +602,35 @@ class Converter
     end
     self.indexItems.append(item)
   end
+
+
+  -- Return a variable or function declaration modified so that the name of the
+  -- declaration is within a highlight span and the rest is formatted as HTML. 
+  -- Also replace < and > with the corresponding HTML sequences.
+  def formatDef(defn)
+    defn = defn.replace('<', '&lt;')
+    defn = defn.replace('>', '&gt;')
+    var pre, base, args = SplitDef(defn)
+
+    -- Also format keywords in function/class definitions.
+    if args.startsWith('(') or args.startsWith('<') or True -- FIX?
+      args = Subst(args, '\<(as|def)\>', def (m)
+                     return HiliSpan(m.group(0), 'hili2')
+                   end)
+    end
+
+    -- Format type names.
+    args = Subst(args, '\<[A-Z][a-zA-Z0-9_]*\>', def (m)
+                   var name = m.group(0)
+                   if self.nameMap.hasKey(NormAnchor(name))
+                     return makeLink(name, False, False, True)
+                   else
+                     return HiliSpan(m.group(0), 'hili3')
+                   end
+                 end)
+
+    return pre + HiliSpan(base) + args
+  end
 end
 
 
@@ -683,17 +721,6 @@ def FindLastChar(s, c)
     i += 1
   end
   return x
-end
-
-
--- Return a variable or function declaration modified so that the name of the
--- declaration is within a highlight span and the rest is unmodified. Also
--- replace < and > with the corresponding HTML sequences.
-def FormatDef(defn)
-  defn = defn.replace('<', '&lt;')
-  defn = defn.replace('>', '&gt;')
-  var pre, base, args = SplitDef(defn)
-  return pre + HiliSpan(base) + args
 end
 
 
@@ -879,8 +906,8 @@ end
 
 -- Return HTML code representing a highlighted variable/function name or 
 -- an operation.
-def HiliSpan(html)
-  return "<span class=""hili"">{}</span>".format(html)
+def HiliSpan(html, cls = "hili")
+  return '<span class="{}">{}</span>'.format(cls, html)
 end
 
 
