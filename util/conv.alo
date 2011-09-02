@@ -176,99 +176,39 @@ class Converter
     return st.title
   end
 
+
   def processTag(tag, arg, st, path, outDir, release, ignoreBrokenLinks)
     switch tag
       case "@head"
-        for h in HtmlHeader
-          st.out.append(h)
-        end
-        st.out.append("")
-        st.titleIndex = st.out.length() - 1
-        st.topIndex = st.out.length()
+        processHead(st)
       case "@module"
          st.curMod = arg
          if arg != "implicit_interfaces"
            addIndexItem([arg, "module"])
          end
       case "@fun", "@exception"
-        if st.state.top() != "dl"
-          st.state.push("dl")
-          st.out.append("<dl>")
-        end
-        st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) + 
-                      FormatDef(arg))
-        addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+        processFunOrException(arg, st)
       case "@h2"
-        if st.state.top() == "dl"
-          st.state.pop()
-          st.out.append("</dl>")
-        end
-        st.out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
+        processHeading(arg, st)
       case "@class"
-        if st.state.top() != "dl"
-          st.state.push("dl")
-          st.out.append("<dl>")
-        end
-        st.out.append("<dt>" + Anchor(st.anchors, arg) + 
-                      FormatDef("class " + arg))
-        addIndexItem([DefName(arg), st.curMod])
-        st.curClass = DefName(arg)
+        processClass(arg, st)
       case "@class-hidden"
-        st.out.append(Anchor(st.anchors, arg))
-        addIndexItem([DefName(arg), st.curMod])
-        st.curClass = DefName(arg)
+        processHiddenClass(arg, st)
       case "@end-class"
         st.curClass = nil
       case "@op"
-        if st.state.top() != "dl"
-          st.state.push("dl")
-          st.out.append("<dl>")
-        end
-        st.out.append("<dt>" + HiliSpan(arg))
+        processOp(arg, st)
       case "@var"
-        if st.state.top() != "dl"
-          st.state.push("dl")
-          st.out.append("<dl>")
-        end
-        st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + HiliSpan(arg))
-        addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+        processVar(arg, st)
       case "@desc"
         st.out.append("<dd>" + arg)
         st.state.push("dd")
       case "@end"
-        if st.prev == "@end" and st.state.top() == "dl"
-          st.state.pop()
-          st.out.append("</dl>")
-        elif st.state.top() == "pre"
-          for l in RemoveSpacePrefix(st.content)
-            var ll = l
-            if st.sectionType == Grammar
-              ll = FormatGrammar(l, self.nameMap)
-            end
-            st.out.append(ll)
-          end
-          st.out.append("</pre>")
-        end
-        st.state.pop()
-        st.sectionType = nil
+        processEnd(st)
       case "@shorttitle"
         st.shortTitle = arg
       case "@title"
-        st.out.append("<h1>" + arg + "</h1>")
-        st.title = arg
-        arg = arg.replace("<tt>", "")
-        arg = arg.replace("</tt>", "")
-        if st.shortTitle != nil
-          self.hierarchy.append((path, st.shortTitle))
-        else
-          self.hierarchy.append((path, arg))
-        end
-        if st.titleIndex >= 0
-          st.out[st.titleIndex] = "  <title>" + arg + "</title>"
-        end
-        var nav = []
-        outputNavToolbar(nav, path, True)
-        st.out.insertAt(st.topIndex, Newline.join(nav))
+        processTitle(arg, st, path)
       case "@index"
         st.title = arg
       case "@example"
@@ -291,11 +231,7 @@ class Converter
         st.out.append(arg)
         st.state.push("p")
       case "@link"
-        var t = convert(arg, outDir, release, ignoreBrokenLinks)
-        if t == ""
-          t = arg
-        end
-        st.out.append("<a href=""{}"">{}</a>".format(arg, t))
+        processLink(arg, st, outDir, release, ignoreBrokenLinks)
       case "@complete-grammar"
         st.out.append("<pre class='ex'>")
         for l in RemoveSpacePrefix(self.grammarRules)
@@ -313,6 +249,130 @@ class Converter
     end
   end
 
+
+  -- Process @head.
+  def processHead(st)
+    for h in HtmlHeader
+      st.out.append(h)
+    end
+    st.out.append("")
+    st.titleIndex = st.out.length() - 1
+    st.topIndex = st.out.length()
+  end
+
+
+  -- Process @title.
+  def processTitle(arg, st, path)
+    st.out.append("<h1>" + arg + "</h1>")
+    st.title = arg
+    arg = arg.replace("<tt>", "")
+    arg = arg.replace("</tt>", "")
+    if st.shortTitle != nil
+      self.hierarchy.append((path, st.shortTitle))
+    else
+      self.hierarchy.append((path, arg))
+    end
+    if st.titleIndex >= 0
+      st.out[st.titleIndex] = "  <title>" + arg + "</title>"
+    end
+    var nav = []
+    outputNavToolbar(nav, path, True)
+    st.out.insertAt(st.topIndex, Newline.join(nav))
+  end
+  
+  
+  -- Process @fun or @exception.
+  def processFunOrException(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) + 
+                  FormatDef(arg))
+    addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+  end
+  
+  
+  -- Process @class.
+  def processClass(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + Anchor(st.anchors, arg) + 
+                  FormatDef("class " + arg))
+    addIndexItem([DefName(arg), st.curMod])
+    st.curClass = DefName(arg)
+  end
+  
+  
+  -- Process @class-hidden.
+  def processHiddenClass(arg, st)
+    st.out.append(Anchor(st.anchors, arg))
+    addIndexItem([DefName(arg), st.curMod])
+    st.curClass = DefName(arg)
+  end
+  
+  
+  -- Process @op.
+  def processOp(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + HiliSpan(arg))
+  end
+  
+  
+  -- Process @var.
+  def processVar(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + HiliSpan(arg))
+    addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+  end
+  
+  
+  -- Process @end.
+  def processEnd(st)
+    if st.prev == "@end" and st.state.top() == "dl"
+      st.state.pop()
+      st.out.append("</dl>")
+    elif st.state.top() == "pre"
+      for l in RemoveSpacePrefix(st.content)
+        var ll = l
+        if st.sectionType == Grammar
+          ll = FormatGrammar(l, self.nameMap)
+        end
+        st.out.append(ll)
+      end
+      st.out.append("</pre>")
+    end
+    st.state.pop()
+    st.sectionType = nil
+  end
+  
+
+  -- Process @h2.  
+  def processHeading(arg, st)
+    if st.state.top() == "dl"
+      st.state.pop()
+      st.out.append("</dl>")
+    end
+    st.out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
+  end
+  
+  
+  -- Process @link.
+  def processLink(arg, st, outDir, release, ignoreBrokenLinks)
+    var t = convert(arg, outDir, release, ignoreBrokenLinks)
+    if t == ""
+      t = arg
+    end
+    st.out.append("<a href=""{}"">{}</a>".format(arg, t))
+  end
 
   -- Replace @ref and @href tags with HTML links.
   def replaceRefs(s, ss, ignoreBrokenLinks, path)
