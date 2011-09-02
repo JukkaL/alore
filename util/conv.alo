@@ -59,9 +59,9 @@ class Converter
   var nameMap = Map()
   var titles = Set()
   var modules = Set()
-  var GrammarRules = []
-  var IndexItems = []
-  var Scope = "(undefined)"
+  var grammarRules = []
+  var indexItems = []
+  var scope = "(undefined)"
 
 
   def convert(path, outDir, release, ignoreBrokenLinks)
@@ -226,14 +226,14 @@ class Converter
             out.append("<a href=""{}"">{}</a>".format(arg, t))
           case "@complete-grammar"
             out.append("<pre class='ex'>")
-            for l in RemoveSpacePrefix(GrammarRules)
+            for l in RemoveSpacePrefix(self.grammarRules)
               out.append(l)
             end
             out.append("</pre>")
           case "@alpha-index"
             outputIndex(out)
           case "@scope"
-            Scope = arg
+            self.scope = arg
           case "@indexitem"
             -- Add an uncategorized indexed item.
             out.append(Anchor(nil, arg))
@@ -417,7 +417,7 @@ class Converter
         if Match("[a-z0-9-]+ ?::", ss) != nil
           self.nameMap[ss.split("::")[0].strip() + "::"] = path
         end
-        GrammarRules.append(s)
+        self.grammarRules.append(s)
       end
     end
   end
@@ -427,7 +427,7 @@ class Converter
   -- current scope, including modules, classes, functions and constants.
   def outputIndex(out)
     -- Sort index items.
-    var items = Uniq(Sort(IndexItems, IndexComp))
+    var items = Uniq(Sort(self.indexItems, IndexComp))
     -- These are all the alphabetical categories.
     var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#"
 
@@ -437,14 +437,14 @@ class Converter
       var c = alpha[i]
 
       -- Within the capi scope, all items start with A (e.g. AAdd).
-      if Scope == "capi" and c != "#"
+      if self.scope == "capi" and c != "#"
         c = "A" + c
       end
 
       -- Filter all items in this category to res.
       var res = []
       for x, y, scope in items
-        if x.upper().startsWith(c) and scope == Scope
+        if x.upper().startsWith(c) and scope == self.scope
           res.append([x, y])
         end
       end
@@ -496,9 +496,9 @@ class Converter
 
   def addIndexItem(item)
     if item.length() < 3
-      item += [Scope]
+      item += [self.scope]
     end
-    IndexItems.append(item)
+    self.indexItems.append(item)
   end
 end
 
