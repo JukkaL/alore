@@ -90,67 +90,17 @@ def Convert(path, outDir, release, ignoreBrokenLinks)
     var s = a[i]
     
     -- Replace certain @ sequences with constant strings.
-    s = s.replace("@raise-direct", 
-      "Raise a direct exception on all error conditions.")
-    s = s.replace("@deprecated", 
-      "<span class=""deprecated"">Deprecated " + 
-      "(this feature will be removed in a future Alore version).</span>")
+    s = ReplaceConstants(s, release)
     
     var ss = s.strip()
     var tag = ""
     
-    -- Replace href and ref tags with html links.
-    while True
-      var m = Search("@(h?ref)(l?)\{(.*?)\}", ss)
-      if m == nil
-        break
-      end
-      var t, anchor = NormLinkTarget(m.group(3))
-      if not NameMap.hasKey(t)
-        -- Invalid link target
-        if not ignoreBrokenLinks
-          WriteLn("{}: Missing link target {}".format(path, t))
-          Exit(1)
-        else
-          ss = ss.replace(m.group(0), m.group(0)[1:])
-          var ref = m.group(0)
-          ref = ref[ref.index("{") + 1:ref.index("}")]
-          s = s.replace(m.group(0), ref)
-        end
-      else
-        -- Valid link target
-        var url = NameMap[t]
-        if not t in Modules and not t in Titles
-          url += "#" + BaseName(anchor)
-        end
-        var st, et = "", ""
-        if m.group(1) == "ref"
-          st, et = "<span class='ref'>", "</span>"
-        end
-        var text = m.group(3).replace(".", "&nbsp;")
-        if m.group(2) == "l"
-          text = text.lower()
-        end
-        var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
-        ss = ss.replace(m.group(0), ref)
-        s = s.replace(m.group(0), ref)
-      end
-    end
-    
-    s = s.replace("@release", release)
-    s = s.replace("@email", ObfuscateEmail(EmailAddress))
+    -- Replace href and ref tags with HTML links.
+    s, ss = ReplaceRefs(s, ss, ignoreBrokenLinks, path)
     
     if ss.startsWith("@")
-      tag = "@"
-      var arg = ""
-      var j = 1
-      while j < ss.length() and (IsWordChar(ss[j]) or ss[j] == "-")
-        tag += ss[j]
-        j += 1
-      end
-      if j < ss.length() - 1 and ss[j] == " "
-        arg = ss[j + 1:]
-      end
+      var arg
+      tag, arg = ParseTag(ss)
       switch tag
         case "@head"
           for h in HtmlHeader
@@ -328,6 +278,79 @@ def Convert(path, outDir, release, ignoreBrokenLinks)
   end
   
   return title
+end
+
+
+-- Replace constant @ sequences such as @deprecated in s with corresponding
+-- HTML sequences.
+def ReplaceConstants(s, release)
+  s = s.replace("@raise-direct", 
+                "Raise a direct exception on all error conditions.")
+  s = s.replace("@deprecated", 
+                "<span class=""deprecated"">Deprecated " + 
+          "(this feature will be removed in a future Alore version).</span>")
+  s = s.replace("@release", release)
+  s = s.replace("@email", ObfuscateEmail(EmailAddress))
+  return s
+end
+
+
+-- Replace @ref and @href tags with HTML links.
+def ReplaceRefs(s, ss, ignoreBrokenLinks, path)
+  while True
+    var m = Search("@(h?ref)(l?)\{(.*?)\}", ss)
+    if m == nil
+      break
+    end
+    var t, anchor = NormLinkTarget(m.group(3))
+    if not NameMap.hasKey(t)
+      -- Invalid link target
+      if not ignoreBrokenLinks
+        WriteLn("{}: Missing link target {}".format(path, t))
+        Exit(1)
+      else
+        ss = ss.replace(m.group(0), m.group(0)[1:])
+        var ref = m.group(0)
+        ref = ref[ref.index("{") + 1:ref.index("}")]
+        s = s.replace(m.group(0), ref)
+      end
+    else
+      -- Valid link target
+      var url = NameMap[t]
+      if not t in Modules and not t in Titles
+        url += "#" + BaseName(anchor)
+      end
+      var st, et = "", ""
+      if m.group(1) == "ref"
+        st, et = "<span class='ref'>", "</span>"
+      end
+      var text = m.group(3).replace(".", "&nbsp;")
+      if m.group(2) == "l"
+        text = text.lower()
+      end
+      var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
+      ss = ss.replace(m.group(0), ref)
+      s = s.replace(m.group(0), ref)
+    end
+  end
+  return s, ss
+end
+
+
+-- Split a string of form '@tag ...' into tag and argument (which may be 
+-- empty). Return tuple (tag, argument).
+def ParseTag(ss)
+  var tag = "@"
+  var arg = ""
+  var j = 1
+  while j < ss.length() and (IsWordChar(ss[j]) or ss[j] == "-")
+    tag += ss[j]
+    j += 1
+  end
+  if j < ss.length() - 1 and ss[j] == " "
+    arg = ss[j + 1:]
+  end
+  return tag, arg
 end
 
 
