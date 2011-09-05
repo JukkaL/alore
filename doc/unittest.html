@@ -67,7 +67,7 @@ test cases like this:
 
 <h3><tt>Suite</tt> methods</h3>
 
-@fun addTest(testcase)
+@fun addTest(testcase as TestCase)
 @desc Add a test case to the suite. This method can be used to add
       manually constructed instances of the @ref{TestCase} class or its
       subclass as members of a suite.
@@ -94,7 +94,7 @@ test cases like this:
 
 <h2>Class <tt>TestCase</tt></h2>
 
-@class TestCase(name[, suite[, function]])
+@class TestCase(name as Str[, suite as Suite[, function as def ()]])
 @desc Construct a test case object. The optional suite argument defines the
       test suite that contains this test case. The optional function argument,
       a callable object that accepts no arguments, will be called
@@ -125,7 +125,7 @@ test cases like this:
 
 <h2>Functions</h2>
 
-@fun RunTest(test[, args])
+@fun RunTest(test as Suite[, args as Array<Str>])
 @desc Run a test case or a test suite. The optional args parameter may be a
       sequence of strings that represent the command line arguments to the
       tester. Status information is displayed on the <tt>StdOut</tt>
@@ -148,7 +148,7 @@ test cases like this:
 @desc Fail a test case by raising @ref{AssertionFailure}.
 @end
 
-@fun Assert(bool[, message])
+@fun Assert(bool as Boolean[, message as Str])
 @desc Raise @ref{AssertionFailure} if bool is not <tt>True</tt>. If the 
       message is provided, it is associated with the exception.
 @end
@@ -161,7 +161,7 @@ test cases like this:
 @desc Raise @ref{AssertionFailure} if a == b.
 @end
 
-@fun AssertRaises(exception[, message], function, arguments = [])
+@fun AssertRaises(exception as Type[, message], function, arguments = [])
 @desc Call the function with the given arguments. Raise @ref{AssertionFailure}
       if the function does not raise an exception of the type specified
       by <i>exception</i>. Additionally, if the <i>message</i> argument is
@@ -173,7 +173,7 @@ test cases like this:
       @end
 @end
 
-@fun AssertType(type, x)
+@fun AssertType(type as Type, x)
 @desc Raise @ref{AssertionFailure} if x is not an instance of the specified
       type.
       @note Instances of subclasses of the type are not accepted.
@@ -182,7 +182,7 @@ test cases like this:
 
 <h2>Exceptions</h2>
 
-@class AssertionFailure([message])
+@class AssertionFailure([message as Str])
 @desc This exception is raised when an assertion is failed in a test case.
       This class is derived from @ref{std::Exception}.
 @end
