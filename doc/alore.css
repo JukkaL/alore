@@ -193,6 +193,17 @@ a.annref:hover {
     padding-right: 1px;
 }
 
+.implements {
+    margin-top: 0;
+    padding-left: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.implements-header {
+    font-style: italic;
+    padding-right: 4px;
+}
+
 ul.sep {
     margin-top: 1em;
 }

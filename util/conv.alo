@@ -73,6 +73,9 @@ class ConversionState
   var topIndex = -1
   var content = nil
   var prev  = ""
+  
+  -- Collect interfaces specified by @implements.
+  var interfaces = []
 end
 
 
@@ -212,8 +215,7 @@ class Converter
       case "@var"
         processVar(arg, st)
       case "@desc"
-        st.out.append("<dd>" + arg)
-        st.state.push("dd")
+        processDesc(arg, st)
       case "@end"
         processEnd(st)
       case "@shorttitle"
@@ -226,6 +228,10 @@ class Converter
         st.out.append("<pre class='ex'>")
         st.state.push("pre")
         st.content = []
+      case "@implements"
+        st.interfaces.append(arg)
+      case "@supertypes"
+        processSupertypes(st)
       case "@grammar"
         st.out.append("<pre class='ex'>")
         st.state.push("pre")
@@ -310,6 +316,7 @@ class Converter
                   formatDef("class " + arg))
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
+    st.interfaces = []
   end
   
   -- Process @class-hidden.
@@ -343,6 +350,26 @@ class Converter
     end
     st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+  end
+  
+  def processDesc(arg, st)
+    st.out.append("<dd>")
+    st.state.push("dd")
+    st.out.append(arg)
+  end
+
+  -- Process @supertypes.
+  def processSupertypes(st)  
+    if st.interfaces != []
+      st.out.append("<p class='implements'>")
+      st.out.append("<span class='implements-header'>Implements</span>")
+      var a = []
+      for iface in st.interfaces
+        a.append(formatTypeNames(iface))
+      end
+      st.out.append(", ".join(a))
+      st.interfaces = []
+    end
   end
   
   -- Process @end.

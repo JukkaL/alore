@@ -3,6 +3,9 @@
 @title Class <tt>std::Int</tt>
 @index Int
 
+@implements Comparable<Int>
+@supertypes
+
 <p>Instances of the <tt>Int</tt> class are integers. Each integer object is
 either negative, zero or positive. Their range is essentially unlimited: they
 can represent both very large and very small integers with thousands of digits.
@@ -11,7 +14,7 @@ can represent both very large and very small integers with thousands of digits.
 operations are the most common ways of constructing integer objects.
 Besides arithmetic, integers are also used for indexing strings and arrays.
 
-@fun Int(x[, base as Int])
+@class Int(x[, base as Int])
 @desc Construct an object of the <tt>Int</tt> type. Call the <tt>_int()</tt>
     method of the first argument and return a value equal to the result,
     provided that it is an integer. Of the primitive types, <tt>Str</tt> and 

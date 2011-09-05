@@ -3,6 +3,12 @@
 @title Class <tt>std::Str</tt>
 @index Str
 
+@implements Sequence<Str>
+@implements Iterable<Str>
+@implements Comparable<Str>
+@implements Multipliable<Int, Str>
+@supertypes
+
 <p>Instances of the <tt>Str</tt> class are immutable strings. A string is a
 potentially empty sequence of characters. A character is logically
 represented by an integer code between 0 and 65535, inclusive. Alore has no
