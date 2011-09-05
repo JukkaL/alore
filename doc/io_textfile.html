@@ -3,6 +3,9 @@
 @title Class <tt>io::TextFile</tt>
 @index TextFile
 
+@inherits TextStream
+@supertypes
+
 <p>The TextFile class represents an open encoded text file as a stream.
 It allows accessing the contents of an ordinary binary file as a 16-bit
 Unicode stream.
@@ -18,7 +21,6 @@ Unicode stream.
       var s = f.readLn()
       f.close()
       @end
-      <p><tt>TextFile</tt> inherits from @ref{TextStream}.
 @end
 
 <p>All Stream operations are supported for TextFile objects. See the

@@ -10,6 +10,9 @@ memory-based streams.
 
 <h2>Class <tt>MemoryStream</tt></h2>
 
+@inherits Stream
+@supertypes
+
 @class MemoryStream([contents as Str])
 @desc Construct a <tt>MemoryStream</tt> instance. If the contents argument is
       provided,
@@ -17,7 +20,6 @@ memory-based streams.
       is initially empty. The stream pointer will always be initially 
       at the start of the stream. <tt>MemoryStream</tt> instances are always 
       buffered and support both reading and writing.
-      <tt>MemoryStream</tt> inherits from @ref{io::Stream}.
 @end
 
 <h3><tt>MemoryStream</tt> methods</h3>

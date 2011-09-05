@@ -74,8 +74,10 @@ class ConversionState
   var content = nil
   var prev  = ""
   
-  -- Collect interfaces specified by @implements.
+  -- Collect interfaces specified by @implements, used by @supertypes.
   var interfaces = []
+  -- Collect supertype information for @supertypes.
+  var inherits = nil
 end
 
 
@@ -230,6 +232,8 @@ class Converter
         st.content = []
       case "@implements"
         st.interfaces.append(arg)
+      case "@inherits"
+        st.inherits = arg
       case "@supertypes"
         processSupertypes(st)
       case "@grammar"
@@ -316,7 +320,6 @@ class Converter
                   formatDef("class " + arg))
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
-    st.interfaces = []
   end
   
   -- Process @class-hidden.
@@ -359,15 +362,26 @@ class Converter
   end
 
   -- Process @supertypes.
-  def processSupertypes(st)  
-    if st.interfaces != []
+  def processSupertypes(st)
+    if st.inherits != nil or st.interfaces != []
       st.out.append("<p class='implements'>")
-      st.out.append("<span class='implements-header'>Implements</span>")
-      var a = []
-      for iface in st.interfaces
-        a.append(formatTypeNames(iface))
+      if st.inherits != nil
+        st.out.append(HiliSpan('Inherits', 'implements-header'))
+        st.out.append(formatTypeNames(st.inherits))
       end
-      st.out.append(", ".join(a))
+      if st.interfaces != []
+        if st.inherits != nil
+          st.out.append('<br>')
+        end
+        st.out.append(HiliSpan("Implements", 'implements-header'))
+        var a = []
+        for iface in st.interfaces
+          a.append(formatTypeNames(iface))
+        end
+        st.out.append(", ".join(a))
+      end
+      
+      st.inherits = nil
       st.interfaces = []
     end
   end
