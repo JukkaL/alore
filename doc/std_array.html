@@ -109,7 +109,7 @@ constructed using the <tt>*</tt> operator. Example:
 
 <p><tt>Array</tt> objects support the following operations:
 
-@op array[n]
+@op array[n] @optype{Array<T>[Int] -> Int}
 @desc Access and modify array items, including subsequences, with the indexing
       operator. The index <tt>n</tt> must be an integer or a pair. If the
       index is an integer, an @ref{IndexError} exception is raised if the index
@@ -139,7 +139,7 @@ constructed using the <tt>*</tt> operator. Example:
       @end
 @end
 
-@op array * n
+@op array * n @optype{Array<T> * Int -> Array<T>}
 @desc Construct an <tt>Array</tt> object which contains the items
     in the <tt>array</tt> operand repeated <tt>n</tt> times. The operand
     <tt>n</tt> must must be a non-negative integer. Example:
@@ -154,7 +154,7 @@ constructed using the <tt>*</tt> operator. Example:
     @end
 @end
 
-@op for x in array
+@op for x in array @optype{for T in Array<T>}
 @desc Array items can be enumerated with a for loop, starting from the first
       item.
 @end
@@ -167,7 +167,7 @@ constructed using the <tt>*</tt> operator. Example:
   with the same items are equivalent.
 @end
 
-@op x in array
+@op x in array @optype{Object in Array<T>}
 @desc Test whether an array contains a specific object. Return a boolean value.
       The test is not recursive, i.e., arrays within arrays are not searched.
 @end
@@ -186,7 +186,7 @@ constructed using the <tt>*</tt> operator. Example:
 @desc Return a string representation of the array contents.
 @end
 
-@op array + x
+@op array + x @optype{Array<T> + Array<T> -> Array<T>}
 @desc Arrays can be concatenated together. A new array is created that contains
       the concatenation of the operand arrays.
 @end
