@@ -41,34 +41,40 @@ Besides arithmetic, integers are also used for indexing strings and arrays.
 <p><tt>Int</tt> objects support the following operations (<tt>n</tt> below
 refers to an <tt>Int</tt> value):
 
-@op n + x
-@op n * x
-@desc Perform an addition or multiplication operation. If <tt>x</tt> is an
+@op n + x @optype{Int + Int -> Int; Int + Float -> Float}
+@desc Perform an addition operation. If <tt>x</tt> is an
   integer,
   the result is also an integer, and if <tt>x</tt> is a float,
   the result is a float. If <tt>x</tt> is neither an integer or a float,
-  return <tt>x + n</tt> (or <tt>x * n</tt> for a multiplication operation)
-  instead.
+  return <tt>x + n</tt> instead.
 @end
 
-@op n - x
+@op n * x @optype{Int * Int -> Int; Int * Float -> Float}
+@desc Perform a multiplication operation. If <tt>x</tt> is an
+  integer,
+  the result is also an integer, and if <tt>x</tt> is a float,
+  the result is a float. If <tt>x</tt> is neither an integer or a float,
+  return <tt>x * n</tt> instead.
+@end
+
+@op n - x @optype{Int - Int -> Int; Int - Float -> Float}
 @desc Perform a subtraction operation. If <tt>x</tt> is an integer,
   the result is also an integer, and if <tt>x</tt> is a float,
   the result is a float.
 @end
 
-@op n / x
+@op n / x @optype{Int / Int -> Float; Int / Float -> Float}
 @desc Perform a division operation. The right operand <tt>x</tt> may be an
   integer or a float. The result will always be a float.
 @end
 
-@op n div x
+@op n div x @optype{Int div Int -> Int; Int div Float -> Int}
 @desc Return <tt>n</tt> divided by <tt>x</tt>, rounded down to the nearest
       integer. If <tt>x</tt> is an integer, the result is an integer,
       and if <tt>x</tt> is a float, the result is a float.
 @end
 
-@op n mod x
+@op n mod x @optype{Int mod Int -> Int; Int mod Float -> Float}
 @desc Perform a modulus operation. The result is chosen so that
       (<tt>n div x) * x + n mod x</tt> == <tt>n</tt>
       (the equality is only
@@ -81,7 +87,7 @@ refers to an <tt>Int</tt> value):
       @end
 @end
 
-@op n ** x
+@op n ** x @optype{Int ** Int -> Int; Int ** Float -> Float}
 @desc Return <tt>n</tt><sup><tt>x</tt></sup>, i.e., <tt>n</tt> raised to the
       <tt>x</tt>th 
       power. If <tt>x</tt> is an integer, the result is an integer, and if
@@ -98,11 +104,11 @@ refers to an <tt>Int</tt> value):
       </ul>
 @end
 
-@op -n
+@op -n @optype{-Int -> Int}
 @desc Return the negation of an integer.
 @end  
 
-@op n == x
+@op n == x @optype{Int == Object -> Boolean}
 @desc Integers can be compared for equality with arbitrary objects.
   An integer object is equal to an equivalent integer or float value.
   If <tt>x</tt> is neither an integer nor a float,
@@ -112,7 +118,8 @@ refers to an <tt>Int</tt> value):
   @end
 @end
 
-@op n &lt; x, n &gt; x
+@op n &lt; x @optype{Int < Int -> Boolean; Int < Float -> Boolean}
+@op n &gt; x @optype{Int > Int -> Boolean; Int > Float -> Boolean}
 @desc Integers can be compared for order with integers and floats.
   If <tt>x</tt> is neither an integer nor a float,
   the operation is evaluated as <tt>x</tt> &gt; <tt>n</tt>

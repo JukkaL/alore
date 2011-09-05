@@ -72,17 +72,17 @@ values are assigned to a key, the later assignments replace the earlier values.
 
 <p><tt>Map</tt> objects support the following operations:
 
-@op map[key]
+@op map[key] @optype{Map<KT, VT>[KT] -> VT}
 @desc Return the value associated with a key, or raise 
       @ref{KeyError} if the key is not in the map.
 @end
 
-@op map[key] = value
+@op map[key] = value @optype{Map<KT, VT>[KT] = VT}
 @desc Add a new association to the map, or replace an existing association, if
       the key already exists.
 @end
 
-@op for key, value in map
+@op for key, value in map @optype{for KT, VT in Map<KT, VT>}
 @desc Map contents can be iterated with a for loop. Each item in the 
       iteration is a tuple (key, value). The items are iterated
       in an arbitrary order.

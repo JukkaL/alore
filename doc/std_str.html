@@ -235,7 +235,7 @@ the second to last character, etc.
 
 <p><tt>Str</tt> objects support the following operations:
 
-@op str[n]
+@op str[n] @optype{Str[Int] -> Str; Str[Pair<Int, Int>] -> Str}
 @desc If the index <tt>n</tt> is an integer, return the character at the 
   specified index as a string of length 1.
   If the index value is out of bounds, raise an @ref{IndexError} exception.
@@ -254,22 +254,22 @@ the second to last character, etc.
   @end
 @end
 
-@op substr in str
+@op substr in str @optype{Str in Str -> Boolean}
 @desc Test whether a string contains a substring. Return a boolean
   value.
 @end
 
-@op for ch in str
+@op for ch in str @optype{for Str in Str}
 @desc The characters in a string can be iterated with a for loop, starting
       from the first character.
 @end
 
-@op x + y
+@op x + y @optype{Str + Str -> Str}
 @desc Return the concatenation of two strings.
 @end
 
-@op str * n
-@op n * str
+@op str * n @optype{Str * Int -> Str}
+@op n * str @optype{Int * Str -> Str}
 @desc A string can be repeated any number of times by multiplying it with an
   integer. The integer must not be negative. Multiplying a string with zero
   results in an empty string.
@@ -279,9 +279,14 @@ the second to last character, etc.
   @end
 @end
 
-@op x == y, x &lt; y, x &gt; y
-@desc Strings can be compared for equality and lexicographic order. Order
-  comparisons are based on the numeric values of characters.
+@op x == y   @optype{Str == Object -> Boolean}
+@desc Strings can be compared for equality.
+@end
+
+@op x &lt; y @optype{Str < Str -> Boolean}
+@op x &gt; y @optype{Str > Str -> Boolean}
+@desc Strings can be compared lexicographic order. Order comparisons are based
+      on the numeric values of characters.
 @end
 
 @op Repr(str)

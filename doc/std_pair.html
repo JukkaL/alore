@@ -28,12 +28,12 @@ the @ref{std::Map} class, where pairs represent (key, value) pairs, and in
 
 <h2>Operations</h2>
 
-@op x : y
+@op x : y  @optype{L : R -> Pair<L, R>}
 @desc Construct a pair with values <tt>x</tt> (<tt>left</tt>) and
       <tt>y</tt> (<tt>right</tt>).
 @end
 
-@op pair == x
+@op pair == x  @optype{Pair<L, R> == Object -> Boolean}
 @desc Pair objects can be compared for equality. Two pairs are equal if and
   only if both their left and right items are equal.
 @end

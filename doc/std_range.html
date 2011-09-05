@@ -34,23 +34,23 @@ the stop.
 
 <h2>Operations</h2>
 
-@op x to y
+@op x to y @optype{Int to Int -> Range}
 @desc Construct a range object representing a range <tt>x</tt>, <tt>x</tt> + 1,
       ..., <tt>y</tt> - 1. Both <tt>x</tt> and <tt>y</tt> must be integers.
 @end
 
-@op for x in range
+@op for x in range @optype{for Int in Range}
 @desc A range can be enumerated in ascending order
   with a for loop, starting with the lower bound and ending with one less than
   the upper bound.
 @end
 
-@op range == x
+@op range == x @optype{Range == Object -> Boolean}
 @desc Range objects can be compared for equality. Two range objects are equal
   if and only if both their lower and upper bounds are equal.
 @end
 
-@op x in range
+@op x in range @optype{Int in Range -> Boolean}
 @desc Return a boolean indicating whether <tt>x</tt> &gt;= <tt>start</tt> and
   <tt>x</tt> &lt; <tt>stop</tt>.
 @end
