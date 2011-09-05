@@ -79,7 +79,8 @@ end
 -- This class performs the conversion and manages the state of the entire 
 -- conversion process.
 class Converter
-  -- Page nesting; each item is a (path, title) pair.
+  -- Page nesting; each item is a (path, title) pair. Used to generate the
+  -- "bread crumb" trail at the top and bottom of pages.
   var hierarchy = Stack() as Stack<(Str, Str)>
   -- List of processed paths in order; used for generating prev/next links.
   -- An empty path ("") signifies a break in the chain.
@@ -628,7 +629,7 @@ class Converter
   -- Replace type names in the string with links to the relevant types.
   -- Assumes type names start with a capital letter.
   def formatTypeNames(s)
-    return Subst(s, '\<[A-Z][a-zA-Z0-9_]*\>', def (m)
+    return Subst(s, '\<([a-z_]+::)*[A-Z][a-zA-Z0-9_]*\>', def (m)
                    var name = m.group(0)
                    if self.nameMap.hasKey(NormAnchor(name))
                      return makeLink(name, False, False, True)
