@@ -324,6 +324,13 @@ class Converter
       st.state.push("dl")
       st.out.append("<dl>")
     end
+    arg = arg.replace('->', '&rArr;')
+    arg = arg.replace('<', '&lt;')
+    arg = arg.replace('>', '&gt;')
+    arg = Subst(arg, '@optype\{(.*?)\}', def (m)
+                  var s = formatTypeNames(m.group(1))
+                  return '<span class="optype">({})</span>'.format(s)
+                end)
     st.out.append("<dt>" + HiliSpan(arg))
   end
   
@@ -612,8 +619,16 @@ class Converter
                    end)
     end
 
-    -- Format type names.
-    args = Subst(args, '\<[A-Z][a-zA-Z0-9_]*\>', def (m)
+    -- Change type names into links.
+    args = formatTypeNames(args)
+
+    return pre + HiliSpan(base) + args
+  end
+
+  -- Replace type names in the string with links to the relevant types.
+  -- Assumes type names start with a capital letter.
+  def formatTypeNames(s)
+    return Subst(s, '\<[A-Z][a-zA-Z0-9_]*\>', def (m)
                    var name = m.group(0)
                    if self.nameMap.hasKey(NormAnchor(name))
                      return makeLink(name, False, False, True)
@@ -621,8 +636,6 @@ class Converter
                      return HiliSpan(m.group(0), 'hili3')
                    end
                  end)
-
-    return pre + HiliSpan(base) + args
   end
 end
 
