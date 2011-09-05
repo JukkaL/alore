@@ -1,66 +1,92 @@
 @head
-@module implicit_interfaces
-@title Implicit interfaces
+@module std
+@title Interfaces
 
-<p>A few implicit interfaces are referred to in Alore documentation. They are
-described in this section. Note that an object (or type) may support multiple
-implicit interfaces. Note that implicit interfaces are often called simply
-interfaces.
+<p>The <tt>std</tt> module defines several interfaces. They are
+described in this section. Note that a class may implement multiple
+interfaces. 
 
-<h2>Sequence</h2>
+<h2>Interface <tt>Sequence&LT;T&gt;</tt></h2>
 
 @class-hidden Sequence
 
-<p>An object supports the read-only sequence interface if it supports
-the following operations:
+<p>An object that implements <tt>Sequence</tt> can be used as a read-only
+sequence. The interface includes the following operations:
 
-@fun length()
+@fun length() as Int
 @desc Return the length of the sequence.
 @end
 
-@op sequence[n]
+@op sequence[n] @optype{Sequence<T>[Int] -> T}
 @desc Return the element at the specified index. The first element has index 0,
       the second 1, etc.
       @note Negative index values need not be supported.
       @end
 @end
 
-<p>Mutable sequences support assigning to an index as well. It is valid to
-refer to the sequence interface without specifying whether the sequence is
-read-only or mutable. The exact kind should, however, be obvious from context.
+<p>@ref{Array} and @ref{Str} implement <tt>Sequence</tt>. Note that
+<tt>Array</tt> objects are mutable.
 
-<p>@ref{Array} objects are mutable sequences and @ref{Str} objects are
-immutable sequences.
-
-<h2>Iterable</h2>
+<h2>Interface <tt>Iterable&lt;T&gt;</tt></h2>
 
 @class-hidden Iterable
 
 <p>Iterable objects provide the <tt>iterator</tt> method:
 
-@fun iterator()
+@fun iterator() as Iterator<T>
 @desc Return an iterator that iterates over all the objects in a composite
       object.
 @end
 
 <p>@ref{Str}, @ref{Range}, @ref{Array}, @ref{Map}, @ref{Set} and @ref{Stream}
-objects are iterable.
+objects implement <tt>Iterable</tt>.
 
-<h2>Iterator</h2>
+<h2>Interface <tt>Iterator&lt;T&gt;</tt></h2>
 
 @class-hidden Iterator
 
-<p>An object that supports the iterator interface allows iterating over the
-items of a composite object. It provides these methods:
+<p>An object that supports the <tt>Iterator</tt> interface performs an
+iteration over the items of a composite object. It provides these methods:
 
-@fun hasNext()
+@fun hasNext() as Boolean
 @desc Return a boolean indicating whether there are additional objects in the
       iteration.
 @end
 
-@fun next()
+@fun next() as T
 @desc Return the next object in the iteration. The iterator interface
       does not specify the order in which objects are returned, but many
       iterable types, such as @ref{Array}, guarantee a specific iteration
       order.
 @end
+
+<h2>Interface <tt>Comparable&lt;T&gt;</tt></h2>
+
+@class-hidden Comparable
+
+@op o < x @optype{Comparable<T> < T -> Boolean}
+@op o > x @optype{Comparable<T> > T -> Boolean}
+@desc A <tt>Comparable</tt> object supports comparisons using &lt; and &gt;.
+@end
+
+<h2>Interface <tt>Addable&lt;OT, RT&gt;</tt></h2>
+
+@class-hidden Addable
+
+@op o + x @optype{Multipliable<OT, RT> + OT -> RT}
+@desc An instance that implements <tt>Addable</tt> supports the
+      + operation. The operand and result types depend are derived from the
+      type arguments.
+@end
+
+<h2>Interface <tt>Multipliable&lt;OT, RT&gt;</tt></h2>
+
+@class-hidden Multipliable
+
+@op o * x @optype{Multipliable<OT, RT> * OT -> RT}
+@desc An instance that implements <tt>Multipliable</tt> supports the
+      * operation. The operand and result types depend are derived from the
+      type arguments.
+@end
+
+
