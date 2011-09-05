@@ -120,17 +120,9 @@ class Converter
     st.state.push("top")
 
     while i < a.length()
-      var s = a[i]
+      var s, ss = replaceInlineTags(a[i], st)
 
-      -- Replace certain @ sequences with constant strings.
-      s = ReplaceConstants(s, release)
-
-      var ss = s.strip()
       var tag = ""
-
-      -- Replace href and ref tags with HTML links.
-      s, ss = replaceRefs(s, ss, ignoreBrokenLinks, path)
-
       if ss.startsWith("@")
         var arg
         tag, arg = ParseTag(ss)
@@ -148,12 +140,15 @@ class Converter
           st.content.append(s)
         end
       end
-      i += 1
+      
       if ss != ""
         st.prev = tag
       end
+      
+      i += 1
     end
 
+    -- Output closing tags for unclosed tags.
     while st.state.top() != "top"
       if st.state.top() == "dl"
         st.out.append("</dl>")
@@ -177,7 +172,20 @@ class Converter
 
     return st.title
   end
+  
+  -- Replace inline tags of form @x and @x{...}. Inline tags can appear
+  -- anywhere within a line.
+  def replaceInlineTags(s, st)
+    -- Replace certain @ sequences with constant strings.
+    s = ReplaceConstants(s, st.release)
 
+    var ss = s.strip()
+
+    -- Replace href and ref tags with HTML links.
+    s, ss = replaceRefs(s, ss, st.ignoreBrokenLinks, st.path)
+    
+    return s, ss
+  end
 
   def processTag(tag, arg, st)
     switch tag
@@ -251,7 +259,6 @@ class Converter
     end
   end
 
-
   -- Process @head.
   def processHead(st)
     for h in HtmlHeader
@@ -261,7 +268,6 @@ class Converter
     st.titleIndex = st.out.length() - 1
     st.topIndex = st.out.length()
   end
-
 
   -- Process @title.
   def processTitle(arg, st)
@@ -282,7 +288,6 @@ class Converter
     st.out.insertAt(st.topIndex, Newline.join(nav))
   end
   
-  
   -- Process @fun or @exception.
   def processFunOrException(arg, st)
     if st.state.top() != "dl"
@@ -293,7 +298,6 @@ class Converter
                   formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
-  
   
   -- Process @class.
   def processClass(arg, st)
@@ -307,14 +311,12 @@ class Converter
     st.curClass = DefName(arg)
   end
   
-  
   -- Process @class-hidden.
   def processHiddenClass(arg, st)
     st.out.append(Anchor(st.anchors, arg))
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
   end
-  
   
   -- Process @op.
   def processOp(arg, st)
@@ -325,7 +327,6 @@ class Converter
     st.out.append("<dt>" + HiliSpan(arg))
   end
   
-  
   -- Process @var.
   def processVar(arg, st)
     if st.state.top() != "dl"
@@ -335,7 +336,6 @@ class Converter
     st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
-  
   
   -- Process @end.
   def processEnd(st)
@@ -356,7 +356,6 @@ class Converter
     st.sectionType = nil
   end
   
-
   -- Process @h2.  
   def processHeading(arg, st)
     if st.state.top() == "dl"
@@ -365,7 +364,6 @@ class Converter
     end
     st.out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
   end
-  
   
   -- Process @link.
   def processLink(arg, st)
@@ -405,7 +403,7 @@ class Converter
     return s, ss
   end
   
-  
+  -- Return the HTML for a link to a definition or a heading.
   def makeLink(target, isIdRef = True, isLower = False, isAnn = False)
     var t, anchor = NormLinkTarget(target)
     var url = self.nameMap[t]
@@ -425,7 +423,6 @@ class Converter
     end
     return "<a {}href=""{}"">{}{}{}</a>".format(aclass, url, st, text, et)
   end
-
 
   -- Output the navigation toolbar.
   def outputNavToolbar(out, path, isTop)
@@ -466,7 +463,6 @@ class Converter
       out.append("<div id='wrapper'><div id='content'>")
     end
   end
-
 
   -- Preprocess a file (and recursively all linked files). Record all 
   -- reference targets.
@@ -523,7 +519,6 @@ class Converter
       end
     end
   end
-
 
   -- Output an alphabetical index. It contains all index items defined in the 
   -- current scope, including modules, classes, functions and constants.
@@ -595,14 +590,12 @@ class Converter
     end
   end
 
-
   def addIndexItem(item)
     if item.length() < 3
       item += [self.scope]
     end
     self.indexItems.append(item)
   end
-
 
   -- Return a variable or function declaration modified so that the name of the
   -- declaration is within a highlight span and the rest is formatted as HTML. 
@@ -706,7 +699,6 @@ def SplitDef(defn)
       end
     end
   end
-  -- WriteLn([pre, base.strip(), args])
   return pre, base.strip(), args
 end
 
@@ -914,6 +906,7 @@ end
 -- Obfuscate an email address by creating a JavaScript fragment that constructs
 -- the address.
 def ObfuscateEmail(email)
+  -- Try to find a character not in the email address (repl).
   var repl
   for ch in "xz-_#"
     if not ch in email
@@ -925,13 +918,18 @@ def ObfuscateEmail(email)
     raise ValueError("Unsupported email address")
   end
   
+  -- Modify the email address by inserting copies of the character to the 
+  -- email address.
   var obfuscated = email[:2] + repl + email[2:5] + repl + email[5:8] + repl +
     email[8:]
 
+  -- Construct JavaScript fragment that simplifies the modified email address
+  -- and inserts it. Also build the email address string using concetenation 
+  -- to give some further obfuscation.
   var res = "<script type='text/javascript'>" + 
             "document.write(('{}' + '{}').replace(/{}/g, ''));".format(
               obfuscated[:4], obfuscated[4:], repl) +
             "</script>";
-            
+  
   return res
 end
