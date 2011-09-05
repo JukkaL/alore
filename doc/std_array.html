@@ -140,6 +140,7 @@ constructed using the <tt>*</tt> operator. Example:
 @end
 
 @op array * n @optype{Array<T> * Int -> Array<T>}
+@op n * array @optype{Int * Array<T> -> Array<T>}
 @desc Construct an <tt>Array</tt> object which contains the items
     in the <tt>array</tt> operand repeated <tt>n</tt> times. The operand
     <tt>n</tt> must must be a non-negative integer. Example:
@@ -159,7 +160,8 @@ constructed using the <tt>*</tt> operator. Example:
       item.
 @end
 
-@op array == x, array &lt; x
+@op array == x @optype{Array<T> == Object -> Boolean}
+@op array < x, array > x
 @desc Arrays can be compared for equality and for lexicographic order. All the
   basic comparison operators are supported: ==, !=, &lt;, &lt;=, &gt;
   and &gt;=.
