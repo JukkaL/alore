@@ -14,7 +14,7 @@ These constants can be mapped to integer <tt>errno</tt> values using
 
 <h2>Functions</h2>
 
-@fun CodeToErrno(code)
+@fun CodeToErrno(code as Constant) as Int
 @desc Return the integer <tt>errno</tt> matching a symbolic constant from
       the below list. Return 0
       if the <tt>errno</tt> value is not defined for the current operating
@@ -24,7 +24,7 @@ These constants can be mapped to integer <tt>errno</tt> values using
       @end
 @end
 
-@fun ErrnoToCode(errno)
+@fun ErrnoToCode(errno as Int) as Constant
 @desc Return a symbolic constant matching an integer <tt>errno</tt> value.
       Raise @ref{ValueError} if no constant is defined for the current
       operating system, or if the constant is not in the below list.
@@ -34,7 +34,7 @@ These constants can be mapped to integer <tt>errno</tt> values using
       @end
 @end
 
-@fun ErrorStr(code)
+@fun ErrorStr(code as Constant) as Str
 @desc Return an error message describing a symbolic error code (in English).
       Return <tt>nil</tt> if no message is available for the code. Example:
       @example
