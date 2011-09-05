@@ -25,17 +25,23 @@ with up to 15 significant digits of accuracy.
 refers to a <tt>Float</tt> value):
 
 @op f + x @optype{Float + Float -> Float; Float + Int -> Float}
-@desc Perform an addition operation. If the right operand
-      <tt>x</tt> is an integer or a float, the result is a float.
-      If <tt>x</tt> is neither an integer or a float,
-      return <tt>x + n</tt> instead.
+@desc Perform a floating point addition operation. The right operand
+      <tt>x</tt> may be an integer or a float; the result is a float.
+@end
+
+@op f + x @optype{Float + Addable<Float, T> -> T}
+@desc If <tt>x</tt> is neither an integer or a float,
+      return <tt>x + n</tt> (switch operands).
 @end
 
 @op f * x @optype{Float * Float -> Float; Float * Int -> Float}
-@desc Perform a multiplication operation. If the right operand
-      <tt>x</tt> is an integer or a float, the result is a float.
-      If <tt>x</tt> is neither an integer or a float,
-      return <tt>x * n</tt> instead.
+@desc Perform a floating point multiplication operation. The right operand
+      <tt>x</tt> may be an integer or a float; the result is a float.
+@end
+
+@op f * x @optype{Float * Multipliable<Float, T> -> T}
+@desc If <tt>x</tt> is neither an integer or a float,
+      return <tt>x * n</tt> (switch operands).
 @end
 
 @op f - x @optype{Float - Float -> Float; Float - Int -> Float}

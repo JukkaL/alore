@@ -45,16 +45,24 @@ refers to an <tt>Int</tt> value):
 @desc Perform an addition operation. If <tt>x</tt> is an
   integer,
   the result is also an integer, and if <tt>x</tt> is a float,
-  the result is a float. If <tt>x</tt> is neither an integer or a float,
-  return <tt>x + n</tt> instead.
+  the result is a float.
+@end
+
+@op n + x @optype{Int + Addable<Int, T> -> T}
+@desc If <tt>x</tt> is neither an integer or a float,
+      return <tt>x + n</tt> (switch operands).
 @end
 
 @op n * x @optype{Int * Int -> Int; Int * Float -> Float}
 @desc Perform a multiplication operation. If <tt>x</tt> is an
   integer,
   the result is also an integer, and if <tt>x</tt> is a float,
-  the result is a float. If <tt>x</tt> is neither an integer or a float,
-  return <tt>x * n</tt> instead.
+  the result is a float.
+@end
+
+@op n * x @optype{Int + Multipliable<Int, T> -> T}
+@desc If <tt>x</tt> is neither an integer or a float,
+      return <tt>x * n</tt> (switch operands).
 @end
 
 @op n - x @optype{Int - Int -> Int; Int - Float -> Float}
