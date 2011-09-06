@@ -197,15 +197,15 @@ the second to last character, etc.
     @end
 @end
   
-@fun startsWith(prefix)
+@fun startsWith(prefix as Str) as Boolean
 @desc Return a boolean indicating whether the string starts with the prefix.
 @end
 
-@fun endsWith(suffix)
+@fun endsWith(suffix as Str) as Boolean
 @desc Return a boolean indicating whether the string ends with the suffix.
 @end
 
-@fun decode(encoding[, strictness])
+@fun decode(encoding as Encoding[, strictness as Constant]) as Str
 @desc Decode the string to 16-bit Unicode using the given character encoding.
       The strictness argument may be @ref{encodings::Strict}
       (the default) or @ref{encodings::Unstrict}. Use this to
@@ -221,7 +221,7 @@ the second to last character, etc.
       @end
 @end
 
-@fun encode(encoding[, strictness])
+@fun encode(encoding as Encoding[, strictness as Constant]) as Str
 @desc Encode the string (interpreted as 16-bit Unicode) using the given
       character encoding. 
       The strictness argument may be @ref{encodings::Strict} (the
