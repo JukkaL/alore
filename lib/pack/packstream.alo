@@ -11,10 +11,8 @@ import io
 
 
 class PackFile is PackStream
-  def create(path, arg = nil, *args)
-  -- FIX: use signature below
-  --def create(path as Str, arg = nil as PackerBase, *args as Constant) or
-  --          (path as Str, arg       as Constant,   *args as Constant)
+  def create(path as Str, arg = nil as PackerBase, *args as Constant) or
+            (path as Str, arg       as Constant,   *args as Constant)
     if arg is Constant
       args.insertAt(0, arg as Constant)
       arg = nil
@@ -35,10 +33,8 @@ class PackStream is Stream
   private var packer as PackerBase
   private var stream as Stream
 
-  def create(stream, arg = nil, *args)
-  -- FIX: use signature below
-  --def create(stream as Stream, arg = nil as PackerBase, *args as Constant) or
-  --          (stream as Stream, arg       as Constant,   *args as Constant)
+  def create(stream as Stream, arg = nil as PackerBase, *args as Constant) or
+            (stream as Stream, arg       as Constant,   *args as Constant)
     if arg is PackerBase
       packer = arg as PackerBase
     else
