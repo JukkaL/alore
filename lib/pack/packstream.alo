@@ -11,33 +11,41 @@ import io
 
 
 class PackFile is PackStream
-  def create(path, *args)
-    var args2 = args
-    if args2.length() > 0 and not args2[0] is Constant
-      args2 = args2[1:]
+  def create(path, arg = nil, *args)
+  -- FIX: use signature below
+  --def create(path as Str, arg = nil as PackerBase, *args as Constant) or
+  --          (path as Str, arg       as Constant,   *args as Constant)
+    if arg is Constant
+      args.insertAt(0, arg as Constant)
+      arg = nil
     end
-    var stream = File(path, *args2)
+    var stream = File(path, *args)
     -- Remove extra flags from args.
-    for flag in Append, Output, Input
+    for flag in [Append, Output, Input]
       if flag in args
         args.removeAt(args.index(flag))
       end
     end
-    super.create(stream, *args)
+    super.create(stream, arg, *args)
   end
 end
 
 
 class PackStream is Stream
-  private var packer
-  private var stream
+  private var packer as PackerBase
+  private var stream as Stream
 
-  def create(stream, *args)
-    if args.length() > 0 and not args[0] is Constant
-      packer = args[0]
-      args = args[1:]
+  def create(stream, arg = nil, *args)
+  -- FIX: use signature below
+  --def create(stream as Stream, arg = nil as PackerBase, *args as Constant) or
+  --          (stream as Stream, arg       as Constant,   *args as Constant)
+    if arg is PackerBase
+      packer = arg as PackerBase
     else
       packer = Packer()
+      if arg is Constant
+        args.insertAt(0, arg as Constant)
+      end
     end
     self.stream = stream
     if Append in args or Output in args or Input in args
@@ -48,187 +56,187 @@ class PackStream is Stream
     super.create(*args)
   end
 
-  def writeByte(x)
+  def writeByte(x as Int)
     write(packer.packByte(x))
   end
 
-  def readByte()
+  def readByte() as Int
     return packer.unpackByte(readExactly(1))
   end
 
-  def writeBytes(a)
+  def writeBytes(a as Array<Int>)
     write(packer.packBytes(a))
   end
 
-  def readBytes(n)
+  def readBytes(n) as Array<Int>
     return packer.unpackBytes(readExactly(1 * n))
   end
 
-  def writeInt8(x)
+  def writeInt8(x as Int)
     write(packer.packInt8(x))
   end
 
-  def readInt8()
+  def readInt8() as Int
     return packer.unpackInt8(readExactly(1))
   end
 
-  def writeInts8(a)
+  def writeInts8(a as Array<Int>)
     write(packer.packInts8(a))
   end
 
-  def readInts8(n)
+  def readInts8(n) as Array<Int>
     return packer.unpackInts8(readExactly(1 * n))
   end
 
-  def writeWord16(x)
+  def writeWord16(x as Int)
     write(packer.packWord16(x))
   end
 
-  def readWord16()
+  def readWord16() as Int
     return packer.unpackWord16(readExactly(2))
   end
 
-  def writeWords16(a)
+  def writeWords16(a as Array<Int>)
     write(packer.packWords16(a))
   end
 
-  def readWords16(n)
+  def readWords16(n) as Array<Int>
     return packer.unpackWords16(readExactly(2 * n))
   end
 
-  def writeInt16(x)
+  def writeInt16(x as Int)
     write(packer.packInt16(x))
   end
 
-  def readInt16()
+  def readInt16() as Int
     return packer.unpackInt16(readExactly(2))
   end
 
-  def writeInts16(a)
+  def writeInts16(a as Array<Int>)
     write(packer.packInts16(a))
   end
 
-  def readInts16(n)
+  def readInts16(n) as Array<Int>
     return packer.unpackInts16(readExactly(2 * n))
   end
 
-  def writeWord32(x)
+  def writeWord32(x as Int)
     write(packer.packWord32(x))
   end
 
-  def readWord32()
+  def readWord32() as Int
     return packer.unpackWord32(readExactly(4))
   end
 
-  def writeWords32(a)
+  def writeWords32(a as Array<Int>)
     write(packer.packWords32(a))
   end
 
-  def readWords32(n)
+  def readWords32(n) as Array<Int>
     return packer.unpackWords32(readExactly(4 * n))
   end
 
-  def writeInt32(x)
+  def writeInt32(x as Int)
     write(packer.packInt32(x))
   end
 
-  def readInt32()
+  def readInt32() as Int
     return packer.unpackInt32(readExactly(4))
   end
 
-  def writeInts32(a)
+  def writeInts32(a as Array<Int>)
     write(packer.packInts32(a))
   end
 
-  def readInts32(n)
+  def readInts32(n) as Array<Int>
     return packer.unpackInts32(readExactly(4 * n))
   end
 
-  def writeWord64(x)
+  def writeWord64(x as Int)
     write(packer.packWord64(x))
   end
 
-  def readWord64()
+  def readWord64() as Int
     return packer.unpackWord64(readExactly(8))
   end
 
-  def writeWords64(a)
+  def writeWords64(a as Array<Int>)
     write(packer.packWords64(a))
   end
 
-  def readWords64(n)
+  def readWords64(n) as Array<Int>
     return packer.unpackWords64(readExactly(8 * n))
   end
 
-  def writeInt64(x)
+  def writeInt64(x as Int)
     write(packer.packInt64(x))
   end
 
-  def readInt64()
+  def readInt64() as Int
     return packer.unpackInt64(readExactly(8))
   end
 
-  def writeInts64(a)
+  def writeInts64(a as Array<Int>)
     write(packer.packInts64(a))
   end
 
-  def readInts64(n)
+  def readInts64(n) as Array<Int>
     return packer.unpackInts64(readExactly(8 * n))
   end
 
-  def writeFloat32(x)
+  def writeFloat32(x as Float)
     write(packer.packFloat32(x))
   end
 
-  def readFloat32()
+  def readFloat32() as Float
     return packer.unpackFloat32(readExactly(4))
   end
 
-  def writeFloats32(a)
+  def writeFloats32(a as Array<Float>)
     write(packer.packFloats32(a))
   end
 
-  def readFloats32(n)
+  def readFloats32(n) as Array<Float>
     return packer.unpackFloats32(readExactly(4 * n))
   end
 
-  def writeFloat64(x)
+  def writeFloat64(x as Float)
     write(packer.packFloat64(x))
   end
 
-  def readFloat64()
+  def readFloat64() as Float
     return packer.unpackFloat64(readExactly(8))
   end
 
-  def writeFloats64(a)
+  def writeFloats64(a as Array<Float>)
     write(packer.packFloats64(a))
   end
 
-  def readFloats64(n)
+  def readFloats64(n) as Array<Float>
     return packer.unpackFloats64(readExactly(8 * n))
   end
   
-  def writeStr(s, len)
+  def writeStr(s as Str, len as Int)
     write(packer.packStr(s, len))
   end
   
-  def readStr(len)
+  def readStr(len as Int) as Str
     return readExactly(len)
   end
   
-  def writeStrs(a, len)
+  def writeStrs(a as Array<Str>, len as Int)
     write(packer.packStrs(a, len))
   end
   
-  def readStrs(n, len)
-    var a = []
+  def readStrs(n as Int, len as Int) as Array<Str>
+    var a = [] as <Str>
     for i in 0 to n
       a.append(readExactly(len))
     end
     return a
   end
   
-  private def readExactly(n)
+  private def readExactly(n as Int) as Str
     var s = read(n)
     if s.length() != n
       raise IoError("Read at end of file")
@@ -236,23 +244,23 @@ class PackStream is Stream
     return s
   end
   
-  def _read(n)
-    return stream._read(n)
+  def _read(n as Int) as Str
+    return (stream as dynamic)._read(n) -- FIX remove cast
   end
   
-  def _write(*a)
-    stream._write(*a)
+  def _write(*a as Str)
+    (stream as dynamic)._write(*a) -- FIX remove cast
   end
   
-  def close()
+  def close() as void
     super.close()
     stream.close()
   end
   
-  def seek(offset)
+  def seek(offset as Int) as Str
     flush()
     -- Discard any data in the input buffer.
     read(peek().length())
-    stream.seek(offset)
+    (stream as dynamic).seek(offset)
   end
 end
