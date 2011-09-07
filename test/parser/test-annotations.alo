@@ -197,6 +197,11 @@ class AnnotationsSuite is Suite
     AssertEqual(Isect7(6), 12)
   end
   
+  def testIntersectionTypeAnnotationWithVaryingArgCounts()
+    AssertEqual(IsectWithVaryingCounts(), 6)
+    AssertEqual(IsectWithVaryingCounts(4), 8)
+  end
+  
   def testLineContinuationAfterAs()
     AssertEqual(Cont(4), 4)
   end
@@ -301,6 +306,15 @@ private def Isect7(a as X) or
                   (a as Y) or
                   (a as Z)
   return a + 6
+end
+
+
+-- Function with intersection type that has different number of accepted
+-- arguments in different intersection items. Checking calls to functions
+-- (and types) like this was broken initially.
+private def IsectWithVaryingCounts(a = 3 as X) or
+                                   (a as Y)
+  return a * 2
 end
 
 

@@ -338,6 +338,9 @@ static AToken *ScanMethodDefinition(AToken *tok, ATypeInfo *type,
    introduced with "or". */
 static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
 {
+    /* Is this the first signature for this function? */
+    ABool isFirst = TRUE;
+    
     for (;;) {
         /* Clear and skip any <...> after function name. */
         tok = AClearGenericAnnotation(tok);
@@ -366,8 +369,10 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
                 
                 tok = AClearTypeAnnotationUntilSeparator(tok);
             } while (tok->type == TT_COMMA);
-            
-            if (fun != NULL) {
+
+            /* Update the number of arguments for the related function, but
+               only for the first signature. */
+            if (fun != NULL && isFirst) {
                 fun->info.global.minArgs = minArgs;
                 fun->info.global.maxArgs = maxArgs;
             }
@@ -375,7 +380,11 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
             if (tok->type == TT_RPAREN)
                 tok = AAdvanceTok(tok);
         } else {
+            /* Could not process the signature; it is probably invalid. This
+               will be detected during parsing. */
             if (fun != NULL) {
+                /* We don't know the programmer's intentions, so make the
+                   function accept any number of arguments. */
                 fun->info.global.minArgs = 0;
                 fun->info.global.maxArgs = A_VAR_ARG_FLAG;
             }
@@ -387,6 +396,10 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
             break;
 
         tok = AAdvanceTok(tok);
+
+        /* Only store valid argument counts during the first iteration (for
+           first alternative signature). */
+        isFirst = FALSE;
     }
 
     return tok;
