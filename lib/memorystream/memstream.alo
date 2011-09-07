@@ -10,7 +10,7 @@ module memorystream
 import io
 
 
-private const BlockSize = 512     -- Stream block size, in characters
+private const BlockSize = 512 as Int    -- Stream block size, in characters
 
 
 -- Memory-based stream
@@ -25,15 +25,15 @@ class MemoryStream is Stream
   -- use case (appending data to an empty stream and then converting it to a 
   -- string).
 
-  private var data = []          -- Array of Str: contents of the stream
-  private var appendOnly = True  -- True if every mutation has been an append
-  private var isClosed = False
+  private var data = [] as Array<Str>         -- Contents of the stream
+  -- True if every mutation has been an append
+  private var appendOnly = True as Boolean 
+  private var isClosed = False as Boolean
+  -- Position in the stream, -1 means at end (only valid in append mode)
+  private var position = -1 as Int  
+  private var len = 0 as Int
   
-  private var position = -1      -- Position in the stream, -1 means at end
-                                 -- (only valid in append mode)
-  private var len = 0
-  
-  def create(init = "")
+  def create(init = "" as Str)
     super.create(Input, Output)
     if init != ""
       _write(init)
@@ -42,7 +42,7 @@ class MemoryStream is Stream
     end
   end
   
-  def _write(*a)
+  def _write(*a as Str)
     if self.appendOnly
       -- Write in append only mode
       for s in a
@@ -89,7 +89,7 @@ class MemoryStream is Stream
     end
   end
   
-  def _read(n)
+  def _read(n as Int) as Str
     if self.position == self.len or self.position == -1
       return nil
     elif n <= 0
@@ -104,7 +104,7 @@ class MemoryStream is Stream
       var i1 = blockIndex(self.position)
       var i2 = Min(blockIndex(self.position + n - 1), self.data.length() - 1)
       var n1 = self.position mod BlockSize
-      var a = []
+      var a = [] as Array<Str>
       a.append(self.data[i1][n1:n1 + n - 1])
       if i2 > i1
         for i in i1 + 1 to i2
@@ -118,12 +118,12 @@ class MemoryStream is Stream
     end
   end
   
-  def size()
+  def size() as Int
     flush()
     return self.len
   end
   
-  def seek(n)
+  def seek(n as Int)
     verifyNotClosed()
     if n < 0 or n > size()
       raise IoError("Invalid seek offset")
@@ -137,7 +137,7 @@ class MemoryStream is Stream
     self.position = n
   end
   
-  def pos()
+  def pos() as Int
     flush()
     if self.position == -1
       return self.len
@@ -146,12 +146,12 @@ class MemoryStream is Stream
     end
   end
   
-  def close()
+  def close() as void
     super.close()
     self.isClosed = True
   end
   
-  def contents()
+  def contents() as Str
     if not self.isClosed
       flush()
     end
@@ -160,7 +160,7 @@ class MemoryStream is Stream
   
   -- Switch the stream to the general mode (appendOnly == False) if it's
   -- currently in the append-only mode.
-  private def enableRandomAccess()
+  private def enableRandomAccess() as void
     if not self.appendOnly
       return
     end
@@ -174,19 +174,19 @@ class MemoryStream is Stream
   end
   
   -- Raise an exception if the stream is closed.
-  private def verifyNotClosed()
+  private def verifyNotClosed() as void
     if self.isClosed
       raise IoError("Stream closed")
     end
   end
   
   -- Return the block index of an offset (only works in the general mode).
-  private def blockIndex(offset)
+  private def blockIndex(offset) as Int
     return offset div BlockSize
   end
 
   -- Empty input buffer and update position accordingly.
-  private def emptyInputBuffer()  
+  private def emptyInputBuffer() as void
     -- Normalize position if there is data in the input buffer
     var numBuffered = peek().length()
     self.position -= numBuffered
