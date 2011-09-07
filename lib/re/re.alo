@@ -20,27 +20,38 @@ end
 
 
 class MatchResult
-  def group(n)
+  def group(n as Int) as Str
   end
-  def span(n)
+  
+  def span(n as Int) as Pair<Int, Int>
   end
 end
 
 
-const Match = __re::Match
-const Search = __re::Search
-const IgnoreCase = __re::IgnoreCase
+private interface RE
+  bind Str
+  bind RegExp
+end
 
 
-def Subst(str, re, repl)
-  var a = []
+const Match = __re::Match as def (RE, Str, Int=) as MatchResult
+
+const Search = __re::Search as def (RE, Str, Int=) as MatchResult
+
+const IgnoreCase = __re::IgnoreCase as Constant
+
+
+def Subst(str as Str, re as RE, repl as Str) as Str or
+         (str as Str, re as RE, repl as def (MatchResult) as Str) as Str
+  var a = [] as <Str>
   
-  var rr = []
-  if repl is Str and "\" in repl
+  var rr = [] as <(Int, dynamic)>
+  if repl is Str and "\" in (repl as Str)
+    var repls = (repl as Str)
     var i = 0
-    while i < repl.length() - 1
-      if repl[i] == "\"
-        var c = repl[i + 1]
+    while i < repls.length() - 1
+      if repls[i] == "\"
+        var c = repls[i + 1]
         if IsDigit(c)
           rr.append((i, Int(c)))
         else
@@ -62,7 +73,7 @@ def Subst(str, re, repl)
     var span = m.span(0)
     a.append(str[i:span.left])
     if repl is Str
-      var rs = repl
+      var rs = (repl as Str)
       var j = rr.length() - 1
       while j >= 0
         var aa, b = rr[j]
@@ -79,7 +90,7 @@ def Subst(str, re, repl)
       end
       a.append(rs)
     else
-      a.append(repl(m))
+      a.append((repl as dynamic)(m))
     end
     i = span.right
   end
@@ -89,8 +100,8 @@ def Subst(str, re, repl)
 end
 
 
-def Split(str, re)
-  var res = []
+def Split(str as Str, re as RE) as Array<Str>
+  var res = [] as <Str>
   
   var i = 0
   var j = 0
