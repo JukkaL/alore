@@ -1,0 +1,13 @@
+module dyncheck
+
+import types
+import checker
+
+
+-- Check if t is a proper subtype of s (no need to rely on compatibility due
+-- to dynamic types).
+def IsProperSubtype(t, s)
+  -- FIX support generic types, tuple types etc.
+  return t is Instance and s is Instance and t.args == [] and s.args == [] and
+         IsSubtype(t, s)
+end

@@ -1,0 +1,1157 @@
+-- Test cases for the type checker related to generics.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Simple generic types
+-- --------------------
+
+
+[case testGenericMethodReturnType]
+c = a.f() -- Fail
+b = a.f()
+
+var a as A<B>
+var b as B
+var c as C
+
+class A<T>
+  def f() as T
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testGenericMethodArgument]
+a.f(c) -- Fail
+a.f(b)
+
+var a as A<B>
+var b as B
+var c as C
+
+class A<T>
+  def f(a as T)
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 1 to method "f" of "A" has incompatible type "C"
+
+[case testGenericMemberVariable]
+a.v = c -- Fail
+a.v = b
+
+var a as A<B>
+var b as B
+var c as C
+
+class A<T>
+  var v = nil as T
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testGenericAccessor]
+a.v = c -- Fail
+c = a.v -- Fail
+a.v = b
+b = a.v
+
+var a as A<B>
+var b as B
+var c as C
+
+class A<T>
+  def v as T
+  end
+  def v = x as T
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testTypeVariableInTupleType]
+a.v = c1 -- Fail
+a.v = c2 -- Fail
+a.v = b
+
+var a as A<B>
+var b as (B, C, B)
+var c1 as (C, C, B)
+var c2 as (B, C, C)
+
+class A<T>
+  var v = nil as (T, C, T)
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testTypeVariableInFunctionType]
+a.v = c1 -- Fail
+a.v = c2 -- Fail
+a.v = b
+
+var a as A<B>
+var b as def (B, C) as B
+var c1 as def (C, C) as B
+var c2 as def (B, C) as C
+
+class A<T>
+  var v = nil as def (T, C) as T
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testSimpleGenericSubtyping]
+c = b -- Fail
+b = c -- Fail
+
+b = b
+b = bb
+
+var b as A<B>
+var bb as A<B>
+var c as A<C>
+
+
+class A<T>
+end
+class B; end
+class C is B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testGenericTypeCompatibilityWithDynamic]
+b = d
+c = d
+d = b
+d = c
+
+var b as A<B>
+var c as A<C>
+var d as A<dynamic>
+
+class A<T>
+end
+class B; end
+class C is B; end
+[out]
+
+[case testTypeVariableAsTypeArgument]
+a.v = c -- Fail
+c = a.v -- Fail
+
+a.v = b
+b = a.v
+
+var a as A<B>
+var b as A<B>
+var c as A<C>
+
+class A<T>
+  var v = nil as A<T>
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testMultipleGenericTypeParametersWithMemberVars]
+t = a.s -- Fail
+s = a.t -- Fail
+
+s = a.s
+t = a.t
+
+var a as A<B, C>
+var s as B
+var t as C
+
+class A<S, T>
+  var s as S
+  var t as T
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testMultipleGenericTypeParametersWithMethods]
+a.f(s, s) -- Fail
+a.f(t, t) -- Fail
+
+a.f(s, t)
+
+var a as A<B, C>
+var s as B
+var t as C
+
+class A<S, T>
+  def f(s as S, t as T)
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 2 to method "f" of "A" has incompatible type "B"
+main, line 2: Argument 1 to method "f" of "A" has incompatible type "C"
+
+[case testMultipleGenericTypeParametersAndSubtyping]
+bb = bc -- Fail
+bb = cb -- Fail
+bc = bb -- Fail
+
+bb = bb
+bc = bc
+
+var bc as A<B, C>
+var bb as A<B, B>
+var cb as A<C, B>
+
+class A<S, T>
+  var s as S
+  var t as T
+end
+
+class B; end
+class C is B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+
+-- Simple generic type bodies
+-- --------------------------
+
+
+[case testGenericTypeBody1]
+class A<T>
+  var a as T
+  
+  def f(b as T) as T
+    f(x)                 -- Fail
+    var d = self as A<B> -- Fail
+    a = f(a)
+    return self.a
+    var c = self as A<T>
+  end
+end
+var x as B
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 5: Argument 1 to method "f" of "A" has incompatible type "B"
+main, line 6: Incompatible types in assignment
+
+[case testGenericTypeBody2]
+class A<T>
+  var a as T
+  
+  def b as T
+    return a
+    return x -- Fail
+  end
+end
+var x as B
+class B; end
+[out]
+main: In member "b" of class "A":
+main, line 6: Incompatible return value type
+
+[case testGenericTypeBodyWithMultipleVariables]
+class A<S, T>
+  def f() as void
+    var s as S
+    var t as T
+    s = t -- Fail
+    t = s -- Fail
+    var a = self as A<S, B> -- Fail
+    var b = self as A<T, T> -- Fail
+    var c = self as A<S, T>
+    t = t
+  end
+end
+
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+
+[case testCompatibilityOfNilWithTypeVar]
+class A<T>
+  def f() as void
+    var a = nil as T
+    a = nil
+  end
+end
+[out]
+
+[case testCompatibilityOfTypeVarWithObject]
+class A<T>
+  def f() as T
+    var a = Object() as T  -- Fail
+    a = Object()           -- Fail
+    var b = f() as Object
+    b = f()
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Operations with generic types
+-- -----------------------------
+
+
+[case testGenericOperations]
+b = a + b -- Fail
+c = a + c -- Fail
+c = a[c]  -- Fail
+b = a[b]  -- Fail
+
+c = a + b
+b = a[c]
+
+var a as A<B, C>
+var b as B
+var c as C
+
+class A<S, T>
+  def _add(a as S) as T
+  end
+  
+  def _get(i as T) as S
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Unsupported operand types for + ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Invalid index type "B" for "A"
+
+[case testOperatorAssignmentWithIndexLvalue1]
+ac[b] += b -- Fail
+ac[c] += c -- Fail
+
+ac[b] += c
+ac[b] = ac[b] + c
+
+var b as B
+var c as C
+var ac as A<C>
+
+class A<T>
+  def _get(i as B) as T
+  end
+  
+  def _set(i as B, v as T)
+  end
+end
+
+class B; end
+class C
+  def _add(o as C) as C
+  end
+end
+[out]
+main, line 1: Unsupported operand types for + ("C" and "B")
+main, line 2: Invalid index type "C" for "A"
+
+[case testOperatorAssignmentWithIndexLvalue2]
+ac[b] += c        -- Fail
+ac[c] += c        -- Fail
+ac[b] = ac[b] + c -- Fail
+
+var b as B
+var c as C
+var ac as A<C>
+
+class A<T>
+  def _get(i as B) as T
+  end
+  
+  def _set(i as C, v as T)
+  end
+end
+
+class B; end
+class C
+  def _add(o as C) as C
+  end
+end
+[out]
+main, line 1: Invalid index type "B" for "A"
+main, line 2: Invalid index type "C" for "A"
+main, line 3: Invalid index type "B" for "A"
+
+
+-- Nested generic types
+-- --------------------
+
+
+[case testNestedGenericTypes]
+ac = aab.x -- Fail
+ac.y = aab -- Fail
+
+ab = aab.x
+ac = aac.x
+ab.y = aab
+ac.y = aac
+
+var aab as A<A<B>>
+var aac as A<A<C>>
+var ab as A<B>
+var ac as A<C>
+
+class A<T>
+  var x = nil as T
+  var y = nil as A<A<T>>
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Generic functions
+-- -----------------
+
+
+[case testSimpleGenericFunction]
+b = id(a) as <B>  -- Fail
+a = id(b) as <B>  -- Fail
+
+a = id(a) as <A>
+
+var a as A
+var b as B
+
+def id<T>(a as T) as T
+  return a
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Argument 1 to "id" has incompatible type "A"
+main, line 2: Incompatible types in assignment
+
+[case testGenericFunctionWithTwoTypeArguments]
+tbc = f(c, tbc) as <B, C> -- Fail
+tbc = f(b, tbb) as <B, C> -- Fail
+tbb = f(b, tbc) as <B, C> -- Fail
+
+tbc = f(b, tbc) as <B, C>
+
+var tbc as (B, C)
+var tbb as (B, B)
+var b as B
+var c as C
+
+def f<S, T>(a as S, b as (S, T)) as (S, T)
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 1 to "f" has incompatible type "C"
+main, line 2: Argument 2 to "f" has incompatible type "(B, B)"
+main, line 3: Incompatible types in assignment
+
+[case testInvalidNumberOfTypeArgumentsForGenericFunction]
+a = f(a) as <Object>                 -- Fail
+a = f(a) as <Object, Object, Object> -- Fail
+g() as <Object>                      -- Fail
+
+f(a) as <Object, Object>
+
+var a as (Object, Object)
+
+def f<S, T>(a as (S, T))
+end
+
+def g() as void
+end
+[out]
+main, line 1: Type application has too few types (2 expected)
+main, line 2: Type application has too many types (2 expected)
+main, line 3: Type application targets a non-generic function
+
+[case testGenericMethodInNonGenericType]
+a = a.f(b) as <B> -- Fail
+a = a.f(b) as <A> -- Fail
+
+a = a.f(a) as <A>
+
+var a as A
+var b as B
+
+class A
+  def f<T>(a as T) as T
+  end
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Argument 1 to method "f" of "A" has incompatible type "B"
+
+[case testGenericMethodInGenericType]
+abc = ab.f(c) as <C> -- Fail
+acb = ab.f(b) as <C> -- Fail
+
+acb = ab.f(c) as <C>
+
+var ab as A<B>
+var acb as A<(C, B)>
+var abc as A<(B, C)>
+var b as B
+var c as C
+
+class A<T>
+  def f<S>(a as S) as A<(S, T)>
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Argument 1 to method "f" of "A" has incompatible type "B"
+
+[case testTypeCheckingGenericFunctionBody]
+def f<S, T>(s as S, t as T) as (T, A)
+  var a = t as S -- Fail
+  s = t -- Fail
+  return (s, A()) -- Fail
+  var b = t as T
+  var c = s as S
+  return (t, A())
+end
+
+class A; end
+[out]
+main: In function "f":
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible return value type
+
+[case testTypeCheckingGenericMethodBody]
+class A<T>
+  def f<S>(s as S, t as T) as (S, T)
+    s = t -- Fail
+    return (s, s) -- Fail
+    return (t, t) -- Fail
+    t = t
+    s = s
+    return (s, t)
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible return value type
+main, line 5: Incompatible return value type
+
+[case testGenericFunctionSubtyping]
+f = f -- Fail
+f = g -- Fail
+
+var f as def<T>(T)
+def g<T>(a as T)
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Constructing instances + generics
+-- ---------------------------------
+
+
+[case testConstructingGenericInstanceWithEmptyConstructor]
+var a = A() as <B> as A<C> -- Fail
+a = A() as <B>             -- Fail
+
+var e = A() as <B> as A<B>
+e = A() as <B>
+
+class A<T>
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testNonEmptyGenericTypeConstructor]
+ac = A(b, b) as <C> -- Fail
+ab = A(c, b) as <C> -- Fail
+
+ac = A(c, b) as <C>
+
+var ac as A<C>
+var ab as A<B>
+
+var b as B
+var c as C
+
+class A<T>
+  def create(a as T, b as B)
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 1 has incompatible type "B"
+main, line 2: Incompatible types in assignment
+
+[case testConstructorForGenericTypeWithMultipleArguments]
+abc = A(b, b) as <B, C> -- Fail
+abc = A(c, c) as <B, C> -- Fail
+acb = A(c, b) as <B, C> -- Fail
+
+abc = A(c, b) as <B, C>
+acb = A(b, c) as <C, B>
+
+var abc as A<B, C>
+var acb as A<C, B>
+
+var b as B
+var c as C
+
+class A<S, T>
+  def create(t as T, s as S)
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 1 has incompatible type "B"
+main, line 2: Argument 2 has incompatible type "C"
+main, line 3: Incompatible types in assignment
+
+[case testGenericConstructorOfNonGenericType]
+a = A(b, c) as <B> -- Fail
+a = A(c, b) as <B> -- Fail
+b = A(b, b) as <B> -- Fail
+
+a = A(b, b) as <B>
+a = A(c, c) as <C>
+
+var a as A
+var b as B
+var c as C
+
+class A
+  def create<T>(a as T, b as T)
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 2 has incompatible type "C"
+main, line 2: Argument 1 has incompatible type "C"
+main, line 3: Incompatible types in assignment
+
+[case testGenericConstructorOfGenericType]
+ab = A(b, b) as <B, C> -- Fail
+ab = A(c, c) as <B, C> -- Fail
+ac = A(b, c) as <B, C> -- Fail
+
+ab = A(b, c) as <B, C>
+
+var ab as A<B>
+var ac as A<C>
+var b as B
+var c as C
+
+class A<T>
+  def create<S>(a as T, b as S)
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 2 has incompatible type "B"
+main, line 2: Argument 1 has incompatible type "C"
+main, line 3: Incompatible types in assignment
+
+[case testInvalidNumberOfTypeArgumentsToGenericTypeConstructor]
+A() as <B>       -- Fail
+A() as <B, B, B> -- Fail
+A() as <B, B>
+
+class A<S, T>
+end
+
+class B; end
+[out]
+main, line 1: Type application has too few types (2 expected)
+main, line 2: Type application has too many types (2 expected)
+
+[case testDefaultConstructorForGenericType]
+ab = A(b, ac) as <B>
+ab = A(c, ab) as <B>
+ac = A(b, ab) as <B>
+
+ab = A(b, ab) as <B>
+
+var ab as A<B>
+var ac as A<C>
+var b as B
+var c as C
+
+class A<T>
+  var x as T
+  var y as A<T>
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Argument 2 has incompatible type A<C>
+main, line 2: Argument 1 has incompatible type "C"
+main, line 3: Incompatible types in assignment
+
+
+-- Built-in type expressions
+-- -------------------------
+
+
+[case testArrayExpressionsWithTypeApplication]
+ab = [] as <A>      -- Fail
+aa = [a, b] as <A>  -- Fail
+aa = [b, a] as <A>  -- Fail
+[a] as <A2>         -- Fail
+[] as <A, A>        -- Fail
+
+aa = [] as <A>
+ab = [] as <B>
+aa = [a, a2] as <A>
+ab = [b, b] as <B>
+
+var aa as Array<A>
+var ab as Array<B>
+
+var a as A
+var a2 as A2
+var b as B
+
+class A; end
+class B; end
+class A2 is A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Array item 2 has incompatible type "B"
+main, line 3: Array item 1 has incompatible type "B"
+main, line 4: Array item 1 has incompatible type "A"
+main, line 5: Type application has too many types (1 expected)
+
+[case testNestedArrayWithTypeApplication]
+aa = [[] as <B>, [c] as <C>] as <Array<B>> -- Fail
+aa = [[] as <B>, [b] as <B>] as <Array<B>>
+
+var aa as Array<Array<B>>
+var b as B
+var c as C
+
+class B; end
+class C; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Array item 2 has incompatible type Array<C>
+
+[case testPairExpressionWithTypeApplication]
+pbb = (b : c) as <B, B> -- Fail
+pbb = (c : b) as <B, B> -- Fail
+pbb = (b : c) as <B, C> -- Fail
+(b : c) as <B>          -- Fail
+
+pbb = (b : b2) as <B, B>
+pbc = (b : c) as <B, C>
+
+var pbb as Pair<B, B>
+var pbc as Pair<B, C>
+var b as B
+var b2 as B2
+var c as C
+
+class B; end
+class B2 is B; end
+class C; end
+[file std/std.alo]
+module std
+class Object
+end
+class Pair<S, T>
+end
+[out]
+main, line 1: Incompatible Pair item type
+main, line 2: Incompatible Pair item type
+main, line 3: Incompatible types in assignment
+main, line 4: Type application has too few types (1 expected)
+
+[case testInvalidTypeApplicationTarget]
+a as <A>
+f as <A>
+a[a] as <A>
+a() as <A>
+
+var a as A
+def f<T>(a as T) as T
+end
+
+class A; end
+[out]
+main, line 1: Invalid type application target type
+main, line 2: Invalid type application target type
+main, line 3: Invalid type application target type
+main, line 4: Invalid type application target type
+main, line 4: "A" not callable
+
+[case testTypeApplicationWithTuples]
+(a, b) as <A>       -- Fail
+(a, b) as <A, B, B> -- Fail
+(b, b2) as <B2, B2>  -- Fail
+(b2, b) as <B2, B2>  -- Fail
+t2 = (nil, nil) as <A, A> -- Fail
+
+t2 = (nil, nil) as <A, B>
+t3 = (a, b, b2) as <A, B, B>
+
+var t2 as (A, B)
+var t3 as (A, B, B)
+var a as A
+var b as B
+var b2 as B2
+
+class A; end
+class B; end
+class B2 is B; end
+[out]
+main, line 1: Type application has too few types (2 expected)
+main, line 2: Type application has too many types (2 expected)
+main, line 3: Incompatible tuple item type
+main, line 4: Incompatible tuple item type
+main, line 5: Incompatible types in assignment
+
+
+-- Multiple assignment with arrays
+-- -------------------------------
+
+
+[case testMultipleAsssignmentWithArrays]
+a, b = [] as <A>   -- Fail
+b, a = [] as <A>   -- Fail
+b2, b2 = [] as <B> -- Fail
+
+a, a = [] as <A>
+b, b2, b = [] as <B2>
+
+var a as A
+var b as B
+var b2 as B2
+
+class A; end
+class B; end
+class B2 is B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testMultipleAssignmentWithArraysInInitialization]
+var a, b = [] as <Object> as (A, A) -- Fail
+var c, d = [] as <A> as (A, Object)
+
+class A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testMultipleAssignmentWithArrayAndIndexing]
+a[1], b[1] = a -- Fail
+a[1], a[2] = a
+
+var a as Array<A>
+var b as Array<Int>
+
+class A
+end
+[file std/std.alo]
+module std
+class Object
+end
+class Array<T>
+  def _set(x as Int, v as T)
+  end
+end
+class Int
+end
+[out]
+main, line 1: Incompatible types in assignment
+
+
+-- Error messages
+-- --------------
+
+
+[case testErrorWithLongGenericTypeName]
+f(a)
+
+var a as A<Object, Object, Object, Object, Object, Object>
+
+def f(a as C)
+end
+
+class A<B, C, D, E, F, G>
+end
+
+class C; end
+[out]
+main, line 1: Argument 1 to "f" has incompatible type A<...>
+
+[case testErrorWithShorterGenericTypeName]
+f(a)
+
+var a as A<Object, B>
+
+def f(a as B)
+end
+
+class A<S, T>
+end
+
+class B; end
+[out]
+main, line 1: Argument 1 to "f" has incompatible type A<Object, B>
+
+[case testErrorWithShorterGenericTypeName2]
+f(a)
+
+var a as A<Object, def ()>
+
+def f(a as B)
+end
+
+class A<S, T>
+end
+
+class B; end
+[out]
+main, line 1: Argument 1 to "f" has incompatible type A<Object, function>
+
+
+-- For statements (without type inference)
+-- ---------------------------------------
+
+
+[case testSimpleForStatement]
+for x as B in ab
+  a = x -- Fail
+  b = x
+end
+
+for x as A in ab -- Fail: incompatible index type
+  b = x -- Fail
+  a = x
+end
+
+for x as A in B() -- Fail: Does not implement Iterable
+end
+
+var ab as Array<B>
+var a as A
+var b as B
+
+class A; end
+class B
+  def iterator() as Iterator<A>
+  end
+end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 6: Incompatible types in for statement
+main, line 7: Incompatible types in assignment
+main, line 11: Iterable expected
+
+[case testForStatementWithMultipleVars1]
+for x as A, y as B in at
+  b = x -- Fail
+  a = y -- Fail
+  a = x
+  b = y
+end
+
+for x as B, y as B in aab
+  a = x -- Fail
+  a = y -- Fail
+  b = x
+  b = y
+end
+
+var at as Array<(A, B)>
+var aab as Array<Array<B>>
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 9: Incompatible types in assignment
+main, line 10: Incompatible types in assignment
+
+[case testForStatementWithMultipleVars1]
+for x as A, y as A in at -- Fail
+end
+for x as B, y as B in at -- Fail
+end
+for x as B, y as A in aab -- Fail
+end
+for x as A, y as B in aab -- Fail
+end
+for x as A, y as A in aa -- Fail
+end
+
+var at as Array<(A, B)>
+var aab as Array<Array<B>>
+var aa as Array<A>
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 1: Incompatible types in for statement
+main, line 3: Incompatible types in for statement
+main, line 5: Incompatible types in for statement
+main, line 7: Incompatible types in for statement
+main, line 9: Incompatible types in for statement
+
+[case testForStatementWithVoid]
+for x as Object in f() -- Fail
+end
+def f() as void
+end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 1: "f" does not return a value
+
+
+-- Intersection types + generics
+-- -----------------------------
+
+
+[case testGenericArgumentInIntersectionType]
+b = f([a]) -- Fail
+a = f([b]) -- Fail
+a = f(b)   -- Fail
+
+a = f([a])
+b = f(b)
+
+def f(a as Array<A>) as A or
+     (a as B) as B
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: No variant of "f" matches argument types
+main, line 3: Incompatible types in assignment
+
+[case testGenericFunctionAsIntersectionItem]
+b = f([a]) -- Fail
+a = f([b]) -- Fail
+a = f(b)   -- Fail
+
+a = f([a])
+b = f([b])
+b = f(b)
+
+def f  (a as B) as B or
+    <T>(a as Array<T>) as T
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+
+-- casts 
+-- is expressions
+-- clashes between type variable names
+-- test reverse add, mul and compare for int and float
+-- error messages with generic types
+--   "Argument X has incompatible type "A<..>"" with lots of stuff within < >

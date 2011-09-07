@@ -1,0 +1,89 @@
+module errno
+
+
+def CodeToErrno(code as Constant) as Int
+end
+
+def ErrnoToCode(errno as Int) as Constant
+end
+
+def ErrorStr(code as Constant) as Str
+end
+
+
+const E2BIG
+const EACCES
+const EADDRINUSE
+const EADDRNOTAVAIL
+const EAFNOSUPPORT
+const EAGAIN
+const EBADF
+const EBADFD
+const EBUSY
+const ECANCELED
+const ECHILD
+const ECOMM
+const ECONNABORTED
+const ECONNREFUSED
+const EDEADLK
+const EDOM
+const EEXIST
+const EFAULT
+const EFBIG
+const EHOSTDOWN
+const EHOSTUNREACH
+const EIDRM
+const EILSEQ
+const EINPROGRESS
+const EINTR
+const EINVAL
+const EIO
+const EISCONN
+const EISDIR
+const ELOOP
+const EMFILE
+const EMLINK
+const EMSGSIZE
+const ENAMETOOLONG
+const ENETDOWN
+const ENETUNREACH
+const ENFILE
+const ENODEV
+const ENOENT
+const ENOEXEC
+const ENOLCK
+const ENOLINK
+const ENOMEM
+const ENOMSG
+const ENONET
+const ENOPROTOOPT
+const ENOSPC
+const ENOSR
+const ENOSTR
+const ENOSYS
+const ENOTCONN
+const ENOTDIR
+const ENOTEMPTY
+const ENOTSOCK
+const ENOTSUP
+const ENOTTY
+const ENOTUNIQ
+const ENXIO
+const EOPNOTSUPP
+const EOVERFLOW
+const EPERM
+const EPIPE
+const EPROTO
+const EPROTONOSUPPORT
+const EPROTOTYPE
+const ERANGE
+const ERESTART
+const EROFS
+const ESPIPE
+const ESRCH
+const ESTALE
+const ETIME
+const ETIMEDOUT
+const ETXTBSY
+const EWOULDBLOCK
+const EXDEV

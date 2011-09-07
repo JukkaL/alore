@@ -1,0 +1,65 @@
+module util
+
+-- Miscellaneous string utility functions used by the Alore checker.
+
+import reflect
+
+
+-- Return the last component of the type name of an object. If obj is nil,
+-- return 'nil'. For example, if obj is 1, return 'Int'.
+def TypeName(obj as Object) as Str
+  if obj == nil
+    return "nil"
+  end
+  var t = Str(TypeOf(obj))
+  return t.split("::")[1]
+end
+
+
+-- Indent all the lines in s (separated by Newlines) by n spaces.
+def Indent(s as Str, n as Int) as Str
+  s = " " * n + s
+  s = s.replace(Newline, Newline + " " * n)
+  return s
+end
+
+
+-- Return the items of an array converted to strings using Repr.
+def ArrayRepr<T>(a as Array<T>) as Array<Str>
+  var aa = [] as <Str>
+  for x in a
+    aa.append(Repr(x))
+  end
+  return aa
+end
+
+
+-- Convert an array into a pretty-printed multiline string representation.
+-- The format is
+--   tag(
+--     item1..
+--     itemN)
+-- Individual items are formatted like this:
+--  - arrays are flattened
+--  - pairs (str : array) are converted recursively, so that str is the tag
+--  - other items are converted to strings and indented
+def DumpTagged(nodes as Array<dynamic>, tag as Str) as Str
+  var a = [] as <Str>
+  if tag != nil
+    a.append(tag + "(")
+  end
+  for n in nodes
+    if n is Array
+      a.append(DumpTagged(n, nil))
+    elif n is Pair
+      var s = DumpTagged(n.right, n.left)
+      a.append(Indent(s, 2))
+    elif n != nil
+      a.append(Indent(Str(n), 2))
+    end
+  end
+  if tag != nil
+    a[-1] += ")"
+  end
+  return Newline.join(a)
+end

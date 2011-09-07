@@ -1,0 +1,359 @@
+module checker
+
+import types
+import nodes
+
+
+-- Is "left" subtype of "right"?
+def IsSubtype(left as Typ, right as Typ) as Boolean
+  if right is Dynamic or right is UnboundType
+    return True
+  else
+    return left.accept(SubtypeVisitor(right))
+  end
+end
+
+
+def IsEquivalent(a as Typ, b as Typ) as Boolean
+  return IsSubtype(a, b) and IsSubtype(b, a)
+end
+
+
+private class SubtypeVisitor is TypeVisitor<Boolean>
+  var right as Typ
+  
+  def create(right as Typ)
+    self.right = right
+  end
+  
+  -- visitX(left) means: is left (which is an instance of X) a subtype of 
+  -- right?
+
+  def visitUnboundType(left as UnboundType) as Boolean
+    return True
+  end
+  
+  def visitErrorType(left as ErrorType) as Boolean
+    return False
+  end
+  
+  def visitDynamic(left as Dynamic) as Boolean
+    return True
+  end
+  
+  def visitVoid(left as Void) as Boolean
+    return right is Void
+  end
+  
+  def visitNilType(left as NilType) as Boolean
+    return not right is Void
+  end
+  
+  def visitInstance(left as Instance) as Boolean
+    if right is Instance
+      var iright = (right as Instance)
+      if not left.type.hasBase(iright.type.fullName) and
+         iright.type.fullName != "std::Object"
+        return False
+      end
+      
+      -- Map left type to corresponding right instances. It's sufficient that
+      -- one of these is equivalent to right.
+      for t in MapInstanceToSupertypes(left, iright.type)
+        if t.argTops == nil and iright.argTops == nil
+          var result = True
+          for i in 0 to iright.args.length()
+            if not IsEquivalent(t.args[i], iright.args[i])
+              result = False
+              break
+            end
+          end
+          if result
+            return True
+          end
+        else
+          return IsEquivalentArgRanges(t, iright)
+        end
+      end
+      
+      -- None of the alternatives matched.
+      return False
+    else
+      return False
+    end
+  end
+  
+  def visitTypeVar(left as TypeVar) as Boolean
+    if right is TypeVar 
+      return left.name == (right as TypeVar).name
+    else
+      return IsNamedInstance(right, "std::Object")
+    end
+  end
+  
+  def visitCallable(left as Callable) as Boolean
+    if right is Callable
+      return IsCallableSubtype(left, right as Callable)
+    elif IsNamedInstance(right, "std::Object")
+      return True
+    elif IsNamedInstance(right, "std::Type") and left.isTypeObj
+      return True
+    else
+      return False
+    end
+  end
+  
+  def visitTupleType(left as TupleType) as Boolean
+    if right is Instance and (IsNamedInstance(right, "std::Object") or
+                              IsNamedInstance(right, "std::Tuple"))
+      return True
+    elif right is TupleType
+      var tright = (right as TupleType)
+      if left.items.length() != tright.items.length()
+        return False
+      end
+      for i in 0 to left.items.length()
+        if not IsSubtype(left.items[i], tright.items[i])
+          return False
+        end
+      end
+      return True
+    else
+      return False
+    end
+  end
+  
+  def visitIntersection(left as Intersection) as Boolean
+    if IsNamedInstance(right, "std::Object")
+      return True
+    elif right is Callable or IsNamedInstance(right, "std::Type")
+      return IsSubtype(left.item1, right) or 
+             IsSubtype(left.item2, right)
+    elif right is Intersection
+      var iright = (right as Intersection)
+      return IsSubtype(left, iright.item1) and 
+             IsSubtype(left, iright.item2)
+    elif right is UnboundType
+      return True
+    else
+      return False
+    end
+  end
+end
+
+
+private def IsCallableSubtype(left as Callable, right as Callable) as Boolean
+  -- Subtyping is not currently supported for generic functions.
+  if left.variables.items != [] or
+     right.variables.items != []
+    return False
+  end
+  
+  -- Non-type cannot be a subtype of type.
+  if right.isTypeObj and not left.isTypeObj
+    return False
+  end
+
+  -- Check return types.
+  if not IsSubtype(left.retType, right.retType)
+    return False
+  end
+  
+  if left.argTypes.length() < right.argTypes.length()
+    return False
+  end
+  if left.minArgs > right.minArgs
+    return False
+  end
+  for i in 0 to right.argTypes.length()
+    if not IsSubtype(right.argTypes[i], left.argTypes[i])
+      return False
+    end
+  end
+  
+  if right.isVarArg and not left.isVarArg
+    return False
+  end
+  
+  if left.isVarArg and not right.isVarArg and 
+     left.argTypes.length() <= right.argTypes.length()
+    return False
+  end
+  
+  return True
+end
+
+
+-- Map an Instance type, including the type arguments, to compatible 
+-- Instance(s) of a specific supertype. Multiple types are returned only if
+-- the supertype is a generic interface which is implemented with multiple
+-- sets of type arguments.
+--
+-- Assume that supertype is a supertype of instance.type.
+private def MapInstanceToSupertypes(instance as Instance, 
+                                    supertype as TypeInfo) as Array<Instance>
+  if instance.type == supertype
+    return [instance]
+  end
+
+  -- Strip type variables away if the supertype has none.
+  if supertype.typeVars == []
+    return [Instance(supertype, [])]
+  end
+  
+  if supertype.isInterface
+    return MapInstanceToInterfaceSupertypes(instance, supertype)
+  end
+  
+  repeat
+    instance = MapInstanceToDirectSupertype(instance, instance.type.base)
+  until instance.type == supertype
+  
+  return [instance]
+end
+
+
+private def MapInstanceToDirectSupertype(instance as Instance, 
+                                         supertype as TypeInfo) as Instance
+  var type = instance.type
+  
+  for b in type.bases
+    -- The cast below cannot fail since we require that semantic analysis 
+    -- was successful, so bases cannot contain unbound types.
+    if b != nil and (b as Instance).type == supertype
+      var map = TypeVarMap(type, instance.args)
+      var tops = TypeVarMap(type, instance.argTops)
+      return ExpandType(b, map, tops) as Instance
+    end
+  end
+  
+  -- Relationship with the supertype not specified explicitly. Use dynamic 
+  -- type arguments implicitly.
+  return Instance(type.base, [Dynamic()] * type.base.typeVars.length())
+end
+
+
+private def TypeVarMap(type as TypeInfo, args as Array<Typ>) as Map<Int, Typ>
+  if args == nil
+    return nil
+  else
+    var map = Map() as <Int, Typ>
+    for i in 0 to args.length()
+      map[i + 1] = args[i]
+    end
+    return map
+  end
+end
+
+
+private def MapInstanceToInterfaceSupertypes(
+                instance as Instance, 
+                supertype as TypeInfo) as Array<Instance>
+  var result = [] as <Instance>
+  for subtypingPath in InterfaceImplementationPaths(instance.type, supertype)
+    var types = [instance]
+    for sup in subtypingPath
+      var a = [] as <Instance>
+      for t in types
+        a.extend(MapInstanceToDirectSupertypes(t, sup))
+      end
+      types = a
+    end
+    result.extend(types)
+  end
+  return result
+end
+
+
+-- Return an array of non-empty paths of direct supertypes from type to 
+-- supertype.
+-- Return [] if no such path could be found.
+--
+--   InterfaceImplementationPaths(A, B) == [[B]] if A inherits B
+--   InterfaceImplementationPaths(A, C) == [[B, C]] if A inherits B and 
+--                                                     B inherits C
+private def InterfaceImplementationPaths(
+                type as TypeInfo, 
+                supertype as TypeInfo) as Array<Array<TypeInfo>>
+  var result = [] as <Array<TypeInfo>>
+
+  if type.base == supertype or supertype in type.interfaces
+    -- Direct supertype.
+    result.append([supertype])
+  end
+  
+  -- Try constructing a path via superclass.
+  if type.base != nil
+    for path in InterfaceImplementationPaths(type.base, supertype)
+      result.append([type.base] + path)
+    end
+  end
+  
+  -- Try constructing a path via each superinterface.
+  if type.interfaces != nil
+    for iface in type.interfaces
+      for path in InterfaceImplementationPaths(iface, supertype)
+        result.append([iface] + path)
+      end
+    end
+  end
+  
+  return result
+end
+
+
+private def MapInstanceToDirectSupertypes(
+                instance as Instance, supertype as TypeInfo) as Array<Instance>
+  var type = instance.type
+  var result = [] as <Instance>
+  
+  for b in type.bases
+    -- The cast below cannot fail since we require that semantic analysis 
+    -- was successful, so bases cannot contain unbound types.
+    if b != nil and (b as Instance).type == supertype
+      var map = TypeVarMap(type, instance.args)
+      var tops = TypeVarMap(type, instance.argTops)
+      result.append(ExpandType(b, map) as Instance)
+    end
+  end
+  
+  if result != []
+    return result
+  else
+    -- Relationship with the supertype not specified explicitly. Use dynamic 
+    -- type arguments implicitly.
+    return [Instance(supertype, [Dynamic()] * supertype.typeVars.length())]
+  end
+end
+
+
+private def IsEquivalentArgRanges(t as Instance, s as Instance) as Boolean
+  var result = True
+  if t.argTops == nil
+    result = IsEquivalentArgRanges(s, t)
+  elif s.argTops == nil
+    for i in 0 to t.args.length()
+      if not IsWithinRange(s.args[i], t.args[i], t.argTops[i])
+        result = False
+      end
+    end
+  else
+    for i in 0 to t.args.length()
+      if not (IsWithinRange(t.args[i], s.args[i], s.argTops[i]) or
+              IsWithinRange(s.args[i], t.args[i], t.argTops[i]))
+        result = False
+      end
+    end
+  end
+  return result
+end
+
+
+private def IsWithinRange(t as Typ, lower as Typ, upper as Typ) as Boolean
+  return IsSubtype(t, upper) and IsSubtype(lower, t)
+end
+
+
+private def IsNamedInstance(t as Typ, fullName as Str) as Boolean
+  return t is Instance and (t as Instance).type.fullName == fullName
+end

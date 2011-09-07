@@ -1,0 +1,638 @@
+-- Test cases for semantic analyser errors. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- See also "semanal-errors.txt" for some basic errors, some of which involve
+-- classes.
+
+
+-- Semantic analysis errors related to classes
+-- -------------------------------------------
+
+[case testMultiplyDefinedVariableWithinClassContext]
+class A
+  var a
+  var a
+end
+b
+[out]
+main: In class "A":
+main, line 3: "a" multiply defined
+main: At top level:
+main, line 5: "b" undefined
+
+[case testUndefinedVariableWithinMethodContext]
+class A
+  def f()
+    b
+  end
+  var a = b
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "b" undefined
+main: In class "A":
+main, line 5: "b" undefined
+
+[case testGetterAndSetterContext]
+class A
+  def f
+    b
+  end
+  var a = b
+  def f = x
+    b
+  end
+  var aa = b
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "b" undefined
+main: In class "A":
+main, line 5: "b" undefined
+main: In member "f" of class "A":
+main, line 7: "b" undefined
+main: In class "A":
+main, line 9: "b" undefined
+
+[case testOnlySetter]
+class A
+  def f = x
+  end
+end
+[out]
+main: In class "A":
+main, line 2: "f" write-only
+
+[case testInheritanceCycle]
+class A is B
+end
+class B is A
+end
+[out]
+main: In class "A":
+main, line 1: Cycle in inheritance chain
+main: In class "B":
+main, line 3: Cycle in inheritance chain
+
+[case testUndefinedSuperclass]
+class A is B
+  def f()
+    super.x
+  end
+  var a
+end
+[out]
+main, line 1: "B" undefined
+main: In member "f" of class "A":
+main, line 3: "x" undefined in superclass
+
+[case testMultipleMemberDefinition1]
+class A
+  var a
+  var a
+  def a()
+  end
+  def a
+  end
+  def a = x
+  end
+  private var a
+end
+[out]
+main: In class "A":
+main, line 3: "a" multiply defined
+main, line 4: "a" multiply defined
+main, line 6: "a" multiply defined
+main, line 8: "a" multiply defined
+main, line 10: "a" multiply defined
+
+[case testMultipleMemberDefinition2]
+class A
+  def a()
+  end
+  def a()
+  end
+  var a
+  def a
+  end
+  def a = x
+  end
+end
+[out]
+main: In class "A":
+main, line 4: "a" multiply defined
+main, line 6: "a" multiply defined
+main, line 7: "a" multiply defined
+main, line 9: "a" multiply defined
+
+[case testInvalidSuperclass]
+var a
+def b()
+end
+class c is a
+  def f()
+    super.x
+    super.x = 1
+    x
+  end
+end
+class d is b
+  def f()
+    super.x
+    super.x = 1
+    x
+  end
+end
+[out]
+main, line 4: Invalid supertype
+main: In member "f" of class "c":
+main, line 6: "x" undefined in superclass
+main, line 7: "x" undefined in superclass
+main, line 7: Invalid lvalue "x"
+main, line 8: "x" undefined
+main: At top level:
+main, line 11: Invalid supertype
+main: In member "f" of class "d":
+main, line 13: "x" undefined in superclass
+main, line 14: "x" undefined in superclass
+main, line 14: Invalid lvalue "x"
+main, line 15: "x" undefined
+
+[case testConstMemberLvalue]
+class c
+  def a
+  end
+  const b
+  def f()
+    a = 1
+    b = 1
+  end  
+end
+[out]
+main: In member "f" of class "c":
+main, line 6: Invalid lvalue in assignment
+main, line 7: Invalid lvalue in assignment
+
+[case testInheritedConstMemberLvalue]
+class A
+  const a
+end
+class B is A
+  def f()
+    a = a
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 6: Invalid lvalue in assignment
+
+[case testMethodLvalue]
+class A
+  def f()
+    f = 1
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Invalid lvalue in assignment
+
+[case testIncompatibleSuperclass_MemberVar]
+class B is A
+  var a
+  private const b
+  var c
+  const d
+  private var e
+end
+class A
+  var a
+  const b
+  def c()
+  end
+  def d
+  end
+  def e
+  end
+  def e = x
+  end
+end
+[out]
+main: In class "B":
+main, line 2: "a" incompatible with definition in "A"
+main, line 3: "b" incompatible with definition in "A"
+main, line 4: "c" incompatible with definition in "A"
+main, line 5: "d" incompatible with definition in "A"
+main, line 6: "e" incompatible with definition in "A"
+
+[case testIncompatibleSuperclass_Method]
+class B is A
+  def a()
+  end
+  private def b()
+  end
+  def d()
+  end
+  private def e()
+  end
+end
+class A
+  var a
+  const b
+  def d
+  end
+  def e
+  end
+  def e = x
+  end
+end
+[out]
+main: In class "B":
+main, line 2: "a" incompatible with definition in "A"
+main, line 4: "b" incompatible with definition in "A"
+main, line 6: "d" incompatible with definition in "A"
+main, line 8: "e" incompatible with definition in "A"
+
+[case testIncompatibleSuperclass_Getter]
+class B is A
+  def a
+  end
+  private def b
+  end
+end
+class A
+  def a()
+  end
+  def b()
+  end
+end
+[out]
+main: In class "B":
+main, line 2: "a" incompatible with definition in "A"
+main, line 4: "b" incompatible with definition in "A"
+
+[case testIncompatibleSuperclass_Setter]
+class B is A
+  def a = x
+  end
+  private def b = x
+  end
+end
+class A
+  def a()
+  end
+  def b(x)
+  end
+end
+[out]
+main: In class "B":
+main, line 2: "a" incompatible with definition in "A"
+main, line 4: "b" incompatible with definition in "A"
+main, line 4: Incompatible visibility for "b"
+
+[case testConstAndSetterInSameClass]
+class A
+  const a
+  def a = x
+  end
+end
+[out]
+main: In class "A":
+main, line 3: "a" multiply defined
+
+[case testInvalidConstructor]
+class A
+  var create
+end
+class B
+  const create
+end
+class C
+  def create
+  end
+end
+[out]
+main: In class "A":
+main, line 2: "create" must be a method
+main, line 2: "create" incompatible with definition in "Object"
+main: In class "B":
+main, line 5: "create" must be a method
+main, line 5: "create" incompatible with definition in "Object"
+main: In class "C":
+main, line 8: "create" must be a method
+main, line 8: "create" incompatible with definition in "Object"
+
+[case testPrivateCreate]
+class A
+  private def create()
+  end
+end
+[out]
+main: In class "A":
+main, line 2: "create" must be public
+main, line 2: "create" incompatible with definition in "Object"
+
+[case testAccessingCreateOutsideClass]
+class A
+  def a()
+    1.create
+    1.create = 1
+    
+    self.create()
+    create()
+  end
+  
+  def create()
+  end
+end
+[out]
+main: In member "a" of class "A":
+main, line 3: Cannot access "create"
+main, line 4: Cannot access "create"
+main, line 6: Cannot access "create"
+main, line 7: Cannot access "create"
+
+[case testMixingPrivateAndPublic]
+class A
+  def a
+  end
+  private def a = x
+  end
+  private def b
+  end
+  def b = x
+  end
+end
+[out]
+main: In class "A":
+main, line 4: Incompatible visibility for "a"
+main, line 6: Incompatbile visibility for "b"
+
+[case testInvalidLvalueUsingSelf]
+class A
+  const c
+  def d()
+    self.x = 1
+    self.c = 1
+    self.d = 1
+    self.e = 1
+  end
+  def e
+  end
+  def create()
+    self.x = 1
+    self.c = 1
+    self.d = 1
+    self.e = 1
+  end
+end
+[out]
+main: In member "d" of class "A":
+main, line 5: "c" not assignable
+main, line 6: "d" not assignable
+main, line 7: "e" not assignable
+main: In member "create" of class "A":
+main, line 14: "d" not assignable
+main, line 15: "e" not assignable
+
+[case testInvalidLvalueUsingSelfInParens]
+class A
+  const c
+  def d()
+    (self).x = 1
+    (self).c = 1
+    (self).d = 1
+    (self).e = 1
+  end
+  def e
+  end
+  def create()
+    (self).x = 1
+    (self).c = 1
+    (self).d = 1
+    (self).e = 1
+  end
+end
+[out]
+main: In member "d" of class "A":
+main, line 5: "c" not assignable
+main, line 6: "d" not assignable
+main, line 7: "e" not assignable
+main: In member "create" of class "A":
+main, line 14: "d" not assignable
+main, line 15: "e" not assignable
+
+[case testSuperWithMissingSuperclass]
+class A
+  def f()
+    super.x
+    super.x = 1
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "x" undefined in superclass
+main, line 4: "x" undefined in superclass
+main, line 4: Invalid lvalue "x"
+
+[case testSuperWithUndefined]
+class A is Exception
+  def f()
+    super.x
+    super.x = 1
+  end
+end
+[usestd fixtures/std-exception.alo]
+[out]
+main: In member "f" of class "A":
+main, line 3: "x" undefined in superclass
+main, line 4: "x" undefined in superclass
+main, line 4: Invalid lvalue "x"
+
+[case testSuperWithInvalidDefinitionType]
+class A is B
+  def f()
+    super.a = 1
+    super.b = 1
+    super.c = 1
+  end
+end
+
+class B
+  const a
+  def b()
+  end
+  def c
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Invalid lvalue "a"
+main, line 4: Invalid lvalue "b"
+main, line 5: Invalid lvalue "c"
+
+[case testSuperWithPrivateInSuperclass]
+class A is B
+  def f()
+    super.a
+    super.b
+    super.c
+    super.a = 1
+    super.b = 1
+    super.c = 1
+  end
+end
+class B
+  private var a
+  private def b()
+  end
+  private def c
+  end
+  private def c = x
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "a" undefined in superclass
+main, line 4: "b" undefined in superclass
+main, line 5: "c" undefined in superclass
+main, line 6: "a" undefined in superclass
+main, line 6: Invalid lvalue "a"
+main, line 7: "b" undefined in superclass
+main, line 7: Invalid lvalue "b"
+main, line 8: "c" undefined in superclass
+main, line 8: Invalid lvalue "c"
+
+[case testErrorInMemberInitialiser]
+class A
+  var a = b
+  var b = x
+end
+[out]
+main: In class "A":
+main, line 3: "x" undefined
+
+[case testInheritanceFromPrimitiveType]
+class A1 is Boolean; end
+class A2 is Tuple; end
+class A3 is Int; end
+class A4 is Constant; end
+class A5 is Str; end
+class A6 is Float; end
+class A7 is Type; end
+class A8 is Function; end
+class A9 is Pair; end
+class A10 is Range; end
+[file std/std.alo]
+module std
+class Object; end
+class Exception; end
+class Boolean; end
+class Tuple; end
+class Int; end
+class Constant; end
+class Str; end
+class Float; end
+class Type; end
+class Function; end
+class Pair; end
+class Range; end
+[out]
+main, line 1: Cannot inherit from a primitive type
+main, line 2: Cannot inherit from a primitive type
+main, line 3: Cannot inherit from a primitive type
+main, line 4: Cannot inherit from a primitive type
+main, line 5: Cannot inherit from a primitive type
+main, line 6: Cannot inherit from a primitive type
+main, line 7: Cannot inherit from a primitive type
+main, line 8: Cannot inherit from a primitive type
+main, line 9: Cannot inherit from a primitive type
+main, line 10: Cannot inherit from a primitive type
+
+[case testAccessingPrivateSuperClassMember]
+class A is B
+  def f()
+    a
+    b
+    a = 1
+    c()
+    d
+    d = 1
+  end
+end
+class B
+  private var a
+  private const b
+  private def c()
+  end
+  private def d
+  end
+  private def d = x
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "a" undefined
+main, line 4: "b" undefined
+main, line 5: "a" undefined
+main, line 5: Invalid lvalue in assignment
+main, line 6: "c" undefined
+main, line 7: "d" undefined
+main, line 8: "d" undefined
+main, line 8: Invalid lvalue in assignment
+
+[case testAssigningToGetterInCreate]
+class A
+  def a
+  end
+  def create()
+    a = 1
+    self.a = 1
+  end
+end
+[out]
+main: In member "create" of class "A":
+main, line 5: Invalid lvalue in assignment
+main, line 6: "a" not assignable
+
+
+-- Special cases (regression tests etc.)
+-- -------------------------------------
+
+[case testInvalidOverridingOfGrandparentMember]
+class C is B
+  def x()
+  end
+  def v()
+  end
+  var f
+end
+class A
+  var x
+  def v
+  end
+  def f()
+  end
+end
+class AA is A
+end
+class B is AA
+end
+[out]
+main: In class "C":
+main, line 2: "x" incompatible with definition in "B"
+main, line 4: "v" incompatible with definition in "B"
+main, line 6: "f" incompatible with definition in "B"
+
+[case testInvalidSuperclassAndCreate]
+class C is B
+end
+C()
+[out]
+main, line 1: "B" undefined

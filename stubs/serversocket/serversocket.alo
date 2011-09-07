@@ -1,0 +1,16 @@
+module serversocket
+
+import socket
+import io
+
+
+class ServerSocket
+  def create(port as Int, address = nil as Str)
+  end
+  
+  def accept(buffering = Unbuffered as Constant) as Socket
+  end
+  
+  def close() as void
+  end 
+end

@@ -1,0 +1,325 @@
+module nodes
+
+
+-- Classes for storing the lexical token information of nodes. This is used 
+-- for outputting the original source code represented by the nodes (including
+-- original formatting and comments).
+--
+-- Each node representation usually only contains tokens directly associated 
+-- with that node (terminals). All members are Tokens or arrays of Tokens,
+-- unless explicitly mentioned otherwise.
+--
+-- If a representation has a single Break token, the member name is br. 
+-- Otherwise, there are different members *Br for different breaks. The prefix
+-- of the member refers to a token before the Break. For example, defBr in
+-- the representation of a function definition refers to the Break token
+-- following the 'def' token and endBr refers to the Break following the 'end'
+-- token.
+
+
+class AloreFileRepr
+  const eof
+end
+
+
+class EncodingRepr
+  const encodingTok
+  const name
+  const br
+end
+
+
+class HeaderRepr
+  const moduleTok
+  const components  -- Array<Token>
+  const br
+end
+
+
+class ImportRepr
+  const importTok   -- May be None
+  const components  -- Array<Token>
+  const separator   -- Comma or break
+end
+
+
+class FuncRepr
+  const visibility  -- May be None
+  const defTok
+  const name        -- May be None
+  const args        -- Array<FuncArgsRepr>
+  const defBr
+  const endTok
+  const endBr      -- May be None
+end
+
+
+-- Representation of a set of function arguments. There are multiple instances
+-- of this for functions with an intersection type.
+class FuncArgsRepr
+  const lseparator    -- '(' or '='
+  const rseparator    -- ')'
+  const argNames
+  const commas
+  const assigns
+  const asterisk
+  const asToks
+  const orTok         -- Succeeding "or" token (or None)
+end
+
+
+class VarRepr
+  const name
+  const comma   -- May be None
+end
+
+
+class TypeDefRepr
+  const visibility    -- May be none
+  const type
+  const name
+  const isTok         -- May be None
+  const implementsTok -- May be None
+  const commas        -- Array<Token> (after implements)
+  const headerBr
+  const bindToks      -- Array<Token>
+  const bindBrs       -- Array<Token>
+  const endTok
+  const endBr
+end
+
+
+class VarDefRepr
+  const visibility
+  const type         -- var/const
+  const assign       -- May be None
+  const br  
+end
+
+
+class ExpressionStmtRepr
+  const br
+end
+
+
+class AssignmentStmtRepr
+  const lparens -- Array<Token>
+  const commas  -- Array<Token>
+  const rparens -- Array<Token>
+  const assign
+  const br
+end
+
+
+class OperatorAssignmentStmtRepr
+  const assign
+  const br
+end
+
+
+class WhileStmtRepr
+  const whileTok
+  const whileBr
+  const endTok
+  const endBr
+end
+
+
+class RepeatStmtRepr
+  const repeatTok
+  const repeatBr
+  const untilTok
+  const untilBr
+end
+
+
+class ForStmtRepr
+  const forTok
+  const inTok
+  const forBr
+  const endTok
+  const endBr
+end
+
+
+class ReturnStmtRepr
+  const returnTok
+  const br
+end
+
+
+class BreakStmtRepr
+  const breakTok
+  const br
+end
+
+
+class IfStmtRepr
+  const ifTok
+  const ifBr
+  const elifToks   -- Array<Token>
+  const elifBrs    -- Array<Token>
+  const elseTok    -- May be None
+  const elseBr     -- May be None
+  const endTok
+  const endBr
+end
+
+
+class RaiseStmtRepr
+  const raiseTok
+  const br
+end
+
+
+class TryExceptStmtRepr
+  const tryTok
+  const tryBr
+  const exceptToks  -- Array<Token>
+  const nameToks    -- Array<Token>, may be None
+  const isToks      -- Array<Token>, may be None
+  const exceptBrs   -- Array<Token>
+  const endTok
+  const endBr
+end
+
+
+class TryFinallyStmtRepr
+  const tryTok
+  const tryBr
+  const finallyTok
+  const finallyBr
+  const endTok
+  const endBr
+end
+
+
+class SwitchStmtRepr
+  const switchTok
+  const switchBr
+  const caseToks   -- Array<Token>
+  const caseCommas -- Array<Array<Token>>
+  const caseBrs    -- Array<Token>
+  const elseTok    -- May be None
+  const elseBr     -- May be None
+  const endTok
+  const endBr
+end
+
+
+class IntExprRepr
+  const int
+end
+
+
+class StrExprRepr
+  const str
+end
+
+
+class FloatExprRepr
+  const float
+end
+
+
+class NilExprRepr
+  const nilTok
+end
+
+
+class SelfExprRepr
+  const selfTok
+end
+
+
+class ParenExprRepr
+  const lparen
+  const rparen
+end
+
+
+class LvalueRepr
+  const lparens  -- Array<Token>
+  const rparens  -- Array<Token>
+  const base
+end
+
+
+class NameExprRepr
+  const components   -- Array<Token>
+end
+
+
+class MemberExprRepr
+  const dot
+  const name
+end
+
+
+class SuperExprRepr
+  const superTok
+  const dot
+  const name
+end
+
+
+class CallExprRepr
+  const lparen
+  const commas   -- Array<Token>
+  const asterisk -- May be None
+  const rparen
+end
+
+
+class IndexExprRepr
+  const lbracket
+  const rbracket
+end
+
+
+class UnaryExprRepr
+  const op
+end
+
+
+class OpExprRepr
+  const op
+  const br    -- May be None (only used for '>')
+end
+
+
+class CastExprRepr
+  const asTok
+end
+
+
+class FuncExprRepr
+end
+
+
+class ArrayExprRepr
+  const lbracket
+  const commas    -- Array<Token>
+  const rbracket
+end
+
+
+class TupleExprRepr
+  const lparen  -- May be None
+  const commas  -- Array<Token>
+  const rparen  -- May be None
+end
+
+
+class AnnotationRepr
+  const asTok
+  const br
+end
+
+
+class TypeApplicationRepr
+  const asTok
+  const langle
+  const commas
+  const rangle
+end

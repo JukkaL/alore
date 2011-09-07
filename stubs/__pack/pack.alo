@@ -1,0 +1,13 @@
+module __pack
+
+def PackFloat32_LE(x as Float) as Str
+end
+
+def PackFloat64_LE(x as Float) as Str
+end
+
+def UnpackFloat32_LE(x as Str) as Float
+end
+
+def UnpackFloat64_LE(x as Str) as Float
+end

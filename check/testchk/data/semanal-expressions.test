@@ -1,0 +1,440 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- See also "semanal-basic.txt" for some simple expression test cases.
+
+
+-- Expression test cases
+-- ---------------------
+
+[case testLiterals]
+ [1, "x", 1.1, nil]
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    ArrayExpr:1(
+      IntExpr(1)
+      StrExpr(x)
+      FloatExpr(1.1)
+      NilExpr())))
+
+[case testBinaryOperations]
+var a
+a * 2 + a
+a and a < "x"
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    OpExpr:2(
+      +
+      OpExpr:2(
+        *
+        NameExpr(a [a])
+        IntExpr(2))
+      NameExpr(a [a])))
+  ExpressionStmt:3(
+    OpExpr:3(
+      and
+      NameExpr(a [a])
+      OpExpr:3(
+        <
+        NameExpr(a [a])
+        StrExpr(x)))))
+
+[case testUnaryOperations]
+var a
+-a
+not 2 in a
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    UnaryExpr:2(
+      -
+      NameExpr(a [a])))
+  ExpressionStmt:3(
+    UnaryExpr:3(
+      not
+      OpExpr:3(
+        in
+        IntExpr(2)
+        NameExpr(a [a])))))
+
+[case testIndexing]
+var a, b, c
+a[b][c]
+(a * 2)[b[c]]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b)
+    Var(c))
+  ExpressionStmt:2(
+    IndexExpr:2(
+      IndexExpr:2(
+        NameExpr(a [a])
+        NameExpr(b [b]))
+      NameExpr(c [c])))
+  ExpressionStmt:3(
+    IndexExpr:3(
+      ParenExpr:3(
+        OpExpr:3(
+          *
+          NameExpr(a [a])
+          IntExpr(2)))
+      IndexExpr:3(
+        NameExpr(b [b])
+        NameExpr(c [c])))))
+
+[case testMemberAccess]
+var a
+a.x.y
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    MemberExpr:2(
+      MemberExpr:2(
+        NameExpr(a [a])
+        x)
+      y)))
+
+[case testVarArgCall]
+var a, b
+a(a + 1, *(b * 2))
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  ExpressionStmt:2(
+    CallExpr:2(
+      NameExpr(a [a])
+      Args(
+        OpExpr:2(
+          +
+          NameExpr(a [a])
+          IntExpr(1))
+        ParenExpr:2(
+          OpExpr:2(
+            *
+            NameExpr(b [b])
+            IntExpr(2))))
+      VarArg)))
+
+[case testMethodCall]
+var a
+a.m(a)
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    CallExpr:2(
+      MemberExpr:2(
+        NameExpr(a [a])
+        m)
+      Args(
+        NameExpr(a [a])))))
+
+[case testArrayLiterals]
+var a
+ [a, 1, [2 * a], []]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    ArrayExpr:2(
+      NameExpr(a [a])
+      IntExpr(1)
+      ArrayExpr:2(
+        OpExpr:2(
+          *
+          IntExpr(2)
+          NameExpr(a [a])))
+      ArrayExpr:2())))
+
+[case testAnonymousFunctions]
+def f(a)
+  var aa
+  var g = def (b)
+    var c = [b, a, aa]
+    def ()
+      return c + a
+    end
+  end
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(a))
+    Body(
+      VarDef:2(
+        Var(aa))
+      VarDef:3(
+        Var(g)
+        FuncExpr:3(
+          Args(
+            Var(b))
+          Body(
+            VarDef:4(
+              Var(c)
+              ArrayExpr:4(
+                NameExpr(b [l])
+                NameExpr(a [l])
+                NameExpr(aa [l])))
+            ExpressionStmt:5(
+              FuncExpr:5(
+                Body(
+                  ReturnStmt:6(
+                    OpExpr:6(
+                      +
+                      NameExpr(c [l])
+                      NameExpr(a [l]))))))))))))
+
+[case testTupleExpressions]
+var a, b
+a, b, (a,), ()
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  ExpressionStmt:2(
+    TupleExpr:2(
+      NameExpr(a [a])
+      NameExpr(b [b])
+      ParenExpr:2(
+        TupleExpr:2(
+          NameExpr(a [a])))
+      TupleExpr:2())))
+
+[case testCastExpression]
+var a
+a as Object
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    CastExpr:2(
+      NameExpr(a [a])
+      NameExpr(Object [std::Object]))))
+
+[case testCastExpression3]
+var a
+a as I
+interface I
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    CastExpr:2(
+      NameExpr(a [a])
+      NameExpr(I [I])))
+  TypeDef:3(
+    I
+    Interface
+  ))
+
+[case testDynamicCastExpression]
+var a
+a as dynamic
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ExpressionStmt:2(
+    CastExpr:2(
+      NameExpr(a [a])
+      NameExpr(dynamic))))
+
+
+-- Refrences via self
+-- ------------------
+
+[case testPrivateViaSelf]
+import a
+[file a/a-skip.alo]
+module a
+class a
+  private var a
+  private const b
+  private def c()
+    self.c()
+    self.a
+    self.a = self.b
+  end
+  def create()
+  end
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testPrivateAccessorsViaSelf]
+import a
+[file a/a-skip.alo]
+module a
+class a
+  private def a
+  end
+  private def a = x
+  end
+  def create()
+    self.a = self.a
+  end
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAccessingPrivateSuperClassMemberUsingSelf]
+import a
+[file a/a-skip.alo]
+module a
+class A is B
+  def f()
+    self.a = self.a
+    self.b
+    self.c()
+    self.d = self.d
+  end
+end
+class B
+  private var a
+  private const b
+  private def c()
+  end
+  private def d
+  end
+  private def d = x
+  end
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAssigningToConstMemberInCreateViaSelf]
+import a
+[file a/a-skip.alo]
+module a
+class A is B
+  const a, b
+  def create()
+    self.a = 1
+    self.b = 1
+    self.c = 1
+  end
+end
+class B
+  const c
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAccessingUndefinedMembersUsingSelf]
+import a
+[file a/a-skip.alo]
+module a
+class A
+  def f()
+    self.x = self.x
+    self.x(1)
+  end
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAnonymousFunction]
+def (a)
+  return a
+end
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    FuncExpr:1(
+      Args(
+        Var(a))
+      Body(
+        ReturnStmt:2(
+          NameExpr(a [l]))))))
+
+[case testAnonymousFunctionWithinClass]
+class A
+  def f()
+    def (); end
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Body(
+        ExpressionStmt:3(
+          FuncExpr:3())))))
+
+[case testAnonymousFunctionAndScopes1]
+def f()
+  var a = def (a); return a; end
+  a -- Ok
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(a)
+        FuncExpr:2(
+          Args(
+            Var(a))
+          Body(
+            ReturnStmt:2(
+              NameExpr(a [l])))))
+      ExpressionStmt:3(
+        NameExpr(a [l])))))
+
+[case testAnonymousFunctionAndScopes1]
+def f()
+  var a = def (b); end
+  a -- Ok
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(a)
+        FuncExpr:2(
+          Args(
+            Var(b))))
+      ExpressionStmt:3(
+        NameExpr(a [l])))))

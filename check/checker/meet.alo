@@ -1,0 +1,150 @@
+module checker
+
+-- Computing greatest lower bounds or "meets" of types
+
+import types
+
+
+def MeetTypes(s as Typ, t as Typ, basic as BasicTypes) as Typ
+  if s is Dynamic
+    return s
+  end
+  
+  return t.accept(TypeMeetVisitor(s, basic))
+end
+
+
+private class TypeMeetVisitor is TypeVisitor<Typ>
+  private const s as Typ
+  private const basic as BasicTypes
+  
+  def create(s as Typ, basic as BasicTypes)
+    self.s = s
+    self.basic = basic
+  end
+
+  def visitUnboundType(t as UnboundType) as Typ
+    if s is Void or s is ErrorType
+      return ErrorType()
+    elif s is NilType
+      return s
+    else
+      return Dynamic()
+    end
+  end
+  
+  def visitErrorType(t as ErrorType) as Typ
+    return t
+  end
+  
+  def visitDynamic(t as Dynamic) as Typ
+    return t
+  end
+  
+  def visitVoid(t as Void) as Typ
+    if s is Void
+      return t
+    else
+      return ErrorType()
+    end
+  end
+  
+  def visitNilType(t as NilType) as Typ
+    if not s is Void and not s is ErrorType
+      return t
+    else
+      return ErrorType()
+    end
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    if s is TypeVar and (s as TypeVar).id == t.id
+      return s
+    else
+      return default(s)
+    end
+  end
+  
+  def visitInstance(t as Instance) as Typ
+    if s is Instance
+      var si = (s as Instance)
+      if t.type == si.type
+        if t.argTops != nil or si.argTops != nil
+          return CombineGenericInstances(t, si, NilType(), basic)
+        elif IsSubtype(t, s)
+          -- Combine type arguments. We could have used join below 
+          -- equivalently.
+          var args = [] as <Typ>
+          for i in 0 to t.args.length()
+            args.append(meet(t.args[i], si.args[i]))
+          end
+          return Instance(t.type, args)
+        else
+          return NilType()
+        end
+      else
+        -- At this point we simplify things a bit by collapsing both types.
+        -- This is safe, but sometimes results in suboptimal results.
+        var tt = CollapseType(t)
+        var ss = CollapseType(s)
+        if IsSubtype(tt, ss)
+          -- Note that any dynamic type arguments in s have no effect. This is
+          -- safe, but sometimes (rarely) suboptimal types can be inferred.
+          -- This would NOT be safe if did not collapse the types above, as
+          -- overlapping but different type ranges could break safety.
+          return tt
+        elif IsSubtype(ss, tt)
+          -- See also above comment.
+          return ss
+        else
+          return NilType()
+        end
+      end
+    else
+      return default(s)
+    end
+  end
+  
+  def visitCallable(t as Callable) as Typ
+    if s is Callable and IsSimilarCallables(t, s as Callable)
+      return CombineSimilarCallables(t, s as Callable, self.basic)
+    else
+      return default(s)
+    end
+  end
+  
+  def visitTupleType(t as TupleType) as Typ
+    if s is TupleType and (s as TupleType).length() == t.length()
+      var items = [] as <Typ>
+      for i in 0 to t.length()
+        items.append(meet(t.items[i], (s as TupleType).items[i]))
+      end
+      return TupleType(items)
+    else
+      return default(s)
+    end
+  end
+  
+  def visitIntersection(t)
+    -- Only support very rudimentary meets between intersection types.
+    if IsSameType(s, t)
+      return s
+    else
+      return default(s)
+    end
+  end
+  
+  private def meet(s, t)
+    return MeetTypes(s, t, basic)
+  end
+  
+  private def default(type)
+    if type is UnboundType
+      return Dynamic()
+    elif type is Void or type is ErrorType
+      return ErrorType()
+    else
+      return NilType()
+    end
+  end
+end

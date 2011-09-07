@@ -1,0 +1,28 @@
+module __dynchk
+
+import reflect
+
+
+-- Convert a type description or a wrapper object to a pretty-printed 
+-- description.
+private def PrettyStr(t)
+  -- FIX support multiple type arguments
+  if t is __Gen
+    return '{}<{}>'.format(PrettyStr(t.type), PrettyStr(t.args))
+  elif t is Type
+    return Str(t)
+  elif t == __Dyn
+    return 'dynamic'
+  elif Str(TypeOf(t)).endsWith('___dyn')
+    -- t is a wrapper object.
+    return '{}<{}>'.format(PrettyStr(TypeOf(t.__o)), PrettyStr(t.__tv))
+  elif t is Array
+    var a = []
+    for v in t
+      a.append(PrettyStr(v))
+    end
+    return ', '.join(a)
+  else
+    raise RuntimeError('Invalid type value')
+  end
+end

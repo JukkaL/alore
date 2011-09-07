@@ -1,0 +1,43 @@
+-- check.alo
+--
+-- Type check a program.
+--
+-- TODO
+--  - use argparse to parse arguments
+
+import analyse
+import errors
+import string
+import io
+
+
+def Main(args)
+  var ss
+  var fnam
+  var showMain = False
+  
+  -- The -t options causes the output to be compatible with type case 
+  -- descriptions.
+  if args[0] == "-t"
+    showMain = True
+    args = args[1:]
+  end
+  
+  fnam = args[0]
+  ss = File(fnam).read()
+  
+  var showFnam = fnam
+  if showMain
+    showFnam = "main"
+  end
+
+  try
+    var trees, symtable, typeinfos, types = Analyse(ss, showFnam, True, nil, 
+                                                    True)
+  except e is CompileError
+    -- Type checking failed. Display error messages.
+    for m in e.messages
+      WriteLn(m)
+    end
+  end
+end

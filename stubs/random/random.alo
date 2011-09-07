@@ -1,0 +1,10 @@
+module random
+
+def Random(n as Int) as Int
+end
+
+def RandomFloat() as Float
+end
+
+def Seed(n = 0 as Int)
+end

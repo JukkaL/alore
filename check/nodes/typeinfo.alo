@@ -1,0 +1,325 @@
+module nodes
+
+import string
+import set
+import util
+import types
+
+
+-- Supertype for node types that can represent a member variable/accessor.
+interface AccessorNode
+  bind FuncDef
+  bind Var
+  
+  def info as TypeInfo
+  def type as Annotation
+  def isPrivate as Boolean
+end
+
+
+-- Class representing the structure of a single class.
+class TypeInfo is Node
+  const fullName        as Str      -- Fully qualified name
+  const isInterface     as Boolean  -- Is this an interface type?
+  var hasImplicitCreate as Boolean  -- If True, added default create method
+  var defn              as TypeDef  -- Corresponding TypeDef
+  var base = nil        as TypeInfo -- Superclass or nil
+  var subtypes = Set()  as Set<TypeInfo> -- Direct subclasses
+  
+  var vars = Map()    as Map<Str, Var>     -- Member variables; also slots
+  var methods = Map() as Map<Str, FuncDef> -- Map from name to node
+  var getters = Map() as Map<Str, FuncDef> -- Map from name to Node
+  var setters = Map() as Map<Str, FuncDef> -- Map form name to Node
+  
+  -- TypeInfos of implemented interfaces
+  var interfaces = [] as Array<TypeInfo>
+  -- For each interface, True if via binding, False if via implements
+  var interfaceTypes = [] as Array<Boolean>
+  
+  -- Information related to type annotations.
+  var typeVars = [] as Array<Str> -- Generic type variable names
+  var bounds = []   as Array<Typ> -- Type variable bounds (each may be nil)
+  -- Inherited generic types (Instance or UnboundType or nil). The first base
+  -- is the superclass, and the rest are interfaces.
+  var bases = []    as Array<Typ>
+  
+  
+  -- Construct a TypeInfo.
+  def create(vars as Map<Str, Var>, 
+             methods as Map<Str, FuncDef>, 
+             getters as Map<Str, FuncDef>, 
+             setters as Map<Str, FuncDef>, 
+             defn as TypeDef, 
+             hasImplicitCreate as Boolean)
+    self.fullName = defn.fullName
+    self.isInterface = defn.isInterface
+    self.vars = vars
+    self.methods = methods
+    self.getters = getters
+    self.setters = setters
+    self.defn = defn
+    self.hasImplicitCreate = hasImplicitCreate
+    if defn.typeVars != nil
+      for vd in defn.typeVars.items
+        self.typeVars.append(vd.name)
+      end
+    end
+  end
+  
+  -- Short name.
+  def name as Str
+    return self.defn.name
+  end
+  
+  -- Is the type definition private?
+  def isPrivate as Boolean
+    return self.defn.isPrivate
+  end
+  
+  def setTypeBounds(a as Array<TypeVarDef>)
+    for vd in a
+      self.bounds.append(vd.bound)
+    end
+  end
+  
+  
+  -- IDEA: Refactor the has* methods to be more consistent and document
+  --       them.
+  
+  def hasReadableMember(name as Str) as Boolean
+    return hasVar(name) or hasMethod(name) or hasGetter(name)
+  end
+  
+  def hasPublicReadableMember(name as Str) as Boolean
+    return hasPublicVar(name) or hasPublicMethod(name) or hasPublicGetter(name)
+  end
+  
+  def hasWritableMember(name as Str) as Boolean
+    return (hasVar(name) and not getVar(name).isConst) or hasSetter(name)
+  end
+  
+  def hasPublicWritableMember(name as Str) as Boolean
+    return (hasPublicVar(name) and not getVar(name).isConst) or 
+      hasPublicSetter(name)
+  end
+  
+  def hasConst(name as Str) as Boolean
+    return hasVar(name) and getVar(name).isConst
+  end
+  
+  def hasVar(name as Str) as Boolean
+    return getVar(name) != nil
+  end
+  
+  def hasPublicVar(name as Str) as Boolean
+    return getPublicVar(name) != nil
+  end
+  
+  def hasMethod(name as Str) as Boolean
+    return methods.hasKey(name) or
+      (self.base != nil and self.base.hasPublicMethod(name))
+  end
+  
+  def hasPublicMethod(name as Str) as Boolean
+    return (methods.hasKey(name) and not methods[name].isPrivate) or
+      (self.base != nil and self.base.hasPublicMethod(name))
+  end
+  
+  def hasGetter(name as Str) as Boolean
+    return getters.hasKey(name) or
+      (self.base != nil and self.base.hasPublicGetter(name))
+  end
+  
+  def hasPublicGetter(name as Str) as Boolean
+    return (getters.hasKey(name) and not getters[name].isPrivate) or
+      (self.base != nil and self.base.hasPublicGetter(name))
+  end
+  
+  def hasSetter(name as Str) as Boolean
+    return setters.hasKey(name) or
+      (self.base != nil and self.base.hasPublicSetter(name))
+  end
+  
+  def hasPublicSetter(name as Str) as Boolean
+    return (setters.hasKey(name) and not setters[name].isPrivate) or
+      (self.base != nil and self.base.hasPublicSetter(name))
+  end
+  
+  
+  def getVar(name as Str) as Var
+    if vars.hasKey(name)
+      return vars[name]
+    elif self.base != nil
+      return self.base.getPublicVar(name)
+    else
+      return nil
+    end
+  end
+  
+  def getPublicVar(name as Str) as Var
+    var v = getVar(name)
+    if v != nil and not v.isPrivate
+      return v
+    else
+      return nil
+    end
+  end
+  
+  def getVarOrGetter(name as Str) as AccessorNode
+    if self.vars.hasKey(name)
+      return self.vars[name]
+    elif self.getters.hasKey(name)
+      return self.getters[name]
+    elif self.base != nil
+      return self.base.getPublicVarOrGetter(name)
+    else
+      return nil
+    end
+  end
+  
+  def getVarOrSetter(name as Str) as AccessorNode
+    if self.vars.hasKey(name)
+      return self.vars[name]
+    elif self.setters.hasKey(name)
+      return self.setters[name]
+    elif self.base != nil
+      return self.base.getPublicVarOrSetter(name)
+    else
+      return nil
+    end
+  end
+  
+  def getPublicVarOrGetter(name as Str) as AccessorNode
+    var v = getVarOrGetter(name)
+    if v != nil and not v.isPrivate
+      return v
+    else
+      return nil
+    end
+  end
+  
+  def getPublicVarOrSetter(name as Str) as AccessorNode
+    var v = getVarOrSetter(name)
+    if v != nil and not v.isPrivate
+      return v
+    else
+      return nil
+    end
+  end
+  
+  def getMethod(name as Str) as FuncDef
+    if self.methods.hasKey(name)
+      return self.methods[name]
+    elif self.base != nil
+      return self.base.getPublicMethod(name)
+    else
+      return nil
+    end
+  end
+  
+  def getPublicMethod(name as Str) as FuncDef
+    if self.methods.hasKey(name) and not self.methods[name].isPrivate
+      return self.methods[name]
+    elif self.base != nil
+      return self.base.getPublicMethod(name)
+    else
+      return nil
+    end
+  end
+  
+  
+  -- Set the base class.
+  def setBase(base as TypeInfo)
+    self.base = base
+    base.subtypes.add(self)
+  end
+  
+  -- Return True if type has a basetype with the specified name, either via
+  -- extension or via implementation.
+  def hasBase(fullName as Str) as Boolean
+    if self.fullName == fullName or
+       (self.base != nil and self.base.hasBase(fullName))
+      return True
+    end
+    for iface in self.interfaces
+      if iface.fullName == fullName or iface.hasBase(fullName)
+        return True
+      end
+    end
+    return False
+  end
+  
+  -- Return TypeInfos of all subtypes, including this type, as a set.
+  def allSubtypes() as Set<TypeInfo>
+    var set = Set([self])
+    for subt in self.subtypes
+      for t in subt.allSubtypes()
+        set.add(t)
+      end
+    end
+    return set
+  end
+  
+  
+  -- Add an implemented interface.
+  def addInterface(base as TypeInfo, isBound as Boolean)
+    self.interfaces.append(base)
+    self.interfaceTypes.append(isBound)
+  end
+  
+  -- Return an Array of interfaces that are either directly implemented by the
+  -- type or that are the supertypes of other interfaces in the array. Omit 
+  -- interfaces that are bound to the type.
+  def allDirectlyImplementedInterfaces() as Array<TypeInfo>
+    var a = [] as <TypeInfo>
+    for i in 0 to self.interfaces.length()
+      if not self.interfaceTypes[i]
+        var iface = self.interfaces[i]
+        if not iface in a
+          a.append(iface)
+        end
+        var ifa = iface
+        while ifa.base != nil
+          ifa = ifa.base
+          if not ifa in a
+            a.append(ifa)
+          end
+        end
+      end
+    end
+    return a
+  end
+  
+  -- Return an array of directly implemented interfaces. Omit inherited and
+  -- bound interfaces.
+  def directlyImplementedInterfaces() as Array<TypeInfo>
+    var a = [] as <TypeInfo>
+    for i in 0 to self.interfaces.length()
+      if not self.interfaceTypes[i]
+        a.append(self.interfaces[i])
+      end
+    end
+    return a
+  end
+  
+  
+  -- Return a string representation of the type, which includes the most
+  -- important information about the type.
+  def _str() as Str
+    var interfaces = [] as <Str>
+    for i in self.interfaces
+      interfaces.append(i.fullName)
+    end
+    var base = nil as Str
+    if self.base != nil
+      base = "Base({})".format(self.base.fullName)
+    end
+    return DumpTagged(["Name({})".format(self.fullName),    
+                       base,
+                       "Interfaces" : interfaces,
+                       "Vars" : self.vars.keys(),
+                       "Methods" : self.methods.keys(),
+                       "Getters" : self.getters.keys(),
+                       "Setters" : self.setters.keys()], "TypeInfo")
+  end
+end

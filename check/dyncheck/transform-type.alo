@@ -1,0 +1,204 @@
+module dyncheck
+
+import nodes
+import types
+import reflect
+import semanal  -- For CreateImplicitCreate and InferImplicitCreateSignature
+
+
+-- Class for transforming type definitions for runtime type checking.
+class TypeTransformer
+  -- Used for common transformation operations
+  private const tf as DyncheckTransformVisitor
+  -- Used for transforming methods
+  private const funcTf as FuncTransformer
+  
+  
+  def create(tf as DyncheckTransformVisitor)
+    self.tf = tf
+    self.funcTf = FuncTransformer(tf)
+  end
+  
+  
+  -- Transform a type definition. The result may be one or two definitions. 
+  -- The first is the transformation of the original TypeDef. The second
+  -- is a wrapper type, which is generated for generic types only.
+  def transformTypeDef(tdef as TypeDef) as Array<TypeDef>
+    var defs = [] as <Node>
+    
+    for d in tdef.defs
+      if d is FuncDef
+        -- Implicit cast from Array<FuncDef> to Array<Node> is safe below.
+        defs.extend(self.funcTf.transformMethod(d as FuncDef) as dynamic)
+      elif d is VarDef
+        defs.extend(transformVarDef(d as VarDef))
+      else
+        defs.append(d)
+      end
+    end
+    
+    -- For generics classes, add an implicit create if it's not present -- it
+    -- requires the extra type variable argument, which the inherited create
+    -- might not accept.
+    if not tdef.info.methods.hasKey('create') and tdef.info.typeVars != []
+      -- FIX inheritance
+      var creat = CreateImplicitCreate(tdef, True)
+      creat.info = tdef.info
+      InferImplicitCreateSignature(tdef.info, creat)
+      -- Implicit cast from Array<FuncDef> to Array<Node> is safe below.
+      defs.extend(self.funcTf.transformMethod(creat) as dynamic)
+    end
+    
+    var res as Array<TypeDef>
+    if tdef.typeVars == nil
+      res = [tdef]
+    else
+      res = [tdef, genericClassWrapper(tdef)]
+    end
+    
+    tdef.defs = defs
+    
+    eraseTypeDefHeader(tdef)
+    
+    return res
+  end
+
+
+  -- Erase generic types in type definition header.
+  private def eraseTypeDefHeader(tdef as TypeDef)
+    tdef.typeVars = nil
+    var baseTypes = [] as <Typ>
+    for bt in tdef.baseTypes
+      baseTypes.append(EraseGenericTypes(bt))
+    end
+    tdef.baseTypes = baseTypes
+  end
+  
+  
+  -- Transform a member variable definition. The result may be one or more 
+  -- definitions.
+  private def transformVarDef(o as VarDef) as Array<Node>
+    var res = [o] as <Node>
+  
+    tf.visitVarDef(o)
+    
+    if o.kind == Mdef and not o.isPrivate
+      -- Add x* wrappers for member variables that are used to access them via
+      -- dynamically-typed references (but only for public member variables).
+      for n in o.names
+        var memberExpr = MemberExpr(SelfExpr(), n.name) as Node
+        memberExpr = Coerce(memberExpr, Dynamic(), n.type.type)
+        var ret = ReturnStmt(memberExpr)
+        
+        res.append(FuncDef(n.name + tf.dynamicSuffix(),
+                           [],
+                           [],
+                           [ret],
+                           False,
+                           True,  -- getter
+                           False, -- not setter
+                           o.isPrivate,
+                           Annotation(Dynamic())))
+      end
+      -- FIX setters
+    end
+    
+    return res
+  end
+  
+      
+  -- Construct a wrapper class for a generic type.
+  private def genericClassWrapper(tdef as TypeDef) as TypeDef
+    -- FIX semanal meta-info for nodes + TypeInfo
+
+    var defs = [] as <Node>
+    
+    -- Does the type have a superclass, other than std::Object?
+    var hasProperSuperclass = tdef.info.base.fullName != 'std::Object'
+    
+    if not hasProperSuperclass
+      -- Generate member variables for wrapper object.
+      defs.extend(makeGenericWrapperMemberVars(tdef))
+      -- Generate constructor.
+      defs.append(makeGenericWrapperCreate())
+    end
+
+    -- Generate method wrappers.
+    for d in tdef.defs
+      -- The dynamic cast below is safe since a class only contains 
+      -- definitions that provide isPrivate.
+      if not (d as dynamic).isPrivate
+        if d is FuncDef
+          if not (d as FuncDef).isConstructor()
+            -- The dynamic cast from Array<FuncDef> to Array<Node> below is 
+            -- safe since the result is passed to extend.
+            defs.extend(self.funcTf.genericMethodWrappers(d as FuncDef) as 
+                                                                    dynamic)
+          end
+        else
+          raise RuntimeError('Definition {} at line {} not supported'.format(
+            TypeOf(d), d.line))
+        end
+      end
+    end
+    
+    var baseExpr = nil as NameExpr
+    -- Inherit superclass wrapper if there is one. A superclass always exists
+    -- when inheriting a class other Object, since generic classes cannot 
+    -- inherit non-generic ones.
+    if hasProperSuperclass
+      baseExpr = NameExpr(tdef.base.name + tf.dynamicSuffix())
+    end
+
+    -- Build the type definition.
+    var wrapper = TypeDef(tdef.name + tf.dynamicSuffix(), -- FIX
+                          defs,
+                          baseExpr,       -- Superclass
+                          [],             -- Implemented interfaces
+                          False,          -- Interface?
+                          [],             -- Bind declarations
+                          tdef.isPrivate,
+                          nil,            -- Type vars
+                          [])             -- BaseTypes
+    -- FIX fullname
+    
+    tf.addLineMapping(tdef, wrapper)
+    
+    return wrapper
+  end
+
+
+  -- Generate member variable definitions for a generic wrapper class. These
+  -- include the wrapped object (__o) and the type variables (__tv).
+  private def makeGenericWrapperMemberVars(tdef as TypeDef) as Array<Node>
+    return [VarDef([Var('__o')],
+                   Mdef,
+                   False, -- const
+                   nil,  -- init
+                   False, -- not private
+                   Annotation(Dynamic())),
+            VarDef([Var('__tv')],
+                   Mdef,
+                   False, -- const
+                   nil,  -- init
+                   False, -- not private
+                   Annotation(Dynamic()))]
+  end
+  
+  
+  -- Build constructor of a generic wrapper clas.
+  private def makeGenericWrapperCreate() as FuncDef
+    var cdefs = [
+      AssignmentStmt([MemberLvalue(SelfExpr(), '__o')],
+                     NameExpr('__o'), False, True),
+      AssignmentStmt([MemberLvalue(SelfExpr(), '__tv')],
+                     NameExpr('__tv'), False, True)] as <Node>
+    return FuncDef('create',
+                   [Var('__o'), Var('__tv')],
+                   [nil, nil],
+                   cdefs,
+                   False, False, False, False,
+                   Annotation(Callable([Dynamic()] * 2, 2, False, 
+                                       Void(), False)))
+  end
+end

@@ -1,0 +1,762 @@
+-- Test cases for the type checker related to type inference.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Inferring types of local variables with simple types
+-- ----------------------------------------------------
+
+
+[case testInferSimpleLvarType]
+def f() as void
+  var a = A() --> A
+  var b = a   --> A
+  a = B() -- Fail
+  b = B() -- Fail
+  a = A()
+  b = A()
+  b = a
+  a = b
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testMissingLvarType]
+def f() as void
+  var a -- Fail
+  var b, c -- Fail
+  a = A()
+  a.x()
+end
+
+class A; end
+[out]
+main: In function "f":
+main, line 2: Need type annotation for local variable
+main, line 3: Need type annotation for local variable
+
+[case testLvarInitializedToNilWithoutType]
+def f() as void
+  var a = nil -- Fail
+  a.x()
+end
+[out]
+main: In function "f":
+main, line 2: Need type annotation for local variable
+
+[case testLvarInitializedToVoid]
+def f() as void
+  var a = g()    -- Fail
+  var b, c = g() -- Fail
+end
+
+def g() as void
+end
+[out]
+main: In function "f":
+main, line 2: "g" does not return a value
+main, line 3: "g" does not return a value
+
+[case testInferringLvarTypeFromArgument]
+def f(a as A)
+  var b = a
+  b = B() -- Fail
+  b = a
+  a = b
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Incompatible types in assignment
+
+[case testInferringLvarTypeFromGvar]
+def f() as void
+  var a = g
+  a = A() -- Fail
+  a = B()
+end
+
+var g as B
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Incompatible types in assignment
+
+[case testInferringImplicitDynamicTypeForLvar]
+def f() as void
+  var a = g
+  nil(a) -- Fail
+  a.x()  
+end
+
+var g
+[out]
+main: In function "f":
+main, line 3: nil not callable
+
+[case testInferringExplicitDynamicTypeForLvar]
+def f(a as dynamic)
+  var b = g
+  nil(b) -- Fail
+  a.x()
+end
+
+var g
+[out]
+main: In function "f":
+main, line 3: nil not callable
+
+
+-- Inferring types of local variables with complex types
+-- -----------------------------------------------------
+
+
+[case testInferringTupleTypeForLvar]
+def f() as void
+  var a = A(), B()
+  var aa as A
+  var bb as B
+  bb = a[0] -- Fail
+  aa = a[1] -- Fail
+  aa = a[0]
+  bb = a[1]
+end
+
+class A; end
+class B; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Int
+end
+[out]
+main: In function "f":
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testInferringTupleTypeForLvarWithNils]
+def f() as void
+  var a = A(), nil -- Fail
+  var b = nil, A() -- Fail
+end
+
+class A; end
+[out]
+main: In function "f":
+main, line 2: Need type annotation for local variable
+main, line 3: Need type annotation for local variable
+
+[case testInferringGenericTypeForLvar]
+def f() as void
+  var a = A() as <C>
+  a = ad -- Fail
+  a = ac
+end
+
+var ac as A<C>
+var ad as A<D>
+
+class A<T>
+end
+
+class C; end
+class D; end
+[out]
+main: In function "f":
+main, line 3: Incompatible types in assignment
+
+[case testInferringFunctionTypeForLvar]
+def f() as void
+  var a = g
+  a(B()) -- Fail
+  a(A())
+end
+
+def g(a as A)
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Argument 1 has incompatible type "B"
+
+[case testInferringFunctionTypeForLvarFromTypeObject]
+def f() as void
+  var a = A
+  a(A()) -- Fail
+  a()
+  nil is a
+end
+
+class A
+end
+[usestd fixtures/std-type.alo]
+[out]
+main: In function "f":
+main, line 3: Too many arguments
+
+[case testInferringGenericFunctionTypeForLvar]
+def f() as void
+  var a = id
+  var b as B
+  var c as C
+  b = a(c) as <B> -- Fail
+  b = a(b) as <B>
+  c = a(c) as <C>
+end
+
+def id<T>(x as T) as T
+  return x
+end
+
+class B; end
+class C; end
+[out]
+main: In function "f":
+main, line 5: Argument 1 has incompatible type "C"
+
+
+-- Inferring local variable types in multiple definition
+-- -----------------------------------------------------
+
+
+[case testInferringLvarTypesInMultiDef]
+def f() as void
+  var a, b = A(), B()
+  a = b   -- Fail
+  a = B() -- Fail
+  b = A() -- Fail
+  
+  a = A()
+  b = B()
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testInferringLvarTypesInMultiDefWithNilTypes]
+def f() as void
+  var a, b = A(), nil -- Fail
+  var c, d = nil, A() -- Fail
+end
+
+class A; end
+[out]
+main: In function "f":
+main, line 2: Need type annotation for local variable
+main, line 3: Need type annotation for local variable
+
+[case testInferringLvarTypesInMultiDefWithInvalidTuple]
+def f() as void
+  var a, b = t        -- Fail
+  var c, d, e, f = t  -- Fail
+  var g, h, i = t
+end
+
+var t as (Object, Object, Object)
+[out]
+main: In function "f":
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testInvalidRvalueTypeInInferredMultipleLvarDefinition]
+def f() as void
+  var a, b = f   -- Fail
+  var c, d = A() -- Fail
+end
+class A; end
+[out]
+main: In function "f":
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testInferringMultipleLvarDefinitionWithArrayRvalue]
+def f() as void
+  var a, b = [] as <C>
+  var c, d, e = [] as <D>  
+  a = D() -- Fail
+  b = D() -- Fail
+  c = C() -- Fail
+  b = c   -- Fail
+  
+  a = C()
+  b = C()
+  c = D()
+  d = D()
+  e = D() 
+  
+  a = b
+  c = d
+  d = e
+end
+
+class C; end
+class D; end
+[usestd fixtures/std-array.alo]
+[out]
+main: In function "f":
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+
+[case testInferringMultipleLvarDefinitionWithImplicitDynamicRvalue]
+def f() as void
+  var a, b = d
+  a.x
+  b.x
+end
+var d
+[out]
+
+[case testInferringMultipleLvarDefinitionWithExplicitDynamicRvalue]
+def f(d as dynamic) as void
+  var a, b = d
+  a.x
+  b.x
+end
+[out]
+
+
+-- Type variable inference for generic functions
+-- ---------------------------------------------
+
+
+[case testInferSimpleGenericFunction]
+b = id(a) -- Fail
+a = id(b) -- Fail
+a = id(c) -- Fail
+
+a = id(a)
+b = id(b)
+c = id(c)
+
+var a as A
+var b as B
+var c as (A, def () as A)
+
+def id<T>(a as T) as T
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testUnderspecifiedInferenceResult]
+-- Inferred type returned by a function has range [bottom, ...] => cannot 
+-- choose a type 
+def ff() as void
+  var x = f() -- Fail
+end
+
+g(nil) -- Ok 
+f()    -- Ok because not used to infer local variable type
+
+f() as <A>
+g(a)
+
+def f<T>() as T
+end
+
+def g<T>(a as T)
+end
+
+var a as A
+class A; end
+[out]
+main: In function "ff":
+main, line 2: Need type annotation for local variable
+
+[case testUnsolvableInferenceResult]
+-- Type constraints are not solvable.
+f(A(), g()) -- Fail
+f(A(), A())
+
+def f<T>(a as T, b as T)
+end
+
+def g() as void
+end
+
+class A; end
+[out]
+main, line 1: Cannot infer type argument 1 of "f"
+
+[case testInferenceWithMultipleConstraints]
+b = f(a, b) -- Fail
+b = f(b, a) -- Fail
+a = f(a, b)
+a = f(b, a)
+
+def f<T>(a as T, b as T) as T
+end
+
+var a as A
+var b as B
+
+class A; end
+class B is A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testInferenceWithMultipleVariables]
+taa = f(a, b) -- Fail
+taa = f(b, a) -- Fail
+tba = f(a, b) -- Fail
+
+tab = f(a, b)
+tba = f(b, a)
+
+def f<T, S>(a as T, b as S) as (T, S)
+end
+
+var a as A
+var b as B
+var taa as (A, A)
+var tab as (A, B)
+var tba as (B, A)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testConstraintSolvingWithSimpleGenerics]
+ab = f(ao) -- Fail
+ao = f(ab) -- Fail
+ab = f(ac) -- Fail
+ab = g(ao) -- Fail
+ao = g(ab) -- Fail
+
+ab = f(ab)
+ac = f(ac)
+ao = f(ao)
+
+ab = g(ab)
+ao = g(ao)
+
+def f<T>(a as A<T>) as A<T>
+end
+
+def g<T>(a as T) as T
+end
+
+var ao as A<Object>
+var ab as A<B>
+var ac as A<C>
+
+class A<T>
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testConstraintSolvingFailureWithSimpleGenerics]
+f(ao, ab) -- Fail
+f(ab, ao) -- Fail
+
+f(ao, ao)
+f(ab, ab)
+
+var ao as A<Object>
+var ab as A<B>
+
+def f<T>(a as A<T>, b as A<T>)
+end
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 1: Cannot infer type argument 1 of "f"
+main, line 2: Cannot infer type argument 1 of "f"
+
+[case testTypeInferenceWithCalleeDefaultArgs]
+a = f(o) -- Fail
+a = g(a, o) -- Fail
+
+o = f()
+o = f(o)
+a = f(a)
+a = g(a)
+
+def f<T>(a = nil as T) as T
+end
+
+def g<T>(a as T, b = nil as T) as T
+end
+
+var a as A
+var o as Object
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Generic function inference with interfaces
+-- ------------------------------------------
+
+
+[case testUniqueAndNonUniqueInterfaceInference]
+f(A(), B())     -- Fail (ambiguous join)
+j = f(A(), C()) -- Fail
+
+i = f(A(), C())
+
+def f<T>(a as T, b as T) as T
+end
+
+var i as I
+var j as J
+
+interface I; end
+interface J; end
+
+class A implements I, J; end
+class B implements I, J; end
+class C implements I; end
+[out]
+main, line 1: Cannot infer type argument 1 of "f"
+main, line 2: Incompatible types in assignment
+
+[case testInterfaceInferenceWithInheritance1]
+f(B(), C())  -- Fail
+
+i = f(A(), B())
+i = f(A(), C())
+
+def f<T>(a as T, b as T) as T
+end
+
+var i as I
+
+interface I; end
+interface J; end
+
+class A implements I
+end
+class B is A implements J
+end
+class C implements I, J
+end
+[out]
+main, line 1: Cannot infer type argument 1 of "f"
+
+[case testInterfaceInferenceWithInheritance2]
+f(B(), C())     -- Fail
+k = f(A(), C()) -- Fail
+
+k = f(A(), B())
+j = f(A(), C())
+
+def f<T>(a as T, b as T) as T
+end
+
+var j as J
+var k as K
+
+interface I; end
+interface J; end
+interface K is J; end
+
+class A implements K
+end
+class B is A implements I
+end
+class C implements I, J
+end
+[out]
+main, line 1: Cannot infer type argument 1 of "f"
+main, line 2: Incompatible types in assignment
+
+[case testPrecedenceOfClassInferenceResultOverInterfaceResult]
+i = f(B(), C()) -- Fail
+j = f(B(), C()) -- Fail
+
+a = f(B(), C())
+
+interface I; end
+interface J; end
+
+def f<T>(a as T, b as T) as T
+end
+
+var a as A
+var i as I
+var j as J
+
+class A
+end
+class B is A implements I, J
+end
+class C is A implements I, J
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- For statements
+-- --------------
+
+
+[case testInferenceOfFor1]
+for x in [A()]
+  b = x -- Fail
+  a = x
+end
+
+for x in [] -- Fail
+  a = x
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 6: Need type annotation for local variable
+
+[case testInferenceOfFor2]
+for x, y in [(A(), B())]
+  b = x -- Fail
+  a = y -- Fail
+  a = x
+  b = y
+end
+
+for x, y, z in [(A(), B())] -- Fail
+end
+
+for x, y in [(nil, nil)] -- Fail
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+main, line 8: Need 3 values to assign
+main, line 11: Need type annotation for local variable
+
+[case testInferenceOfFor3]
+for x, y in [[A()]]
+  b = x -- Fail
+  b = y -- Fail
+  a = x
+  a = y
+end
+
+for x, y in [[]] -- Fail
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 8: Need type annotation for local variable
+
+[case testInferenceOfForWithPartialTypeDeclarations]
+for x, y as A in [[B()]] -- Fail
+  b = x
+  b = y -- Fail
+end
+for x as A, y in [[B()]] -- Fail
+  b = x -- Fail
+  b = y
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 1: Cannot mix unannotated and annotated loop variables
+main, line 1: Incompatible types in for statement
+main, line 3: Incompatible types in assignment
+main, line 5: Cannot mix unannotated and annotated loop variables
+main, line 5: Incompatible types in for statement
+main, line 6: Incompatible types in assignment
+
+[case testForStatementInferenceWithVoid]
+for x in f() -- Fail
+end
+def f() as void
+end
+[usestd fixtures/std-for.alo]
+[out]
+main, line 1: "f" does not return a value
+
+
+-- generic type parameter inference
+--   generic functions
+--     non-unique join due to interfaces
+--       multiple generic interface instances
+--     complex types, variable within a type
+--       generic
+--         generic subtyping, including multiple paths
+--       tuple
+--       callable
+--         non-generic
+--         disallow generic function types in function signatures?
+--     wrong number of arguments
+--     invalid argument types
+--     generic method
+--     constraint solving against dynamic
+--     void type
+--     function type without name in error messages
+-- anonymous functions

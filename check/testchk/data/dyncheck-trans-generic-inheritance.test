@@ -1,0 +1,332 @@
+-- Test cases for runtime (dynamic) checking transformation and generic 
+-- inheritance.
+--
+-- See dyncheck-trans-basic.test for an overview of the file format.
+
+
+-- Non-generic class inherits a generic class
+-- ------------------------------------------
+
+
+[case testInheritingGenericClass]
+class A<T>
+  def f(t as T)
+  end
+end
+class B is A<C>
+  def g(c as C)
+    f(c)
+  end
+end
+class C; end
+[out]
+...
+class B is A
+  def g`B(c as C)
+    f`A([C], c)
+  end
+  def g*(c as dynamic) as dynamic
+    g`B({C <= dyn | c})
+  end
+end
+...
+
+
+[case testInheritingGenericClassAndExternalAccess]
+var b as B
+var c as C
+b.f(c)
+b.g(c)
+class A<T>
+  def f(t as T)
+  end
+end
+class B is A<C>
+  def g(c as C)
+    f(c)
+  end
+end
+class C; end
+[out]
+var b as B
+var c as C
+b.f`A([C], c)
+b.g`B(c)
+...
+
+
+[case testInheritingGenericClassAndOverriding]
+var a as A<C>
+var b as B
+var c as C
+a.f(c)
+b.f(c)
+class A<T>
+  def f(t as T)
+  end
+end
+class B is A<C>
+  def f(c as C)
+  end
+end
+class C; end
+[out]
+...
+a.f`A([C], c)
+b.f`B(c)
+...
+class B is A
+  def f`B(c as C)
+  end
+  def f`A(__tv as dynamic, t as dynamic)
+    -- IDEA: We can omit the cast, since __tv[0] must be C?
+    f`B({C <= __tv[0] | t})
+  end
+  def f*(c as dynamic) as dynamic
+    f`B({C <= dyn | c})
+  end
+end
+...
+
+
+[case testInheritingGenericClassAndOverriding2]
+class A<T>
+  def f(a as C<T>, b as D)
+  end
+end
+class B is A<E>
+  def f(a as C<E>, b as D)
+  end
+end
+class C<T>
+end
+class D; end
+class E; end
+[out]
+...
+class B is A
+...
+  def f`B(a as C, b as D)
+  end
+  def f`A(__tv as dynamic, a as C, b as D)
+    -- IDEA: The cast might be superficial; a must have type C<E>
+    f`B({C<E> <= C<__tv[0]> | a}, b)
+  end
+  def f*(a as dynamic, b as dynamic) as dynamic
+    f`B({C<E> <= dyn | a}, {D <= dyn | b})
+  end
+...
+
+
+-- Generic class inherits a generic class; identical type variables
+-- ----------------------------------------------------------------
+
+
+[case testGenericInheritanceWithIdenticalTypeVars]
+-- Single type variable
+class A<T>
+  def f(a as T, b as A<T>)
+  end
+end
+class B<S> is A<S>
+  def f(a as S, b as A<S>)
+  end
+end
+[out]
+...
+class B is A
+  def f`B(__tv as dynamic, a as dynamic, b as A)
+  end
+  def f`A(__tv as dynamic, a as dynamic, b as A)
+    f`B([__tv[0]], a, b)
+  end
+  def f*(a as dynamic, b as dynamic) as dynamic
+    f`B([dyn], a, {A<dyn> <= dyn | b})
+  end
+...
+end
+class B* is A*
+  def f`B(__tv as dynamic, a as dynamic, b as A)
+    self.__o.f`B(self.__tv, {self.__tv[0] <= dyn | a}, {A<self.__tv[0]> <= A<dyn> | b})
+  end
+  def f*(a as dynamic, b as dynamic) as dynamic
+    self.__o.f`B(self.__tv, {self.__tv[0] <= dyn | a}, {A<self.__tv[0]> <= dyn | b})
+  end
+end
+
+
+[case testGenericInheritanceWithIdenticalTypeVars2]
+-- Multiple type variables
+class A<T, S>
+  def f(a as T, b as A<S, T>)
+  end
+end
+class B<T, S> is A<T, S>
+  def f(a as T, b as A<S, T>)
+  end
+end
+[out]
+...
+class B is A
+...
+  def f`A(__tv as dynamic, a as dynamic, b as A)
+    f`B([__tv[0], __tv[1]], a, b)
+  end
+...
+
+
+[case testGenericInheritanceWithDifferentSig]
+-- Override with dynamic
+class A<T>
+  def f(a as T, b as A<T>)
+  end
+end
+class B<S> is A<S>
+  def f(a as dynamic, b as dynamic)
+  end
+end
+[out]
+...
+class B is A
+  def f`B(__tv as dynamic, a as dynamic, b as dynamic)
+  end
+  def f`A(__tv as dynamic, a as dynamic, b as A)
+    f`B([__tv[0]], {dyn <= __tv[0] | a}, {dyn <= A<__tv[0]> | b})
+  end
+  def f*(a as dynamic, b as dynamic) as dynamic
+    f`B([dyn], a, b)
+  end
+...
+
+
+-- Generic class inherits a generic class; different type variables
+-- ----------------------------------------------------------------
+
+
+[case testGenericClassInheritsGenericsClassAndOverrides]
+class A<S, T>
+  def f(s as S, t as T)
+  end
+end
+class B<S> is A<C, S>
+  def f(s as C, t as S)
+  end
+end
+class C; end
+[out]
+...
+class B is A
+  def f`B(__tv as dynamic, s as C, t as dynamic)
+  end
+  def f`A(__tv as dynamic, s as dynamic, t as dynamic)
+    f`B([__tv[1]], {C <= __tv[0] | s}, t)
+  end
+  def f*(s as dynamic, t as dynamic) as dynamic
+    f`B([dyn], {C <= dyn | s}, t)
+  end
+...
+
+
+[case testGenericInheritanceWithArgShuffling]
+class A<X, Y, Z>
+  def f() as void
+  end
+end
+class B<X, Y, Z> is A<Z, X, Y>
+  def f() as void
+  end
+end
+[out]
+...
+class B is A
+...
+  def f`A(__tv as dynamic)
+    f`B([__tv[1], __tv[2], __tv[0]])
+  end
+...
+
+
+[case testGenericInheritanceWithNestedArgs]
+class A<T>
+  def f(a as T) as void
+  end
+end
+class B<T> is A<A<T>>
+  def f(a as A<T>)
+  end
+end
+[out]
+...
+class B is A
+...
+  def f`B(__tv as dynamic, a as A)
+  end
+  def f`A(__tv as dynamic, a as dynamic)
+    f`B([__tv[0].args[0]], a)
+  end
+...
+
+
+[case testGenericInheritanceWithNestedArgs2]
+-- More complex path to subtype type variable
+class A<T>
+  def f() as void
+  end
+end
+class B<T> is A<C<X, A<T>>>
+  def f() as void
+  end
+end
+class C<S, T>
+end
+class X; end
+[out]
+...
+class B is A
+...
+  def f`A(__tv as dynamic)
+    f`B([__tv[0].args[1].args[0]])
+  end
+...
+
+
+[case testGenericInheritanceWithDifferentSigAndNestedArgs1]
+-- Override with dynamic
+class A<T>
+  def f(a as T)
+  end
+end
+class B<S> is A<A<S>>
+  def f(a as dynamic)
+  end
+end
+[out]
+...
+class B is A
+  def f`B(__tv as dynamic, a as dynamic)
+  end
+  def f`A(__tv as dynamic, a as dynamic)
+    f`B([__tv[0].args[0]], {dyn <= __tv[0] | a})
+  end
+...
+
+
+[case testGenericInheritanceWithDifferentSigAndNestedArgs2]
+-- Supertype with dynamic, subtype without
+class A<T>
+  def f(a as dynamic)
+  end
+end
+class B<S> is A<A<S>>
+  def f(a as A<S>)
+  end
+end
+[out]
+...
+class B is A
+  def f`B(__tv as dynamic, a as A)
+  end
+  def f`A(__tv as dynamic, a as dynamic)
+    f`B([__tv[0].args[0]], {__tv[0] <= dyn | a})
+  end
+...

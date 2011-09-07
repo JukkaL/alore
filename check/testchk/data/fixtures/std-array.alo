@@ -1,0 +1,12 @@
+module std
+
+-- Std module stub used in Array-related test cases.
+
+class Object
+end
+
+class Type
+end
+
+class Array<T>
+end

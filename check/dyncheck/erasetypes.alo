@@ -1,0 +1,44 @@
+module dyncheck
+
+import types
+import lex
+import nodes
+
+
+private const None = Token("") as Token
+
+
+-- Remove generic type arguments and type variables form an annotation.
+def EraseAnnotation(a as Annotation)
+  if a != nil
+    a.type = EraseGenericTypes(a.type)
+  end
+end
+
+
+-- Remove generic type arguments and type variables from a type. Replace all 
+-- types A<...> with simply A, and all type variables with "dynamic".
+def EraseGenericTypes(t as Typ) as Typ
+  if t != nil
+    return t.accept(GenericTypeEraser())
+  else
+    return nil
+  end
+end
+
+
+-- Implementation of type erasure
+private class GenericTypeEraser is TypeTranslator
+  -- FIX: What about generic function types?
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    return Dynamic()
+  end
+
+  def visitInstance(t as Instance) as Typ
+    -- IDEA: Retain all whitespace in the representation.
+    var repr = InstanceRepr(t.repr.components,
+                            None, [], None)
+    return Instance(t.type, [], nil, nil, t.line, repr)
+  end
+end

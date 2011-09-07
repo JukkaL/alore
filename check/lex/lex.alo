@@ -1,0 +1,462 @@
+-- Lexical analyzer for Alore.
+
+module lex
+
+import string
+import re
+import set
+import reflect
+import encodings
+import util
+
+
+-- Base class for all tokens
+class Token
+  var pre = "" as Str -- Space, comments etc. before token
+  var str      as Str -- Token string
+  var line     as Int -- Token line number
+  
+  def create(str as Str, pre = "" as Str)
+    self.str = str
+    self.pre = pre
+  end
+  
+  def _str() as Str
+    var t = TypeName(self)
+    return t + "(" + fix(pre) + fix(str) + ")"
+  end
+  
+  def rep as Str
+    return self.pre + self.str
+  end
+  
+  private def fix(s as Str) as Str
+    return s.replace(LF, "\n")
+  end
+end
+
+
+-- Token classes
+
+-- Statement break (line break or semicolon)
+class Break is Token
+end
+
+-- End of file
+class Eof is Token
+end
+
+-- Reserved word (other than keyword operators; they use Op)
+class Keyword is Token
+end
+
+-- An alphanumeric identifier
+class Name is Token
+end
+
+-- Integer literal
+class IntLit is Token
+end
+
+-- String literal
+class StrLit is Token
+  -- Return the parsed contents of the literal.
+  def parsed() as Str
+    -- FIX: Also replace \uXXXX sequences.
+    var s = self.str[1:-1]
+    s = s.replace(self.str[0] * 2, self.str[0])
+    return s
+  end
+end
+
+-- Float literal
+class FloatLit is Token
+end
+
+-- Punctuator (e.g. comma or paranthesis)
+class Punct is Token
+end
+
+-- Operator (e.g. '+' or 'and')
+class Op is Token
+end
+
+-- Byte order mark (at the start of a file)
+class Bom is Token
+end
+
+-- Lexer error token
+class LexError is Token
+  const type as Constant -- One of the error types below
+
+  def create(str as Str, type as Constant)
+    super.create(str)
+    self.type = type
+  end
+end
+
+
+-- Lexer error types
+const NumericLiteralError, UnterminatedStringLiteral, InvalidCharacter,
+      NonAsciiCharacterInComment, NonAsciiCharacterInString,
+      InvalidUtf8Sequence
+
+-- Encoding contexts
+const StrContext, CommentContext
+
+
+-- Analyze s and return an array of token objects, the last of which is always
+-- Eof.
+def Lex(s as Str) as Array<Token>
+  var l = Lexer()
+  l.lex(s)
+  return l.tok
+end
+
+
+-- Reserved words (not including operators)
+private const Keywords = Set([
+  "break", "class", "const", "elif", "else", "encoding",
+  "end", "except", "finally", "for", "if", "import", 
+  "module", "nil", "private", "raise", "repeat", "return",
+  "self", "def", "super", "switch", "try", "until", "var",
+  "while", "sub", "interface", "implements", "dynamic", "bind"]) as Set<Str>
+  
+-- Alphabetical operators (reserved words)
+private const AlphaOperators = Set([
+  "div", "mod", "in", "is", "to", "not", "and", "or", "as"]) as Set<Str>
+  
+-- List of regular expressions that match non-alphabetical operators
+private const Operators = [RegExp("[+*/<>:.]"), 
+                           RegExp("-"), 
+                           RegExp("==|!=|<=|>=|\*\*")] as Array<RegExp>
+
+-- List of regular expressions that match punctuator tokens
+private const Punctuators = [RegExp("[=,()]"), 
+                             RegExp("\["),
+                             RegExp("]"),
+                             RegExp("::"), 
+                             RegExp("([-+*/]|\*\*)=")] as Array<RegExp>
+
+-- Tokens (as strings) after which newlines are ignored
+-- NOTE: '>' not included
+private const JoinLineTokens = Set([
+  "(", "[", ",", "=", ".",
+  "+", "-", "/", "*", "**", ":",
+  "div", "mod", "and", "or", "to", "is", "in", "as",
+  "==", "!=", "<", "<=", ">=",
+  "+=", "-=", "*=", "/=", "**="]) as Set<Str>
+
+
+-- Source file encodings
+private const DefaultEncoding, AsciiEncoding, Latin1Encoding, Utf8Encoding
+
+
+-- Lexical analyser
+private class Lexer
+  private var i    as Int
+  private var s    as Str
+  private var line as Int
+  private var pre = "" as Str
+  private var isPreviousEncoding = False as Boolean
+  private var isEncoding = False         as Boolean
+  private var enc = DefaultEncoding      as Constant
+
+  var tok = [] as Array<Token>
+  var map = [unknownCharacter] * 256 as Array<def ()>
+  
+  def create() as void
+    for seq, method in [("ABCDEFGHIJKLMNOPQRSTUVWXYZ", lexName),
+                        ("abcdefghijklmnopqrstuvwxyz_", lexName),
+                        ("0123456789", lexNumber),
+                        (".", lexNumberOrDot),
+                        (" " + Tab, lexSpace),
+                        ("#", lexHashBang),
+                        ('"', lexStrDouble),
+                        ("'", lexStrSingle),
+                        (CR + LF + ";", lexBreak),
+                        ("-", lexMinusOrComment),
+                        ("+*/<>:=!,()[]", lexMisc)]
+      for c in seq
+        self.map[Ord(c)] = method
+      end
+    end
+  end
+  
+  -- Lexically analyse a string, storing the tokens at the tok array.
+  def lex(s as Str)
+    self.s = s
+    self.i = 0
+    self.line = 1
+    
+    if s.startsWith("\u00ef\u00bb\u00bf")
+      addToken(Bom(s[0:3]))
+    end
+    
+    var map = self.map
+    while self.i < s.length()
+      var c = Ord(s[self.i])
+      self.isEncoding = False
+      map[c]()
+      self.isPreviousEncoding = self.isEncoding
+    end
+    
+    -- Append a break if one is not at the end of input.
+    if self.tok.length() > 0 and not self.tok[-1] is Break
+      addToken(Break(""))
+    end
+    
+    addToken(Eof(""))
+  end
+  
+  -- Analyse a token starting with a dot (either the member access operator or
+  -- a Float literal).
+  def lexNumberOrDot() as void
+    if isAtNumber() 
+      lexNumber()
+    else
+      lexMisc()
+    end
+  end
+  
+  const numberExp = RegExp("[0-9]|\.[0-9]") as RegExp  -- Used by isAtNumber
+  
+  -- Is the current location at a numeric literal?
+  def isAtNumber() as Boolean
+    return match(self.numberExp) != ""
+  end
+  
+  -- Regexps used by lexNumber
+  const numberExp1 = RegExp("[0-9]+") as RegExp
+  const numberExp2 = 
+    RegExp("[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?|[0-9]+[eE][-+]?[0-9]+") as RegExp
+  const nameCharExp = RegExp("[a-zA-Z0-9_]") as RegExp
+  
+  -- Analyse an Int or Float literal. Assume that the current location points
+  -- to one of them.
+  def lexNumber() as void
+    var s1 = match(self.numberExp1)
+    var s2 = match(self.numberExp2)
+    
+    var max = Max(s1.length(), s2.length())
+    if Match(nameCharExp, self.s[self.i + max:self.i + max + 1]) != nil
+      addToken(LexError(" " * max, NumericLiteralError))
+    elif s1.length() > s2.length()
+      -- Integer literal.
+      addToken(IntLit(s1))
+    else
+      -- Float literal.
+      addToken(FloatLit(s2))
+    end
+  end
+  
+  const nameExp = RegExp("[a-zA-Z_][a-zA-Z0-9_]*") as RegExp -- Used by lexName
+  
+  -- Analyse a name (an identifier, a keyword or an alphabetical operator).
+  def lexName() as void
+    var s = match(self.nameExp)
+    if s in Keywords
+      -- Keep track of encoding tokens so that we can do a shallow parsing of
+      -- encoding declarations while we perform lexical analysis.
+      if s == "encoding"
+        self.isEncoding = True
+      end
+      addToken(Keyword(s))
+    elif s in AlphaOperators
+      addToken(Op(s))
+    else
+      -- Keep track of encoding.
+      if self.isPreviousEncoding and self.enc == DefaultEncoding
+        if s == "utf8"
+          self.enc = Utf8Encoding
+        elif s == "latin1"
+          self.enc = Latin1Encoding
+        elif s == "ascii"
+          self.enc = AsciiEncoding
+        end
+      end
+      addToken(Name(s))
+    end
+  end
+  
+  -- Regexps representing Str literals
+  const strExpSingle = RegExp("'([^'\r\n]|'')*'") as RegExp
+  const strExpDouble = RegExp('"([^"\r\n]|"")*"') as RegExp
+  
+  -- Analyse single-quoted string literal
+  def lexStrSingle() as void
+    lexStr(self.strExpSingle)
+  end
+  
+  -- Analyse double-quoted string literal
+  def lexStrDouble() as void
+    lexStr(self.strExpDouble)
+  end
+  
+  -- Analyse a string literal described by a regexp. Assume that the current
+  -- location is at a single or double quote.
+  def lexStr(re as RegExp)
+    var s = match(re)
+    if s != ""
+      verifyEncoding(s, StrContext)
+      addToken(StrLit(s))
+    else
+      -- Unterminated string literal.
+      s = match("[^\n\r]*")
+      addToken(LexError(s, UnterminatedStringLiteral))
+    end
+  end
+  
+  const commentExp = RegExp("--[^\n\r]*") as RegExp
+  
+  -- Analyse a comment.
+  def lexComment() as void
+    var s = match(self.commentExp)
+    verifyEncoding(s, CommentContext)
+    addPre(s)
+  end
+  
+  const hashBangExp = RegExp("#![^\n\r]*") as RegExp
+  
+  -- Analyse #! comment (only valid at the start of a file).
+  def lexHashBang() as void
+    if self.i == 0 and self.s[:2] == "#!"
+      var s = match(self.hashBangExp)
+      addPre(s)
+    else
+      unknownCharacter()
+    end
+  end
+  
+  const spaceExp = RegExp("[ \t]+") as RegExp
+  
+  -- Analyse a run of whitespace characters.
+  def lexSpace() as void
+    var s = match(self.spaceExp)
+    addPre(s)
+    self.isEncoding = self.isPreviousEncoding
+  end
+  
+  const breakExp = RegExp("\r\n|\r|\n|;") as RegExp
+  
+  -- Analyse a statement break (line break or a semicolon).
+  def lexBreak() as void
+    var s = match(breakExp)
+    if ignoreBreak() and s != ";"
+      addPre(s)
+    else
+      addToken(Break(s))
+    end
+    if s != ";"
+      self.line += 1
+    end
+  end
+  
+  -- Analyse something starting with '-' (a comment or the minus operator).
+  def lexMinusOrComment() as void
+    if i + 1 < self.s.length() and self.s[self.i + 1] == "-"
+      lexComment()
+    else
+      lexMisc()
+    end
+  end
+  
+  -- Analyse a non-alphabetical operator or a punctuator.
+  def lexMisc() as void
+    var s = ""
+    var t = nil as dynamic
+    for reList, type in [(Operators, Op), (Punctuators, Punct)]
+      for re in reList
+        var s2 = match(re)
+        if s2.length() > s.length()
+          t = type
+          s = s2
+        end
+      end
+    end
+    if s == ""
+      raise ValueError("Lex error at line {}".format(self.line))
+    end
+    addToken(t(s))
+  end
+  
+  -- Report an unknown character as a lexical analysis error.
+  def unknownCharacter() as void
+    addToken(LexError(self.s[self.i], InvalidCharacter))
+  end
+  
+  
+  -- Utility methods
+  ------------------
+  
+  
+  -- If the argument regexp is matched at the current location, return the
+  -- matched string; otherwise return the empty string.
+  private def match(re as RegExp) as Str or
+                   (re as Str) as Str
+    var m = Match(re, self.s[self.i:])
+    if m != nil
+      return m.group(0)
+    else
+      return ""
+    end
+  end
+  
+  -- Record string representing whitespace or comment after the previous. 
+  -- The accumulated whitespace/comments will be associated with the next
+  -- token and then it will be cleared.
+  private def addPre(s as Str)
+    self.pre += s
+    self.i += s.length()
+  end
+  
+  -- Store a token. Update its line number and record preceding whitespace 
+  -- characters and comments.
+  private def addToken(tok as Token)
+    if tok.str == "" and not tok is Eof and not tok is Break and
+       not tok is LexError
+      raise ValueError("Empty token")
+    end
+    tok.pre = self.pre
+    tok.line = self.line
+    self.tok.append(tok)
+    self.i += tok.str.length()
+    self.pre = ""
+  end
+  
+  -- If the next token is a break, can we ignore it?
+  private def ignoreBreak() as Boolean
+    if tok.length() == 0
+      return True
+    end
+    var t = TypeOf(tok[-1])
+    return t == Break or tok[-1].str in JoinLineTokens
+  end
+  
+  -- Verify that a token (represented by a string) is encoded correctly 
+  -- according to the file encoding.
+  private def verifyEncoding(str as Str, context as Constant)
+    var codec = nil as def (Constant=) as Encoding
+    switch self.enc
+      case AsciiEncoding
+        codec = Ascii
+      case Utf8Encoding, DefaultEncoding
+        codec = Utf8
+    end
+    if codec != nil
+      try
+        Decode(str, codec, Strict)
+      except DecodeError
+        var type = InvalidUtf8Sequence
+        if self.enc == AsciiEncoding
+          if context == StrContext
+            type = NonAsciiCharacterInString
+          else
+            type = NonAsciiCharacterInComment
+          end
+        end
+        addToken(LexError("", type))
+      end        
+    end
+  end
+end

@@ -1,0 +1,121 @@
+module semanal
+
+import nodes
+import string
+import util
+import re
+import types
+
+
+const Tvar -- Constant for type variable nodes in symbol table
+
+
+class SymbolTable is Map<Str, Array<SymbolTableNode>>
+  def _str() as Str
+    var a = [] as <Str>
+    for key, value in self
+      if value is Array
+        var b2 = [] as <Str>
+        for bb in value
+          -- Filter out definitions in the std module.
+          if bb is SymbolTableNode and bb.modId != "std"
+            b2.append(Repr(bb))
+          end
+        end
+        if b2 != []
+          a.append("  " + Str(key) + " : " + "; ".join(b2))
+        end
+      else
+        a.append("  <invalid item>")
+      end
+    end
+    a = Sort(a)
+    a.insertAt(0, "SymbolTable(")
+    a[-1] += ")"
+    return Newline.join(a)
+  end
+  
+  def add(name as Str, node as SymbolTableNode)
+    if not self.hasKey(name)
+      self[name] = []
+    end    
+    self[name].append(node)
+  end
+  
+  def cleanup() as void
+    for k in keys()
+      if self[k] == []
+        self.remove(k)
+      end
+    end
+  end
+end
+
+
+-- Supertype for node types that can be stored in the symbol table.
+interface SymNode
+  bind FuncDef
+  bind Var
+  bind TypeInfo
+  
+  def name as Str
+  def fullName as Str
+  def isPrivate as Boolean
+end
+
+
+class SymbolTableNode
+  const kind as Constant -- Ldef/Gdef/Mdef/Tvar
+  const node as SymNode  -- Parse tree node of definition (FuncDef/Var/
+                         -- TypeInfo), nil for Tvar
+  const tvarId as Int    -- Type variable id (for Tvars only)
+  const modId  as Str    -- Module id (e.g. "foo::bar") or nil
+  
+  private const typeOverride as Typ  -- If nil, fall back to type of node
+  
+  def create(kind as Constant, node as SymNode, modId = nil as Str, 
+             type = nil as Typ, tvarId = 0 as Int)
+    self.kind = kind
+    self.node = node
+    self.typeOverride = type
+    self.modId = modId
+    self.tvarId = tvarId
+  end
+  
+  def fullName as Str
+    if self.node != nil
+      return self.node.fullName
+    else
+      return nil
+    end
+  end
+
+  def type as Typ
+    -- IDEA: Get rid of the dynamic cast.
+    var node = self.node as dynamic
+    if self.typeOverride != nil
+      return self.typeOverride
+    elif (node is Var or node is FuncDef) and node.type != nil
+      return node.type.type
+    else
+      return nil
+    end
+  end
+  
+  def _str() as Str
+    var s = "{}/{}".format(CleanUp(Str(kind)), TypeName(node))
+    if self.modId != nil
+      s += " ({})".format(self.modId)
+    end
+    -- Include declared type of variables and functions.
+    if self.type != nil
+      s += " : {}".format(self.type)
+    end
+    return s
+  end
+end
+
+
+private def CleanUp(s as Str) as Str
+  return Subst(s, ".*::", "")
+end

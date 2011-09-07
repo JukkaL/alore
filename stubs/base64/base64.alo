@@ -1,0 +1,7 @@
+module base64
+
+def Base64Encode(str as Str) as Str
+end
+
+def Base64Decode(str as Str) as Str
+end

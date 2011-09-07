@@ -1,0 +1,72 @@
+module dyncheck
+
+import types
+import nodes
+import checker
+
+
+-- Return a type expression that maps the runtime type variables of a 
+-- supertype method wrapper to the runtime type variables of a subtype.
+-- This is used for method overrides in generic inheritance.
+-- 
+-- Examples (A-to-B mapping):
+--  - If class B inherits A<T>, the result is nil (no typevars in subtype).
+--  - If class B<T> inherits A<T>, the result is [__tv[0]] (identity 
+--    mapping).
+--  - If class B<T> inherits A<X, T> (where X is a class), the result is
+--    [__tv[1]].
+--  - If class B<S, T> inherits A<T, S>, the result is [__tv[1], __tv[0]]
+--    (swap order of type arguments).
+--  - If class B<T> inherits A<X<T>>, the result is [__tv[0].args[0]].
+--
+-- Note that a case like class B<S> inherits A is forbidden, since type 
+-- variables for B could not be derived from A.
+private def SubtypeTvars(supertype as TypeInfo, 
+                         subtype as TypeInfo) as TypeExpr
+  if subtype.typeVars == []
+    return nil
+  else
+    var res = [] as <Typ>
+    for i in 0 to subtype.typeVars.length()
+      res.append(MapSupertypeToSubtypeTvar(supertype, subtype, i + 1))
+    end
+    return TypeExpr(res)
+  end
+end
+
+
+-- Return a type expression that maps from supertype runtime type variables 
+-- to the subtype type variable with the given index.
+private def MapSupertypeToSubtypeTvar(supertype as TypeInfo, 
+                                      subtype as TypeInfo, 
+                                      tvindex as Int) as RuntimeTypeVar
+  -- First get the description of how to get from supertype type variables to
+  -- a subtype type variable.
+  var mapping = checker::GetSupertypeToSubtypeTvarRelation(supertype, 
+                                                           subtype, tvindex)
+  
+  -- The type checker should have noticed if there is no mapping. Be defensive
+  -- and make sure there is one.
+  if mapping == nil
+    raise RuntimeError('Could not find a typevar mapping')  
+  end
+  
+  -- Build the expression for getting at the subtype type variable 
+  -- progressively.
+  
+  -- Read the value of a supertype runtime type variable.
+  
+  -- First translate to get a RuntimeTypeVar type.
+  var rttypevar = TranslateRuntimeTypeVars(TypeVar(nil, mapping[0]))
+  -- Peel off the wrapper.
+  var expr = (rttypevar as RuntimeTypeVar).node
+  
+  -- Then, optionally look into arguments based on the description.
+  for i in mapping[1:]
+    expr = MemberExpr(expr, 'args')
+    expr = IndexExpr(expr, IntExpr(i))
+  end
+  
+  -- Than add a final wrapper so that we have a valid type.
+  return RuntimeTypeVar(expr)
+end

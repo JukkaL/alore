@@ -1,0 +1,47 @@
+module testchk
+
+-- Test cases for errors in semantic analysis.
+
+import unittest
+import analyse
+import errors
+import testchk::helpers
+import os
+
+
+-- Paths to files containing test case descriptions.
+const SemAnalErrorFiles = ["semanal-errors.test",
+                           "semanal-errors-classes.test",
+                           "semanal-errors-interfaces.test",
+                           "semanal-errors-modules.test"]
+
+
+class SemAnalErrorSuite is Suite
+  def cases()
+    -- Read test cases from test case description files.
+    var c = []
+    for f in SemAnalErrorFiles
+      c += ParseTestCases(Join(TestDataPrefix, f), TestSemAnalError, 
+                          TestTempDir)
+    end
+    return c
+  end
+end
+
+
+-- Perform a test case.
+private def TestSemAnalError(testcase)
+  var a
+  try
+    var src = LF.join(testcase.input)
+    Analyse(src, "main", False, TestTempDir)
+    raise AssertionFailure("No errors reported in {}, line {}".format(
+            testcase.file, testcase.line))
+  except e is CompileError
+    -- Verify that there was a compile error and that the error messages 
+    -- are equivalent.
+    AssertStringArraysEqual(testcase.output, e.messages, 
+                            "Invalid compiler output ({}, line {})".format(
+                              testcase.file, testcase.line))
+  end
+end

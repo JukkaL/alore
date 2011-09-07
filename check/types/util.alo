@@ -1,0 +1,10 @@
+module types
+
+
+private def ListStr<T>(list as Iterable<T>, sep = ", " as Str) as Str
+  var a = [] as <Str>
+  for i in list
+    a.append(Str(i))
+  end
+  return sep.join(a)
+end

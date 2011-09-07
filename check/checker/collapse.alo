@@ -1,0 +1,87 @@
+module checker
+
+import types
+
+
+-- Collapse generic range types within type. Always collapse a range to the
+-- bottom type of the range (the most specific type). Do not modify other
+-- parts of type.
+--
+-- Examples:
+--   A<Int..Object>       -> A<Int>
+--   A<Int>               -> A<Int>
+--   C                    -> C
+--   dynamic              -> dynamic
+--   B<A<Int..Object>, C> -> B<A<Int>, C>
+def CollapseType(t as Typ) as Typ
+  return t.accept(CollapseTypeVisitor())
+end
+
+
+-- Implementation of type collapsing as a visitor.
+private class CollapseTypeVisitor is TypeVisitor<Typ>
+  -- Pass simple types through unmodified.
+
+  def visitUnboundType(t as UnboundType) as Typ
+    return t
+  end
+  
+  def visitErrorType(t as ErrorType) as Typ
+    return t
+  end
+  
+  def visitDynamic(t as Dynamic) as Typ
+    return t
+  end
+  
+  def visitVoid(t as Void) as Typ
+    return t
+  end
+  
+  def visitNilType(t as NilType) as Typ
+    return t
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    return t
+  end
+  
+  -- Collapse recursively arguments of instance types, and ignore argument
+  -- range tops.
+  def visitInstance(t as Instance) as Typ
+    var args = [] as <Typ>
+    for arg in t.args
+      args.append(collapse(arg))
+    end
+    return Instance(t.type, args)
+  end
+  
+  -- Collapse other composite types recursively.
+  
+  def visitCallable(t as Callable) as Typ
+    var argTypes = [] as <Typ>
+    for argType in t.argTypes
+      argTypes.append(collapse(argType))
+    end
+    return Callable(argTypes, t.minArgs, t.isVarArg, collapse(t.retType),
+                    t.isTypeObj, nil, t.variables)
+  end
+  
+  def visitTupleType(t as TupleType) as Typ
+    var items = [] as <Typ>
+    for item in t.items
+      items.append(collapse(item))
+    end
+    return TupleType(items)
+  end
+  
+  def visitIntersection(t as Intersection) as Typ
+    return Intersection(collapse(t.item1) as FunctionLike, 
+                        collapse(t.item2) as FunctionLike)
+  end
+
+  -- Helper to collapse a type.  
+  private def collapse(t as Typ) as Typ
+    return t.accept(self)
+  end
+end

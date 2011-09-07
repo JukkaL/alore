@@ -1,0 +1,12 @@
+module std
+
+-- Std module stub used in boolean-related test cases.
+
+class Object
+end
+
+class Type
+end
+
+class Boolean
+end

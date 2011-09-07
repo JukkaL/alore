@@ -1,0 +1,319 @@
+module __testc
+
+
+const ShortIntMax = 1
+const ShortIntMin = 1
+
+
+def AIsLongInt(x)
+  return True
+end
+
+def IsWideStr(x)
+  return True
+end
+
+def IsSubStr(x)
+  return True
+end
+
+def CallTrace(f, *args) -- FIX
+  return [Exception(), ["x"]]
+end
+
+def TypeName(x)
+end
+
+def CollectGarbage()
+end
+
+def CollectAllGarbage()
+end
+
+def Call(x, y, z = nil)
+end
+
+def Members(x)
+  return ["x"]
+end
+
+def RaiseDirectTypeError(x)
+end
+
+def RaiseDirectMemoryError(x)
+end
+
+def ContextDepth()
+  return 1
+end
+
+def AGetInt(x)
+  return "1"
+end
+
+def AGetIntU(x)
+  return "1"
+end
+
+def AGetInt64(x)
+  return "1"
+end
+
+def AGetIntU64(x)
+  return "1"
+end
+
+def AMakeInt(x)
+  return 1
+end
+
+def AMakeIntU(x)
+  return 1
+end
+
+def AMakeInt64(x)
+  return 1
+end
+
+def AMakeIntU64(x)
+  return 1
+end
+
+def AGetFloat(x)
+  return "x"
+end
+
+def AGetStr(x)
+  return "x"
+end
+
+def AGetStrW(x)
+  return "x"
+end
+
+def AGetStrUtf8(x)
+  return "x"
+end
+
+def AMakeEmptyStr(x)
+  return "x"
+end
+
+def AMakeEmptyStrW(x)
+  return "x"
+end
+
+def AMakeStrUtf8(x)
+  return "x"
+end
+
+def AStrLenUtf8(x)
+  return 1
+end
+
+def ASetArrayItem(x, y, z)
+end
+
+def AMakeArray(x)
+end
+
+def ATemps()
+end
+
+def AIs(x, y)
+end
+
+def ACall(x, y)
+end
+
+def ACallVarArg(x, y, z)
+end
+
+def ACallValue(x, y)
+end
+
+def ACallValueVarArg(x, y, z)
+end
+
+def ARaise(x)
+end
+
+def ARaiseByType(x, y)
+end
+
+def ARaiseValue(x)
+end
+
+def ATry(x)
+end
+
+def AIsExceptionType(x, y)
+end
+
+def ACallMethod(a, b, c = nil, d = nil, e = nil)
+end
+
+def ACallMethodVarArg(x, y, z)
+end
+
+def AMember(x, y)
+end
+
+def ASetMember(x, y, z)
+end
+
+def ASuperMember(x, y)
+end
+
+def ASetSuperMember(x, y, z)
+end
+
+def AGlobal(x)
+end
+
+def AConcat(x, y)
+  return Object()
+end
+
+def ASubStr(x, y, z)
+  return "x"
+end
+
+def AGetPair(x)
+end
+
+def AGetRange(x)
+end
+
+def AIsEq(x, y)
+end
+
+def AIsNeq(x, y)
+end
+
+def AIsLt(x, y)
+end
+
+def AIsGt(x, y)
+end
+
+def AIsLte(x, y)
+end
+
+def AIsGte(x, y)
+end
+
+def ASubArray(x, y, z)
+end
+
+def ALen(x)
+end
+
+def AGetItemAt(x, y)
+end
+
+def ASetItemAt(x, y, z)
+end
+
+def AGetItem(x, y)
+end
+
+def ASetItem(x, y, z)
+end
+
+def AAdd(x, y)
+end
+
+def ASub(x, y)
+end
+
+def AMul(x, y)
+end
+
+def ADiv(x, y)
+end
+
+def AIntDiv(x, y)
+end
+
+def AMod(x, y)
+end
+
+def APow(x, y)
+end
+
+def ANeg(x)
+end
+
+def AIn(x, y)
+end
+
+def InfiniteRecursionC()
+end
+
+def SymbolInfoCount()
+end
+
+def GlobalValueCount()
+end
+
+def TypeStats(x)
+end
+
+def AAllocContainer(x)
+end
+
+def AContainerPtr(x)
+end
+
+def AContainerValue(x)
+end
+
+def ASetContainerValue(x, y)
+end
+
+def CheckSyntax(x, y = nil)
+end
+
+def AVersion()
+end
+
+def GetCModuleImports(x)
+end
+
+
+class BinaryData
+  def set(x)
+  end
+  
+  def get()
+  end
+end
+
+    
+class BinaryData2 is BinaryData
+  var x
+  var y
+  var z
+  
+  def set2(a, b)
+  end
+  
+  def get2()
+  end
+end
+
+                    
+class BinaryDataNonInit
+  def set(x)
+  end
+  
+  def get()
+  end
+end
+
+    
+class RecursionClassC
+  def infiniteRecursion()
+  end
+end

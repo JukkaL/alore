@@ -1,0 +1,355 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Return statement
+-- ----------------
+
+
+[case testReturnValue]
+def f() as A
+  return A()
+  return B() -- Fail
+end
+def g() as B
+  return A() -- Fail
+end
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Incompatible return value type
+main: In function "g":
+main, line 6: Incompatible return value type
+
+[case testReturnSubtype]
+def f() as B
+  return A() -- Fail
+end
+def g() as A
+  return B()
+end
+class A; end
+class B is A; end
+[out]
+main: In function "f":
+main, line 2: Incompatible return value type
+
+[case testReturnWithoutAValue]
+def f() as A
+  return -- Fail
+end
+def g() as void
+  return
+end
+class A; end
+[out]
+main: In function "f":
+main, line 2: Return value expected
+
+
+-- If statement
+-- ------------
+
+
+[case testIfStatement]
+var a as A
+var b as Boolean
+if a    -- Fail
+  a = b -- Fail
+elif a  -- Fail
+  a = b -- Fail
+elif a  -- Fail
+  a = b -- Fail
+else
+  a = b -- Fail
+end
+if b
+elif b
+end
+if b
+end
+
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 3: Boolean value expected for if condition
+main, line 4: Incompatible types in assignment
+main, line 5: Boolean value expected for if condition
+main, line 6: Incompatible types in assignment
+main, line 7: Boolean value expected for if condition
+main, line 8: Incompatible types in assignment
+main, line 10: Incompatible types in assignment
+
+
+-- Loops
+-- -----
+
+
+[case testWhileStatement]
+var a as A
+var b as Boolean
+while a    -- Fail
+  a = b    -- Fail
+end
+while b
+  b = b
+end
+
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 3: Boolean value expected for while condition
+main, line 4: Incompatible types in assignment
+
+[case testRepeatStatement]
+var a as A
+var b as Boolean
+repeat
+  a = b    -- Fail
+until a    -- Fail
+repeat
+  b = b
+until b
+
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 4: Incompatible types in assignment
+main, line 5: Boolean value expected for until condition
+
+[case testBreakStatement]
+var b as Boolean
+while b
+  break
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+
+
+-- Exception handling
+-- ------------------
+
+
+[case testRaiseStatement]
+var a as A
+raise a -- Fail
+var e as Exception
+var f as MyError
+raise e
+raise f
+class A; end
+class MyError is Exception; end
+[usestd fixtures/std-exception.alo]
+[out]
+main, line 2: Invalid exception type
+
+[case testTryFinallyStatement]
+var a as A
+try
+  var b as A
+  a = Object() -- Fail
+finally
+  var b as A
+  a = Object() -- Fail
+end
+class A; end
+[out]
+main, line 4: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+
+[case testTryExceptStatement]
+try
+  var a = B() as A       -- Fail
+except e is Exception
+  e = A()               -- Fail
+  e = Err()
+except e is Err
+  e = Exception()       -- Fail
+  e = Err()
+end
+class A; end
+class B; end
+class Err is Exception; end
+[usestd fixtures/std-exception.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+
+[case testTryExceptStatementSimple]
+try
+  var a = B() as A       -- Fail
+except Exception
+  var a = B() as A       -- Fail
+end
+class A; end
+class B; end
+[usestd fixtures/std-exception.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Switch statement
+-- ----------------
+
+
+[case testSimpleSwitchStatement]
+var o as Object
+switch f(o)  -- Fail
+  case f(o)  -- Fail
+    f(o)     -- Fail
+end
+def f(e as A) as A
+end
+class A; end
+[out]
+main, line 2: Argument 1 to "f" has incompatible type "Object"
+main, line 3: Argument 1 to "f" has incompatible type "Object"
+main, line 4: Argument 1 to "f" has incompatible type "Object"
+
+[case testSwitchStatement]
+var o as Object
+switch f(o)  -- Fail
+  case f(o), g(o)  -- Fail
+    f(o)           -- Fail
+  case f(o)        -- Fail
+    f(o)           -- Fail
+  else
+    f(o)           -- Fail
+end
+def f(e as A) as A
+end
+def g(e as A) as A
+end
+class A; end
+[out]
+main, line 2: Argument 1 to "f" has incompatible type "Object"
+main, line 3: Argument 1 to "f" has incompatible type "Object"
+main, line 3: Argument 1 to "g" has incompatible type "Object"
+main, line 4: Argument 1 to "f" has incompatible type "Object"
+main, line 5: Argument 1 to "f" has incompatible type "Object"
+main, line 6: Argument 1 to "f" has incompatible type "Object"
+main, line 8: Argument 1 to "f" has incompatible type "Object"
+
+
+-- Operator assignment
+-- -------------------
+
+
+[case testPlusAssign]
+var a, b, c as (A, B, C)
+a += b   -- Fail
+b += a   -- Fail
+c += a   -- Fail
+a += c
+
+class A
+  def _add(x as C) as A
+  end
+end
+
+class B
+  def _add(x as A) as C
+  end
+end
+
+class C; end
+[out]
+main, line 2: Unsupported operand types for + ("A" and "B")
+main, line 3: Result type of + incompatible in assignment
+main, line 4: Unsupported left operand type for + ("C")
+
+[case testMinusAssign]
+var a, b, c as (A, B, C)
+a -= b   -- Fail
+b -= a   -- Fail
+c -= a   -- Fail
+a -= c
+
+class A
+  def _sub(x as C) as A
+  end
+end
+
+class B
+  def _sub(x as A) as C
+  end
+end
+
+class C; end
+[out]
+main, line 2: Unsupported operand types for - ("A" and "B")
+main, line 3: Result type of - incompatible in assignment
+main, line 4: Unsupported left operand type for - ("C")
+
+[case testMulAssign]
+var a, c as (A, C)
+a *= a   -- Fail
+c *= a   -- Fail
+a *= c
+
+class A
+  def _mul(x as C) as A
+  end
+end
+
+class C; end
+[out]
+main, line 2: Unsupported operand types for * ("A" and "A")
+main, line 3: Unsupported left operand type for * ("C")
+
+[case testDivAssign]
+var a, c as (A, C)
+a /= a   -- Fail
+c /= a   -- Fail
+a /= c
+
+class A
+  def _div(x as C) as A
+  end
+end
+
+class C; end
+[out]
+main, line 2: Unsupported operand types for / ("A" and "A")
+main, line 3: Unsupported left operand type for / ("C")
+
+[case testPowAssign]
+var a, c as (A, C)
+a **= a   -- Fail
+c **= a   -- Fail
+a **= c
+
+class A
+  def _pow(x as C) as A
+  end
+end
+
+class C; end
+[out]
+main, line 2: Unsupported operand types for ** ("A" and "A")
+main, line 3: Unsupported left operand type for ** ("C")
+
+[case testSubtypesInOperatorAssignment]
+var a, b as (A, B)
+b += b
+b += a
+a += b
+
+class A
+  def _add(x as A) as B
+  end
+end
+
+class B is A
+end
+[out]

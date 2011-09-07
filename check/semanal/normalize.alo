@@ -1,0 +1,173 @@
+module semanal
+
+import nodes
+import reflect
+
+
+private var ForCount = 1
+private var TmpCount = 1
+
+
+def InitializeNormalize()
+  ForCount = 1
+  TmpCount = 1
+end
+
+
+-- Normalize a non-semantically analyzed parse tree by transforming certain 
+-- syntactic constructs to simpler forms:
+--  - for loop into a while loop
+--  - initialization in definitions into definition + assigment (TODO)
+def Normalize(tree)
+  tree.accept(NormVisitor())
+end
+
+
+private class NormVisitor is NodeVisitor
+  def visitBlock(block)
+    var i = 0
+    while i < block.length()
+      var stmt = block[i]
+      if stmt is ForStmt
+        normForStmt(block, i)
+      elif stmt is VarDef and stmt.init != nil
+        normVarDefWithInit(block, i)
+      elif stmt is OperatorAssignmentStmt
+        normOperatorAssignmentStmt(block, i)
+      else
+        i += 1
+      end
+    end
+  end
+  
+  def visitAloreFile(file)
+    var defs = file.defs
+    var i = 0
+    while i < defs.length()
+      var defn = defs[i]
+      if defn is VarDef and defn.init != nil
+        normVarDefWithInit(defs, i)
+      elif defn is ForStmt
+        normForStmt(defs, i)
+      elif defn is OperatorAssignmentStmt
+        normOperatorAssignmentStmt(defs, i)
+      end
+      i += 1
+    end
+  end
+  
+  def visitClassDef(cdef)
+    var defs = cdef.defs
+    var i = 0
+    while i < defs.length()
+      var defn = defs[i]
+      if defn is VarDef and defn.init != nil
+        normVarDefWithInit(defs, i)
+      end
+      i += 1
+    end
+  end
+  
+  -- IDEA: Use visitor to set line number of all nodes more simply
+  
+  private def normForStmt(block, i)
+    var forStmt = block[i]
+    if forStmt is ForStmt
+      var line = forStmt.line
+      var enum = "___enum{}".format(ForCount)
+          -- FIX create a name not existing in the code? or ___x is reserved
+      ForCount += 1
+      var v = Var(enum)
+      var enumCall = MemberCall(forStmt.expr, "iterator", line)
+      var defn = VarDef([v], Ldef, False, enumCall).setLine(line)
+
+      var n1 = NameExpr(enum).setLine(line)
+      var hasNext = MemberCall(n1, "hasNext", line)
+      var n2 = NameExpr(enum).setLine(line)
+      var next = MemberCall(n2, "next", line)
+      var ass = VarDef(forStmt.index, Ldef, True, next).setLine(line)
+      var wh = WhileStmt(hasNext, [ass] + forStmt.body).setLine(line)
+
+      block[i] = wh
+      block.insertAt(i, defn)
+    else
+      raise ValueError("For statement expected")
+    end
+  end
+  
+  private def normVarDefWithInit(block, i)
+    var varStmt = block[i]
+    if varStmt is VarDef
+      var line = varStmt.line
+      var lvalues = []
+      for v in varStmt.names
+        lvalues.append(NameExpr(v.name).setLine(line))
+      end
+      var ass = AssignmentStmt(lvalues, varStmt.init, lvalues.length() > 1, 
+                               True).setLine(line)
+      varStmt.init = nil
+      block.insertAt(i + 1, ass)
+    else
+      raise ValueError("Invalid statement")
+    end
+  end
+  
+  private def normOperatorAssignmentStmt(block, i)
+    var opAss = block[i]
+    if opAss is OperatorAssignmentStmt
+      var line = opAss.line
+      var lvalue = opAss.lvalue
+      var init = []
+      var get, set
+
+      -- FIX: handle super lvalue
+
+      switch TypeOf(lvalue)
+        case NameLvalue
+          get = NameExpr(lvalue.name).setLine(line)
+          set = NameExpr(lvalue.name).setLine(line)
+        case MemberLvalue
+          var base = TmpVar()
+          var initBase = VarDef([base], Ldef, False, lvalue.expr).setLine(line)
+          init = [initBase]
+          get = MemberExpr(NameExpr(base.name).setLine(line), 
+                           lvalue.name).setLine(line)
+          set = MemberExpr(NameExpr(base.name).setLine(line), 
+                           lvalue.name).setLine(line)
+        case IndexLvalue
+          var base = TmpVar()
+          var index = TmpVar()
+          var initBase = VarDef([base], Ldef, False, lvalue.base).setLine(line)
+          var initIndex = VarDef([index], Ldef, False, lvalue.index).
+                            setLine(line)
+          init = [initBase, initIndex]
+          get = IndexExpr(NameExpr(base.name).setLine(line), 
+                          NameExpr(index.name).setLine(line)).setLine(line)
+          set = IndexExpr(NameExpr(base.name).setLine(line), 
+                          NameExpr(index.name).setLine(line)).setLine(line)
+      end
+
+      var op = OpExpr(opAss.op, get, opAss.rvalue).setLine(line)
+      var repl = init + [AssignmentStmt([set], op, False).setLine(line)]
+      block[i] = repl[0]
+      for s in Reversed(repl[1:])
+        block.insertAt(i + 1, s)
+      end
+    else
+      raise ValueError("Operator assignment expected")
+    end
+  end
+end
+
+
+private def MemberCall(expr, member, line, args = [])
+  return CallExpr(MemberExpr(expr, member).setLine(line), args).setLine(line)
+end
+
+
+private def TmpVar()
+  -- FIX ___tmpx in used code should be  rejected by the semantic analyser
+  var name = "___tmp{}".format(TmpCount)
+  TmpCount += 1
+  return Var(name)
+end

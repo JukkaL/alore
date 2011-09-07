@@ -1,0 +1,68 @@
+module checker
+
+import types
+
+
+-- Erase any type variables from a type. Also replace complex types (tuple,
+-- function) with the corresponding concrete types.
+--
+-- Examples:
+--   A -> A
+--   B<X> -> B<dynamic>
+--   (A, B) -> Tuple
+--   def (..) -> Function
+--
+-- (Typ) -> Typ
+def EraseType(type as Typ, basic as BasicTypes) as Typ
+  return type.accept(EraseTypeVisitor(basic))
+end
+
+
+private class EraseTypeVisitor is TypeVisitor<Typ>
+  private const basic as BasicTypes
+
+  def create(basic as BasicTypes)
+    self.basic = basic
+  end
+
+  def visitUnboundType(t as UnboundType) as Typ
+    return t
+  end
+  
+  def visitErrorType(t as ErrorType) as Typ
+    return t
+  end
+  
+  def visitDynamic(t as Dynamic) as Typ
+    return t
+  end
+  
+  def visitVoid(t as Void) as Typ
+    return t
+  end
+  
+  def visitNilType(t as NilType) as Typ
+    return t
+  end
+  
+  def visitInstance(t as Instance) as Typ
+    return Instance(t.type, [Dynamic()] * t.args.length(), nil, nil, t.line, 
+                    t.repr)
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    return Dynamic()
+  end
+  
+  def visitCallable(t as Callable) as Typ
+    return basic.function
+  end
+  
+  def visitTupleType(t as TupleType) as Typ
+    return basic.tuple
+  end
+  
+  def visitIntersection(t as Intersection) as Typ
+    return basic.function
+  end
+end

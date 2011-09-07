@@ -1,0 +1,4 @@
+module nanotime
+
+def NanoTime() as Int
+end

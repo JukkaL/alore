@@ -1,0 +1,633 @@
+-- Test cases for parser errors. Each test case consists of two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- The input code will be stored as file "file.alo".
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+[case testParseErrorBeforeEndOfFile]
+class Foo
+[out]
+file.alo: In class "Foo":
+file.alo, line 1: Parse error before end of file
+
+[case testParseErrors]
+raise
+1 if
+div 2
+"x" 1
+"x" 1.1
+1 "x"
+,1
+(12 + 3
+12)
+[12 +3
+12]
+1 Foo
+[out]
+file.alo, line 1: Parse error before end of line
+file.alo, line 2: Parse error before "if"
+file.alo, line 3: Parse error before div
+file.alo, line 4: Parse error before numeric literal
+file.alo, line 5: Parse error before numeric literal
+file.alo, line 6: Parse error before string literal
+file.alo, line 7: Parse error before ,
+file.alo, line 8: Parse error before end of line
+file.alo, line 9: Parse error before )
+file.alo, line 10: Parse error before end of line
+file.alo, line 11: Parse error before ]
+file.alo, line 12: Parse error before "Foo"
+
+[case testKeywordsInInvalidContexts]
+var def
+var sub
+1 + implements
+1 + interface
+1 + dynamic
+[out]
+file.alo, line 1: Parse error before "def"
+file.alo, line 2: Parse error before "sub"
+file.alo, line 3: Parse error before "implements"
+file.alo, line 4: Parse error before "interface"
+file.alo, line 5: Parse error before "dynamic"
+
+[case testInvalidNumericLiteral]
+1.0e
+23x445
+[out]
+file.alo, line 1: Invalid numeric literal
+file.alo, line 2: Invalid numeric literal
+
+[case testUnterminatedStringLiteral]
+"cat
+"x" + "
+
+'foo
+1 '
+[out]
+file.alo, line 1: Unterminated string literal
+file.alo, line 2: Unterminated string literal
+file.alo, line 4: Unterminated string literal
+file.alo, line 5: Unterminated string literal
+
+[case testInvalidCharacter]
+@%&
+#
+[out]
+file.alo, line 1: Unrecognized character @
+file.alo, line 2: Unrecognized character #
+
+[case testInvalidHashBang]
+#
+[out]
+file.alo, line 1: Unrecognized character #
+
+[case testInvalidHeader]
+module "x"
+[out]
+file.alo, line 1: Parse error before string literal
+
+[case testInvalidEncoding]
+encoding 1
+[out]
+file.alo, line 1: Parse error before numeric literal
+
+[case testInvalidImport]
+import x
+import
+import ::y
+import 1
+[out]
+file.alo, line 2: Parse error before end of line
+file.alo, line 3: Parse error before ::
+file.alo, line 4: Parse error before numeric literal
+
+[case testReportingFunctionContext]
+def Func(x, y)
+  var a 1
+end
+if
+[out]
+file.alo: In function "Func":
+file.alo, line 2: Parse error before numeric literal
+file.alo: At top level:
+file.alo, line 4: Parse error before end of line
+file.alo, line 4: Parse error before end of file
+
+[case testReportingClassAndMethodContext]
+class A
+  var a 1
+  def func(x, y)
+    var 1
+  end
+  var const
+end
+var 1
+[out]
+file.alo: In class "A":
+file.alo, line 2: Parse error before numeric literal
+file.alo: In member "func" of class "A":
+file.alo, line 4: Parse error before numeric literal
+file.alo: In class "A":
+file.alo, line 6: Parse error before "const"
+file.alo: At top level:
+file.alo, line 8: Parse error before numeric literal
+
+[case testReportingAccessorContext]
+class C
+  def prop
+    +1
+  end
+  def prop = y
+    1 1
+  end
+  *2
+end
+[out]
+file.alo: In member "prop" of class "C":
+file.alo, line 3: Parse error before +
+file.alo, line 6: Parse error before numeric literal
+file.alo: In class "C":
+file.alo, line 8: Parse error before *
+
+[case testInvalidSetter]
+class C
+  def prop = 1
+    var avr
+  end
+end
+[out]
+file.alo: In member "prop" of class "C":
+file.alo, line 2: Parse error before numeric literal
+
+[case testInvalidClass]
+class
+  def f()
+    1 1
+  end
+end
+[out]
+file.alo, line 1: Parse error before end of line
+file.alo: In function "f":
+file.alo, line 3: Parse error before numeric literal
+
+[case testInvalidClassWithInheritance]
+class X is 1
+  def f()
+    1 1
+  end
+end
+[out]
+file.alo: In class "X":
+file.alo, line 1: Parse error before numeric literal
+file.alo: In member "f" of class "X":
+file.alo, line 3: Parse error before numeric literal
+
+[case testInvalidFunction]
+def f1(1
+end
+def f2
+end
+def f3=x
+end
+[out]
+file.alo: In function "f1":
+file.alo, line 1: Parse error before numeric literal
+file.alo: In function "f2":
+file.alo, line 3: Parse error before end of line
+file.alo: In function "f3":
+file.alo, line 5: Parse error before =
+
+[case testInvalidFunction2]
+def f4(a
+end
+def f5(a,)
+end
+def f6(a,*b
+end
+[out]
+file.alo: In function "f4":
+file.alo, line 1: Parse error before end of line
+file.alo: In function "f5":
+file.alo, line 3: Parse error before )
+file.alo: In function "f6":
+file.alo, line 5: Parse error before end of line
+
+[case testInvalidFunction3]
+def f7(a,*)
+end
+def f8(a=2, b)
+end
+def f9(a=2 2)
+end
+[out]
+file.alo: In function "f7":
+file.alo, line 1: Parse error before )
+file.alo: In function "f8":
+file.alo, line 3: Parse error before )
+file.alo: In function "f9":
+file.alo, line 5: Parse error before numeric literal
+
+[case testInvalidIf]
+def f()
+  if
+  elif )
+  end
+end
+def g()
+  if 1
+  else
+  elif 1 1
+  end
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before end of line
+file.alo, line 3: Parse error before )
+file.alo: In function "g":
+file.alo, line 9: Parse error before "elif"
+file.alo: At top level:
+file.alo, line 11: Parse error before "end"
+
+[case testInvalidFor]
+for x, in while
+end
+for 1 in 1, 2
+end
+[out]
+file.alo, line 1: Parse error before in
+file.alo, line 3: Parse error before numeric literal
+
+[case testInvalidWhile]
+while 1 1
+end
+[out]
+file.alo, line 1: Parse error before numeric literal
+
+[case testInvalidTry]
+try
+  1 + 2
+except Exception e
+  2 + 3
+end
+[out]
+file.alo, line 3: Parse error before "e"
+
+[case testInvalidVarDef]
+var a, 1
+var a = 1 1
+var
+var a =
+[out]
+file.alo, line 1: Parse error before numeric literal
+file.alo, line 2: Parse error before numeric literal
+file.alo, line 3: Parse error before end of line
+file.alo, line 4: Parse error before end of line
+
+[case testMissingUntil]
+repeat
+  var a = 1
+  a += 1
+def f()
+end
+[out]
+file.alo, line 4: Parse error before "f"
+file.alo, line 5: Parse error before end of file
+
+[case testMissingEndInFunction]
+def f()
+  var a = 1
+  a += 1
+def f2()
+end
+[out]
+file.alo: In function "f":
+file.alo, line 4: Parse error before "f2"
+file.alo, line 5: Parse error before end of file
+
+[case testMissingEndInIf]
+def f()
+  if a < 5
+def f2()
+end
+[out]
+file.alo: In function "f":
+file.alo, line 3: Parse error before "f2"
+file.alo, line 4: Parse error before end of file
+
+[case testErrorInAnonymousFunction]
+def f()
+  Foo(def (x, y = 4, z)
+        var x 1
+      end)
+  1 1
+end
+
+1 1
+
+def g()
+  1 1
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before )
+file.alo, line 3: Parse error before numeric literal
+file.alo, line 5: Parse error before numeric literal
+file.alo: At top level:
+file.alo, line 8: Parse error before numeric literal
+file.alo: In function "g":
+file.alo, line 11: Parse error before numeric literal
+
+[case testFunctionAnnotationParseError]
+def g(x as #)
+  1 "x"
+end
+
+def h() as (1)
+  1 "x"
+end
+[out]
+file.alo: In function "g":
+file.alo, line 1: Unrecognized character #
+file.alo, line 2: Parse error before string literal
+file.alo: In function "h":
+file.alo, line 5: Parse error before numeric literal
+file.alo, line 6: Parse error before string literal
+
+[case testInvalidMethodAnnotationParseError]
+class A
+  def g(x as #)
+    1 "x"
+  end
+
+  def h() as (1)
+    1 "x"
+  end
+end
+[out]
+file.alo: In member "g" of class "A":
+file.alo, line 2: Unrecognized character #
+file.alo, line 3: Parse error before string literal
+file.alo: In member "h" of class "A":
+file.alo, line 6: Parse error before numeric literal
+file.alo, line 7: Parse error before string literal
+
+[case testInvalidGetterAnnotations]
+class A
+  def d as 1
+  end  
+end
+[out]
+file.alo: In member "d" of class "A":
+file.alo, line 2: Parse error before numeric literal
+
+[case testInvalidSetterAnnotations]
+class A
+  def d = x as 1
+  end  
+end
+[out]
+file.alo: In member "d" of class "A":
+file.alo, line 2: Parse error before numeric literal
+
+[case testInvalidClassAnnotation1]
+class A<A
+  1
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: Parse error before end of line
+file.alo, line 2: Parse error before numeric literal
+
+[case testInvalidClassAnnotation2]
+class A is 1
+  1
+end
+[out]
+file.alo: In class "A":
+file.alo, line 1: Parse error before numeric literal
+file.alo, line 2: Parse error before numeric literal
+
+[case testInvalidForAnnotation]
+for x as 1 in 1, 2
+  1 "x"
+end
+def f()
+  for x as 1 in 1, 2
+    1 "X"
+  end 
+end
+[out]
+file.alo, line 1: Parse error before numeric literal
+file.alo, line 2: Parse error before string literal
+file.alo: In function "f":
+file.alo, line 5: Parse error before numeric literal
+file.alo, line 6: Parse error before string literal
+
+[case testDanglingAnnotations]
+def f()
+  var x
+  : X
+end
+
+class X
+  var x
+  : X
+end
+
+: Int
+[out]
+file.alo: In function "f":
+file.alo, line 3: Parse error before :
+file.alo: In class "X":
+file.alo, line 8: Parse error before :
+file.alo: At top level:
+file.alo, line 11: Parse error before :
+
+[case testAnnotationBeforeInvalidStatement]
+: X
+f()
+: X
+while True
+end
+: X
+if True
+end
+: X
+a = 1
+[out]
+file.alo, line 1: Parse error before :
+file.alo, line 3: Parse error before :
+file.alo, line 6: Parse error before :
+file.alo, line 9: Parse error before :
+
+[case testInvalidAnonymousFunctionAnnotation]
+def f()
+  var g = def () as 1
+    1 2
+  end
+  1 "x"
+end
+[out]
+file.alo: In function "f":
+file.alo, line 2: Parse error before numeric literal
+file.alo, line 3: Parse error before numeric literal
+file.alo, line 5: Parse error before string literal
+
+[case testInvalidInlineAnnotation]
+(f as <)
+f as <x x>
+1 1
+as <x>
+f as <x,>
+f as <>
+[out]
+file.alo, line 1: Parse error before )
+file.alo, line 2: Parse error before "x"
+file.alo, line 3: Parse error before numeric literal
+file.alo, line 4: Parse error before as
+file.alo, line 5: Parse error before >
+file.alo, line 6: Parse error before >
+
+[case testInvalidInterfaces]
+interface
+  def f
+end
+interface A implements B
+end
+interface C
+[out]
+file.alo, line 1: Parse error before end of line
+file.alo: In interface "A":
+file.alo, line 4: Parse error before "implements"
+file.alo: In interface "C":
+file.alo, line 6: Parse error before end of file
+
+[case testInvalidInterfaceMember]
+interface A
+  var a
+  const b
+  def f(x = 1)
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before "var"
+file.alo, line 3: Parse error before "const"
+file.alo: In member "f" of interface "A":
+file.alo, line 4: Parse error before numeric literal
+
+[case testDoubleObsoleteCastParentheses]
+((o))x
+[out]
+file.alo, line 1: Parse error before "x"
+
+[case testPrivateDefinitionInInterface]
+interface A
+  private def a()
+  private def b
+  private def b = x
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before "private"
+file.alo, line 3: Parse error before "private"
+file.alo, line 4: Parse error before "private"
+
+[case testInvalidInterface]
+class a implements if
+end
+[out]
+file.alo: In class "a":
+file.alo, line 1: Parse error before "if"
+
+[case testInvalidBindDeclaration]
+interface A
+  def f()
+  bind Object
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 3: Parse error before "bind"
+
+[case testInvalidBindDeclaration2]
+interface A
+  bind Object, A
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before ,
+
+[case testInvalidBindDeclaration3]
+interface A
+  bind
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before end of line
+
+[case testInvalidBindDeclaration4]
+interface A
+  bind x.y
+end
+[out]
+file.alo: In interface "A":
+file.alo, line 2: Parse error before .
+
+[case testBindDeclarationInClass]
+class A
+  bind Object
+end
+[out]
+file.alo: In class "A":
+file.alo, line 2: Parse error before "bind"
+
+[case testGarbageAfterFunctionSig2]
+def g() as x )
+end
+[out]
+file.alo: In function "g":
+file.alo, line 1: Parse error before )
+
+[case testGarbageAfterInstanceType1]
+var x as a<b> )
+[out]
+file.alo, line 1: Parse error before )
+
+[case testGarbageAfterInstanceType2]
+var x as a )
+[out]
+file.alo, line 1: Parse error before )
+
+[case testGarbageAfterTupleType]
+var x as (a, b) )
+[out]
+file.alo, line 1: Parse error before )
+
+[case testOmittingAllArgumentTypesWithIntersectionType]
+def isect(a, b) or
+         (a, b)
+end
+[out]
+file.alo: In function "isect":
+file.alo, line 1: Type signature expected when using "or"
+
+[case testNonMatchingNameInIntersectionType]
+def isect1(a, b) as void or
+          (a, a) as void
+end
+def isect2(a, b) as void or
+          (b, b) as void
+end
+def isect3(a, b=1) as void or
+          (b) as void
+end
+[out]
+file.alo: In function "isect1":
+file.alo, line 2: Name of argument "a" does not match initial signature
+file.alo: In function "isect2":
+file.alo, line 5: Name of argument "b" does not match initial signature
+file.alo: In function "isect3":
+file.alo, line 8: Name of argument "b" does not match initial signature

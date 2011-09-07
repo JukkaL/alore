@@ -1,0 +1,1100 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+[case testSimpleVarType]
+var x as Object
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(std::Object)))
+
+[case testSimpleFunctionSignature]
+def f(x as A, y as Object)
+end
+class A
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def (A, std::Object)))
+  TypeDef:3(
+    A
+  ))
+
+[case testMemberVariableType]
+class A
+  var a as Object
+  def create()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Type:2(std::Object))
+    FuncDef:3(
+      create)))
+
+[case testIntersectionTypes]
+def f(x as A, y as B) as A or
+     (x as B, y as A) as B
+end
+class A; end
+class B; end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def (A, B) as A /\ def (B, A) as B))
+  TypeDef:4(
+    A
+  )
+  TypeDef:5(
+    B
+  ))
+
+[case testDynamicType]
+var x as dynamic
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(dynamic)))
+
+[case testTupleType]
+var x as (Exception, Object)
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1((std::Exception, std::Object))))
+
+[case testForLoop]
+for x as Exception in 1
+end
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  ForStmt:1(
+    Var(x)
+    Type:1(std::Exception)
+    IntExpr(1)
+    Body()))
+
+[case testForLoop2]
+for x as Exception,
+    y as std :: Object in 1
+end
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  ForStmt:1(
+    Var(x)
+    Var(y)
+    Type:1(std::Exception)
+    Type:2(std::Object)
+    IntExpr(1)
+    Body()))
+
+[case testInlineTypeAnnotationWithOneArg]
+Object as <Object>()
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      TypeApplication:1(
+        NameExpr(Object [std::Object])
+        Types(
+          std::Object))
+      Args())))
+
+[case testInlineTypeAnnotationWithTwoArgs]
+Object as <Object, Exception>()
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      TypeApplication:1(
+        NameExpr(Object [std::Object])
+        Types(
+          std::Object
+          std::Exception))
+      Args())))
+
+[case testAnonymousFunctionTypeAnnotation]
+var f = def (x as Object) as Exception; end
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(f)
+    FuncExpr:1(
+      Args(
+        Var(x))
+      Type:1(def (std::Object) as std::Exception))))
+
+[case testAnonymousFunctionTypeAnnotationWithinClass]
+class A
+  def f()
+    var g = def (x as Object) as Exception; end
+  end
+end
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Body(
+        VarDef:3(
+          Var(g)
+          FuncExpr:3(
+            Args(
+              Var(x))
+            Type:3(def (std::Object) as std::Exception)))))))
+
+[case testAccessorAnnotations]
+class A
+  def x as Object
+  end
+  def x = y as Object
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      x
+      Getter
+      Type:2(std::Object))
+    FuncDef:4(
+      x
+      Setter
+      Args(
+        Var(y))
+      Type:4(std::Object))))
+
+[case testReferringToInterfaceTypes]
+interface A
+end
+var x as A
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+  )
+  VarDef:3(
+    Var(x)
+    Type:3(A)))
+
+[case testSimpleFunctionType]
+var x as def (Object) as Exception
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(def (std::Object) as std::Exception)))
+
+[case testDefaultArgFunctionType]
+var x as def (Object, Exception=)
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(def (std::Object, std::Exception=))))
+
+[case testVarArgFunctionType]
+var x as def (Object, *Exception)
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(def (std::Object, *std::Exception))))
+
+[case testQualifiedTypeName]
+var x as std::Object
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(std::Object)))
+
+[case testDoublyQualifiedTypeName]
+import a::b
+var x as (a::b::a, b::a)
+[file a/b/a-skip.alo]
+module a::b
+class a
+end
+[out]
+AloreFile:1(
+  Import(a::b)
+  VarDef:2(
+    Var(x)
+    Type:2((a::b::a, a::b::a))))
+
+[case testImportsAndNameLookup]
+import a
+var x as A
+[file a/a-skip.alo]
+module a
+import b
+class A
+end
+[file b/b-skip.alo]
+module b
+class A
+end
+[out]
+AloreFile:1(
+  Import(a)
+  VarDef:2(
+    Var(x)
+    Type:2(a::A)))
+
+[case testQualifiedToCurrentModule]
+import a
+[file a/a.alo]
+module a
+import b
+class A
+end
+var x as ::A
+[file b/b-skip.alo]
+module b
+class A
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+  Import(b)
+  TypeDef:3(
+    A
+  )
+  VarDef:5(
+    Var(x)
+    Type:5(a::A)))
+
+[case testFunctionWithDefaultArgs1]
+def f(x as Object, y=2 as Object)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def (std::Object, std::Object=))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(y [l]))
+        IntExpr(2)))))
+
+[case testFunctionWithDefaultArgs2]
+def f(x=1 as Object, y=2 as Object)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def (std::Object=, std::Object=))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(x [l]))
+        IntExpr(1))
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(y [l]))
+        IntExpr(2)))))
+
+[case testFunctionsWithVarargs1]
+def f(*x as Object)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def (*std::Object))
+    VarArg))
+
+[case testFunctionsWithVarargs2]
+def f(x as A, y=1 as Object, *z as Object)
+end
+class A; end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y)
+      Var(z))
+    Type:1(def (A, std::Object=, *std::Object))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(y [l]))
+        IntExpr(1)))
+    VarArg)
+  TypeDef:3(
+    A
+  ))
+
+[case testComplexIntersectionTypes]
+import a
+[file a/a-skip.alo]
+module a
+def f(x=nil as A) or
+     ()
+end
+
+def h(x as B, *y as A) or
+     (x as A)
+end
+
+def i(x=nil as A, y=nil as A, z=nil as A) or
+     (x as A, y as B, z= as A) or
+     (x as B, y as A, z as B) or
+     (x as A)
+end
+
+class A; end
+class B; end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testReturnValueInIntersectionType]
+def f(x = nil as Object) as Object or
+     (x as A)
+end
+class A; end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def (std::Object=) as std::Object /\ def (A))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(x [l]))
+        NilExpr())))
+  TypeDef:4(
+    A
+  ))
+
+[case testSimpleGenericType]
+class A<T>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+  ))
+
+[case testSimpleGenericTypeWithBound]
+class A<T is Object>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T is std::Object)
+  ))
+
+[case testSimpleGenericTypeWithMultipleVars]
+class A<T, S>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T
+      S)
+  ))
+
+[case testGenericTypeReference]
+class A<T>
+end
+var x as A<Object>
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+  )
+  VarDef:3(
+    Var(x)
+    Type:3(A<std::Object>)))
+
+[case testReferringTypeVariable]
+class A<T>
+  def f() as T
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+    FuncDef:2(
+      f
+      Type:2(def () as T`1))))
+
+[case testMemberVariableUsingTypeVar]
+class A<T>
+  var m = nil as T
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+    VarDef:2(
+      Var(m)
+      NilExpr()
+      Type:2(T`1))))
+
+[case testGenericFunction]
+def f<T>(x as T) as Object
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def <T> (T`-1) as std::Object)))
+
+[case testLocalVariableUsingTypeVar]
+def f<T>(x as T) as T
+  var y as T
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def <T> (T`-1) as T`-1)
+    Body(
+      VarDef:2(
+        Var(y)
+        Type:2(T`-1)))))
+
+[case testGetterAndSetterInGenericType]
+class A<T>
+  def g as T
+  end
+  def g = x as T
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+    FuncDef:2(
+      g
+      Getter
+      Type:2(T`1))
+    FuncDef:4(
+      g
+      Setter
+      Args(
+        Var(x))
+      Type:4(T`1))))
+
+[case testTypeVariableInComplexType]
+class A<T>
+  def f() as (A<T>, def (T) as T)
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+    FuncDef:2(
+      f
+      Type:2(def () as (A<T`1>, def (T`1) as T`1)))))
+
+[case testGenericMethod]
+class A
+  def f<T>(x as T) as T
+    var y as T
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Args(
+        Var(x))
+      Type:2(def <T> (T`-1) as T`-1)
+      Body(
+        VarDef:3(
+          Var(y)
+          Type:3(T`-1))))))
+
+[case testGenericMethodInGenericType]
+class A<T>
+  def f<S>(x as S, y as T)
+    var z as (S, T)
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+    FuncDef:2(
+      f
+      Args(
+        Var(x)
+        Var(y))
+      Type:2(def <S> (S`-1, T`1))
+      Body(
+        VarDef:3(
+          Var(z)
+          Type:3((S`-1, T`1)))))))
+
+[case testMultipleGenericTypeParameters]
+class A<X, Y>
+  def f(x as X, y as Y)
+    var z as (X, Y)
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      X
+      Y)
+    FuncDef:2(
+      f
+      Args(
+        Var(x)
+        Var(y))
+      Type:2(def (X`1, Y`2))
+      Body(
+        VarDef:3(
+          Var(z)
+          Type:3((X`1, Y`2)))))))
+
+[case testMultipleGenericFunctionParameters]
+def f<X, Y>(x as X, y as Y)
+  var z as (X, Y)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def <X, Y> (X`-1, Y`-2))
+    Body(
+      VarDef:2(
+        Var(z)
+        Type:2((X`-1, Y`-2))))))
+
+[case testGenericFunctionWithDefaultArgs]
+def f<T>(x as T, y = nil as T)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def <T> (T`-1, T`-1=))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(y [l]))
+        NilExpr()))))
+
+[case testGenericFunctionWithVarArgs]
+def f<T>(x as Object, *y as T)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def <T> (std::Object, *T`-1))
+    VarArg))
+
+[case testGenericInterface]
+interface A<T>
+  def g as T
+end
+var a as A<Object>
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    TypeVars(
+      T)
+    FuncDef:2(
+      g
+      Getter
+      Type:2(T`1)))
+  VarDef:4(
+    Var(a)
+    Type:4(A<std::Object>)))
+
+[case testInheritanceFromGenericClass1]
+class A<T>
+end
+class B is A<Object>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+  )
+  TypeDef:3(
+    B
+    NameExpr(A [A])
+    BaseType(
+      A<std::Object>)
+  ))
+
+[case testInheritanceFromGenericClass2]
+class A<T>
+end
+class B<S> is A<S>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+  )
+  TypeDef:3(
+    B
+    NameExpr(A [A])
+    TypeVars(
+      S)
+    BaseType(
+      A<S`1>)
+  ))
+
+[case testGenericTypeDefinedInModule]
+import m
+var a as A<Object>
+[file m/m.alo]
+module m
+class A<T>
+end
+[out]
+AloreFile:1(
+  Import(m)
+  VarDef:2(
+    Var(a)
+    Type:2(m::A<std::Object>)))
+AloreFile:1(
+  tmp/m/m.alo
+  Header(m)
+  TypeDef:2(
+    A
+    TypeVars(
+      T)
+  ))
+
+[case testInheritanceFromGenericInterface]
+import m
+class C implements X<B>, X<Object>
+end
+[file m/m-skip.alo]
+module m
+interface X<T>
+end
+class B
+end
+[out]
+AloreFile:1(
+  Import(m)
+  TypeDef:2(
+    C
+    BaseType(
+      m::X<m::B>
+      m::X<std::Object>)
+    Implements(
+      NameExpr(X [m::X])
+      NameExpr(X [m::X]))
+  ))
+
+[case testExtendingBothClassAndInterface1]
+import m
+class A is B<Object> implements C
+end
+[file m/m-skip.alo]
+module m
+class B<T>
+end
+interface C
+end
+[out]
+AloreFile:1(
+  Import(m)
+  TypeDef:2(
+    A
+    NameExpr(B [m::B])
+    BaseType(
+      m::B<std::Object>)
+    Implements(
+      NameExpr(C [m::C]))
+  ))
+
+[case testExtendingBothClassAndInterface2]
+import m
+class A is B implements C<Object>
+end
+[file m/m-skip.alo]
+module m
+class B
+end
+interface C<T>
+end
+[out]
+AloreFile:1(
+  Import(m)
+  TypeDef:2(
+    A
+    NameExpr(B [m::B])
+    BaseType(
+      m::C<std::Object>)
+    Implements(
+      NameExpr(C [m::C]))
+  ))
+
+[case testExtendingBothClassAndInterface3]
+import m
+class A is B<Object, A> implements C<Object>
+end
+[file m/m-skip.alo]
+module m
+class B<S, T>
+end
+interface C<T>
+end
+[out]
+AloreFile:1(
+  Import(m)
+  TypeDef:2(
+    A
+    NameExpr(B [m::B])
+    BaseType(
+      m::B<std::Object, A>
+      m::C<std::Object>)
+    Implements(
+      NameExpr(C [m::C]))
+  ))
+
+[case testSimpleBounds]
+class B
+end
+class A<T is Object>
+  def f() as T
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    B
+  )
+  TypeDef:3(
+    A
+    TypeVars(
+      T is std::Object)
+    FuncDef:4(
+      f
+      Type:4(def () as T`1))))
+
+[case testTupleTypeBound]
+class A<T is (Object, Object)>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T is (std::Object, std::Object))
+  ))
+
+[case testFunctionTypeBound]
+class A<T is def () as Object>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T is def () as std::Object)
+  ))
+
+[case testDynamicInTypeBound]
+class A<T is (dynamic, Object)>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T is (dynamic, std::Object))
+  ))
+
+[case testTypeVariableShadowsGlobalName]
+var T
+class A<T>
+  def f as T
+  end
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(T))
+  TypeDef:2(
+    A
+    TypeVars(
+      T)
+    FuncDef:3(
+      f
+      Getter
+      Type:3(T`1))))
+
+[case testDynamicallyTypedClassInheritingFromGenericType]
+class A<T>
+end
+class B is A
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T)
+  )
+  TypeDef:3(
+    B
+    NameExpr(A [A])
+  ))
+
+[case testBoundsInGenericFunction]
+def f<T is Object>(x as T) as T
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def <T is std::Object> (T`-1) as T`-1)))
+
+[case testSimpleFBoundedPolymorphismWithFunction]
+def f<T is Comparable<T>>(x as T) as Object
+end
+interface Comparable<T>
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def <T is Comparable<T`-1>> (T`-1) as std::Object))
+  TypeDef:3(
+    Comparable
+    Interface
+    TypeVars(
+      T)
+  ))
+
+[case testFboundedPolymorphismWithType]
+class A<T is B<S>, S is T>
+end
+class B<T>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T is B<S`2>
+      S is T`1)
+  )
+  TypeDef:3(
+    B
+    TypeVars(
+      T)
+  ))
+
+[case testIntersectionTypeGenericFunction1]
+def f<T>(x as T) as T or
+     <S>(x as S) as S
+  var y as (T, S)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def <T> (T`-1) as T`-1 /\ def <S> (S`-1) as S`-1)
+    Body(
+      VarDef:3(
+        Var(y)
+        Type:3((T`-1, S`-1))))))
+
+[case testIntersectionTypeGenericFunction2]
+def f<T>(x as T) as Object or
+     <T>(x as Object) as T
+  var y as T
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def <T> (T`-1) as std::Object /\ def <T> (std::Object) as T`-1)
+    Body(
+      VarDef:3(
+        Var(y)
+        Type:3(T`-1)))))
+
+[case testImplicitCreateSignature1]
+class A
+  var a, b as (Object, B)
+  var c = nil
+end
+class B; end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Var(b)
+      Type:2((std::Object, B)))
+    VarDef:3(
+      Var(c)
+      NilExpr())
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(a)
+        Var:nil(b))
+      Type:-1(def (std::Object, B))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              a))
+          NameExpr(a [l]))
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              b))
+          NameExpr(b [l])))))
+  TypeDef:5(
+    B
+  ))
+
+[case testImplicitCreateSignature2]
+class A
+  var d
+  var e as Object
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(d))
+    VarDef:3(
+      Var(e)
+      Type:3(std::Object))
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(d)
+        Var:nil(e))
+      Type:-1(def (dynamic, std::Object))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              d))
+          NameExpr(d [l]))
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              e))
+          NameExpr(e [l]))))))

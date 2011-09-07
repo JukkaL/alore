@@ -1,0 +1,941 @@
+-- Test cases for runtime (dynamic) checking transformation.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the 
+-- transformation.
+
+-- Note that the test cases use a pretty-printed output syntax that is not 
+-- valid Alore code.
+
+
+-- Empty method transformation, no inheritance
+-- -------------------------------------------
+
+
+[case testIdentityTransformation]
+class A
+end
+class B
+end
+[out]
+class A
+end
+class B
+end
+
+[case testSimpleMethod]
+class A
+  def create() as void
+  end
+
+  def f() as A
+  end
+end
+[out]
+class A
+  def create() as void
+  end
+
+  def f`A() as A
+  end
+  def f*() as dynamic
+    return {dyn <= A | f`A()}
+  end
+end
+
+[case testMethodWithArguments]
+class A
+  def create() as void
+  end
+
+  def f(a as A) as void
+  end
+end
+[out]
+class A
+  def create() as void
+  end
+
+  def f`A(a as A) as void
+  end
+  def f*(a as dynamic) as dynamic
+    f`A({A <= dyn | a})
+  end
+end
+
+[case testMethodWithDynamicTypesInArguments]
+class A
+  def f(a as dynamic, b as dynamic) as A
+  end
+end
+[out]
+class A
+  def f`A(a as dynamic, b as dynamic) as A
+  end
+  def f*(a as dynamic, b as dynamic) as dynamic
+    return {dyn <= A | f`A(a, b)}
+  end
+end
+
+[case testMethodWithDynamicReturnType]
+class A
+  def f(a as A) as dynamic
+  end
+end
+[out]
+class A
+  def f`A(a as A) as dynamic
+  end
+  def f*(a as dynamic) as dynamic
+    return f`A({A <= dyn | a})
+  end
+end
+
+
+-- Empty methods with inheritance
+-- ------------------------------
+
+
+[case testOverridingStaticWithDynamic]
+class A
+  def f(a as A) as B
+  end
+end
+class B is A
+  def f(a as dynamic) as dynamic
+  end
+end
+[out]
+class A
+  def f`A(a as A) as B
+  end
+  def f*(a as dynamic) as dynamic
+    return {dyn <= B | f`A({A <= dyn | a})}
+  end
+end
+class B is A
+  def f`B(a as dynamic) as dynamic
+  end
+  def f`A(a as A) as B
+    return {B <= dyn | f`B({dyn <= A | a})}
+  end
+  def f*(a as dynamic) as dynamic
+    return f`B(a)
+  end
+end
+
+[case testOverridingDynamicWithStatic]
+class A
+  def f(a as dynamic) as dynamic
+  end
+end
+class B is A
+  def f(a as A) as B
+  end
+end
+[out]
+class A
+  def f`A(a as dynamic) as dynamic
+  end
+  def f*(a as dynamic) as dynamic
+    return f`A(a)
+  end
+end
+class B is A
+  def f`B(a as A) as B
+  end
+  def f`A(a as dynamic) as dynamic
+    return {dyn <= B | f`B({A <= dyn | a})}
+  end
+  def f*(a as dynamic) as dynamic
+    return {dyn <= B | f`B({A <= dyn | a})}
+  end
+end
+
+[case testNewMethodInSubclass]
+class A
+  def f(a as A) as B
+  end
+end
+class B is A
+  def g(b as B) as A
+  end
+end
+[out]
+class A
+  def f`A(a as A) as B
+  end
+  def f*(a as dynamic) as dynamic
+    return {dyn <= B | f`A({A <= dyn | a})}
+  end
+end
+class B is A
+  def g`B(b as B) as A
+  end
+  def g*(b as dynamic) as dynamic
+    return {dyn <= A | g`B({B <= dyn | b})}
+  end
+end
+
+[case testOverridingMethodInGrandparent]
+class A
+  def f(a as A) as B
+  end
+end
+class B is A
+end
+class C is B
+  def f(a as dynamic) as dynamic
+  end
+end
+[out]
+...
+class B is A
+end
+class C is B
+  def f`C(a as dynamic) as dynamic
+  end
+  def f`A(a as A) as B
+    return {B <= dyn | f`C({dyn <= A | a})}
+  end
+  def f*(a as dynamic) as dynamic
+    return f`C(a)
+  end
+end
+
+[case testOverridingMethodTwice]
+class A
+  def f(a as A) as B
+  end
+end
+class B is A
+  def f(a as dynamic) as B
+  end
+end
+class C is B
+  def f(a as A) as dynamic
+  end
+end
+[out]
+...
+class B is A
+  def f`B(a as dynamic) as B
+  end
+  def f`A(a as A) as B
+    return f`B({dyn <= A | a})
+  end
+  def f*(a as dynamic) as dynamic
+    return {dyn <= B | f`B(a)}
+  end
+end
+class C is B
+  def f`C(a as A) as dynamic
+  end
+  def f`B(a as dynamic) as B
+    return {B <= dyn | f`C({A <= dyn | a})}
+  end
+  def f*(a as dynamic) as dynamic
+    return f`C({A <= dyn | a})
+  end
+end
+
+[case testOverridingStaticWithStatic]
+-- IDEA: This could be optimized by simply overriding f`A (no need for 
+--       wrappers)
+class A
+  def f(a as A) as B
+  end
+end
+class B is A
+  def f(a as A) as B
+  end
+end
+[out]
+...
+class B is A
+  def f`B(a as A) as B
+  end
+  def f`A(a as A) as B
+    return f`B(a)
+  end
+  def f*(a as dynamic) as dynamic
+    return {dyn <= B | f`B({A <= dyn | a})}
+  end
+end
+
+[case testOverridingDynamicWithDynamic]
+-- IDEA: This could be optimized by simply overriding f`A (no need for 
+--       wrappers)
+class A
+  def f(a as dynamic) as dynamic
+  end
+end
+class B is A
+  def f(a as dynamic) as dynamic
+  end
+end
+[out]
+...
+class B is A
+  def f`B(a as dynamic) as dynamic
+  end
+  def f`A(a as dynamic) as dynamic
+    return f`B(a)
+  end
+  def f*(a as dynamic) as dynamic
+    return f`B(a)
+  end
+end
+
+
+-- Method calls
+-- ------------
+
+
+[case testCallStaticallyTypedMethod]
+class A
+  def f(b as B) as A
+    return b.g()
+  end
+end
+class B
+  def g() as A
+  end
+end
+[out]
+class A
+  def f`A(b as B) as A
+    return b.g`B()
+  end
+...
+
+[case testCallDynamicallyTypedMethod]
+class A
+  def f(b as dynamic) as dynamic
+    return b.g()
+  end
+end
+class B
+  def g() as A
+  end
+end
+[out]
+class A
+  def f`A(b as dynamic) as dynamic
+    return b.g*()
+  end
+...
+
+[case testStaticCallWithArguments]
+class A
+  def f(b as B) as A
+    return b.g(b, b)
+  end
+end
+class B
+  def g(b as B, d as dynamic) as A
+  end
+end
+[out]
+class A
+  def f`A(b as B) as A
+    return b.g`B(b, {dyn <= B | b})
+  end
+...
+
+[case testDynamicCallWithArguments]
+class A
+  def f(d as dynamic, b as B) as A
+    return d.g(d, b)
+  end
+end
+class B
+end
+[out]
+class A
+  def f`A(d as dynamic, b as B) as A
+    return {A <= dyn | d.g*(d, {dyn <= B | b})}
+  end
+...
+
+[case testMethodCallWithInheritance]
+class A
+  def f1(b as B) as A
+    return b.f1(b)
+  end
+  def f2(b as B, a as A) as B
+    return b.g(a)
+  end
+end
+class B is A
+  def g(a as A) as B
+  end
+end
+[out]
+class A
+  def f1`A(b as B) as A
+    return b.f1`A(b)
+  end
+...
+  def f2`A(b as B, a as A) as B
+    return b.g`B(a)
+  end
+...
+
+[case testNestedMethodCalls]
+class A
+  def f(a as A) as dynamic
+    return a.g(a.g(a))
+  end
+  def g(a as dynamic) as A
+  end
+end
+[out]
+class A
+  def f`A(a as A) as dynamic
+    return {dyn <= A | a.g`A({dyn <= A | a.g`A({dyn <= A | a})})}
+  end
+...
+
+[case testMethodCallWithDirectReference]
+class A
+  def f(a as A) as dynamic
+    return g(a)
+  end
+  def g(a as dynamic) as A
+  end
+end
+[out]
+class A
+  def f`A(a as A) as dynamic
+    return {dyn <= A | g`A({dyn <= A | a})}
+  end
+...
+
+
+-- Statements
+-- ----------
+
+
+[case testReturnStatement1]
+class A
+  def f(b as B) as dynamic
+    return b.g()
+  end
+end
+class B
+  def g() as A
+  end
+end
+[out]
+class A
+  def f`A(b as B) as dynamic
+    return {dyn <= A | b.g`B()}
+  end
+  def f*(b as dynamic) as dynamic
+    return f`A({B <= dyn | b})
+  end
+end
+...
+
+[case testReturnStatement2]
+class A
+  def f(b as B) as A
+    return b.g()
+  end
+end
+class B
+  def g() as dynamic
+  end
+end
+[out]
+class A
+  def f`A(b as B) as A
+    return {A <= dyn | b.g`B()}
+  end
+  def f*(b as dynamic) as dynamic
+    return {dyn <= A | f`A({B <= dyn | b})}
+  end
+end
+...
+
+
+-- Cast insertion (or non-insertion) in specific cases
+-- ---------------------------------------------------
+
+
+[case testOmitSubtypeToSupertypeCast]
+class A
+  def f(b as B) as A
+    return b
+  end
+end
+class B is A
+end
+[out]
+class A
+  def f`A(b as B) as A
+    return b
+  end
+...
+
+
+-- Constructor and object construction
+-- -----------------------------------
+
+
+[case testBasicConstructor]
+class A
+  var a as A
+  var d as dynamic
+  
+  def create(a as A, d as dynamic)
+    self.a = a
+    self.d = d
+  end
+end
+[out]
+class A
+  var a as A
+  def a* as dynamic
+    return {dyn <= A | self.a}
+  end
+  var d as dynamic
+  def d* as dynamic
+    return self.d
+  end
+  
+  def create(a as A, d as dynamic)
+    self.a = a
+    self.d = d
+  end
+end
+
+[case testCreateInstanceWithExactTypes]
+class A
+  def create(b as B)
+  end
+  
+  def f(b as B) as A
+    return A(b)
+  end
+end
+class B
+end
+[out]
+class A
+  def create(b as B)
+  end
+  
+  def f`A(b as B) as A
+    return A(b)
+  end
+...
+
+[case testCreateInstanceWithReturnTypeCast]
+class A
+  def f() as dynamic
+    return A()
+  end
+end
+[out]
+class A
+  def f`A() as dynamic
+    return {dyn <= A | A()}
+  end
+...
+
+[case testCreateInstanceWithArgumentCasts]
+class A
+  def f(b as B, d as dynamic) as B
+    return B(b, d)
+  end
+end
+class B
+  def create(d as dynamic, a as A)
+  end
+end
+[out]
+class A
+  def f`A(b as B, d as dynamic) as B
+    return B({dyn <= B | b}, {A <= dyn | d})
+  end
+...
+
+
+-- Self expressions
+-- ----------------
+
+
+[case testSelf]
+class A
+  def f(a as dynamic)
+    self.f(self)
+  end
+end
+[out]
+class A
+  def f`A(a as dynamic)
+    self.f`A({dyn <= A | self})
+  end
+...
+
+
+-- Member variable access
+-- ----------------------
+
+
+[case testMemberVariableAccessViaStatic]
+class A
+  var a as A
+  var d as dynamic
+  def f() as A
+    return self.d
+  end
+  def g() as dynamic
+    return self.a
+  end
+end
+[out]
+class A
+...
+  def f`A() as A
+    return {A <= dyn | self.d}
+  end
+...
+  def g`A() as dynamic
+    return {dyn <= A | self.a}
+  end
+...
+
+[case testMemberVariableAccessViaDynamic]
+class A
+  def f(d as dynamic) as A
+    return d.x
+  end
+end
+[out]
+class A
+  def f`A(d as dynamic) as A
+    return {A <= dyn | d.x*}
+  end
+...
+
+
+-- Casts
+-- -----
+
+
+[case testCast]
+class A
+  def f(a as A) as B
+    return a as B
+  end
+end
+class B is A
+end
+[out]
+class A
+  def f`A(a as A) as B
+    return a as B
+  end
+...
+
+[case testDynamicCast]
+class A
+  def f(a as A) as B
+    return a as dynamic
+  end
+end
+class B is A
+end
+[out]
+class A
+  def f`A(a as A) as B
+    return {B <= dyn | {dyn <= A | a} as dynamic}
+  end
+...
+--    return {B <= dyn | {dyn <= A | a} as dynamic}
+
+
+-- Global expressions
+-- ------------------
+
+
+[case testGlobalExpression]
+class A
+  def f(a as dynamic)
+  end
+end
+
+A().f(A())
+[out]
+...
+A().f`A({dyn <= A | A()})
+
+
+-- Void type
+-- ---------
+
+
+[case testImplicitVoid]
+class A
+  def f(b as dynamic)
+  end
+end
+class B is A
+  def f(b as B)
+  end
+end
+[out]
+class A
+  def f`A(b as dynamic)
+  end
+  def f*(b as dynamic) as dynamic
+    f`A(b)
+  end
+end
+class B is A
+  def f`B(b as B)
+  end
+  def f`A(b as dynamic)
+    f`B({B <= dyn | b})
+  end
+  def f*(b as dynamic) as dynamic
+    f`B({B <= dyn | b})
+  end
+end
+
+
+-- Function definition and call
+-- ----------------------------
+
+
+[case testFunctionDefinitionAndCall]
+def f(a as A) as A
+  return A() as dynamic
+end
+var d as dynamic
+d = f(A() as dynamic)
+class A; end
+[out]
+def f(a as A) as A
+  return {A <= dyn | {dyn <= A | A()} as dynamic}
+end
+var d as dynamic
+d = {dyn <= A | f({A <= dyn | {dyn <= A | A()} as dynamic})}
+class A; end
+
+
+-- Assignment and initialization
+-- -----------------------------
+
+
+[case testAssignmentToGlobal]
+var a as A
+var d as dynamic
+a = a
+a = d
+d = a
+class A; end
+[out]
+var a as A
+var d as dynamic
+a = a
+a = {A <= dyn | d}
+d = {dyn <= A | a}
+class A; end
+
+[case testGlobalInitialization]
+var a as A
+var d as dynamic
+var dd = a as dynamic
+var aa = a as A
+class A; end
+[out]
+var a as A
+var d as dynamic
+var dd = {dyn <= A | a} as dynamic
+var aa = a as A
+class A; end
+
+[case testLocalVariableAssignmentAndInit]
+def f() as void
+  var a as A
+  var d = a as dynamic
+  var aa = a as A
+  a = a
+  d = a
+end
+class A; end
+[out]
+def f() as void
+  var a as A
+  var d = {dyn <= A | a} as dynamic
+  var aa = a as A
+  a = a
+  d = {dyn <= A | a}
+end
+class A; end
+
+[case testAssignmentToMemberUsingDot]
+var a as A
+var d as dynamic
+a.m = d
+a.m = a
+
+class A
+  var m as A
+end
+[out]
+...
+a.m = {A <= dyn | d}
+a.m = a
+...
+
+[case testDirectAssignmentToMember]
+class A
+  var m as A
+  var d as dynamic
+  
+  def f() as void
+    m = m
+    d = d
+    m = d
+    d = m
+  end
+end
+[out]
+...
+  def f`A() as void
+    m = m
+    d = d
+    m = {A <= dyn | d}
+    d = {dyn <= A | m}
+  end
+...
+
+[case testMemberInitialization]
+class A
+  var a as A
+  var d = a as dynamic
+  var b = a as A
+end
+[out]
+class A
+  var a as A
+...
+  var d = {dyn <= A | a} as dynamic
+...
+  var b = a as A
+...
+
+
+-- nil
+-- ---
+
+
+[case testInitializationToNil]
+var a = nil as Object
+var d = nil as dynamic
+[out]
+var a = nil as Object
+var d = nil as dynamic
+
+[case testNilFunctionArgument]
+def f(a as A)
+end
+f(nil)
+class A; end
+[out]
+...
+f(nil)
+...
+
+
+-- Control flow statements
+-- -----------------------
+
+
+[case testIf]
+var b as Boolean
+var d as dynamic
+if b
+  b = d
+elif d
+  d = b
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+...
+if b
+  b = {std::Boolean <= dyn | d}
+elif d
+  d = {dyn <= std::Boolean | b}
+end
+
+[case testWhile]
+def f(b as Boolean) as dynamic
+end
+var b as Boolean
+var d as dynamic
+while f(d)
+  b = d
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+...
+while f({std::Boolean <= dyn | d})
+  b = {std::Boolean <= dyn | d}
+end
+
+
+-- Private members
+-- ---------------
+
+
+[case testPrivateMemberVariable]
+class A
+  private var a as A
+  def create(d as dynamic)
+    self.a = d
+  end
+end
+[out]
+class A
+  private var a as A
+  def create(d as dynamic)
+    self.a = {A <= dyn | d}
+  end
+end
+
+
+-- Displaying debugging information
+-- --------------------------------
+
+
+[case testSimplePrint]
+-- The arguments to debugging functions are not coerced.
+__Print('hello')
+[out]
+__Print('hello')
+
+[case testComplexPrint]
+class A; end
+def f(a as dynamic) as dynamic
+end
+var a as A
+__Print(a, f(a))
+[out]
+...
+var a as A
+__Print(a, f({dyn <= A | a}))
+
+
+-- additional basic features
+--   pretty-printing values
+--   void type
+--   integer and boolean literals
+--   integer and boolean ops
+--   comparing against nil

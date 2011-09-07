@@ -1,0 +1,286 @@
+module parser
+
+import lex
+import types
+
+
+-- Parse a type. Return (type, index after type).
+def ParseType(tok as Array<Token>, index as Int) as (Typ, Int)
+  var p = TypeParser(tok, index)
+  return p.parseType(), p.index()
+end
+
+
+-- Parse type variables and optional bounds (<...>). Return (bounds, index 
+-- after bounds).
+def ParseTypeVariables(tok as Array<Token>, index as Int, 
+                       isFunc as Boolean) as (TypeVars, Int)
+  var p = TypeParser(tok, index)
+  return p.parseTypeVariables(isFunc), p.index()
+end
+
+
+private class TypeParser
+  private var tok as Array<Token>
+  private var ind as Int
+
+  def create(tok as Array<Token>, ind as Int)
+    self.tok = tok
+    self.ind = ind
+  end
+ 
+  def index() as Int
+    return self.ind
+  end
+
+  -- Parse a type.
+  def parseType() as Typ
+    var t = currentToken()
+    if t.str == "def"
+      return parseFunctionType(skip())
+    elif t.str == "dynamic"
+      return parseDynamicType()
+    elif t.str == "("
+      return parseTupleType()
+    elif t is Name or t.str == "::"
+      return parseNamedType()
+    else
+      parseError()
+    end
+  end
+
+  -- Parse type variables and optional bounds (<...>).
+  def parseTypeVariables(isFunc as Boolean) as TypeVars
+    var langle = expect("<")
+
+    var commas = [] as <Token>
+    var items = [] as <TypeVarDef>
+    var n = 1
+    while True
+      var t = parseTypeVariable(n, isFunc)
+      items.append(t)
+      if currentTokenStr() != ","
+        break
+      end
+      commas.append(skip())
+      n += 1
+    end
+
+    var rangle = expect(">")
+    return TypeVars(items, TypeVarsRepr(langle, commas, rangle))
+  end
+
+  private def parseTypeVariable(n as Int, isFunc as Boolean) as TypeVarDef
+    var t = expectType(Name)
+
+    var line = t.line
+    var name = t.str
+
+    var isTok = None
+    var bound = nil as Typ
+    if currentTokenStr() == "is"
+      isTok = skip()
+      bound = parseType()
+    end
+    
+    if isFunc
+      n = -n
+    end
+
+    return TypeVarDef(name, n, bound, line, TypeVarDefRepr(t, isTok))
+  end
+  
+  -- Parse "dynamic" type.
+  def parseDynamicType() as Dynamic
+    var tok = skip()
+    return Dynamic(tok.line, DynamicRepr(tok))
+  end
+
+  -- Parse a function type, without the def token.
+  def parseFunctionType(defTok = None as Token) as Callable
+    var line = currentToken().line
+
+    var vars = TypeVars([])
+    if currentTokenStr() == "<"
+      vars = parseTypeVariables(True)
+    end
+
+    var lparen = expect("(")
+
+    var argTypes = [] as <Typ>
+    var minArgs = -1
+    var isVarArg = False
+    var retType = Void(nil) as Typ
+    var assigns, asterisk = [] as <Token>, None
+
+    var commas = [] as <Token>
+    if currentTokenStr() != ")"
+      while True
+        if currentTokenStr() == "*"
+          asterisk = skip()
+          isVarArg = True
+        end
+
+        var t = parseType()
+        argTypes.append(t)
+        
+        if currentTokenStr() == "=" and not isVarArg
+          assigns.append(skip())
+          if minArgs == -1
+            minArgs = argTypes.length() - 1
+          end
+        else
+          assigns.append(None)
+          if minArgs != -1 and not isVarArg
+            parseError()
+          end
+        end
+
+        if currentTokenStr() != "," or isVarArg
+          break
+        end
+        commas.append(skip())
+      end
+    end
+
+    var rparen = expect(")")
+
+    if minArgs == -1
+      minArgs = argTypes.length()
+      if isVarArg
+        minArgs -= 1
+      end
+    end
+
+    var asTok = None
+    if currentTokenStr() == "as"
+      asTok = skip()
+      retType = parseType()
+    end
+
+    var repr = CallableRepr(defTok, lparen, commas, assigns, asterisk, 
+                            rparen, asTok)
+    return Callable(argTypes, minArgs, isVarArg, retType, False, nil, vars, 
+                    [], line, repr)
+  end
+
+  def parseNamedType() as UnboundType
+    var line = currentToken().line
+    var name = ""
+    var components = [] as <Token>
+    if currentTokenStr() == "::"
+      name = "::"
+      components.append(skip())
+    end
+
+    components.append(expectType(Name))
+    name += components[-1].str
+
+    while currentTokenStr() == "::"
+      components.append(skip())
+      var t = expectType(Name)
+      components.append(t)
+      name += "::" + t.str
+    end
+
+    var langle, rangle = None, None
+    var commas = [] as <Token>
+    var args = [] as <Typ>
+    if currentTokenStr() == "<"
+      langle = skip()
+
+      while True
+        var t = parseType()
+        args.append(t)
+        if currentTokenStr() != ","
+          break
+        end
+        commas.append(skip())
+      end
+
+      rangle = expect(">")
+    end
+
+    return UnboundType(name, args, line, UnboundTypeRepr(components, langle, 
+                                                         commas, rangle))
+  end
+
+  def parseTupleType() as TupleType
+    var line = currentToken().line
+    var lparen = expect("(")
+
+    var commas = [] as <Token>
+    var items = [] as <Typ>
+    while currentTokenStr() != ")"
+      var t = parseType()
+      items.append(t)
+
+      -- Single-item tuples require a trailing comma.
+      if currentTokenStr() == ")" and items.length() == 1
+        parseError()
+      end
+
+      if currentTokenStr() != ","
+        break
+      end    
+      commas.append(skip())
+
+      -- Trailing comma is only allowed for single-item tuples.
+      if currentTokenStr() == ")" and items.length() != 1
+        parseError()
+      end
+    end
+
+    var rparen = expect(")")
+    return TupleType(items, line, TupleTypeRepr(lparen, commas, rparen))
+  end
+
+  -- Helpers
+
+  def skip() as Token
+    self.ind += 1
+    return self.tok[self.ind - 1]
+  end
+  
+  def expect(str as Str) as Token
+    if self.tok[self.ind].str == str
+      self.ind += 1
+      return self.tok[self.ind - 1]
+    else
+      parseError()
+    end
+  end
+  
+  def expectType(type as Type) as Token
+    if currentToken() is type
+      self.ind += 1
+      return self.tok[self.ind - 1]
+    else
+      parseError()
+    end
+  end
+  
+  def currentToken() as Token
+    return self.tok[self.ind]
+  end
+  
+  def currentTokenStr() as Str
+    return currentToken().str
+  end
+  
+  def parseError() as void
+    raise TypeParseError(self.tok, self.ind)
+  end
+end
+
+
+class TypeParseError is Exception
+  const index as Int
+  const token as Token
+
+  def create(token as Array<Token>, index as Int)
+    self.token = token[index]
+    self.index = index
+    super.create()
+  end
+end

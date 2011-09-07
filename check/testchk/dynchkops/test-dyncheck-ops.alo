@@ -1,0 +1,389 @@
+module testchk::dynchkops
+
+-- Unit test cases for operations in the __dynchk module. They are in a 
+-- separate module to avoid polluting the test module namespace.
+
+import unittest
+import __dynchk
+import reflect
+
+
+private const Fail
+private const Dyn = __dynchk::__Dyn
+
+
+class DyncheckOpsSuite is Suite
+  private var fx -- Test fixture
+  
+  def setUp()
+    self.fx = OpsFixture()
+  end
+
+
+  def testTrivial()
+    -- Trivial casts.
+    assertCast(A, A, fx.a, fx.a)
+  
+    -- Trivial casts to and from dynamic.
+    assertCast(Dyn, A, fx.a, fx.a)
+    assertCast(A, Dyn, fx.a, fx.a)
+  end
+  
+  def testNonGeneric()    
+    -- Failed cast.
+    assertCast(A, Dyn, fx.b, Fail)
+    
+    -- Subtype relationship with dynamic.
+    assertCast(A, Dyn, fx.aa, fx.aa)
+    assertCast(Dyn, A, fx.aa, fx.aa)
+    
+    -- Subtype relationship without dynamic.
+    assertCast(A, AA, fx.aa, fx.aa)
+    assertCast(A, AB, fx.ab, fx.ab)
+    assertCast(AA, A, fx.aa, fx.aa)
+    assertCast(AB, A, fx.ab, fx.ab)
+    
+    -- Failed subtype cast.
+    assertCast(AA, A, fx.ab, Fail)
+    assertCast(AA, A, fx.a, Fail)
+    assertCast(AB, A, fx.aa, Fail)
+    assertCast(AB, A, fx.a, Fail)
+  end
+  
+  def testDeepHierarchy()
+    assertCast(Object, AA, fx.aa, fx.aa)
+    assertCast(Object, A, fx.aa, fx.aa)
+    assertCast(AA, Object, fx.aa, fx.aa)
+    assertCast(AA, Object, fx.a, Fail)
+  end
+  
+  -- Test coercion where the value is not an instance of the source type.
+  def testValueIncompatibleWithSource()
+    assertCast(Dyn, A, fx.o, fx.o)
+    assertCast(Dyn, AA, fx.o, fx.o)
+    assertCast(Dyn, AA, fx.a, fx.a)
+  end
+  
+  -- Test coercions between 'dynamic' and simple generic types, using only
+  -- naked input objects.
+  def testGenericsAndDynamic()
+    -- {dyn <= G<A> | naked G} ==> wrapped G<A>
+    assertCast(Dyn, fx.g_a_t, fx.g_naked, fx.g_a)
+    assertCast(Dyn, fx.h_a_t, fx.h_naked, fx.h_a)
+    -- {G<A> <= dyn | naked G} ==> wrapped G<A>
+    assertCast(fx.g_a_t, Dyn, fx.g_naked, fx.g_a)
+    
+    -- Failures
+    
+    -- {G<A> <= dyn | A} ==> fail
+    assertCast(fx.g_a_t, Dyn, fx.a, Fail)    
+  end
+  
+  -- Test coercions from wrapped generics (via type dynamic) to equivalent 
+  -- generic types (no-op).
+  def testEquivalentWrappedGenerics()
+    -- {G<X> <= dyn | wrapped G<X>} is a no-op.
+    assertCast(fx.g_a_t, Dyn, fx.g_a, fx.g_a)
+    assertCast(fx.g_b_t, Dyn, fx.g_b, fx.g_b)
+    assertCast(fx.h_a_t, Dyn, fx.h_a, fx.h_a)
+  end
+  
+  -- As above, but with invalid generic type arguments.
+  def testWrappedGenericsWithUnrelatedTypeArguments()
+    -- {G<X> <= dyn | wrapped G<Y>} fails if X unrelated to Y
+    assertCast(fx.g_a_t, Dyn, fx.g_b, Fail)
+    assertCast(fx.g_b_t, Dyn, fx.g_a, Fail)
+  end
+  
+  def testWrappedGenericsWithInvalidGenericType()
+    -- {G<A> <= dyn | naked H} ==> fail
+    assertCast(fx.g_a_t, Dyn, fx.h_naked, Fail)
+    -- {G<A> <= dyn | H<A>} ==> fail
+    assertCast(fx.g_a_t, Dyn, fx.h_a, Fail)
+  end
+  
+  -- Test coercions between generics with different type arguments. Here one
+  -- of the arguments is dynamic, e.g. G<X> <= dyn.
+  def testGenericsWithDifferentTypeArgumentsOneDynamic()
+    -- {G<A> <= G<dyn> | naked G} ==> wrapped G<A>
+    assertCast(fx.g_a_t, fx.g_dyn_t, fx.g_naked, fx.g_a)
+    -- {G<A> <= G<dyn> | wrapped G<A>} ==> wrapped G<A>
+    assertCast(fx.g_a_t, fx.g_dyn_t, fx.g_a, fx.g_a)
+    
+    -- {G<dyn> <= G<A> | naked G} ==> wrapped G<A>
+    assertCast(fx.g_dyn_t, fx.g_a_t, fx.g_naked, fx.g_a)
+    -- {G<dyn> <= G<A> | wrapped G<A>} ==> wrapped G<A>
+    assertCast(fx.g_dyn_t, fx.g_a_t, fx.g_a, fx.g_a)
+    
+    -- Failures
+    
+    -- {G<A> <= G<dyn> | wrapped G<B>} ==> Fail
+    assertCast(fx.g_a_t, fx.g_dyn_t, fx.g_b, Fail)
+  end
+  
+  -- Test coercions of form G<dynamic> <= dynamic.
+  def testFromDynamicToGenericWithDynamicArgument()
+    -- {G<dyn> <= dyn | wrapped G<A>} ==> wrapped G<A>
+    assertCast(fx.g_dyn_t, Dyn, fx.g_a, fx.g_a)
+    -- {G<dyn> <= dyn | naked G} ==> naked G
+    assertCast(fx.g_dyn_t, Dyn, fx.g_naked, fx.g_naked)
+    
+    -- Failures.
+    
+    -- {G<dyn> <= dyn | naked H} ==> fail
+    assertCast(fx.g_dyn_t, Dyn, fx.h_naked, Fail)
+    -- {G<dyn> <= dyn | wrapped H<A>} ==> fail
+    assertCast(fx.g_dyn_t, Dyn, fx.h_a, Fail)
+  end
+  
+  def testFromGenericWithDynamicArgumentToDynamic()    
+    -- {dyn <= G<dyn> | naked G} ==> naked G
+    assertCast(Dyn, fx.g_dyn_t, fx.g_naked, fx.g_naked)
+    -- {dyn <= G<dyn> | wrapped G<A>} ==> wrapped G<A>
+    assertCast(Dyn, fx.g_dyn_t, fx.g_a, fx.g_a)
+  end
+  
+  def testFailedCoercionToGenericWithSimpleSourceValue()
+    -- {G<A> <= dyn | naked A} ==> fail
+    assertCast(fx.g_a_t, Dyn, fx.a, Fail)
+    -- {G<dyn> <= dyn | naked A} ==> fail
+    assertCast(fx.g_dyn_t, Dyn, fx.a, Fail)
+  end
+  
+  def testSimpleMeetsWithDynamicSourceType()
+    -- Subtype -> supertype
+  
+    -- {G<Object> <= dyn | G<A>} ==> G<A>
+    assertCast(fx.g_obj_t, Dyn, fx.g_a, fx.g_a)
+    -- {G<Object> <= dyn | G<AA>} ==> G<AA>
+    assertCast(fx.g_obj_t, Dyn, fx.g_aa, fx.g_aa)
+    -- {G<A> <= dyn | G<AA>} ==> G<AA>
+    assertCast(fx.g_a_t, Dyn, fx.g_aa, fx.g_aa)
+    
+    -- Supertype -> subtype
+    
+    -- {G<A> <= dyn | G<Object>} ==> G<A>
+    assertCast(fx.g_a_t, Dyn, fx.g_obj, fx.g_a)
+    -- {G<AA> <= dyn | G<Object>} ==> G<AA>
+    assertCast(fx.g_aa_t, Dyn, fx.g_obj, fx.g_aa)
+    -- {G<AA> <= dyn | G<A>} ==> G<AA>
+    assertCast(fx.g_aa_t, Dyn, fx.g_a, fx.g_aa)
+    
+    -- Failures
+    
+    -- {G<A> <= dyn | G<BA>} ==> Fail
+    assertCast(fx.g_a_t, Dyn, fx.g_ba, Fail)
+    -- {G<Object> <= dyn | H<A>} ==> Fail
+    assertCast(fx.g_obj_t, Dyn, fx.h_a, Fail)
+  end
+  
+  def testSimpleMeetsWithGenericSourceTypeWithDynamicArgument()
+    -- Subtype -> supertype
+  
+    -- {G<Object> <= G<dyn> | G<A>} ==> G<A>
+    assertCast(fx.g_obj_t, fx.g_dyn_t, fx.g_a, fx.g_a)
+    -- {G<Object> <= G<dyn> | G<AA>} ==> G<AA>
+    assertCast(fx.g_obj_t, fx.g_dyn_t, fx.g_aa, fx.g_aa)
+    -- {G<A> <= G<dyn> | G<AA>} ==> G<AA>
+    assertCast(fx.g_a_t, fx.g_dyn_t, fx.g_aa, fx.g_aa)
+    
+    -- Supertype -> subtype
+    
+    -- {G<A> <= G<dyn> | G<Object>} ==> G<A>
+    assertCast(fx.g_a_t, fx.g_dyn_t, fx.g_obj, fx.g_a)
+    -- {G<AA> <= G<dyn> | G<Object>} ==> G<AA>
+    assertCast(fx.g_aa_t, fx.g_dyn_t, fx.g_obj, fx.g_aa)
+    -- {G<AA> <= G<dyn> | G<A>} ==> G<AA>
+    assertCast(fx.g_aa_t, fx.g_dyn_t, fx.g_a, fx.g_aa)
+    
+    -- Failures
+    
+    -- {G<A> <= G<dyn> | G<BA>} ==> Fail
+    assertCast(fx.g_a_t, fx.g_dyn_t, fx.g_ba, Fail)
+  end
+  
+  
+  -- Generics with multiple type arguments
+  -- -------------------------------------
+  
+  
+  def testMultipleArgs()
+    -- {M<A, B> <= dyn | naked m} ==> wrapped M<A, B>
+    assertCast(fx.m_a_b_t, Dyn, fx.m_naked, fx.m_a_b)
+    -- {M<A, B> <= dyn | wrapped M<A, B>} ==> wrapped M<A, B>
+    assertCast(fx.m_a_b_t, Dyn, fx.m_a_b, fx.m_a_b)
+    
+    -- {dyn <= M<A, B> | naked m} ==> wrapped M<A, B>
+    assertCast(Dyn, fx.m_a_b_t, fx.m_naked, fx.m_a_b)
+    -- {dyn <= M<A, B> | wrapped M<A, B>} ==> wrapped M<A, B>
+    assertCast(Dyn, fx.m_a_b_t, fx.m_a_b, fx.m_a_b)
+    
+    -- Failures
+    
+    -- {M<A, A> <= dyn | wrapped M<A, B>} ==> Fail
+    assertCast(fx.m_a_a_t, Dyn, fx.m_a_b, Fail)
+    -- {M<A, A> <= dyn | wrapped M<B, A>} ==> Fail
+    assertCast(fx.m_a_a_t, Dyn, fx.m_b_a, Fail)
+  end
+  
+  def testMultipleArgsSomeDynamic()
+    -- {M<B, dynamic> <= M<dynamic, A> | m_naked} => wrapped M<B, A>
+    assertCast(fx.m_b_dyn_t, fx.m_dyn_a_t, fx.m_naked, fx.m_b_a)
+    
+    -- {M<B, dynamic> <= M<B, A> | m_naked} => wrapped M<B, A>
+    assertCast(fx.m_b_dyn_t, fx.m_b_a_t, fx.m_naked, fx.m_b_a)
+    -- {M<B, A> <= M<dynamic, A> | m_naked} => wrapped M<B, A>
+    assertCast(fx.m_b_a_t, fx.m_dyn_a_t, fx.m_naked, fx.m_b_a)
+    
+    -- {M<B, dynamic> <= dyn | wrapped M<B, dynamic>} => wrapped M<B, dynamic>
+    assertCast(fx.m_b_dyn_t, Dyn, fx.m_b_dyn, fx.m_b_dyn)
+    -- {M<dynamic, B> <= dyn | wrapped M<dynamic, B>} => wrapped M<dynamic, B>
+    assertCast(fx.m_dyn_a_t, Dyn, fx.m_dyn_a, fx.m_dyn_a)
+  end
+  
+  def testMeetsWithMultipleTypeVars()
+    -- {M<A, B> <= dyn | wrapped M<AA, B>} ==> wrapped M<AA, B>
+    assertCast(fx.m_a_b_t, Dyn, fx.m_aa_b, fx.m_aa_b)
+    -- {M<AA, B> <= dyn | wrapped M<A, B>} ==> wrapped M<AA, B>
+    assertCast(fx.m_aa_b_t, Dyn, fx.m_a_b, fx.m_aa_b)
+    -- {M<B, A> <= dyn | wrapped M<B, AA>} ==> wrapped M<B, AA>
+    assertCast(fx.m_b_a_t, Dyn, fx.m_b_aa, fx.m_b_aa)
+    -- {M<B, AA> <= dyn | wrapped M<B, A>} ==> wrapped M<B, AA>
+    assertCast(fx.m_b_aa_t, Dyn, fx.m_b_a, fx.m_b_aa)
+    
+    -- {M<A, dyn> <= dyn | wrapped M<AA, B>} ==> wrapped M<AA, B>
+    assertCast(fx.m_a_dyn_t, Dyn, fx.m_aa_b, fx.m_aa_b)
+    -- {M<dyn, A> <= dyn | wrapped M<B, AA>} ==> wrapped M<B, AA>
+    assertCast(fx.m_dyn_a_t, Dyn, fx.m_b_aa, fx.m_b_aa)
+    
+    -- {M<AA, B> <= dyn | wrapped M<A, dyn>} ==> wrapped M<AA, B>
+    assertCast(fx.m_aa_b_t, Dyn, fx.m_a_dyn, fx.m_aa_b)
+    -- {M<B, A> <= dyn | wrapped M<dyn, AA>} ==> wrapped M<B, AA>
+    assertCast(fx.m_b_a_t, Dyn, fx.m_dyn_aa, fx.m_b_aa)
+    
+    -- Result has 'dynamic' as an argument
+    
+    -- {M<dyn, A> <= dyn | wrapped M<dyn, AA>} ==> wrapped M<dyn, AA>
+    assertCast(fx.m_dyn_a_t, Dyn, fx.m_dyn_aa, fx.m_dyn_aa)
+    -- {M<dyn, AA> <= dyn | wrapped M<dyn, A>} ==> wrapped M<dyn, AA>
+    assertCast(fx.m_dyn_aa_t, Dyn, fx.m_dyn_a, fx.m_dyn_aa)
+  end
+  
+  
+  -- Error messages
+  -- --------------
+  
+  
+  def testExceptionErrorMessages()
+    assertCastMessage(A, Dyn, fx.b, 'A expected, but found B')
+    assertCastMessage(A, Dyn, fx.g_naked, 'A expected, but found G')
+    assertCastMessage(A, Dyn, fx.g_a, 'A expected, but found G')
+    assertCastMessage(fx.g_a_t, Dyn, fx.h_a, 'G expected, but found H')
+    assertCastMessage(fx.g_a_t, Dyn, fx.g_b, 'Cannot coerce G<B> to G<A>')
+    assertCastMessage(fx.m_a_b_t, Dyn, fx.m_a_a, 
+                      'Cannot coerce M<A, A> to M<A, B>')
+    assertCastMessage(fx.g_g_a_t, Dyn, fx.g_g_b, 
+                      'Cannot coerce G<G<B>> to G<G<A>>')
+  end
+  
+  
+  -- Nested generics
+  -- ---------------
+  
+  
+  def testNestedGenerics()
+    -- {G<G<A>> <= dyn | naked G} ==> G<G<A>>
+    assertCast(fx.g_g_a_t, Dyn, fx.g_naked, fx.g_g_a)    
+    -- {G<G<A>> <= dyn | wrapped G<G<A>>} ==> G<G<A>>
+    assertCast(fx.g_g_a_t, Dyn, fx.g_g_a, fx.g_g_a)
+    
+    -- Failures
+    
+    -- {G<G<A>> <= dyn | wrapped G<G<B>>} ==> fail
+    assertCast(fx.g_g_a_t, Dyn, fx.g_g_b, Fail)
+    -- {G<G<A>> <= dyn | wrapped G<H<A>>} ==> fail
+    assertCast(fx.g_g_a_t, Dyn, fx.g_h_a, Fail)
+  
+    -- {G<G<A>> <= dyn | wrapped G<A>} ==> fail
+    assertCast(fx.g_g_a_t, Dyn, fx.g_b, Fail)
+    -- {G<A> <= dyn | wrapped G<G<A>>} ==> fail
+    assertCast(fx.g_a_t, Dyn, fx.g_g_a, Fail)
+  end
+  
+  def testNestedGenericsWithDynamicTypeArguments()
+    -- {G<dyn> <= G<G<A>> | naked G} ==> wrapped G<G<A>>
+    assertCast(fx.g_dyn_t, fx.g_g_a_t, fx.g_naked, fx.g_g_a)    
+    -- {G<G<A>> <= G<dyn> | naked G} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_a_t, fx.g_dyn_t, fx.g_naked, fx.g_g_a)
+    
+    -- {G<G<dyn>> <= G<G<A>> | naked G} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_dyn_t, fx.g_g_a_t, fx.g_naked, fx.g_g_a)    
+    -- {G<G<A>> <= G<G<dyn>> | naked G} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_a_t, fx.g_g_dyn_t, fx.g_naked, fx.g_g_a)
+    
+    -- {G<G<dyn>> <= G<G<A>> | wrapped G<G<A>>} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_dyn_t, fx.g_g_a_t, fx.g_g_a, fx.g_g_a)
+    -- {G<G<A>> <= G<G<dyn>> | wrapped G<G<A>>} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_a_t, fx.g_g_dyn_t, fx.g_g_a, fx.g_g_a)
+    
+    -- {G<G<A>> <= dyn | wrapped G<G<dyn>>} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_a_t, Dyn, fx.g_g_dyn, fx.g_g_a)
+    -- {G<G<dyn>> <= dyn | wrapped G<G<A>>} ==> wrapped G<G<A>>
+    assertCast(fx.g_g_dyn_t, Dyn, fx.g_g_a, fx.g_g_a)
+  end
+  
+  def testNestedMeets()
+    -- {G<G<A>> <= dyn | wrapped G<G<AA>>} ==> wrapped G<G<AA>>
+    assertCast(fx.g_g_a_t, Dyn, fx.g_g_aa, fx.g_g_aa)
+    -- {G<G<AA>> <= dyn | wrapped G<G<A>>} ==> wrapped G<G<AA>>
+    assertCast(fx.g_g_aa_t, Dyn, fx.g_g_a, fx.g_g_aa)
+  end
+  
+  
+  private def assertCast(target, source, value, result)
+    if result == Fail
+      AssertRaises(AnnotationError, def ()
+                                      __dynchk::__Cast(target, source, value)
+                                    end)
+    else
+      var act = __dynchk::__Cast(target, source, value)
+      if not isEqual(act, result)
+        raise AssertionFailure('{} != {}'.format(act, result))
+      end
+    end
+  end
+  
+  private def assertCastMessage(target, source, value, message)
+    try
+      __dynchk::__Cast(target, source, value)
+      raise AssertionFailure('No exception raised')
+    except e is AnnotationError
+      AssertEqual(e.message.replace('testchk::dynchkops::', ''),
+                  message)
+    end
+  end
+  
+  private def isEqual(a, b)
+    if TypeOf(a) == TypeOf(b) 
+      if Str(TypeOf(a)).endsWith('___dyn')
+        return a.__o == b.__o and isEqual(a.__tv, b.__tv)
+      elif a is __Gen
+        return a.type == b.type and isEqual(a.args, b.args)
+      elif a is Array
+        if a.length() != b.length()
+          return False
+        end
+        for i in 0 to a.length()
+          if not isEqual(a[i], b[i])
+            return False
+          end
+        end
+        return True
+      else
+        return a == b
+      end
+    else
+      return a == b
+    end
+  end
+end

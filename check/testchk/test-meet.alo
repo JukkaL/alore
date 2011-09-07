@@ -1,0 +1,282 @@
+module testchk
+
+-- Test cases for greatest lower bounds (meets) of types.
+
+import unittest
+import types
+import checker
+
+
+class MeetSuite is Suite
+  private var fx
+  
+  def setUp()
+    self.fx = TypeFixture()
+  end
+  
+  def testTrivialCases()
+    for simple in fx.void, fx.a, fx.o, fx.b
+      assertMeet(simple, simple, simple)
+    end
+  end
+  
+  def testClassSubtyping()
+    assertMeet(fx.a, fx.o, fx.a)
+    assertMeet(fx.a, fx.b, fx.b)
+    assertMeet(fx.b, fx.o, fx.b)
+    assertMeet(fx.a, fx.d, NilType())
+    assertMeet(fx.b, fx.c, NilType())
+  end
+  
+  def testTuples()
+    assertMeet(tuple(), tuple(), tuple())
+    assertMeet(tuple(fx.a), tuple(fx.a), tuple(fx.a))
+    assertMeet(tuple(fx.b, fx.c), tuple(fx.a, fx.d), tuple(fx.b, NilType()))
+    
+    assertMeet(tuple(fx.a, fx.a), fx.stdTuple, NilType())
+    assertMeet(tuple(fx.a), tuple(fx.a, fx.a), NilType())
+  end
+  
+  def testFunctionTypes()
+    assertMeet(callable(fx.a, fx.b), callable(fx.a, fx.b), 
+               callable(fx.a, fx.b))
+               
+    assertMeet(callable(fx.a, fx.b), callable(fx.b, fx.b), NilType())
+    assertMeet(callable(fx.a, fx.b), callable(fx.a, fx.a), NilType())
+  end
+  
+  def testTypeVars()
+    assertMeet(fx.t, fx.t, fx.t)
+    assertMeet(fx.s, fx.s, fx.s)
+    assertMeet(fx.t, fx.s, NilType())
+  end
+  
+  def testVoid()
+    assertMeet(fx.void, fx.void, fx.void)
+    assertMeet(fx.void, fx.dyn, fx.dyn)
+    
+    -- Meet of any other type against void results in ErrorType, since there
+    -- is no meaningful valid result.
+    for t in fx.a, fx.o, UnboundType("x"), NilType(), fx.t, tuple(), 
+             callable(fx.a, fx.b)
+      assertMeet(t, fx.void, fx.err)
+    end
+  end
+  
+  def testNil()
+    assertMeet(NilType(), NilType(), NilType())
+    
+    assertMeet(NilType(), fx.dyn, fx.dyn)
+    assertMeet(NilType(), fx.void, fx.err)
+    
+    -- Any type t joined with nil results in nil, unless t is dynamic or void.
+    for t in fx.a, fx.o, UnboundType("x"), fx.t, tuple(), callable(fx.a, fx.b)
+      assertMeet(t, NilType(), NilType())
+    end
+  end
+  
+  def testUnboundType()
+    assertMeet(UnboundType("x"), UnboundType("x"), fx.dyn)
+    assertMeet(UnboundType("x"), UnboundType("y"), fx.dyn)
+    
+    assertMeet(UnboundType("x"), fx.void, fx.err)
+    
+    -- The meet of any type t with an unbound type results in dynamic (except
+    -- for void). Unbound type means that there is an error somewhere in the 
+    -- program, so this does not affect type safety.
+    for t in fx.dyn, fx.a, fx.o, fx.t, tuple(), callable(fx.a, fx.b)
+      assertMeet(t, UnboundType("X"), fx.dyn)
+    end
+  end
+  
+  def testDynamicType()
+    -- Meet against dynamic type always results in dynamic.
+    for t in fx.dyn, fx.a, fx.o, NilType(), UnboundType("x"), fx.void, fx.t,
+             tuple(), callable(fx.a, fx.b)
+      assertMeet(t, fx.dyn, fx.dyn)
+    end
+  end
+  
+  def testErrorType()
+    assertMeet(fx.err, fx.dyn, fx.dyn)
+  
+    -- Meet against any type except dynamic results in ErrorType.
+    for t in fx.a, fx.o, NilType(), UnboundType("x"), fx.void, fx.t,
+             tuple(), callable(fx.a, fx.b)
+      assertMeet(t, fx.err, fx.err)
+    end    
+  end
+  
+  def testSimpleGenerics()
+    assertMeet(fx.ga, fx.ga, fx.ga)
+    assertMeet(fx.ga, fx.o, fx.ga)
+    assertMeet(fx.ga, fx.gb, fx.nilt)
+    assertMeet(fx.ga, fx.g2a, fx.nilt)
+    
+    assertMeet(fx.ga, fx.nilt, fx.nilt)
+    assertMeet(fx.ga, fx.dyn, fx.dyn)
+    
+    for t in fx.a, fx.t, tuple(), callable(fx.a, fx.b)
+      assertMeet(t, fx.ga, fx.nilt)
+    end
+  end
+  
+  def testGenericsWithMultipleArgs()
+    assertMeet(fx.hab, fx.hab, fx.hab)
+    assertMeet(fx.hab, fx.haa, fx.nilt)
+    assertMeet(fx.hab, fx.hbb, fx.nilt)    
+  end
+  
+  def testGenericsWithRanges()
+    assertMeet(fx.gaa, fx.gaa, fx.gaa)
+    assertMeet(fx.gaa, fx.gbb, fx.nilt)
+    
+    assertMeet(fx.gba, fx.gaa, fx.gaa)
+    assertMeet(fx.gao, fx.gaa, fx.gaa)
+    assertMeet(fx.gbo, fx.gaa, fx.gaa)
+    
+    assertMeet(fx.gba, fx.gba, fx.gba)
+    assertMeet(fx.gbo, fx.gba, fx.gba)
+    assertMeet(fx.gao, fx.gba, fx.gaa)
+    
+    assertMeet(fx.gbo, fx.gao, fx.gao)
+    assertMeet(fx.gao, fx.gao, fx.gao)
+    
+    assertMeet(fx.ga, fx.gao, fx.gaa)
+    assertMeet(fx.ga, fx.gba, fx.gaa)
+    assertMeet(fx.ga, fx.gbo, fx.gaa)
+    assertMeet(fx.gb, fx.gao, fx.nilt)
+    
+    assertMeet(fx.gbb, fx.gao, fx.nilt)
+    
+    -- FIX other bound meet/join cases
+  end
+  
+  def testGenericsWithInheritance()
+    assertMeet(fx.gsab, fx.gb, fx.gsab)
+    assertMeet(fx.gsba, fx.gb, fx.nilt)
+  end
+  
+  def testGenericsWithInheritanceAndSharedSupertype()
+    assertMeet(fx.gsba, fx.gs2a, fx.nilt)
+    assertMeet(fx.gsab, fx.gs2a, fx.nilt)
+  end
+  
+  def testGenericsWithInheritanceAndRanges()
+    -- Note that the result is collapsed.
+    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.o, fx.o]), 
+               fx.gaa, 
+               Instance(fx.gsi, [fx.d, fx.a]))
+    
+    -- This results in bottom (nilt) since we collapse ranges in this case
+    -- before calculating the meet.
+    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
+               fx.gba, fx.nilt)
+    
+    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
+               fx.gbb, fx.nilt)
+  end
+  
+  def testNestedRanges()
+    assertMeet(Instance(fx.gi, [fx.gba]),
+               Instance(fx.gi, [fx.gao]),
+               Instance(fx.gi, [fx.gaa]))
+  end
+  
+  def testGenericTypesAndDynamic()
+    assertMeet(fx.gdyn, fx.ga, fx.gdyn)
+  end
+  
+  def testGenericTypesAndDynamicAndRanges()
+    assertMeet(fx.gdyn, fx.gba, fx.gdyndyn)
+    assertMeet(fx.gdyndyn, fx.gba, fx.gdyndyn)
+  end
+  
+  def testCallablesWithDynamic()
+    assertMeet(callable(fx.a, fx.a,   fx.dyn, fx.a), 
+               callable(fx.a, fx.dyn, fx.a,   fx.dyn),
+               callable(fx.a, fx.dyn, fx.dyn, fx.dyn))
+  end
+  
+  def testInteresctionTypes()
+    -- Support for meets between intersection types is partial.
+    var c1 = callable(fx.a, fx.a)
+    var c2 = callable(fx.d, fx.d)
+    var c3 = callable(fx.b, fx.b)
+    var c4 = callable(fx.dyn, fx.dyn)
+    var i1 = Intersection(c1, c2)
+    var i2 = Intersection(c2, c1)
+    var i3 = Intersection(c2, c3)
+    
+    assertMeet(i1, i1, i1)
+    assertMeet(i2, i2, i2)
+    assertMeet(i3, i3, i3)
+    
+    assertMeet(i1, i2, fx.nilt)
+    assertMeet(i1, i3, fx.nilt)
+    assertMeet(i1, c4, fx.nilt)
+    
+    assertMeet(i1, fx.dyn, fx.dyn)
+    assertMeet(i1, fx.void, fx.err)
+  end
+  
+  def testMeetInterfaceTypes()
+    assertMeet(fx.f, fx.f, fx.f)
+    assertMeet(fx.f, fx.f2, fx.nilt)
+    assertMeet(fx.f, fx.f3, fx.f3)
+  end
+  
+  def testJoinInterfaceAndClassTypes()    
+    assertMeet(fx.o, fx.f, fx.f)
+    assertMeet(fx.a, fx.f, fx.nilt)
+    
+    assertMeet(fx.e, fx.f, fx.e)
+  end
+  
+  def testJoinClassTypesWithSharedInterfaces()
+    -- These have nothing special with respect to meets, unlike joins. These
+    -- are for completeness only.
+    assertMeet(fx.e, fx.e2, fx.nilt)
+    assertMeet(fx.e2, fx.e3, fx.nilt)
+  end
+  
+  def testMeetWithGenericInterfaces()
+    var fx = InterfaceTypeFixture()
+    assertMeet(fx.gfa, fx.m2, fx.m2)
+    assertMeet(fx.gfb, fx.m2, fx.m2)
+    assertMeet(fx.gfa, fx.gfa, fx.gfa)
+    assertMeet(fx.m2, fx.m2, fx.m2)
+    assertMeet(fx.gfb, fx.m1, fx.nilt)
+  end
+  
+  -- FIX generic interfaces + ranges
+  
+  private def assertMeet(s, t, meet) 
+    assertSimpleMeet(s, t, meet)
+    assertSimpleMeet(t, s, meet)
+  end
+  
+  private def assertSimpleMeet(s, t, meet)
+    var result = MeetTypes(s, t, fx.basic)
+    var actual = Str(result)
+    var expected = Str(meet)
+    AssertEqual(actual, expected, "meet({}, {}) == {{}} ({{}} expected)".
+                 format(s, t))
+    if not s is ErrorType and not result is ErrorType
+      Assert(IsSubtype(result, s), "{} not subtype of {}".format(result, s))
+    end
+    if not t is ErrorType and not result is ErrorType
+      Assert(IsSubtype(result, t), "{} not subtype of {}".format(result, t))
+    end
+  end
+  
+  private def tuple(*a)
+    return TupleType(a)
+  end
+  
+  -- callable(a1, ..., an, r) constructs a callable with argument types 
+  -- a1, ... an and return type r.
+  private def callable(*a)
+    return Callable(a[:-1], a.length() - 1, False, a[-1], False)
+  end
+end

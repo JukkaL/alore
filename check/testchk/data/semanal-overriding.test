@@ -1,0 +1,220 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+            
+-- Test cases for overriding
+-- -------------------------
+            
+[case testSuperMethodRefWithInvalidArgCount]
+class A
+  def f(x)
+  end
+end
+class B is A
+  def g()
+    super.f()
+    super.f(1, 2)
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Args(
+        Var(x))))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+    FuncDef:6(
+      g
+      Body(
+        ExpressionStmt:7(
+          CallExpr:7(
+            SuperExpr:7(
+              f)
+            Args()))
+        ExpressionStmt:8(
+          CallExpr:8(
+            SuperExpr:8(
+              f)
+            Args(
+              IntExpr(1)
+              IntExpr(2))))))))
+
+[case testOverridingMethod]
+class A
+  def f()
+  end
+end
+class B is A
+  def f()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+    FuncDef:6(
+      f)))
+
+[case testOverridingVar]
+class A
+  var a
+  def create()
+  end
+end
+class B is A
+  def a
+  end
+  def a = x
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:3(
+      create))
+  TypeDef:6(
+    B
+    NameExpr(A [A])
+    FuncDef:7(
+      a
+      Getter)
+    FuncDef:9(
+      a
+      Setter
+      Args(
+        Var(x)))))
+
+[case testOverridingConst]
+class A
+  const a
+  def create()
+  end
+end
+class B is A
+  def a
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Const)
+    FuncDef:3(
+      create))
+  TypeDef:6(
+    B
+    NameExpr(A [A])
+    FuncDef:7(
+      a
+      Getter)))
+
+[case testOverridingGetter]
+class A
+  def a
+  end
+end
+class B is A
+  def a
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+    FuncDef:6(
+      a
+      Getter)))
+
+[case testOverridingSetter]
+class A
+  def a
+  end
+  def a = x
+  end
+end
+class B is A
+  def a = x
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter)
+    FuncDef:4(
+      a
+      Setter
+      Args(
+        Var(x))))
+  TypeDef:7(
+    B
+    NameExpr(A [A])
+    FuncDef:8(
+      a
+      Setter
+      Args(
+        Var(x)))))
+
+[case testOverridingWithDifferentArgs]
+class A
+  def f(x)
+  end
+  def g(x)
+  end
+end
+class B is A
+  def f()
+  end
+  def g(x, y)
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Args(
+        Var(x)))
+    FuncDef:4(
+      g
+      Args(
+        Var(x))))
+  TypeDef:7(
+    B
+    NameExpr(A [A])
+    FuncDef:8(
+      f)
+    FuncDef:10(
+      g
+      Args(
+        Var(x)
+        Var(y)))))

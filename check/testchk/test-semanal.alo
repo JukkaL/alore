@@ -1,0 +1,56 @@
+module testchk
+
+-- Test cases for semantic analysis.
+
+import unittest
+import analyse
+import errors
+import testchk::helpers
+import os
+
+
+-- Semantic analysis test case description files.
+const SemAnalFiles = ["semanal-basic.test",
+                      "semanal-classes.test",
+                      "semanal-expressions.test",
+                      "semanal-interfaces.test",
+                      "semanal-modules.test",
+                      "semanal-overriding.test",
+                      "semanal-statements.test",
+                      "semanal-super.test"]
+
+
+class SemAnalSuite is Suite
+  def cases()
+    var c = []
+    for f in SemAnalFiles
+      c += ParseTestCases(Join(TestDataPrefix, f), TestSemAnal, TestTempDir)
+    end
+    return c
+  end
+end
+
+
+-- Perform a semantic analysis test case. The testcase argument contains a
+-- description of the test case (inputs and output).
+private def TestSemAnal(testcase)
+  var a
+  try
+    var src = LF.join(testcase.input)
+    var trees, symtable, infos, types = 
+                     Analyse(src, "main", False, TestTempDir)
+    a = []
+    -- Include string representations of the source files in the actual output.
+    for t in trees
+      -- Omit the std module and files with a special marker in the path.
+      if not t.path.endsWith("/std.alo") and not "-skip." in t.path
+        a += Str(t).split(LF)
+      end
+    end
+  except e is CompileError
+    a = e.messages
+  end
+  AssertStringArraysEqual(testcase.output, a, 
+                          "Invalid semantic analyser output ({}, line {})".
+                            format(testcase.file, testcase.line))
+end

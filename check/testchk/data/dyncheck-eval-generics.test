@@ -1,0 +1,344 @@
+-- Test cases for evaluation after runtime checking transformation.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from evaluation.
+
+
+-- Basic generics test cases
+-- -------------------------
+
+
+[case testCastFromGenericTypeToDynamic]
+-- Test method argument with type variable type.
+class A<T>
+  def create() as void
+  end
+  def f(a as T) as void
+  end
+end
+class B; end
+var a = A() as <B> as A<B>
+a.f(B()) -- ok
+var d = a as dynamic
+d.f(a) -- fail
+[out]
+Traceback:
+  at main level (__tmp.alo, line 11)
+  f of A (__tmp.alo, line 5)
+AnnotationError: B expected, but found A
+
+
+[case testCastGenericToDynamicToGeneric]
+class A<T>
+  private var a as T
+  def create(a as T)
+    self.a = a
+  end
+  def f() as T
+    return self.a
+  end
+end
+class B; end
+class C is B; end
+var d = A(B()) as <B> as dynamic
+var b as B
+b = d.f()          -- Ok
+var aa = d as A<C> -- Ok
+aa.f()             -- Fail
+[out]
+Traceback:
+  at main level (__tmp.alo, line 16)
+  f of A (__tmp.alo, line 7)
+AnnotationError: C expected, but found B
+
+
+[case testInvalidCastFromDynamicToGenericType]
+class A<T>
+end
+class B; end
+var d = (B() as dynamic) as dynamic
+var a = d as A<B>
+[out]
+Traceback:
+  at main level (__tmp.alo, line 5)
+AnnotationError: A expected, but found B
+
+
+[case testInvalidCastFromDynamicToGenericType2]
+class A<T>
+end
+class B<T>
+end
+var d = (B() as <Object>) as dynamic
+var a = d as A<Object>
+[out]
+Traceback:
+  at main level (__tmp.alo, line 6)
+AnnotationError: A expected, but found B
+
+
+[case testCastToDynamicTypeArgument]
+class A<T>
+  def f(a as T)
+  end
+end
+class B; end
+class C; end
+var a = A() as <B> as A<B>
+var d = a as A<dynamic>
+d.f(B()) -- Ok
+d.f(C()) -- Fail
+[out]
+Traceback:
+  at main level (__tmp.alo, line 10)
+  f of A (__tmp.alo, line 3)
+AnnotationError: B expected, but found C
+
+
+[case testCastFromDynamicTypeArgument]
+class A<T>
+  private var x as T
+  def create(x as T)
+    self.x = x
+  end
+  def f() as T
+    return self.x
+  end
+end
+class B; end
+class C; end
+var d = A(C()) as <dynamic> as A<dynamic>
+var a = d as A<B>
+d.f()  -- Ok
+a.f()  -- Fail
+[out]
+Traceback:
+  at main level (__tmp.alo, line 15)
+  f of A (__tmp.alo, line 7)
+AnnotationError: B expected, but found C
+
+
+[case testRecursionViaSelfInGenericClass]
+class A<T>
+  def f() as dynamic
+    return g()
+  end
+  def g() as A<T>
+    return A() as <T>
+  end
+end
+class B; end
+var a = A() as <B> as A<B>
+var d = a.f() as dynamic
+__Print(d)
+[out]
+A<B>
+
+
+[case testDynamicallyTypedGenerics]
+class A<T>
+  def f() as A<T>
+    return A() as <T>
+  end
+end
+class B; end
+var d = A() as <dynamic> as dynamic
+var a2 = d as A<B>
+__Print(d, d.f(), a2)
+[out]
+A A A<B>
+
+
+[case testDynamicallyTypedGenericsWithError]
+class A; end
+class B; end
+var d = Cell(A()) as <dynamic> as dynamic
+var a = d as Cell<B>
+__Print(a)
+a.get()
+@include cell.alo
+[out]
+Cell<B>
+Traceback:
+  at main level (__tmp.alo, line 6)
+  get of Cell (__tmp.alo, line 14)
+AnnotationError: B expected, but found A
+
+
+[case testCastFromDynamicToGenericToDynamic]
+var d1 = Cell(Object()) as <dynamic> as dynamic
+var ca = d1 as Cell<A>
+var d2 = ca as dynamic
+__Print(d1, ca, d2)
+d2.get() -- Fail: get Object, but wrapper is Cell<A>
+class A; end
+@include cell.alo
+[out]
+Cell Cell<A> Cell<A>
+Traceback:
+  at main level (__tmp.alo, line 5)
+  get of Cell (__tmp.alo, line 14)
+AnnotationError: A expected, but found Object
+
+
+-- Coercions with meets
+-- --------------------
+
+
+[case testCastToSupertypeArgument]
+var ab = A(B()) as <B> as A<B>
+var ao = (ab as dynamic) as A<Object>
+ao.v()         -- Ok
+ao.s(Object()) -- Fail
+class A<T>
+  private var x as T
+  def create(x as T)
+    self.x = x
+  end
+  def v() as T
+    return self.x
+  end
+  def s(x as T)
+    self.x = x
+  end
+end
+class B; end
+[out]
+Traceback:
+  at main level (__tmp.alo, line 4)
+  s of A (__tmp.alo, line 14)
+AnnotationError: B expected, but found Object
+
+
+[case testCastToSubtypeArgument]
+var ao = A(B()) as <Object> as A<Object>
+var ab = (ao as dynamic) as A<B>
+ab.v()         -- Ok
+ab.s(B())      -- Ok
+ao = A(Object()) as <Object>
+ab = ao as dynamic
+ab.v()         -- Fail
+class A<T>
+  private var x as T
+  def create(x as T)
+    self.x = x
+  end
+  def v() as T
+    return self.x
+  end
+  def s(x as T)
+  end
+end
+class B; end
+[out]
+Traceback:
+  at main level (__tmp.alo, line 7)
+  v of A (__tmp.alo, line 14)
+AnnotationError: B expected, but found Object
+
+
+[case testCastToSubtypeArgumentAccessViaDynamic]
+var co = Cell(Object()) as <Object> as Cell<Object>
+var cb = (co as dynamic) as Cell<B>
+var d = cb as dynamic
+d.get() -- Fail
+class B; end
+@include cell.alo
+[out]
+Traceback:
+  at main level (__tmp.alo, line 4)
+  get of Cell (__tmp.alo, line 13)
+AnnotationError: B expected, but found Object
+
+
+[case testCastToIncompatibleArgumentType]
+var ab as A<B>
+var ac as A<C>
+ab = A(nil) as <B>
+ac = ab as dynamic -- Fail
+class A<T>
+  private var x as T
+  def create(x as T)
+    self.x = x
+  end
+  def v() as T
+    return self.x
+  end
+  def s(x as T)
+  end
+end
+class B; end
+class C; end
+[out]
+Traceback:
+  at main level (__tmp.alo, line 4)
+AnnotationError: Cannot coerce A<B> to A<C>
+
+
+-- Test test case helpers (messages, includes)
+-- -------------------------------------------
+
+
+[case testDumpingGenericObject]
+class A<T>
+end
+class B; end
+var a = A() as <B> as A<B>
+var d = a as dynamic
+__Print(a, d)
+var aa = A() as <A<B>> as A<A<B>>
+d = aa
+__Print(aa, d)
+[out]
+A A<B>
+A A<A<B>>
+
+
+[case testInclude]
+var a = Cell(Object()) as <Object> as Cell<Object>
+var d = a as dynamic
+__Print(a, d)
+@include cell.alo
+[out]
+Cell Cell<Object>
+
+
+-- Multiple type arguments
+-- -----------------------
+
+
+[case testMultipleTypeArguments]
+class A<S, T>
+  def f(s as S)
+  end
+  def g(t as T)
+  end
+end
+class B; end
+class C; end
+var a = A() as <B, C> as A<B, C>
+var d = a as dynamic
+d.f(B())
+d.g(C())
+__Print(d)
+d.g(B())
+[out]
+A<B, C>
+Traceback:
+  at main level (__tmp.alo, line 14)
+  g of A (__tmp.alo, line 5)
+AnnotationError: C expected, but found B
+
+
+[case testMultipleTypeArgumentsWithSomeDynamic]
+class A<S, T>
+end
+class B; end
+class C; end
+var a1 = A() as <B, dynamic> as A<B, dynamic>
+var d = a1 as dynamic
+var a2 = a1 as A<dynamic, C>
+__Print(a1, d, a2)
+[out]
+A A<B, dynamic> A<B, C>

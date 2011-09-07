@@ -1,0 +1,229 @@
+module checker
+
+-- Type inference constraint generation
+
+import types
+
+
+-- Infer type constraints for a callable and a list of argument types. 
+-- Return a list of constraints.
+def InferConstraintsForCallable(callee as Callable, 
+                                argTypes as Array<Typ>, 
+                                isVarArg as Boolean) as Array<Constraint>
+  -- FIX check argument counts
+  
+  var calleeNumArgs = callee.maxFixedArgs
+  
+  var constraints = [] as <Constraint>
+  
+  var callerRest = nil as Typ -- Rest of types for varargs calls  
+  if isVarArg
+    argTypes, callerRest = ExpandCallerVarArgs(argTypes, calleeNumArgs)
+    if argTypes == nil
+      -- Invalid varargs arguments.
+      return []
+    end
+    
+    if callerRest != nil and callee.isVarArg
+      var c = InferConstraints(callee.argTypes[-1], callerRest)
+      constraints.extend(c)
+    end
+  end
+  
+  var callerNumArgs = argTypes.length()
+  
+  -- Infer constraints for fixed arguments.
+  for i in 0 to Min(calleeNumArgs, callerNumArgs)
+    var c = InferConstraints(callee.argTypes[i], argTypes[i])
+    constraints.extend(c)
+  end
+  
+  -- Infer constraints for varargs.
+  if callee.isVarArg
+    for i in calleeNumArgs to callerNumArgs
+      var c = InferConstraints(callee.argTypes[-1], argTypes[i])
+      constraints.extend(c)
+    end
+  end
+  
+  return constraints
+end
+
+
+-- Infer type constraints. Match a template type, which may contain type
+-- variable references, recursively against a type which does not contain
+-- (the same) type variable references. The result is a list of type constrains
+-- of form "T is a supertype/subtype of x", where T is a type variable present
+-- in the the template and x is a type without reference to type variables 
+-- present in the template.
+--
+-- Assume T and S and type variables. Now the following results can be 
+-- calculated (read as "(template, actual) --> result"):
+--
+--   (T, X)            -->  T :> X
+--   (X<T>, X<Y>)      -->  T <: Y and T :> Y
+--   ((T, T), (X, Y))  -->  T :> X and T :> Y
+--   ((T, S), (X, Y))  -->  T :> X and S :> Y
+--   (X<T>, dynamic)   -->  T <: dynamic and T :> dynamic
+--
+-- The constraints are represented as Constraint objects.
+def InferConstraints(template as Typ, actual as Typ) as Array<Constraint>
+  return template.accept(ConstraintBuilderVisitor(actual))
+end
+
+
+const SubtypeOf, SupertypeOf
+
+
+-- A representatino of a type constraint, either T <: type or T :> type (T is 
+-- a type variable).
+class Constraint
+  const typeVar as Int      -- Type variable id
+  const op      as Constant -- SubtypeOf or SupertypeOf
+  const target  as Typ
+  
+  def _str() as Str
+    var opStr = "<:"
+    if self.op == SupertypeOf
+      opStr = ":>"
+    end
+    return "{} {} {}".format(self.typeVar, opStr, self.target)
+  end
+end
+
+
+-- Visitor class for inferring type constraints.
+class ConstraintBuilderVisitor is TypeVisitor<Array<Constraint>>
+  private var actual as Typ -- The type that is compared against a template
+  
+  def create(actual as Typ)
+    self.actual = actual
+  end
+  
+  -- Trivial leaf types
+  
+  def visitUnboundType(template as UnboundType) as Array<Constraint>
+    return []
+  end
+  
+  def visitDynamic(template as Dynamic) as Array<Constraint>
+    return []
+  end
+  
+  def visitVoid(template as Void) as Array<Constraint>
+    return []
+  end
+  
+  def visitNilType(template as NilType) as Array<Constraint>
+    return []
+  end
+  
+  -- Non-trivial leaf type
+  
+  def visitTypeVar(template as TypeVar) as Array<Constraint>
+    return [Constraint(template.id, SupertypeOf, self.actual)]
+  end
+  
+  -- Non-leaf types
+  
+  def visitInstance(template as Instance) as Array<Constraint>
+    if self.actual is Instance and 
+       (self.actual as Instance).type.hasBase(template.type.fullName)
+      var res = [] as <Constraint>
+      
+      for mapped in MapInstanceToSupertypes(self.actual as Instance, 
+                                            template.type)
+        for i in 0 to template.args.length()
+          -- The constraints for generic type parameters are invariant. Include
+          -- the default constraint and its negation to achieve the effect.
+          var cb = InferConstraints(template.args[i], mapped.args[i])
+          res.extend(cb)
+          var ct = InferConstraints(template.args[i], mapped.top(i))
+          res.extend(NegateConstraints(ct))
+        end
+      end
+      
+      return res
+    elif self.actual is Dynamic
+      -- IDEA: Include both ways, i.e. add negation as well?
+      return inferAgainstDynamic(template.args)
+    else
+      return []
+    end
+  end
+  
+  def visitCallable(template as Callable) as Array<Constraint>
+    if self.actual is Callable
+      var cactual = (self.actual as Callable)
+      -- FIX verify argument counts
+      -- FIX what if one of the functions is generic
+      var res = [] as <Constraint>
+      for i in 0 to template.argTypes.length()
+        -- Negate constraints due function argument type contravariance.
+        res.extend(NegateConstraints(
+                     InferConstraints(template.argTypes[i], 
+                                      cactual.argTypes[i])))
+      end
+      res.extend(InferConstraints(template.retType, cactual.retType))
+      return res
+    elif self.actual is Dynamic
+      -- FIX what if generic
+      var res = inferAgainstDynamic(template.argTypes)
+      res.extend(InferConstraints(template.retType, Dynamic()))
+      return res
+    else
+      return []
+    end
+  end
+  
+  def visitTupleType(template as TupleType) as Array<Constraint>
+    if self.actual is TupleType and 
+       (self.actual as TupleType).items.length() == template.items.length()
+      var res = [] as <Constraint>
+      for i in 0 to template.items.length()
+        res.extend(InferConstraints(template.items[i], 
+                                    (self.actual as TupleType).items[i]))
+      end
+      return res
+    elif self.actual is Dynamic
+      return inferAgainstDynamic(template.items)
+    else
+      return []
+    end      
+  end
+  
+  def visitIntersection(template as Intersection) as Array<Constraint>
+    -- Not supported. Currently this is also never reached.
+    return []
+  end
+  
+  private def inferAgainstDynamic(types as Array<Typ>) as Array<Constraint>
+    var res = [] as <Constraint>
+    for t in types
+      res.extend(InferConstraints(t, Dynamic()))
+    end
+    return res
+  end
+end
+
+
+private def NegateConstraints(constraints as Array<Constraint>) as 
+                                Array<Constraint>
+  var res = [] as <Constraint>
+  for c in constraints
+    res.append(Constraint(c.typeVar, NegOp(c.op), c.target))
+  end
+  return res
+end
+
+
+-- Map SubtypeOf to SupertypeOf and vice versa.
+private def NegOp(op as Constant) as Constant
+  if op == SubtypeOf
+    return SupertypeOf
+  elif op == SupertypeOf
+    return SubtypeOf
+  else
+    raise ValueError("Invalid operator {}".format(op))
+  end
+end

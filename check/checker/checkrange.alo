@@ -1,0 +1,170 @@
+module checker
+
+import types
+
+
+-- Determine which generic type variables in a generic function type support
+-- range types. Range types are supported for variable T when the both of the
+-- following conditions hold for the return type:
+--
+--  1. T is only used as an argument of generic type, e.g. A<T>, but not in 
+--     other contexts.
+--  2. T appears at most once in the return type.
+--
+-- The first requirement is due to the limitation of supporting range types 
+-- only as generic type arguments. The second requirement ensures that the 
+-- range type will ever be collapsed at most once; otherwise we could lose 
+-- type safety. It would probably be feasible to relax the requirements 
+-- somewhat, but it's not obvious how useful that would be.
+def GenericFunctionRangeVariables(type as Callable) as Array<Boolean>
+  var res = [] as <Boolean>
+  for tv in type.variables.items
+    res.append(DoesTypeVariableSupportRanges(type.retType, tv.id))
+  end
+  return res
+end
+
+
+private def DoesTypeVariableSupportRanges(type as Typ, id as Int) as Boolean
+  return type.accept(RangeSupportVisitor(id)) and
+         type.accept(TypeVarCountVisitor(id)) <= 1
+end
+
+
+private class RangeSupportVisitor is TypeVisitor<Boolean>
+  private const id as Int
+  
+  def create(id as Int)
+    self.id = id
+  end
+
+  def visitUnboundType(t as UnboundType) as Boolean
+    return True
+  end
+  
+  def visitErrorType(t as ErrorType) as Boolean
+    return True
+  end
+  
+  def visitDynamic(t as Dynamic) as Boolean
+    return True
+  end
+  
+  def visitVoid(t as Void) as Boolean
+    return True
+  end
+  
+  def visitNilType(t as NilType) as Boolean
+    return True
+  end
+  
+  def visitTypeVar(t as TypeVar) as Boolean
+    return t.id != self.id
+  end
+  
+  def visitInstance(t as Instance) as Boolean
+    for arg in t.args
+      if not arg is TypeVar and not check(arg)
+        return False
+      end
+    end
+    return True
+  end
+  
+  def visitCallable(t as Callable) as Boolean
+    for argType in t.argTypes
+      if not check(argType)
+        return False
+      end
+    end
+    return check(t.retType)
+  end
+  
+  def visitTupleType(t as TupleType) as Boolean
+    for item in t.items
+      if not check(item)
+        return False
+      end
+    end
+    return True
+  end
+  
+  def visitIntersection(t as Intersection) as Boolean
+    return check(t.item1) and check(t.item2)
+  end
+  
+  private def check(type as Typ) as Boolean
+    return type.accept(self)
+  end
+end
+
+
+
+private class TypeVarCountVisitor is TypeVisitor<Int>
+  private const id as Int
+  
+  def create(id as Int)
+    self.id = id
+  end
+  
+  def visitUnboundType(t as UnboundType) as Int
+    return 0
+  end
+  
+  def visitErrorType(t as ErrorType) as Int
+    return 0
+  end
+  
+  def visitDynamic(t as Dynamic) as Int
+    return 0
+  end
+  
+  def visitVoid(t as Void) as Int
+    return 0
+  end
+  
+  def visitNilType(t as NilType) as Int
+    return 0
+  end
+  
+  def visitInstance(t as Instance) as Int
+    var c = 0
+    for arg in t.args
+      c += count(arg)
+    end
+    return c
+  end
+  
+  def visitTypeVar(t as TypeVar) as Int
+    if t.id == id
+      return 1
+    else
+      return 0
+    end
+  end
+  
+  def visitCallable(t as Callable) as Int
+    -- FIX also count range upper bounds?
+    var c = 0
+    for argType in t.argTypes
+      c += count(argType)
+    end
+    return c + count(t.retType)
+  end
+  
+  def visitTupleType(t as TupleType) as Int
+    var c = 0
+    for item in t.items
+      c += count(item)
+    end
+    return c
+  end
+  
+  def visitIntersection(t as Intersection) as Int
+    return count(t.item1) + count(t.item2)
+  end
+  
+  private def count(type as Typ) as Int
+    return type.accept(self)
+  end
+end

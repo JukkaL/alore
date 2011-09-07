@@ -1,0 +1,38 @@
+module checker
+
+import types
+
+
+-- This class represents a bound method (callable) with some type variables 
+-- that are partially defined by upper and lower bounds.
+--
+-- Intermediate type only generated via type inference. This will collapsed
+-- immediately into a Callable type by binding the type variables.
+class RangeCallable is Typ
+  const bottoms   as Array<Typ> -- Lower bounds; for type vars 1, 2, ...
+  const tops      as Array<Typ> -- Upper bounds; for type vars 1, 2, ...
+                                -- Each may be nil if collapsed.
+  const rangeIds  as Array<Int> -- Ids of range types (or nil if collapse).
+  const callable  as Callable   -- The generic callable type these apply to.
+  
+  def create(bottoms as Array<Typ>, tops as Array<Typ>, rangeIds as Array<Int>,
+             callable as Callable)
+    self.bottoms = bottoms
+    self.tops = tops
+    self.rangeIds = rangeIds
+    self.callable = callable
+  end
+  
+  def typeVarIds()
+    return Array(1 to numTypeVars() + 1)
+  end
+  
+  def numTypeVars()
+    return self.bottoms.length()
+  end
+
+  -- Visitors can't deal with this type.  
+  def accept<T>(visitor as TypeVisitor<T>) as T
+    raise RuntimeError("Operation not supported")
+  end
+end

@@ -1,0 +1,1032 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Methods
+-- -------
+
+
+[case testMethodCall]
+var a as A
+var b as B
+
+a.foo(B())        -- Fail
+a.bar(B(), A())   -- Fail
+
+a.foo(A())
+b.bar(B(), A())
+
+class A
+  def foo(x as A)
+  end
+end
+class B
+  def bar(x as B, y as A)
+  end
+end
+[out]
+main, line 4: Argument 1 to method "foo" of "A" has incompatible type "B"
+main, line 5: "A" has no member "bar"
+
+[case testMethodCallWithSubtype]
+var a as A
+a.foo(A())
+a.foo(B())
+a.bar(A()) -- Fail
+a.bar(B())
+
+class A
+  def foo(x as A)
+  end
+  def bar(x as B)
+  end
+end
+class B is A
+end
+[out]
+main, line 4: Argument 1 to method "bar" of "A" has incompatible type "A"
+
+[case testInheritingMethod]
+var a as B
+a.foo(A()) -- Fail
+a.foo(B())
+
+class A
+  def foo(x as B)
+  end
+end
+class B is A
+end
+[out]
+main, line 2: Argument 1 to method "foo" of "A" has incompatible type "A"
+
+[case testAccessingOverriddenMethod]
+var a as A
+var b as B
+a.foo(A()) -- Fail
+a.foo(B())
+b.foo(A())
+b.foo(B())
+
+class A
+  def foo(x as B)
+  end
+end
+class B is A
+  def foo(x as A)
+  end
+end
+[out]
+main, line 3: Argument 1 to method "foo" of "A" has incompatible type "A"
+
+[case testMethodCallWithInvalidNumberOfArguments]
+var a as A
+a.foo()               -- Fail
+a.foo(Object(), A())  -- Fail
+
+class A
+  def foo(x as A)
+  end
+end
+[out]
+main, line 2: Too few arguments for method "foo" of "A"
+main, line 3: Too many arguments for method "foo" of "A"
+main, line 3: Argument 1 to method "foo" of "A" has incompatible type "Object"
+
+[case testMethodBody]
+class A
+  def f() as void
+    var a = Object() as A    -- Fail
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible types in assignment
+
+[case testMethodArguments]
+class A
+  def f(a as A, b as B)
+    a = B() -- Fail
+    b = A() -- Fail
+    a = A()
+    b = B()
+  end
+end
+class B
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testReturnFromMethod]
+class A
+  def f() as A
+    return B() -- Fail
+    return A()
+  end
+end
+class B
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible return value type
+
+
+-- Member variables
+-- ----------------
+
+
+[case testMemberVariable]
+var a as A
+var b as B
+a = a.b -- Fail
+b = a.b
+
+class A
+  var b = B() as B
+end
+class B
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testMemberVariableLvalue]
+var a as A
+var b as B
+a.b = a -- Fail
+a.b = b
+
+class A
+  var b = B() as B
+end
+class B
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testMemberVariableInitialization]
+class A
+  var a = B() as A -- Fail
+  var b = A() as A  
+end
+class B
+end
+[out]
+main: In class "A":
+main, line 2: Incompatible types in assignment
+
+[case testMemberVariableInheritance]
+var a as A
+var b as B
+b.b = a   -- Fail
+b.b = b
+
+class A
+  var b = B() as B
+end
+class B is A
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testSelfMethod]
+class A
+  def f(a as A)
+    self.f(B())        -- Fail
+    self.g()           -- Fail
+    self.f(A())
+  end
+end
+class B
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Argument 1 to method "f" of "A" has incompatible type "B"
+main, line 4: "A" has no member "g"
+
+[case testSelfVar]
+class A
+  def f() as void
+    var b = self.x as B -- Fail
+    self.x = B()       -- Fail
+    self.y             -- Fail
+    self.y = A()       -- Fail
+    var a = self.x as A
+    self.x = A()    
+  end
+  
+  var x = A() as A
+end
+class B
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: "A" has no member "y"
+main, line 6: "A" has no member "y"
+
+
+-- Direct member access
+-- --------------------
+
+
+[case testDirectMethodAccess]
+class A
+  def f(x as A)
+    f(B())  -- Fail
+    f()     -- Fail
+    f(A())
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 3: Argument 1 to method "f" of "A" has incompatible type "B"
+main, line 4: Too few arguments for method "f" of "A"
+
+[case testDirectMemberVarAccess]
+class A
+  def f() as void
+    var b = x as B -- Fail
+    x = b         -- Fail
+    var a = x as A
+    x = a
+  end
+  var x = A() as A
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testDirectInheritedMethodAccess]
+class A is B
+  def g() as void
+    f(B())  -- Fail
+    f(A())
+  end
+end
+class B
+  def f(x as A)
+  end
+end
+[out]
+main: In member "g" of class "A":
+main, line 3: Argument 1 to method "f" of "B" has incompatible type "B"
+
+[case testDirectInheritedVariableAccess]
+class A is B
+  def g() as void
+    var a as A
+    var b as B
+    a = x -- Fail
+    b = x
+  end
+end
+class B
+  var x = B() as B
+end
+[out]
+main: In member "g" of class "A":
+main, line 5: Incompatible types in assignment
+
+
+-- Method overriding
+-- -----------------
+
+
+[case testMethodOverridingWithIdenticalSignature]
+class B is A
+  def f(x as A)
+  end
+  def g(x as B, y as Object) as A
+  end
+  def h() as void
+  end
+end
+class A
+  def f(x as A)
+  end
+  def g(x as B, y as Object) as A
+  end
+  def h() as void
+  end
+end
+[out]
+
+[case testMethodOverridingWithCoAndContraVariance]
+class B is A
+  def f(x as Object, y as A) as B
+  end
+end
+class A
+  def f(x as A, y as B) as A
+  end
+end
+[out]
+
+[case testMethodOverridingWithIncompatibleTypes]
+class B is A
+  def f(x as B, y as B) as A  -- Fail
+  end
+  def g(x as A, y as B) as A  -- Fail
+  end
+  def h(x as A, y as B) as Object  -- Fail
+  end
+end
+class A
+  def f(x as A, y as B) as A
+  end
+  def g(x as A, y as A) as A
+  end
+  def h(x as A, y as B) as A
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 2: Argument 1 of "f" incompatible with supertype "A"
+main: In member "g" of class "B":
+main, line 4: Argument 2 of "g" incompatible with supertype "A"
+main: In member "h" of class "B":
+main, line 6: Return type of "h" incompatible with supertype "A"
+
+[case testMethodOverridingWithIncompatibleArgumentCount]
+class B is A
+  def f(x as A, y as A)  -- Fail
+  end
+  def g(x as A) as A  -- Fail
+  end
+end
+class A
+  def f(x as A)
+  end
+  def g(x as A, y as B) as A
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 2: Signature of "f" incompatible with supertype "A"
+main: In member "g" of class "B":
+main, line 4: Signature of "g" incompatible with supertype "A"
+
+[case testMethodOverridingAcrossDeepInheritanceHierarchy1]
+class C is B -- with gap in implementations
+  def f(x as C)  -- Fail
+  end
+end
+class B is A
+end
+class A
+  def f(x as B)
+  end
+end
+[out]
+main: In member "f" of class "C":
+main, line 2: Argument 1 of "f" incompatible with supertype "A"
+
+[case testMethodOverridingAcrossDeepInheritanceHierarchy2]
+class C is B -- with multiple implementations
+  def f(x as B)  -- Fail
+  end
+end
+class B is A
+  def f(x as A)
+  end
+end
+class A
+  def f(x as B)
+  end
+end
+[out]
+main: In member "f" of class "C":
+main, line 2: Argument 1 of "f" incompatible with supertype "B"
+
+[case testMethodOverridingWithVoidReturnValue]
+class B is A
+  def f() as A  -- Fail
+  end
+  def g() as void  -- Fail
+  end
+end
+class A
+  def f() as void
+  end
+  def g() as A
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 2: Return type of "f" incompatible with supertype "A"
+main: In member "g" of class "B":
+main, line 4: Return type of "g" incompatible with supertype "A"
+
+
+-- Constructors
+-- ------------
+
+
+[case testTrivialConstructor]
+var a = A() as A
+var b = A() as B -- Fail
+class A
+  def create() as void
+  end
+end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+
+[case testConstructor]
+var a  = A(B()) as A
+var aa = A(Object()) as A  -- Fail
+var b  = A(B()) as B       -- Fail
+
+class A
+  def create(x as B)
+  end
+end
+class B; end
+[out]
+main, line 2: Argument 1 has incompatible type "Object"
+main, line 3: Incompatible types in assignment
+
+[case testConstructorWithTwoArguments]
+var a = A(C(), B()) as A  -- Fail
+
+class A
+  def create(x as B, y as C)
+  end
+end
+class B
+end
+class C is B
+end
+[out]
+main, line 1: Argument 2 has incompatible type "B"
+
+[case testInheritedConstructor]
+var b = B(C()) as B
+var a = B(D()) as A -- Fail
+class A
+  def create(x as C)
+  end
+end
+class B is A
+end
+class C; end
+class D; end
+[out]
+main, line 2: Argument 1 has incompatible type "D"
+
+[case testOverridingWithIncompatibleConstructor]
+A()    -- Fail
+B(C()) -- Fail
+A(C())
+B()
+class A
+  def create(x as C)
+  end
+end
+class B is A
+  def create() as void
+  end
+end
+class C; end
+[out]
+main, line 1: Too few arguments for "A"
+main, line 2: Too many arguments for "B"
+
+[case testConstructorWithReturnValueType]
+class A
+  def create() as A
+  end
+end
+[out]
+main: In member "create" of class "A":
+main, line 2: Cannot define return type for "create"
+
+[case testDefaultConstructorType]
+A(B())      -- Fail
+A(B(), B()) -- Fail
+A(B(), C())
+
+class A
+  var x as B
+  var y as C
+end
+class B; end
+class C; end
+[out]
+main, line 1: Too few arguments for "A"
+main, line 2: Argument 2 has incompatible type "B"
+
+[case testGlobalFunctionCreateWithReturnType]
+var a = create() as A
+var b = create() as B -- Fail
+def create() as A
+end
+
+class A; end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+
+
+-- Inheritance
+-- -----------
+
+
+[case testDeepInheritanceHierarchy]
+var d = C() as D  -- Fail
+    d = B()      -- Fail
+    d = A()      -- Fail
+    d = D2()     -- Fail
+var a = D() as A 
+    a = D2() 
+var b = D() as B
+    b = D2()
+
+class A; end
+class B is A; end
+class C is B; end
+class D is C; end
+class D2 is C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Private members
+-- ---------------
+
+
+[case testPrivateMemberVarOutsideClass]
+var a as A
+a.foo            -- Fail
+a.foo = Object() -- Fail
+class A
+  private var foo as Object
+end
+[out]
+main, line 2: "foo" is private in "A"
+main, line 3: "foo" is private in "A"
+
+[case testPrivateMethodOutsideClass]
+var a as A
+a.foo()          -- Fail
+class A
+  private def foo() as void
+  end
+end
+[out]
+main, line 2: "foo" is private in "A"
+
+[case testAccessingPrivateMemberUsingSelf]
+class A
+  def f() as void
+    self.g(Object())  -- Fail
+    self.g()
+    (self).g()
+    var b = self.x as A
+    self.x = b
+  end
+
+  private def g() as void
+  end
+
+  private var x as A
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Too many arguments for method "g" of "A"
+
+[case testDirectAccessToPrivateMembers]
+class A
+  def f() as void
+    g(Object())  -- Fail
+    g()
+    var b = x as A
+    x = b
+  end
+
+  private def g() as void
+  end
+
+  private var x as A
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Too many arguments for method "g" of "A"
+
+[case testAccessingPrivateMemberDefinedInSuperclassOutsideClass]
+var a as B
+a.x            -- Fail
+a.x = Object() -- Fail
+a.foo()        -- Fail
+class A
+  private var x as Object
+  private def foo() as void
+  end
+end
+class B is A
+end
+[out]
+main, line 2: "B" has no member "x"
+main, line 3: "B" has no member "x"
+main, line 4: "B" has no member "foo"
+
+[case testAccessingPrivateMemberDefinedInSuperclassWithinClass1]
+class B is A
+  def f() as void
+    foo()
+    x
+    x = A()
+  end
+end
+class A
+  private var x as Object
+  private def foo() as void
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 3: "foo" undefined
+main, line 4: "x" undefined
+main, line 5: "x" undefined
+main, line 5: Invalid lvalue in assignment
+
+[case testAccessingPrivateMemberDefinedInSuperclassWithinClass2]
+class B is A
+  def f() as void
+    self.foo()   -- Fail
+    self.x       -- Fail
+    self.x = A() -- Fail
+  end
+end
+class A
+  private var x as Object
+  private def foo() as void
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 3: "B" has no member "foo"
+main, line 4: "B" has no member "x"
+main, line 5: "B" has no member "x"
+
+
+-- Const members
+-- -------------
+
+
+[case testConstMemberOutsideClass]
+var a as A
+A().x = a -- Fail
+a = A().x
+
+class A
+  const x = A() as A
+end
+[out]
+main, line 2: Member "x" is not assignable
+
+[case testConstMemberViaSelf]
+class A
+  def f() as void
+    self.x = A() -- Fail
+    self.x
+  end
+  const x = A() as A
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "x" not assignable
+
+[case testInitializingConstMember]
+class A
+  def create() as void
+    x = B()      -- Fail
+    self.x = B() -- Fail
+    x = A()
+    self.x = A()
+  end
+  const x as A
+end
+class B; end
+[out]
+main: In member "create" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testAssigningToMethodOutsideClass]
+var a as A
+a.f = A() -- Fail
+
+class A
+  def f() as void
+  end
+end
+[out]
+main, line 2: Member "f" is not assignable
+
+[case testAssigningToMethodWithinClass]
+class A
+  def create() as void
+    f = A()       -- Fail
+    self.f = A()  -- Fail
+    g = A()       -- Fail
+    self.g = A()  -- Fail
+  end
+
+  def f() as void
+  end
+
+  private def g() as void
+  end
+end
+[out]
+main: In member "create" of class "A":
+main, line 3: Invalid lvalue in assignment
+main, line 4: "f" not assignable
+main, line 5: Invalid lvalue in assignment
+main, line 6: "g" not assignable
+
+[case testAssignmentToInheritedMethod]
+class A is B
+  def g() as void
+    f = A()       -- Fail
+    self.f = A()  -- Fail
+  end
+end
+class B
+  def f() as void
+  end
+end
+[out]
+main: In member "g" of class "A":
+main, line 3: Invalid lvalue in assignment
+main, line 4: "f" not assignable
+
+[case testPrivateConstMemberOutsideClass]
+var a as A
+a.x = a
+a.f = a
+
+class A
+  private const x as A
+  private def f() as void
+  end
+end
+[out]
+main, line 2: "x" is private in "A"
+main, line 3: "f" is private in "A"
+
+[case testPrivateConstMemberWithinClass]
+class A
+  private const x as A
+  private def f() as void
+     var a as A
+     self.x = a -- Fail
+     self.f = a -- Fail
+     x = a -- Fail
+     f = a -- Fail
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 5: "x" not assignable
+main, line 6: "f" not assignable
+main, line 7: Invalid lvalue in assignment
+main, line 8: Invalid lvalue in assignment
+
+[case testInheritedConstMember]
+class A is B
+  def g() as void
+    x = A() -- Fail
+    f = A() -- Fail
+    self.x = A() -- Fail
+    self.f = A() -- Fail
+  end
+end
+
+class B
+  const x = A() as A
+  def f() as void
+  end
+end
+[out]
+main: In member "g" of class "A":
+main, line 3: Invalid lvalue in assignment
+main, line 4: Invalid lvalue in assignment
+main, line 5: "x" not assignable
+main, line 6: "f" not assignable
+
+[case testInheritedConstMemberOutsideClass]
+var a as A
+a.x = A() -- Fail
+a.f = A() -- Fail
+
+class A is B
+end
+
+class B
+  const x = A() as A
+  def f() as void
+  end
+end
+[out]
+main, line 2: Member "x" is not assignable
+main, line 3: Member "f" is not assignable
+
+[case testInitializingInheritedConstMember]
+class A is B
+  def create() as void
+    x = B() -- Fail
+    self.x = B() -- Fail
+    x = A()
+    self.x = A()
+  end
+end
+
+class B
+  const x = A() as A
+  def f() as void
+  end
+end
+[out]
+main: In member "create" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Public and private definition with the same name
+-- ------------------------------------------------
+
+
+[case testPublicAndPrivateMethodWithTheSameName]
+var a as A
+a.f()    -- Fail
+a.f(nil)
+
+class A is B
+  def f(x as A)
+  end
+end
+class B
+  private def f() as void
+  end
+end
+[out]
+main, line 2: Too few arguments for method "f" of "A"
+
+[case testPublicAndPrivateVarWithTheSameName]
+var a as A
+a = a.x       -- Fail
+a.x = a       -- Fail
+var c as C
+c = a.x
+a.x = c
+
+class A is B
+  var x as C
+end
+class B
+  private var x as A
+end
+class C; end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testPublicAndPrivateAccessorsWithTheSameName]
+var a as A
+a = a.x       -- Fail
+a.x = a       -- Fail
+var c as C
+c = a.x
+a.x = c
+
+class A is B
+  def x as C
+  end
+  def x = y as C
+  end
+end
+class B
+  private def x as A
+  end
+  private def x = y as A
+  end
+end
+class C; end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testPublicAndPrivateMembersWithDifferentKinds1]
+var a as A
+a.x = nil -- Fail
+
+class A is B
+  def x as C
+  end
+end
+class B
+  private var x as A
+end
+class C; end
+[out]
+main, line 2: Member "x" is not assignable
+
+[case testPublicAndPrivateMembersWithDifferentKinds2]
+var a as A
+a.y = nil   -- Fail
+
+class A is B
+  var x as C
+  def y() as void
+  end
+  var f as C
+end
+class B
+  private def x as A
+  end
+  private var y as A
+  private def f() as void
+  end
+end
+class C; end
+[out]
+main, line 2: Member "y" is not assignable
+
+[case testPublicAndPrivateMembersWithTheSameNameAccessedWithinClass]
+class A is B
+  def x() as void
+    f() -- Fail
+    x()
+    self.x()
+    f = B()
+    self.f = B()
+  end
+
+  var f as B
+end
+class B
+  private def f() as void
+  end
+  private var x as A
+end
+[out]
+main: In member "x" of class "A":
+main, line 3: "B" not callable
+
+
+-- Private definitions with same names in inheritance hierarchy
+-- ------------------------------------------------------------
+
+
+[case testPrivateDefinitionsWithTheSameNames]
+class A is B
+  private def f(a as A)
+    f()   -- Fail
+    f(a)
+    x = B()
+    self.x = B()
+  end
+  private var x as B
+end
+
+class B
+  private def f() as void
+  end
+  private var x as A
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Too few arguments for method "f" of "A"
+
+
+-- Special cases
+-- -------------
+
+
+[case testMultipleClassDefinition]
+A()
+class A
+end
+class A
+end
+[out]
+main, line 4: "A" multiply defined

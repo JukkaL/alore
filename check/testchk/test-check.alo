@@ -1,0 +1,52 @@
+-- Test case runner for type checker cases. Each test case type checks a piece
+-- of code and the checker output includes the reported errors.
+
+module testchk
+
+import unittest
+import analyse
+import errors
+import testchk::helpers
+import os
+
+
+class TypeCheckSuite is Suite
+  -- List of files that contain test case descriptions.
+  const files = ["check-basic.test",
+                 "check-statements.test",
+                 "check-expressions.test",
+                 "check-classes.test",
+                 "check-modules.test",
+                 "check-accessors.test",
+                 "check-super.test",
+                 "check-functions.test",
+                 "check-tuples.test",                 
+                 "check-dynamic.test",
+                 "check-interfaces.test",
+                 "check-generics.test",
+                 "check-generic-subtyping.test",
+                 "check-inference.test",
+                 "check-inference-ranges.test",
+                 "check-varargs.test"]
+
+  def cases()
+    var c = []
+    for f in files
+      c += ParseTestCases(Join(TestDataPrefix, f), runTest, TestTempDir)
+    end
+    return c
+  end
+
+  private def runTest(testcase)
+    var a = []
+    try
+      var src = LF.join(testcase.input)
+      Analyse(src, "main", False, TestTempDir, True)
+    except e is CompileError
+      a = e.messages
+    end
+    AssertStringArraysEqual(testcase.output, a, 
+                            "Invalid type checker output ({}, line {})".format(
+                              testcase.file, testcase.line))
+  end
+end

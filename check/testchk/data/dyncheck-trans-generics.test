@@ -1,0 +1,456 @@
+-- Test cases for runtime (dynamic) checking transformation.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the 
+-- transformation.
+
+-- Note that the test cases use a pretty-printed output syntax that is not 
+-- valid Alore code.
+
+
+-- Generics basics
+-- ---------------
+
+
+[case testSimpleGenericClass]
+class C<T>
+  private var o as T
+  def create(o as T)
+    self.o = o
+  end
+  def get() as T
+    return self.o
+  end
+end
+[out]
+class C
+  private var o as dynamic
+  def create(__tv as dynamic, o as dynamic)
+    self.o = o
+  end
+  def get`C(__tv as dynamic) as dynamic
+    return self.o
+  end
+  def get*() as dynamic
+    -- Omit dyn <= T cast as a no-op.
+    return get`C([dyn])
+  end
+end
+class C*
+  var __o as dynamic
+  var __tv as dynamic
+  def create(__o as dynamic, __tv as dynamic)
+    self.__o = __o
+    self.__tv = __tv
+  end
+  def get`C(__tv as dynamic) as dynamic
+    -- Ignore argument __tv since self.__tv is always at least as specific.
+    return {self.__tv[0] <= dyn | self.__o.get`C(self.__tv)}
+  end
+  def get*() as dynamic
+    return {dyn <= self.__tv[0] | \
+             {self.__tv[0] <= dyn | self.__o.get`C(self.__tv)}}
+  end
+end
+
+
+[case testGenericMethodWithArguments]
+class C<T>
+  def f(a as A, t as T)
+  end
+end
+class A; end
+[out]
+class C
+  def f`C(__tv as dynamic, a as A, t as dynamic)
+  end
+  def f*(a as dynamic, t as dynamic) as dynamic
+    f`C([dyn], {A <= dyn | a}, t)
+  end
+  def create(__tv as dynamic)
+  end
+end
+class C*
+...
+  def f`C(__tv as dynamic, a as A, t as dynamic)
+    self.__o.f`C(self.__tv, a, {self.__tv[0] <= dyn | t})
+  end
+  def f*(a as dynamic, t as dynamic) as dynamic
+    self.__o.f`C(self.__tv, {A <= dyn | a}, {self.__tv[0] <= dyn | t})
+  end
+end
+class A; end
+
+
+[case testAccessingGenericMethodInTypedContext]
+class A; end
+class B; end
+class C<T>
+  def create() as void
+  end
+  def f(a as A)
+  end
+end
+var c as C<B>
+c.f(A() as dynamic)
+[out]
+...
+var c as C
+c.f`C([B], {A <= dyn | {dyn <= A | A()} as dynamic})
+
+
+[case testAccessingMethodInGenericClassAndTypedContextViaSelf]
+class A; end
+class C<T>
+  def f(a as A)
+    self.f(a)
+  end
+end
+[out]
+...
+  def f`C(__tv as dynamic, a as A)
+    self.f`C([__tv[0]], a)
+  end
+...
+
+
+[case testAccessingMethodInGenericClassDirectly]
+class A; end
+class C<T>
+  def f(a as A)
+    f(a)
+  end
+end
+[out]
+...
+  def f`C(__tv as dynamic, a as A)
+    f`C([__tv[0]], a)
+  end
+...
+
+
+[case testConstructingGenericInstance]
+class C<T>
+  def create() as void
+  end
+end
+class A; end
+var a = C() as <A> as C<A>
+var d = C() as <dynamic> as C<dynamic>
+[out]
+...
+class A; end
+var a = C([A]) as <A> as C
+var d = C([dyn]) as <dynamic> as C
+
+
+[case testCastFromDynamicToGenericType]
+class A<T>
+  private var a as T
+  def create(a as T)
+    self.a = a
+  end
+  def f() as T
+    return self.a
+  end
+end
+class B; end
+class C; end
+var d = A(B()) as <dynamic> as dynamic
+var b as B
+b = d.f()          -- Ok
+var aa = d as A<C> -- Ok
+aa.f()             -- Fail
+[out]
+...
+class C; end
+var d = {dyn <= A<dyn> | A([dyn], {dyn <= B | B()}) as <dynamic>} as dynamic
+var b as B
+b = {B <= dyn | d.f*()}          -- Ok
+var aa = {A<C> <= dyn | d} as A -- Ok
+aa.f`A([C])             -- Fail
+
+
+[case testCastWithDynamicAndTypedArguments]
+class A<T>
+end
+class B; end
+var a as A<B>
+var d as A<dynamic>
+a = d
+d = a
+[out]
+...
+var d as A
+a = {A<B> <= A<dyn> | d}
+d = {A<dyn> <= A<B> | a}
+
+
+[case testNestedGenerics]
+class A<T>
+  def f() as void
+  end
+end
+class B; end
+var a as A<A<B>>
+var d as A<dynamic>
+d = a
+a.f()
+d.f()
+[out]
+...
+var d as A
+d = {A<dyn> <= A<A<B>> | a}
+a.f`A([A<B>])
+d.f`A([dyn])
+
+
+[case testGenericWrapperWithNonGenericTypesInSignatures]
+class A<T>
+  def f(b as B, ab as A<B>) as A<B>
+  end
+  def g() as B
+  end
+end
+class B; end
+[out]
+...
+class A*
+...
+  def f*(b as dynamic, ab as dynamic) as dynamic
+    return {dyn <= A<B> | \
+             self.__o.f`A(self.__tv, {B <= dyn | b}, {A<B> <= dyn | ab})}
+  end
+...
+  def g*() as dynamic
+    return {dyn <= B | self.__o.g`A(self.__tv)}
+  end
+...
+
+
+-- Multiple type arguments
+-- -----------------------
+
+
+[case testCallingEmptyMethodWithTwoTypeArguments]
+class A<T, S>
+  def f() as void
+  end
+end
+class B; end
+class C; end
+
+var a as A<B, C>
+a.f()
+[out]
+...
+  def f*() as dynamic
+    f`A([dyn, dyn])
+  end
+...
+class A*
+  var __o as dynamic
+...
+  def f`A(__tv as dynamic)
+    self.__o.f`A(self.__tv)
+  end
+  def f*() as dynamic
+    self.__o.f`A(self.__tv)
+  end
+...
+var a as A
+a.f`A([B, C])
+
+
+[case testAccessingMultipleTypeArguments]
+class A<T, S>
+  private var x as T
+  def f(y as S) as T
+    return x
+  end
+end
+[out]
+...
+class A*
+...
+  def f`A(__tv as dynamic, y as dynamic) as dynamic
+    return {self.__tv[0] <= dyn | \
+             self.__o.f`A(self.__tv, {self.__tv[1] <= dyn | y})}
+  end
+  def f*(y as dynamic) as dynamic
+    return {dyn <= self.__tv[0] | \
+             {self.__tv[0] <= dyn | \
+               self.__o.f`A(self.__tv, {self.__tv[1] <= dyn | y})}}
+  end
+...
+
+
+[case testAccessingGenericMethodInTypedContextViaSelfAndMultipleArgs]
+class A; end
+class B; end
+class C<T, S>
+  def f(a as A)
+    self.f(a)
+  end
+end
+[out]
+...
+  def f`C(__tv as dynamic, a as A)
+    self.f`C([__tv[0], __tv[1]], a)
+  end
+...
+
+
+-- Coercions involving type variables
+-- ----------------------------------
+
+
+-- NOTE: Some of the wrapper test cases above also coerce to/from type
+--       variables.
+
+
+[case testSimpleTypeVarCoercionWithMultipleTypeVariables]
+class A<T, S>
+  private var t as T
+  private var s as S
+  def f() as void
+    var d as dynamic
+    d = t
+    d = s
+  end
+end
+[out]
+...
+  def f`A(__tv as dynamic) as void
+    var d as dynamic
+    d = {dyn <= __tv[0] | t}
+    d = {dyn <= __tv[1] | s}
+  end
+...
+
+
+[case testTypeVarCoercionsWithGenericTypes]
+class A<T>
+  private var a as A<T>
+  def f() as void
+    var d as dynamic
+    d = a
+    a = d
+  end
+end
+[out]
+...
+  def f`A(__tv as dynamic) as void
+    var d as dynamic
+    d = {dyn <= A<__tv[0]> | a}
+    a = {A<__tv[0]> <= dyn | d}
+  end
+...
+
+
+[case testConstructGenericInstanceBasedOnTypeVar]
+class A<T>
+  def f() as void
+    var a = A() as <T>
+    var d = a as dynamic
+  end
+end
+[out]
+...
+  def f`A(__tv as dynamic) as void
+    var a = A([__tv[0]]) as <T>
+    var d = {dyn <= A<__tv[0]> | a} as dynamic
+  end
+...
+
+
+-- Type erasure
+-- ------------
+
+
+[case testTypeErasureOfFunctionSignatures]
+class A<T>
+end
+class B
+  def m(a as A<B>)
+  end
+end
+def f() as A<B>
+end
+[out]
+...
+class B
+  def m`B(a as A)
+  end
+  def m*(a as dynamic) as dynamic
+    m`B({A<B> <= dyn | a})
+  end
+end
+def f() as A
+end
+
+
+-- Misc test cases
+-- ---------------
+
+
+[case testPairExample]
+-- This test case is adapted from an example program in a paper describing
+-- the transformation process.
+class P<H, T>
+  private var head as H
+  private var tail as T
+  private var name as Name
+  def create(head as H, tail as T, name as Name)
+    self.head = head
+    self.tail = tail
+    self.name = name
+  end
+  def setHead(newHead as H, newName as Name) as P<H, T>
+    return P(newHead, self.tail, newName) as <H, T>
+  end
+end
+class Name; end
+[out]
+class P
+...
+  def setHead`P(__tv as dynamic, newHead as dynamic, newName as Name) as P
+    return P([__tv[0], __tv[1]], newHead, self.tail, newName) as <H, T>
+  end
+  def setHead*(newHead as dynamic, newName as dynamic) as dynamic
+    return {dyn <= P<dyn, dyn> | \
+             setHead`P([dyn, dyn], newHead, {Name <= dyn | newName})}
+  end
+end
+class P*
+...
+  def setHead`P(__tv as dynamic, newHead as dynamic, newName as Name) as P
+    return {P<self.__tv[0], self.__tv[1]> <= P<dyn, dyn> | \
+             self.__o.setHead`P(self.__tv, \
+                                {self.__tv[0] <= dyn | newHead}, \
+                                newName)}
+  end
+  def setHead*(newHead as dynamic, newName as dynamic) as dynamic
+    return {dyn <= P<self.__tv[0], self.__tv[1]> | \
+             {P<self.__tv[0], self.__tv[1]> <= P<dyn, dyn> | \
+               self.__o.setHead`P(self.__tv, \
+                                  {self.__tv[0] <= dyn | newHead}, \
+                                  {Name <= dyn | newName})}}
+  end
+end
+class Name; end
+
+
+-- normal class inherits generic class
+--   overriding
+--   coercions
+-- generic class inherits generic class
+--   access within class
+--   external access
+--   overriding
+--   multiple type variables
+-- generic class inherits normal class
+--   access within class
+--   external access
+--   overriding

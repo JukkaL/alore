@@ -1,0 +1,19 @@
+module bitop
+
+def And(x as Int, y as Int) as Int
+end
+
+def Or(x as Int, y as Int) as Int
+end
+
+def Xor(x as Int, y as Int) as Int
+end
+
+def Neg(x as Int) as Int
+end
+
+def Shl(x as Int, y as Int) as Int
+end
+
+def Shr(x as Int, y as Int) as Int
+end

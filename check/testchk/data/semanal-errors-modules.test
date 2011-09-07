@@ -1,0 +1,379 @@
+-- Test cases for semantic analyser errors. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Module-related semantic analysis errors
+-- ---------------------------------------
+
+
+[case testImportUndefinedModule]
+import a
+import io::a
+import a::b::c::d
+var a
+a = 1
+[out]
+main, line 1: Module "a" could not be imported
+main, line 2: Module "io::a" could not be imported
+main, line 3: Module "a::b::c::d" could not be imported
+
+[case testErrorInImportedModule]
+import foo
+[file foo/f.alo]
+module foo
+x
+[out]
+In module imported in main, line 1:
+tmp/foo/f.alo, line 2: "x" undefined
+
+[case testModuleHeaderInMainFile]
+module main
+x
+[out]
+main, line 1: Unexpected module header
+main, line 2: "x" undefined
+
+[case testInvalidModuleHeader]
+import foo
+[file foo/foo.alo]
+module Foo
+[out]
+In module imported in main, line 1:
+tmp/foo/foo.alo, line 1: Invalid module header
+
+[case testReportingImportContext]
+import a
+import b
+[file a/a.alo]
+module a
+[file b/b.alo]
+module b
+x
+[out]
+In module imported in main, line 2:
+tmp/b/b.alo, line 2: "x" undefined
+
+[case testReportingImportChain]
+---- Padding
+import a
+[file a/a.alo]
+module a
+---- Padding
+import b
+[file b/b.alo]
+module b
+x
+[out]
+In module imported in tmp/a/a.alo, line 3,
+                   in main, line 2:
+tmp/b/b.alo, line 2: "x" undefined
+
+[case testNestedModuleContext]
+import fob::bar
+[file fob/bar/x.alo]
+import zah
+[file zah/z.alo]
+x
+[out]
+In module imported in main, line 1:
+tmp/fob/bar/x.alo, line 1: Module header expected
+In module imported in tmp/fob/bar/x.alo, line 1,
+                   in main, line 1:
+tmp/zah/z.alo, line 1: Module header expected
+tmp/zah/z.alo, line 1: "x" undefined
+
+[case testModuleContextWithParseError]
+import foo
+[file foo/f.alo]
+module foo
+1 1
+[out]
+In module imported in main, line 1:
+tmp/foo/f.alo, line 2: Parse error before numeric literal
+
+[case testAmbiguousShortReference]
+import a, b
+Foo
+Bar
+[file a/a.alo]
+module a
+def Foo()
+end
+class Bar
+end
+[file b/b.alo]
+module b
+def Foo()
+end
+var Bar
+[out]
+main, line 2: "Foo" ambiguous
+main, line 3: "Bar" ambiguous
+
+[case testAmbiguousQualifiedReference]
+import a::c, b::c
+Foo
+Bar
+c::Foo
+c::Bar
+[file a/c/a.alo]
+module a::c
+def Foo()
+end
+class Bar
+end
+[file b/c/b.alo]
+module b::c
+def Foo()
+end
+var Bar
+[out]
+main, line 2: "Foo" ambiguous
+main, line 3: "Bar" ambiguous
+main, line 4: "c::Foo" ambiguous
+main, line 5: "c::Bar" ambiguous
+
+[case testImportingUndefinedModuleInAnImportedModule]
+import a
+[file a/a.alo]
+module a
+import b
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 2: Module "b" could not be imported
+
+[case testInvalidHeaderInNestedModule]
+import a::b
+[file a/b/a.alo]
+module a::a
+[file a/b/b.alo]
+module b::b
+[file a/b/c.alo]
+module a
+[file a/b/d.alo]
+module a::b::c
+[out]
+In module imported in main, line 1:
+tmp/a/b/a.alo, line 1: Invalid module header
+tmp/a/b/b.alo, line 1: Invalid module header
+tmp/a/b/c.alo, line 1: Invalid module header
+tmp/a/b/d.alo, line 1: Invalid module header
+
+[case testModuleWithMultipleFiles]
+import a
+[file a/a.alo]
+module x
+[file a/b.alo]
+module a
+x
+[file a/c.alo]
+module x
+y
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 1: Invalid module header
+tmp/a/c.alo, line 1: Invalid module header
+tmp/a/b.alo, line 2: "x" undefined
+tmp/a/c.alo, line 2: "y" undefined
+
+[case testUnimportedReferences]
+import a
+x
+b::f
+[file a/a.alo]
+module a
+import b
+[file b/b.alo]
+module b
+const x
+def f()
+end
+[out]
+main, line 2: "x" undefined
+main, line 3: "b::f" undefined
+
+[case testSuperclassInNonImportedModule]
+import a
+class a is b
+end
+[file a/a.alo]
+module a
+import b
+[file b/b.alo]
+module b
+class b
+end
+[out]
+main, line 2: "b" undefined
+
+[case testNonExistingModuleName]
+import a::b
+a::Object
+x::b::X
+a::x::X
+[file a/b/a.alo]
+module a::b
+var X
+[out]
+main, line 2: "a::Object" undefined
+main, line 3: "x::b::X" undefined
+main, line 4: "a::x::X" undefined
+
+[case testWrongPrefix]
+-- Wrong but imported module prefix
+import a
+a::Object
+[file a/a.alo]
+module a
+[out]
+main, line 2: "a::Object" undefined
+   
+[case testUndefinedPartiallyQualifiedName]
+import a::b
+b::X
+[file a/b/a.alo]
+module a::b
+[out]
+main, line 2: "b::X" undefined
+
+[case testUndefinedReferenceToCurrentModule1]
+import a
+::X
+[file a/a.alo]
+module a
+var X
+::X
+[out]
+main, line 2: "::X" undefined
+
+[case testUndefinedReferenceToCurrentModule2]
+import a
+var X
+[file a/a.alo]
+module a
+::X
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 2: "::X" undefined
+
+[case testUndefinedReferenceToMainFileDefinition]
+import a
+var X
+[file a/a.alo]
+module a
+X
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 2: "X" undefined
+
+[case testEmptyModule]
+import a
+[file a/a.x]
+module a
+[out]
+main, line 1: Module "a" could not be imported
+
+[case testAccessingModulePrivateDefinition]
+import a
+X
+a::X
+[file a/a.alo]
+module a
+import b
+Y
+b::Y
+private var X
+[file b/b.alo]
+module b
+private def Y()
+end
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 3: "Y" undefined
+tmp/a/a.alo, line 4: "b::Y" undefined
+main, line 2: "X" undefined
+main, line 3: "a::X" undefined
+
+[case testPartiallyQualifiedAccessToModulePrivate]
+import a::b
+b::X
+[file a/b/a.alo]
+module a::b
+private var X
+[out]
+main, line 2: "b::X" undefined
+
+[case testPrivateSuperclass]
+import a
+class A is B
+end
+class AA is a::B
+end
+[file a/a.alo]
+module a
+private class B
+end
+[out]
+main, line 2: "B" undefined
+main, line 4: "a::B" undefined
+
+-- The special module "err" contains a directory with .alo extension which
+-- causes an IO error.
+[case testIoError]
+import err
+[file err/e.alo]
+module err
+[out]
+main, line 1: Module "err" could not be imported
+
+[case testUsingCurrentModuleQualifier1]
+import a
+[file a/a.alo]
+module a
+var x
+a::x
+::x
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 3: "a::x" undefined
+
+[case testUsingCurrentModuleQualifier2]
+import a::b
+[file a/b/a.alo]
+module a::b
+var x
+a::b::x
+b::x
+[out]
+In module imported in main, line 1:
+tmp/a/b/a.alo, line 3: "a::b::x" undefined
+tmp/a/b/a.alo, line 4: "b::x" undefined
+
+[case testCurrentModuleQualifierInSuperclass]
+import a
+[file a/a.alo]
+module a
+class c
+end
+class d is a::c
+end
+class e is ::c
+end
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 4: "a::c" undefined
+
+[case testMissingModuleHeaderWithDefinitions]
+import a
+[file a/a-skip.alo]
+class A
+end
+[out]
+In module imported in main, line 1:
+tmp/a/a-skip.alo, line 1: Module header expected

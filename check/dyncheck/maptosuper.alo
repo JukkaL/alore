@@ -1,0 +1,101 @@
+module dyncheck
+
+import types
+import nodes
+
+
+class SupertypeMapError is Exception
+end
+
+
+-- Map a type from the context of a subtype to the context of a supertype.
+-- In particular, convert any type variables to be valid for supertype. If
+-- subtype maps some supertype type variables to constant types, instances of
+-- these  constant types will *not* be translated.
+--
+-- For example, consider these type definitions:
+--
+--   class A<`1> ...
+--   class B<`1> is A<X<`1>> ...
+--
+-- Type X<`1> in B would be converted to `1 in A.
+def MapTypeToSupertype(type as Typ, subtype as TypeInfo, 
+                       supertype as TypeInfo) as Typ
+  -- There's nothing to do if the subtype has no type variables, even if the
+  -- supertype is generic.
+  if subtype.typeVars == []
+    return type
+  end
+  
+  -- Repeatedly map the type to the immediate supertype until reaching our 
+  -- target.
+  while subtype != supertype
+    type = type.accept(SupertypeMapper(subtype))
+    subtype = subtype.base
+  end
+  
+  return type
+end
+
+
+-- Map a type to the context of the immediate supertype.
+class SupertypeMapper is TypeTranslator
+  private const subtype as TypeInfo
+
+  def create(subtype as TypeInfo)
+    self.subtype = subtype
+  end
+
+  def visitInstance(t as Instance) as Typ
+    if IsConstantType(t)
+      -- Constant types (with no type variables) are never mapped. The effect
+      -- is that we get coercions from type variables to constant types. This 
+      -- may be essential if constant types may have a different 
+      -- representation from values with type variable type. Anyway, any 
+      -- superfluous coercions can be removed later during the transformation.
+      return super.visitInstance(t)
+    else
+      -- Check if the instance maps directly to a supertype variable.
+      var m = findArgumentMatch(t)
+      if m != nil
+        return m -- Yes
+      else
+        -- No, translate arguments recursively.
+        return super.visitInstance(t)
+      end
+    end
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    -- If we reach here, the instance must map directly to a supertype 
+    -- variable.
+    var m = findArgumentMatch(t)
+    if m != nil
+      return m
+    else
+      -- We could not perform the mapping: there is no complete match.
+      raise SupertypeMapError('Unmatched TypeVar')
+    end
+  end
+  
+  -- Find an instance of a type in the arguments of a generic supertype, and
+  -- return a supertype TypeVar reference that refers to this type argument.
+  --
+  -- For example, consider the following definition:
+  --
+  --   class A<T> is B<C, T>
+  --
+  -- Now findArgumentMatch(T`1), with A as the subtype, would return `2, since
+  -- T is the second type argument to B.
+  private def findArgumentMatch(t as Typ) as TypeVar
+    var base = (subtype.bases[0] as Instance)
+    for i in 0 to base.args.length()
+      if IsSameType(t, base.args[i])
+        -- Found a match with a supertype variable!
+        return TypeVar(nil, i + 1)
+      end
+    end
+    -- Could not match.
+    return nil
+  end
+end

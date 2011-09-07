@@ -1,0 +1,9 @@
+module std
+
+-- Std module stub used in exception-related test cases.
+
+class Object
+end
+
+class Exception
+end

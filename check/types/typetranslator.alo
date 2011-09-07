@@ -1,0 +1,70 @@
+module types
+
+
+-- Identity type transformation. Subclass this and override some methods to 
+-- implement a non-trivial transformation.
+--
+-- NOTE: Does not preserve upper bounds of instance types!
+class TypeTranslator is TypeVisitor<Typ>
+  def visitUnboundType(t as UnboundType) as Typ
+    return t
+  end
+  
+  def visitErrorType(t as ErrorType) as Typ
+    return t
+  end
+  
+  def visitDynamic(t as Dynamic) as Typ
+    return t
+  end
+  
+  def visitVoid(t as Void) as Typ
+    return t
+  end
+  
+  def visitNilType(t as NilType) as Typ
+    return t
+  end
+  
+  def visitInstance(t as Instance) as Typ
+    -- Assume that no upper bounds are defined.
+    return Instance(t.type, translateTypes(t.args), nil, nil, t.line, t.repr)
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    return t
+  end
+  
+  def visitCallable(t as Callable) as Typ
+    return Callable(translateTypes(t.argTypes), t.minArgs, t.isVarArg,
+                    t.retType.accept(self), t.isTypeObj, t.name, t.variables,
+                    translateBoundVars(t.boundVars), t.line, t.repr)
+  end
+  
+  def visitTupleType(t as TupleType) as Typ
+    return TupleType(translateTypes(t.items), t.line, t.repr)
+  end
+  
+  def visitIntersection(t as Intersection) as Typ
+    return Intersection(t.item1.accept(self) as FunctionLike, 
+                        t.item2.accept(self) as FunctionLike,
+                        t.name, t.line, t.repr)
+  end
+  
+  private def translateTypes(types as Array<Typ>) as Array<Typ>
+    var a = [] as <Typ>
+    for t in types
+      a.append(t.accept(self))
+    end
+    return a
+  end
+  
+  private def translateBoundVars(
+                   types as Array<(Int, Typ)>) as Array<(Int, Typ)>
+    var a = [] as <(Int, Typ)>
+    for id, t in types
+      a.append((id, t.accept(self)))
+    end
+    return a
+  end
+end

@@ -1,0 +1,71 @@
+module testchk
+
+-- Test cases for parsing Alore files with different encodings.
+
+import unittest
+import parser
+import errors
+import testchk::helpers
+import os
+import io
+
+
+-- Test case files (parse-enc*.alo and parse-enc*.out) are located in the
+-- common checker test data directory.
+
+
+class EncodingsSuite is Suite
+  def cases()
+    -- Each test case is described by a pair of files (.alo and .out).
+    var a = []
+    for fnam in ListDir(TestDataPrefix, "parse-enc*.alo")
+      a.append(EncodingTestCase(fnam))
+    end
+    return a
+  end
+end
+
+
+-- Test case class for parsing Alore files with different encodings.
+class EncodingTestCase is TestCase
+  -- File name of the source file used for this test case (.alo)
+  private const fnam
+
+  def create(fnam)
+    super.create(FileBase(fnam))
+    self.fnam = fnam
+  end
+  
+  -- Perform the test case. Parse the file and verify that the output matches
+  -- the test case output file (.out extension).
+  def run()
+    var input = FileStr(self.fnam)
+    var outf = FileBase(self.fnam) + ".out"
+    var output = FileStr(outf)
+    if output == nil
+      raise AssertionFailure("{} missing".format(outf))
+    end
+    output = output.strip()
+    var a
+    try
+      a = Str(Parse(input)).split(LF)
+    except e is CompileError
+      a = e.messages
+    end
+    AssertStringArraysEqual(a, output.split(LF), "Invalid parser output")
+  end
+end
+
+
+-- Read the contents of a file as a string.
+def FileStr(fn)
+  try
+    var f = File(Join(TestDataPrefix, fn))
+    var s = f.read()
+    f.close()
+    return s
+  except IoError
+    WriteLn("{} missing!".format(fn))
+    return nil
+  end
+end

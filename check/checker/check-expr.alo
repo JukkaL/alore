@@ -1,0 +1,1142 @@
+module checker
+
+import nodes
+import types
+
+
+-- This class type checks expressions. It works closely together with 
+-- TypeChecker.
+class ExpressionChecker
+  -- Some services are provided by a TypeChecker instance.
+  private const chk as TypeChecker
+  -- This is shared with TypeChecker, but stored also here for convenience.
+  private const msg as MessageBuilder
+  
+  
+  -- Construct an expression checker.
+  def create(chk as TypeChecker, msg as MessageBuilder)
+    self.chk = chk
+    self.msg = msg
+  end
+  
+
+  -- Type check a name lvalue.  
+  def visitNameLvalue(n as NameLvalue) as Typ
+    return visitNameExpr(n)
+  end
+  
+  -- Type check a name expression (of any kind: local, member or global).
+  def visitNameExpr(e as NameExpr) as Typ
+    var result as Typ
+   
+    -- Give up if the semantic analyser could not bind the name.
+    if e.fullName == nil
+      result = Dynamic()
+    else
+      var sym = chk.lookup(e.fullName, e.kind)
+      if sym.kind == Mdef
+        -- Direct access to a member. Reuse ordinary member access logic.
+        return analyseDirectMemberAccess(e.name, e.info, e is NameLvalue, e)
+      elif sym.node is Var
+        -- Variable or constant reference.
+        var node = (sym.node as Var)
+        if sym.kind == Gdef and node.isConst and not node.isInit and 
+           node.type == nil
+          -- Implicit type for symbolic constants.
+          result = namedType("std::Constant")
+        elif sym.type == nil
+          -- Implicit dynamic type.
+          result = Dynamic()
+        else
+          -- Local or global variable.
+          result = sym.type
+        end
+      elif sym.node is FuncDef
+        -- Reference to a global function.
+        var node = (sym.node as FuncDef)
+        result = chk.functionType(node)
+      elif sym.node is TypeInfo
+        -- Reference to a type object.
+        result = typeObjectType(sym.node as TypeInfo)
+      else
+        -- Unknown reference; use dynamic type implicitly to avoid generating
+        -- extra type errors.
+        result = Dynamic()
+      end
+    end
+    return result
+  end
+  
+  -- Create a callable/intersection type from the signature of the constructor
+  -- and the TypeInfo of the class.
+  private def classCallable(createType as FunctionLike, info as TypeInfo) as
+                              FunctionLike
+    if createType is Callable
+      -- Basic case (no intersection type)
+      var ccreate = (createType as Callable)
+      var variables = [] as <TypeVarDef>
+      for i in 0 to info.typeVars.length()
+        variables.append(TypeVarDef(info.typeVars[i], i + 1, info.bounds[i]))
+      end
+
+      variables.extend(ccreate.variables.items)
+
+      return Callable(ccreate.argTypes, 
+                      ccreate.minArgs, 
+                      ccreate.isVarArg,
+                      SelfType(info),
+                      True,                  -- Is a type object
+                      nil, 
+                      TypeVars(variables))
+    else
+      -- Intersection type for create
+      var icreate = (createType as Intersection)
+      return Intersection(classCallable(icreate.item1, info),
+                          classCallable(icreate.item2, info))
+    end
+  end
+  
+  -- Visit member lvalue (of form e.id).
+  def visitMemberLvalue(n as MemberLvalue) as Typ
+    return collapseMemberType(analyseOrdinaryMemberAccess(n, True))
+  end
+  
+  -- Visit member expression (of form e.id).
+  def visitMemberExpr(e as MemberExpr) as Typ
+    return collapseMemberType(analyseOrdinaryMemberAccess(e, False))
+  end
+  
+  -- Analyse member expression or member lvalue. Note that this function may
+  -- return a RangeCallable type.
+  private def analyseOrdinaryMemberAccess(e as MemberExpr, 
+                                          isLvalue as Boolean) as Typ
+    return analyseMemberAccess(e.name, accept(e.expr), isSelfExpr(e.expr), e, 
+                               isLvalue, False)
+  end
+  
+  -- Analyse member access that is external, i.e. it cannot refer to private
+  -- definitions. Return the result type.
+  --
+  -- Note that this function may return a RangeCallable type.
+  def analyseExternalMemberAccess(member as Str, baseType as Typ, 
+                                  context as Context, 
+                                  inversion = nil as Constant) as Typ
+    return analyseMemberAccess(
+             member, 
+             baseType, 
+             False,      -- Hide private
+             context, 
+             False,      -- Not lvalue
+             False,      -- Not super
+             inversion)
+  end
+  
+  -- Analyse direct member access via a name expression (implicit self). This
+  -- can access private definitions.
+  private def analyseDirectMemberAccess(name as Str, 
+                                        info as TypeInfo, 
+                                        isLvalue as Boolean,
+                                        context as Context) as Typ
+    return analyseMemberAccess(name,
+                               SelfType(info),
+                               True,     -- Can access private
+                               context,
+                               isLvalue,
+                               False)    -- Not super
+  end
+  
+  -- Analyse member access. This is a general operation that supports various
+  -- different variations:
+  --
+  --   1. direct access (accessPrivate == True) or external (otherwise)
+  --   2. lvalue or non-lvalue access (i.e. setter or getter access)
+  --   3. supertype access (when using the super keyword; isSuper == True and
+  --      overrideInfo should refer to be the supertype)
+  --
+  -- The inversion argument can be Inverted or nil. If Inverted, this refers to
+  -- an inverted relational operation (e.g. x >= y => not x._lt(y)).
+  --
+  -- Note that this function may return a RangeCallable type.
+  private def analyseMemberAccess(name as Str,     -- Member name
+                                  type as Typ,     -- Base type
+                                  accessPrivate as Boolean, 
+                                  node as Context, 
+                                  isLvalue as Boolean,
+                                  isSuper as Boolean, 
+                                  inversion = nil as Constant,  
+                                  overrideInfo = nil as TypeInfo) as Typ
+    if type is Instance
+      -- The base object has an instance type.
+      var itype = (type as Instance)
+      
+      var info = itype.type
+      if overrideInfo != nil
+        info = overrideInfo
+      end
+      
+      -- Look up the member. First look up the method dictionary.
+      var method = nil as FuncDef
+      if accessPrivate and not isLvalue
+        method = info.getMethod(name)
+      elif not isLvalue
+        method = info.getPublicMethod(name)
+      end
+      
+      if method != nil
+        -- Found a method. The call below has a unique result for all valid 
+        -- programs.
+        itype = MapInstanceToSupertypes(itype, method.info)[0]
+        if itype.argTops != nil
+          -- The base object has ranges in type arguments. Return a placholder
+          -- type which retains the ranges (Callable cannot represent them).
+          -- The caller will have to collapse the ranges into an ordinary 
+          -- Callable type before using the type further.
+          return RangeCallable(
+                   itype.args,
+                   itype.argTops,
+                   itype.rangeIds,
+                   chk.functionType(method) as dynamic) -- FIX bad cast?
+        else
+          -- No ranges; return an ordinary Callable.
+          return ExpandTypeByInstance(chk.functionType(method), itype)
+        end
+      else
+        -- Not a method.
+        return analyseMemberVarAccess(name, itype, info, accessPrivate, node,
+                                      isLvalue, isSuper, inversion)
+      end
+    elif type is Dynamic
+      -- The base object has dynamic type.
+      return Dynamic()
+    elif type is TupleType
+      -- Actually look up from the std::Tuple type.
+      return analyseMemberAccess(name, chk.tupleType(), accessPrivate,
+                                 node, isLvalue, isSuper, inversion)
+    else
+      -- The base object has an unsupported type.
+      return self.msg.hasNoMember(type, name, node, inversion)
+    end
+  end
+  
+  -- Analyse member access that does not target a method. This is logically 
+  -- part of analyseMemberAccess and the arguments are similar.
+  private def analyseMemberVarAccess(name as Str,
+                                     itype as Instance,
+                                     info as TypeInfo,
+                                     accessPrivate as Boolean,
+                                     node as Context,
+                                     isLvalue as Boolean,
+                                     isSuper as Boolean,
+                                     inversion as Constant) as Typ
+    -- It was not a method. Try looking up a variable.
+    var v = lookupMemberVarOrAccessor(info, name, isLvalue, accessPrivate)
+
+    if v is Var
+      -- Found a member variable, but it might be invalid (const).
+
+      -- Assignment to a const member should generally fail. Note that 
+      -- invalid lvalue when accessing using self (accessPrivate == True)
+      -- is dealt with in the semantic analyser, and we really want this 
+      -- to succeed in this case so that the correct type is returned 
+      -- for checking const initialization in create().
+
+      -- This is unique for all valid programs.
+      itype = MapInstanceToSupertypes(itype, v.info)[0]
+      -- FIX what if more than one?
+      if not (isLvalue and (v as Var).isConst and not accessPrivate)
+        if v.type != nil
+          return ExpandTypeByInstance(v.type.type, itype)
+        else
+          -- Implicit dynamic type.
+          return Dynamic()
+        end
+      end
+    elif v is FuncDef
+      -- Found a getter or a setter. This is unique for all valid programs.
+      itype = MapInstanceToSupertypes(itype, v.info)[0]
+      return ExpandTypeByInstance(chk.accessorType(v), itype)
+    end
+
+    -- Could not find the member.
+    if (accessPrivate or isSuper) and itype.type.hasReadableMember(name)
+      -- Do not report error to avoid duplicate errors. The semantic 
+      -- analyser has already reported this.
+      return Dynamic()
+    else
+      return self.msg.hasNoMember(itype, name, node, inversion)
+    end
+  end
+  
+  -- Find the member variable or accessor node that refers to the given member
+  -- of a type.
+  private def lookupMemberVarOrAccessor(
+                  info as TypeInfo, name as Str, isLvalue as Boolean, 
+                  accessPrivate as Boolean) as AccessorNode
+    if isLvalue
+      if accessPrivate
+        return info.getVarOrSetter(name)
+      else
+        return info.getPublicVarOrSetter(name)
+      end
+    else
+      if accessPrivate
+        return info.getVarOrGetter(name)
+      else
+        return info.getPublicVarOrGetter(name)
+      end
+    end
+  end
+  
+  -- Type check a self expression.
+  def visitSelfExpr(e as SelfExpr) as Typ
+    if e.type != nil
+      return SelfType(e.type)
+    else
+      return Dynamic()
+    end
+  end
+  
+  -- Type check a parenthesised expression.
+  def visitParenExpr(e as ParenExpr) as Typ
+    return accept(e.expr)
+  end
+  
+  -- Type check a nil expression (trivial).
+  def visitNilExpr(e as NilExpr) as Typ
+    return NilType()
+  end
+  
+  -- Type check an integer literal (trivial).
+  def visitIntExpr(e as IntExpr) as Typ
+    return namedType("std::Int")
+  end
+  
+  -- Type check a string literal (trivial).
+  def visitStrExpr(e as StrExpr) as Typ
+    return namedType("std::Str")
+  end
+  
+  -- Type check a float literal (trivial).
+  def visitFloatExpr(e as FloatExpr) as Typ
+    return namedType("std::Float")
+  end
+  
+  -- Type check a call expression.
+  def visitCallExpr(e as CallExpr) as Typ
+    var calleeType as Typ
+    if e.callee is MemberExpr
+      -- Need special processing to retain possible RangeCallable types. These
+      -- will be expanded later after argument types have been inferred.
+      calleeType = analyseOrdinaryMemberAccess(e.callee as MemberExpr, False)
+    else
+      -- Type check callee in an ordinary fashion. This will never result in
+      -- a RangeCallable type.
+      calleeType = accept(e.callee)
+    end
+    chk.storeType(e.callee, calleeType)
+    return checkCallExprWithCalleeType(calleeType, e)
+  end
+  
+  -- Type check call expression. The given callee type overrides the type of
+  -- the callee expression.
+  def checkCallExprWithCalleeType(calleeType as Typ, e as CallExpr) as Typ
+    -- Type check arguments.
+    var argTypes = [] as <Typ>
+    for arg in e.args
+      argTypes.append(accept(arg))
+    end
+    
+    return checkCall(calleeType, argTypes, e, e.isVarArg, 
+                     not isGlobalNameExpr(e.callee))
+  end
+  
+  -- Type check a call with the given callee and argument types. If isVarArg
+  -- is True, the callee uses varargs. If checkArgCount is False, do not report
+  -- invalid number of arguments as an error (this is used when the error has
+  -- already been reported by the semantic analyser and we don't want duplicate
+  -- error messages). If inversion is Inverted, this is an inverted relational
+  -- operation (this may affect generated error messages).
+  def checkCall(callee as Typ, 
+                argTypes as Array<Typ>, 
+                context as Context, 
+                isVarArg = False as Boolean, 
+                checkArgCount = True as Boolean, 
+                inversion = nil as Constant) as Typ
+    if callee is RangeCallable
+      callee = expandRangeCallable(callee as RangeCallable, argTypes, isVarArg,
+                                   context)
+    end
+                        
+    if callee is Callable
+      var callable = (callee as Callable)
+      if callable.isGeneric()
+        callable = inferFunctionTypeArguments(callable, argTypes, isVarArg, 
+                                              context)
+      end
+      
+      -- Check number of arguments, but only if the semantic analyser hasn't
+      -- done it for us.
+      if checkArgCount
+        -- Checking the type and compatibility of the varargs argument type in
+        -- a call is handled by the checkArgumentTypes call below.
+        if not IsValidArgc(argTypes.length(), False, callable)
+          self.msg.invalidArgumentCount(callable, argTypes.length(), context)
+        end
+      end
+      
+      checkArgumentTypes(argTypes, isVarArg, callable, context, inversion)
+
+      return callable.retType
+    elif callee is Intersection
+      var target = intersectionTypeCallTarget(
+                     argTypes, isVarArg, callee as Intersection, context)
+      return checkCall(target, argTypes, context, isVarArg, checkArgCount, 
+                       inversion)
+    elif callee is Dynamic
+      return Dynamic()
+    else
+      return self.msg.notCallable(callee, context)
+    end
+  end
+  
+  -- Expand a range callable into an ordinary callable type. The resulting
+  -- type may have ranges, but they are embedded within Instance type 
+  -- components of the type.
+  private def expandRangeCallable(callee as RangeCallable, 
+                                  argTypes as Array<Typ>, 
+                                  isVarArg as Boolean, 
+                                  context as Context) as Typ
+    var inferredArgs = InferRangeCallableTypeArguments(
+                         callee, argTypes, isVarArg, chk.basicTypes())
+    return applyInferredArguments(callee.callable, inferredArgs, 
+                                  callee.typeVarIds(), context)
+  end
+  
+  -- Infer the type arguments for a generic callee type. Return a derived
+  -- callable type that has the arguments applied (and stored as implicit
+  -- type arguments). If isVarArg is True, the callee uses varargs.
+  private def inferFunctionTypeArguments(
+                calleeType as Callable, 
+                argTypes as Array<Typ>, 
+                isVarArg as Boolean, 
+                context as Context) as Callable
+    var inferredArgs = InferFunctionTypeArguments(
+                         calleeType, argTypes, 
+                         isVarArg, chk.basicTypes()) as Array<(Typ, Typ)>
+    return applyInferredArguments(calleeType, inferredArgs, [], context)
+  end
+  
+  -- Apply inferred values of type arguments to a generic function. If 
+  -- implicitTypeVars are given, they correspond to the ids of the implicit
+  -- instance type variables; they are stored as the prefix of inferredArgs.
+  -- InferredArgs contains first the values of implicit instance type vars (if 
+  -- any), and then values of function type variables, concatenated together.
+  def applyInferredArguments(calleeType as Callable, 
+                             inferredArgs as Array<(Typ, Typ)>, 
+                             implicitTypeVars as Array<Int>, 
+                             context as Context) as Callable
+    -- Determine which type variables support range type variables.
+    var rangeSupported = [] as <Boolean>
+    for v in implicitTypeVars
+      rangeSupported.append(DoesTypeVariableSupportRanges(calleeType.retType,
+                                                          v))
+    end
+    rangeSupported.extend(GenericFunctionRangeVariables(calleeType))
+    
+    -- Report error if some of the variables could not be solved. In that case
+    -- assume that all variables have type dynamic to avoid extra bogus error
+    -- messages.
+    for i in 0 to inferredArgs.length()
+      var inferredType = inferredArgs[i]
+      if inferredType == nil
+        -- Could not infer a non-trivial type for a type variable.
+        self.msg.couldNotInferTypeArguments(
+                    calleeType, i + 1 - implicitTypeVars.length(), context)
+        inferredArgs = [(Dynamic(), Dynamic())] * inferredArgs.length()
+      end
+    end
+    
+    -- Collect inferred lower bounds for all type variables. Collect upper
+    -- bounds for those variables that support them.
+    var lowerBounds = [] as <Typ>
+    var upperBounds = [] as <Typ>
+    for i in 0 to inferredArgs.length()
+      var lower, upper = inferredArgs[i]
+      lowerBounds.append(lower)
+      if rangeSupported[i]
+        upperBounds.append(upper)
+      else
+        upperBounds.append(nil)
+      end
+    end
+    
+    -- Apply the inferred types to the function type. In this case the return
+    -- type must be Callable, since we give the right number of type arguments.
+    return applyGenericArguments(calleeType, lowerBounds, upperBounds, 
+                                 implicitTypeVars, nil) as Callable
+  end
+  
+  -- Check argument types against a callable type. If isVarArg is True,
+  -- the caller uses varargs.
+  private def checkArgumentTypes(argTypes as Array<Typ>, isVarArg as Boolean, 
+                                 callee as Callable, context as Context, 
+                                 inversion = nil as Constant)
+    var calleeNumArgs = callee.maxFixedArgs
+    
+    var callerRest = nil as Typ -- Rest of types for varargs calls
+    if isVarArg
+      -- Varargs call site.
+      
+      if not isValidVarArg(argTypes[-1])
+        self.msg.invalidVarArg(argTypes[-1], context)
+        return
+      end
+      
+      argTypes, callerRest = ExpandCallerVarArgs(argTypes, calleeNumArgs)
+      
+      -- Check vararg call argument count.
+      if argTypes.length() < callee.minArgs
+        self.msg.tooFewArguments(callee, context)
+      elif argTypes.length() > callee.argTypes.length() and not callee.isVarArg
+        self.msg.tooManyArguments(callee, context)
+      elif callerRest != nil and not callee.isVarArg and 
+           not argTypes[-1] is Dynamic
+        self.msg.tooManyArguments(callee, context)
+      end
+      
+      -- Check vararg types.
+      if callerRest != nil and callee.isVarArg
+        chk.checkSubtype(callerRest, callee.argTypes[-1], context,
+                         IncompatibleArrayVarArgs)
+      end
+    end
+    
+    var callerNumArgs = argTypes.length()
+    
+    -- Verify fixed argument types.
+    for i in 0 to Min(callerNumArgs, calleeNumArgs)
+      checkArg(argTypes[i], callee.argTypes[i], i + 1, callee, context, 
+               inversion)
+    end
+    
+    -- Verify varargs.
+    if callee.isVarArg
+      for i in calleeNumArgs to callerNumArgs
+        checkArg(argTypes[i], callee.argTypes[-1], i + 1, callee, context,
+                 inversion)
+      end
+    end
+  end
+ 
+  -- Check the type of a single argument in a call.
+  private def checkArg(callerType as Typ, calleeType as Typ, n as Int, 
+                       callee as Callable, context as Context, 
+                       inversion as Constant)
+    if not IsSubtype(callerType, calleeType)
+      if callerType is Void
+        self.msg.doesNotReturnValue(callerType, context)
+      else
+        self.msg.incompatibleArgument(n, callee, callerType, context, 
+                                      inversion)
+      end
+    end
+  end
+  
+  -- Infer the correct intersection item to call with the given argument
+  -- types. The return value may be Callable or dynamic (if an unique item 
+  -- could not be determined due to there being some dynamic types in the 
+  -- arguments). If isVarArg is True, the caller uses varargs.
+  private def intersectionTypeCallTarget(argTypes as Array<Typ>, 
+                                         isVarArg as Boolean, 
+                                         intersection as Intersection, 
+                                         context as Context) as Typ
+    var match = nil as Typ -- Callable, Dynamic or nil
+    for type in intersection.items()
+      if matchesSignature(argTypes, isVarArg, type)
+        if match != nil and (match is Dynamic or
+                             not IsSameType((match as Callable).retType, 
+                                            type.retType))
+          -- Ambiguous return type. Either the intersection type is overlapping
+          -- (which results in an error elsewhere) or the caller has provided 
+          -- some dynamic argument types; in either case can only infer the 
+          -- type to be dynamic, as it is not an error to use dynamic types
+          -- in calls.
+          match = Dynamic()
+        else
+          match = type
+        end
+      end
+    end
+    if match == nil
+      self.msg.noVariantMatchesArguments(intersection, context)
+      return Dynamic()
+    else
+      return match
+    end
+  end
+  
+  -- Determine whether argument types match the given signature. If isVarArg
+  -- is True, the caller uses varargs.
+  private def matchesSignature(argTypes as Array<Typ>, isVarArg as Boolean, 
+                               type as Callable) as Boolean
+    if not IsValidArgc(argTypes.length(), False, type)
+      return False
+    end
+    
+    if isVarArg
+      if not isValidVarArg(argTypes[-1])
+        return False
+      end
+      var rest as Typ
+      argTypes, rest = ExpandCallerVarArgs(argTypes, type.maxFixedArgs)
+    end
+    
+    for i in 0 to argTypes.length()
+      if not IsSubtype(argTypes[i], ReplaceTypeVars(type.argTypes[i]))
+        return False
+      end
+    end
+    return True
+  end
+  
+  -- Visit a binary operator expression.
+  def visitOpExpr(e as OpExpr) as Typ
+    var leftType = accept(e.left)
+    var rightType = accept(e.right)
+    switch e.op
+      case "+", "-", "*", "/", "div", "mod", "**"
+        var method = OpMethods[e.op]
+        return checkOp(method, leftType, rightType, e)
+      case "<", ">"
+        return checkRelationalOp(e.op, leftType, rightType, e)
+      case "<=", ">="
+        return checkRelationalOp(e.op, leftType, rightType, e, Inverted)
+      case "==", "!="
+        checkNotVoid(leftType, e)
+        checkNotVoid(rightType, e)
+        return chk.booleanType()      
+      case "and", "or"
+        return checkBooleanOp(e.op, leftType, rightType, e)
+      case "in"
+        var result = checkOp("_in", rightType, leftType, e)
+        checkBooleanReturnValue("_in", result, e)
+        return chk.booleanType()
+      case "is"
+        return checkIsOp(leftType, rightType, e)
+      case ":"
+        checkNotVoid(leftType, e)
+        checkNotVoid(rightType, e)
+        return chk.namedGenericType("std::Pair", [leftType, rightType], 
+                                    [joinWithObject(leftType), 
+                                     joinWithObject(rightType)])
+      case "to"
+        if not IsSubtype(leftType, chk.intType()) or
+           not IsSubtype(rightType, chk.intType())
+          self.msg.unsupportedOperandTypes("to", leftType, rightType, e)
+        end
+        return namedType("std::Range")
+      else
+        return Dynamic()
+    end
+  end
+  
+  -- Visit a cast expression.
+  def visitCastExpr(expr as CastExpr) as Typ
+    var sourceType = accept(expr.expr)
+    var typeExpr = expr.typeName
+    if typeExpr.name == "dynamic"
+      return Dynamic()
+    else
+      var targetType = namedType(typeExpr.fullName)
+      
+      if not chk.isWithinFunction()
+        -- Test casts outside functions immediately.
+        if not isValidCast(sourceType, targetType)
+          self.msg.invalidCast(targetType, sourceType, expr)
+        end
+      elif not sourceType is NilType
+        -- Postpone checking of casts within functions. For functions  with 
+        -- intersection types it is sufficient that a cast is valid for
+        -- any intersection type item (signature); it can be invalid for other
+        -- items. The actual errors are reported later by checkCasts() after
+        -- all the signatures have been type checked.
+        
+        -- Check the validity of the cast (for a single signature) and update
+        -- the error list for this expression.
+        if isValidCast(sourceType, targetType)
+          -- Valid cast. Clear the invalid cast list for this cast; we will
+          -- not report an error for this even if other signatures would result
+          -- in invalid casts.
+          chk.castStatus[expr] = []
+        else
+          -- Invalid cast. Unless the cast has been successful, record an 
+          -- additional invalid cast. If we later find a valid cast for another
+          -- signature, this will be ignored.
+          if not chk.castStatus.hasKey(expr) or 
+               chk.castStatus[expr] != []
+            chk.castStatus[expr] = chk.castStatus.get(expr, []) +
+                                   [(targetType, sourceType)]
+          end
+        end
+      end
+      
+      return targetType
+    end
+  end
+  
+  -- Type check a relational operation (<, <=, > or >=).
+  def checkRelationalOp(op as Str, leftType as Typ, rightType as Typ, 
+                        context as Context, inversion = nil as Constant) as Typ
+    var method = OpMethods[op]
+    var result = checkOp(method, leftType, rightType, context, inversion)
+    checkBooleanReturnValue(method, result, context)
+    return chk.booleanType()
+  end
+  
+  -- Check that resultType is compatible with Boolean. It is the return value
+  -- of the method with the given name (this is used for error message 
+  -- generation).
+  def checkBooleanReturnValue(method as Str, resultType as Typ, 
+                              context as Context)
+    if not IsSubtype(resultType, chk.booleanType())
+      self.msg.booleanReturnValueExpected(method, context)
+    end
+  end
+  
+  -- Type check an unary expression ("not" or -).
+  def visitUnaryExpr(e as UnaryExpr) as Typ
+    var operandType = accept(e.expr)
+    switch e.op
+      case "not"
+        chk.checkBoolean(operandType, e, BooleanExpectedForNot)
+        return chk.booleanType()
+      case "-"
+        var methodType = analyseExternalMemberAccess("_neg", operandType, e)
+        return checkCall(methodType, [], e)
+    end
+  end
+  
+  -- Type check a binary operation which maps to a method call.
+  def checkOp(method as Str, baseType as Typ, argType as Typ, 
+              context as Context, inversion = nil as Constant) as Typ
+    if hasNonMethod(baseType, method)
+      self.msg.methodExpectedAsOperatorImplementation(
+        baseType, method, context)
+    end
+    var methodType = analyseExternalMemberAccess(method, baseType, context,
+                                                 inversion)
+    return checkCall(methodType, [argType], context, False, True, inversion)
+  end
+  
+  -- Type check a boolean operation ("and" or "or").
+  private def checkBooleanOp(op as Str, leftType as Typ, rightType as Typ, 
+                             context as Context) as Typ
+    if not isBoolean(leftType)
+      self.msg.unsupportedLeftOperand(op, leftType, context)
+    elif not isBoolean(rightType)
+      self.msg.unsupportedOperandTypes(op, leftType, rightType, context)
+    end
+    return chk.booleanType()
+  end
+  
+  -- Type check an "is" operation.
+  private def checkIsOp(leftType as Typ, type as Typ, context as Context) as
+                          Typ
+    checkNotVoid(leftType, context)
+    if not isType(type)
+      self.msg.typeExpectedAsRightOperandOfIs(context)
+    end
+    return chk.booleanType()
+  end
+  
+  -- Is a cast from sourceType to targetType valid (i.e. can succeed at 
+  -- runtime)?
+  def isValidCast(sourceType as Typ, targetType as Instance) as Boolean
+    return IsSubtype(targetType, sourceType) or
+           IsSubtype(sourceType, targetType) or
+           targetType.type.isInterface or
+           (sourceType is Instance and 
+            (sourceType as Instance).type.isInterface)
+  end
+  
+  -- Type check an index lvalue (base[index]).
+  def visitIndexLvalue(e as IndexLvalue) as Typ
+    return visitIndexExpr(e)
+  end
+  
+  -- Type check an index expression (base[index]).
+  def visitIndexExpr(e as IndexExpr) as Typ
+    var leftType = accept(e.base)
+    var rightType = accept(e.index)
+    if leftType is TupleType
+      -- Special case for tuples. They support indexing only by integer
+      -- literals.
+      var index = unwrap(e.index)
+      if index is IntExpr
+        var n = (index as IntExpr).value
+        var tupleType = (leftType as TupleType)
+        if n < tupleType.items.length()
+          return tupleType.items[n]
+        else
+          chk.fail(TupleIndexOutOfRange, e)
+          return Dynamic()
+        end
+      else
+        chk.fail(TupleIndexMustBeAnIntLiteral, e)
+        return Dynamic()
+      end
+    else
+      return checkOp("_get", leftType, rightType, e)
+    end
+  end
+  
+  -- Type check an array expression [...].
+  def visitArrayExpr(e as ArrayExpr) as Typ
+    -- Type checking an array expression is translated into type checking a 
+    -- generic function call.
+    
+    var tv = TypeVar("T", 1)
+    var constructor = Callable([tv], 
+                               0, 
+                               True, 
+                               chk.namedGenericType("std::Array", [tv]),
+                               False,
+                               nil,
+                               TypeVars([TypeVarDef("T", 1)]))
+    
+    var itemTypes = [] as <Typ>
+    for item in e.items
+      var t = accept(item)
+      checkNotVoid(t, e)
+      itemTypes.append(t)
+    end
+    
+    return checkCall(constructor, itemTypes, e)
+  end
+  
+  -- Type check a tuple expression.
+  def visitTupleExpr(e as TupleExpr) as Typ
+    var items = [] as <Typ>
+    for item in e.items
+      var t = accept(item)
+      checkNotVoid(t, e)
+      items.append(t)
+    end
+    return TupleType(items)
+  end
+  
+  -- Type check a super expression as lvalue.
+  def visitSuperLvalue(e as SuperLvalue) as Typ
+    return analyseSuper(e, True)
+  end
+  
+  -- Type check a super expression (non-lvalue).
+  def visitSuperExpr(e as SuperExpr) as Typ
+    return analyseSuper(e, False)
+  end
+  
+  -- Type check a super expression or a super lvalue.
+  def analyseSuper(e as SuperExpr, isLvalue as Boolean) as Typ
+    if e.info != nil and e.info.base != nil
+      return collapseMemberType(analyseMemberAccess(
+               e.name, SelfType(e.info), False, e, isLvalue, True, nil, 
+               e.info.base))
+    else
+      -- Invalid super. This has been reported by the semantic analyser.
+      return Dynamic()
+    end
+  end
+  
+  -- Type check an anonymous function expression.
+  def visitFuncExpr(e as FuncExpr) as Typ
+    chk.visitFuncDef(e)
+    return chk.functionType(e)
+  end
+  
+  -- Type check a type application (expr as <...>).
+  def visitTypeApplication(e as TypeApplication) as Typ
+    var expr = unwrap(e.expr)
+    -- Check the type of the base (operand) expression. Each operand type is 
+    -- different.
+    if expr is CallExpr
+      return checkTypeApplicationForCallExpr(e, expr as CallExpr)
+    elif expr is ArrayExpr
+      return checkTypeApplicationForArrayExpr(e, expr as ArrayExpr)
+    elif expr is OpExpr and (expr as OpExpr).op == ":"
+      return checkTypeApplicationForPairExpr(e, expr as OpExpr)
+    elif expr is TupleExpr
+      return checkTypeApplicationForTupleExpr(e, expr as TupleExpr)
+    else
+      -- Invalid target operand; don't know what to do.
+      chk.fail(InvalidTypeApplicationTargetType, e)
+      return Dynamic()
+    end
+  end
+  
+  -- Type check type application with call expression as base.
+  def checkTypeApplicationForCallExpr(tapp as TypeApplication, 
+                                      expr as CallExpr) as Typ
+    var callExpr = (expr as CallExpr)
+    var calleeType = accept(callExpr.callee)
+
+    -- Apply the types to the callee.
+    if calleeType is Callable
+      calleeType = applyGenericArguments(calleeType as Callable, 
+                                         tapp.types, nil, [], tapp)
+      -- Currently the type of the callee still has a generic type. The real
+      -- type should have the type variables applied.
+      chk.storeType(callExpr.callee, calleeType)
+    else
+      chk.fail(InvalidTypeApplicationTargetType, tapp)
+    end
+
+    var retType = checkCallExprWithCalleeType(calleeType, callExpr)
+    chk.storeType(callExpr, retType)
+    return retType
+  end
+  
+   -- Type check type application with array expression [...] as base.
+   def checkTypeApplicationForArrayExpr(tapp as TypeApplication,
+                                        expr as ArrayExpr) as Typ
+    var itemType as Typ
+    if tapp.types.length() == 1
+      itemType = tapp.types[0]
+    else
+      self.msg.incompatibleTypeApplication(1, tapp.types.length(), tapp)
+      itemType = Dynamic()
+    end
+
+    var i = 1
+    for item in (expr as ArrayExpr).items
+      var t = accept(item)
+      if not IsSubtype(t, itemType)
+        self.msg.incompatibleArrayItemType(t, i, item)
+      end
+      i += 1
+    end
+
+    return chk.namedGenericType("std::Array", [itemType])
+  end
+  
+  -- Type check type application with pair expression (e : f) as base.
+  def checkTypeApplicationForPairExpr(tapp as TypeApplication,
+                                      expr as OpExpr) as Typ
+    var opExpr = (expr as OpExpr)
+    var leftType = accept(opExpr.left)
+    var rightType = accept(opExpr.right)
+
+    if tapp.types.length() == 2
+      chk.checkSubtype(leftType, tapp.types[0], tapp, IncompatiblePairItemType)
+      chk.checkSubtype(rightType, tapp.types[1], tapp, 
+                       IncompatiblePairItemType)
+      return chk.namedGenericType("std::Pair", tapp.types)
+    else
+      self.msg.incompatibleTypeApplication(1, tapp.types.length(), tapp)
+      return Dynamic()
+    end
+  end
+  
+  -- Type check type application with tuple expression as base.
+  def checkTypeApplicationForTupleExpr(tapp as TypeApplication,
+                                       expr as TupleExpr) as Typ
+    var texpr = (expr as TupleExpr)
+    if tapp.types.length() != texpr.items.length()
+      self.msg.incompatibleTypeApplication(texpr.items.length(), 
+                                           tapp.types.length(), tapp)
+      return Dynamic()
+    else
+      for i in 0 to tapp.types.length()
+        var item = texpr.items[i]
+        var t = accept(item)
+        chk.checkSubtype(t, tapp.types[i], item, IncompatibleTupleItemType)
+      end
+      return TupleType(tapp.types)
+    end
+  end
+  
+  -- Apply generic type arguments to a callable type. For example, applying
+  -- Int to 'def <T> (T) -> T' results in 'def [Int] (Int) -> Int'. Here 
+  -- '[Int]' is an implicit bound type variable.
+  --
+  -- Note that upperBounds may be nil, and individual items in the upperBounds
+  -- array may be nil.
+  def applyGenericArguments(callable as Callable, 
+                            types as Array<Typ>, 
+                            upperBounds as Array<Typ>, 
+                            implicitTypeVars as Array<Int>,
+                            context as Context) as Typ
+    var tvars = [] as <TypeVarDef>
+    for v in implicitTypeVars
+      -- The name of type variable is not significant, so nil is fine.
+      tvars.append(TypeVarDef(nil, v))
+    end
+    tvars.extend(callable.variables.items)
+    
+    if tvars.length() != types.length()
+      self.msg.incompatibleTypeApplication(tvars.length(), types.length(),
+                                           context)
+      return Dynamic()
+    end
+    
+    -- Create a map from type variable name to target type.
+    var map = Map() as <Int, Typ>
+    for i in 0 to tvars.length()
+      map[tvars[i].id] = types[i]
+    end
+    
+    -- Create upper bounds map if we were given upper bounds.
+    var uppMap = nil as Map<Int, Typ>
+    if upperBounds != nil
+      uppMap = Map()
+      for i in 0 to tvars.length()
+        if upperBounds[i] != nil
+          uppMap[tvars[i].id] = upperBounds[i]
+        end
+      end
+    end
+    
+    var argTypes = [] as <Typ>
+    for at in callable.argTypes
+      argTypes.append(ExpandType(at, map, uppMap))
+    end
+    
+    var boundVars = [] as <(Int, Typ)>
+    for tv in tvars
+      boundVars.append((tv.id, map[tv.id]))
+    end
+    
+    return Callable(argTypes,
+                    callable.minArgs,
+                    callable.isVarArg,
+                    ExpandType(callable.retType, map, uppMap),
+                    callable.isTypeObj,
+                    callable.name,
+                    TypeVars([]),
+                    callable.boundVars + boundVars,
+                    callable.line,
+                    callable.repr)
+  end
+  
+  
+  -- Helpers
+  -- -------
+  
+  
+  -- Type check a node. The context argument is not used currently.
+  -- Alias for TypeChecker accept.
+  private def accept(node as Node, context = nil as Typ) as Typ
+    return self.chk.accept(node, context)
+  end  
+  
+  -- Return an instance type with type given by the name and no type arguments.
+  -- Alias for TypeChecker namedType.
+  private def namedType(name as Str) as Instance
+    return self.chk.namedType(name)
+  end
+  
+  -- Generate an error if type is Void.
+  private def checkNotVoid(type as Typ, context as Context)
+    self.chk.checkNotVoid(type, context)
+  end
+  
+  -- Is type compatible with std::Boolean?
+  def isBoolean(type as Typ) as Boolean
+    return IsSubtype(type, chk.booleanType())
+  end
+
+  -- Is type compatible with type::Type?
+  def isType(type as Typ) as Boolean
+    return IsSubtype(type, chk.typeType())
+  end
+  
+  -- Is a type valid as a vararg argument?
+  private def isValidVarArg(type as Typ) as Boolean
+    return type is TupleType or isArrayInstance(type) or type is Dynamic
+  end
+  
+  -- Is the argument an instance type std::Array<...>?
+  private def isArrayInstance(t as Typ) as Boolean
+    return t is Instance and (t as Instance).type.fullName == "std::Array"
+  end
+  
+  -- Return the join of a type against std::Object.
+  private def joinWithObject(type as Typ) as Typ
+    return JoinTypes(type, chk.objectType(), chk.basicTypes())
+  end
+  
+  -- Does a type have a member variable or an accessor with the given name?
+  private def hasNonMethod(type as Typ, member as Str) as Boolean
+    if type is Instance 
+      var itype = (type as Instance)
+      return not itype.type.hasPublicMethod(member) and 
+             itype.type.hasPublicReadableMember(member)
+    else
+      return False
+    end
+  end
+  
+  -- Return the type of a type object. 
+  --
+  -- For a generic type G with type variables T and S the type is of form 
+  --
+  --   def <T, S>(...) as G<T, S>,
+  --
+  -- where ... are argument types for the create method.
+  private def typeObjectType(info as TypeInfo) as Typ
+    if info.isInterface
+      return chk.typeType()
+    end
+    var createMethod = info.getMethod("create")
+    if createMethod == nil
+      -- Must be an invalid class definition.
+      return Dynamic()
+    else
+      -- Construct callable type based on signature of create, but by 
+      -- adjusting return type and type arguments.
+      
+      var createType = chk.functionType(createMethod)
+      
+      return classCallable(createType, info)
+    end
+  end
+  
+  -- If type is RangeCallable, convert it to Callable by applying type 
+  -- variables. Otherwise, return type.
+  private def collapseMemberType(type as Typ) as Typ
+    if type is RangeCallable
+      var rtype = (type as RangeCallable)
+      var variables = Map() as <Int, Typ>
+      for i in 0 to rtype.bottoms.length()
+        variables[i + 1] = rtype.bottoms[i]
+      end
+      return ExpandType(rtype.callable, variables)
+    else
+      return type
+    end
+  end
+  
+  -- Is e a (potentially parenthesised) self expression?
+  private def isSelfExpr(e as Node) as Boolean
+    return unwrap(e) is SelfExpr
+  end
+  
+  -- Unwrap parentheses from an expression node.
+  private def unwrap(e as Node) as Node
+    if e is ParenExpr
+      return unwrap((e as ParenExpr).expr)
+    else
+      return e
+    end
+  end
+  
+  -- Is expr a name expression that refers to a global function or a type?
+  private def isGlobalNameExpr(expr as Node) as Boolean
+    if expr is NameExpr 
+      var nexpr = (expr as NameExpr)
+      return nexpr.kind == Gdef and 
+             (nexpr.node is FuncDef or nexpr.node is TypeInfo)
+    else
+      return False
+    end
+  end
+end

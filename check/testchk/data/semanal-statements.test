@@ -1,0 +1,539 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Statement test cases
+-- --------------------
+
+[case testForStatement]
+var a
+for x in a
+  [x, a]
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  ForStmt:2(
+    Var(x)
+    NameExpr(a [a])
+    Body(
+      ExpressionStmt:3(
+        ArrayExpr:3(
+          NameExpr(x [l])
+          NameExpr(a [a]))))))
+
+[case testTryExceptStatement]
+var a
+try
+  a
+except e is Exception
+  [e, a]
+except Exception
+  a
+end
+[usestd fixtures/std-exception.alo]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  TryExceptStmt:2(
+    Body(
+      ExpressionStmt:3(
+        NameExpr(a [a])))
+    NameExpr(Exception [std::Exception])
+    Var(e)
+    Body(
+      ExpressionStmt:5(
+        ArrayExpr:5(
+          NameExpr(e [l])
+          NameExpr(a [a]))))
+    NameExpr(Exception [std::Exception])
+    Body(
+      ExpressionStmt:7(
+        NameExpr(a [a])))))
+
+[case testTryFinallyStatement]
+var a
+try
+  a
+finally
+  a
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  TryFinallyStmt:2(
+    ExpressionStmt:3(
+      NameExpr(a [a]))
+    ExpressionStmt:5(
+      NameExpr(a [a]))))
+
+[case testWhileStatement]
+var a
+while a
+  a
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  WhileStmt:2(
+    NameExpr(a [a])
+    Body(
+      ExpressionStmt:3(
+        NameExpr(a [a])))))
+
+[case testRepeatStatement]
+var a
+repeat
+  a
+until a
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  RepeatStmt:2(
+    NameExpr(a [a])
+    Body(
+      ExpressionStmt:3(
+        NameExpr(a [a])))))
+
+[case testSwitchStatement]
+var a, b
+switch a
+  case b
+    a
+end
+switch a
+  case a
+    b
+  case b, a
+    a
+  else
+    b
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  SwitchStmt:2(
+    NameExpr(a [a])
+    Case(
+      NameExpr(b [b]))
+    Body(
+      ExpressionStmt:4(
+        NameExpr(a [a]))))
+  SwitchStmt:6(
+    NameExpr(a [a])
+    Case(
+      NameExpr(a [a]))
+    Body(
+      ExpressionStmt:8(
+        NameExpr(b [b])))
+    Case(
+      NameExpr(b [b])
+      NameExpr(a [a]))
+    Body(
+      ExpressionStmt:10(
+        NameExpr(a [a])))
+    Else(
+      ExpressionStmt:12(
+        NameExpr(b [b])))))
+
+[case testBreakStatement]
+repeat
+  break
+until 1
+while 1
+  break
+end
+for x in 1
+  if x
+    break
+  end
+end
+[out]
+AloreFile:1(
+  RepeatStmt:1(
+    IntExpr(1)
+    Body(
+      BreakStmt:2()))
+  WhileStmt:4(
+    IntExpr(1)
+    Body(
+      BreakStmt:5()))
+  ForStmt:7(
+    Var(x)
+    IntExpr(1)
+    Body(
+      IfStmt:8(
+        If(
+          NameExpr(x [l]))
+        Then(
+          BreakStmt:9())))))
+
+[case testIfStatement]
+var a, b
+if a
+  b
+elif b
+  a
+elif a
+  b
+else
+  a
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  IfStmt:2(
+    If(
+      NameExpr(a [a]))
+    Then(
+      ExpressionStmt:3(
+        NameExpr(b [b])))
+    If(
+      NameExpr(b [b]))
+    Then(
+      ExpressionStmt:5(
+        NameExpr(a [a])))
+    If(
+      NameExpr(a [a]))
+    Then(
+      ExpressionStmt:7(
+        NameExpr(b [b])))
+    Else(
+      ExpressionStmt:9(
+        NameExpr(a [a])))))
+
+
+-- Assignment test cases
+-- ---------------------
+
+[case testSingleAssignmentToGlobalVariable]
+var a
+a = 1
+a.x = 1
+a[a] = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a [a]))
+    IntExpr(1))
+  AssignmentStmt:3(
+    Lvalues(
+      MemberLvalue:3(
+        NameExpr(a [a])
+        x))
+    IntExpr(1))
+  AssignmentStmt:4(
+    Lvalues(
+      IndexLvalue:4(
+        NameExpr(a [a])
+        NameExpr(a [a])))
+    IntExpr(1)))
+
+[case testSingleAssignmentToLocalVariable]
+def f(a)
+  a = 1
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(a))
+    Body(
+      AssignmentStmt:2(
+        Lvalues(
+          NameLvalue(a [l]))
+        IntExpr(1)))))
+
+[case testSingleAssignmenToMemberVar]
+class A
+  var a
+  def create()
+    a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:3(
+      create
+      Body(
+        AssignmentStmt:4(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testParenthesisedLvalue]
+var a
+(a) = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a [a]))
+    IntExpr(1)))
+
+[case testSingleAssignmenToSetter]
+class A
+  def a
+  end
+  def a = x
+  end
+  def create()
+    a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter)
+    FuncDef:4(
+      a
+      Setter
+      Args(
+        Var(x)))
+    FuncDef:6(
+      create
+      Body(
+        AssignmentStmt:7(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testSingleAssignmenToInheritedMemberVar]
+class A
+  var a
+  def create()
+  end
+end
+class B is A
+  def create()
+    a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:3(
+      create))
+  TypeDef:6(
+    B
+    NameExpr(A [A])
+    FuncDef:7(
+      create
+      Body(
+        AssignmentStmt:8(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testSingleAssignmenToInheritedSetter]
+class A
+  def a
+  end
+  def a = x
+  end
+  def create()
+  end
+end
+class B is A
+  def create()
+    a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter)
+    FuncDef:4(
+      a
+      Setter
+      Args(
+        Var(x)))
+    FuncDef:6(
+      create))
+  TypeDef:9(
+    B
+    NameExpr(A [A])
+    FuncDef:10(
+      create
+      Body(
+        AssignmentStmt:11(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testSingleAssignmentToPrivateMemberVar]
+class A
+  private var a
+  def create()
+    a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Private)
+    FuncDef:3(
+      create
+      Body(
+        AssignmentStmt:4(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testSingleAssignmentToPrivateSetter]
+class A
+  private def a
+  end
+  private def a = x
+  end
+  def create()
+    a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter
+      Private)
+    FuncDef:4(
+      a
+      Setter
+      Private
+      Args(
+        Var(x)))
+    FuncDef:6(
+      create
+      Body(
+        AssignmentStmt:7(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testSimpleMultipleAssignment]
+var a
+def f()
+  var b
+  a, b = 1
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  FuncDef:2(
+    f
+    Body(
+      VarDef:3(
+        Var(b))
+      AssignmentStmt:4(
+        Lvalues(
+          NameLvalue(a [a])
+          NameLvalue(b [l]))
+        IntExpr(1)))))
+
+[case testArrayLvalueInMultipleAssignment]
+var a
+def f()
+  var b
+  [a, b] = 1
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  FuncDef:2(
+    f
+    Body(
+      VarDef:3(
+        Var(b))
+      AssignmentStmt:4(
+        Lvalues(
+          NameLvalue(a [a])
+          NameLvalue(b [l]))
+        IntExpr(1)))))
+
+[case testParenthesisedLvalueInMultipleAssignment]
+var a
+def f()
+  var b
+  (a, b) = 1
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  FuncDef:2(
+    f
+    Body(
+      VarDef:3(
+        Var(b))
+      AssignmentStmt:4(
+        Lvalues(
+          NameLvalue(a [a])
+          NameLvalue(b [l]))
+        IntExpr(1)))))
+
+[case testAssignModify]
+var a
+a += 1
+a[1] *= 2
+a.x -= 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  OperatorAssignmentStmt:2(
+    +
+    NameLvalue(a [a])
+    IntExpr(1))
+  OperatorAssignmentStmt:3(
+    *
+    IndexLvalue:3(
+      NameExpr(a [a])
+      IntExpr(1))
+    IntExpr(2))
+  OperatorAssignmentStmt:4(
+    -
+    MemberLvalue:4(
+      NameExpr(a [a])
+      x)
+    IntExpr(1)))

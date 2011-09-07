@@ -1,0 +1,27 @@
+module dyncheck
+
+import types
+import nodes
+
+
+-- Build an expression that coerces expr from sourceType to targetType. Return
+-- bare expr if the coercion is trivial (always a no-op).
+def Coerce(expr as Node, targetType as Typ, sourceType as Typ, 
+           isWrapperClass = False as Boolean) as Node
+  if IsTrivialCast(targetType, sourceType)
+    return expr
+  else
+    var target = TranslateRuntimeTypeVars(targetType)
+    var source = TranslateRuntimeTypeVars(sourceType)
+    return CoerceExpr(expr, target, source, isWrapperClass)
+  end
+end
+
+
+-- Is an implicit cast from sourceType to targetType a no-op (can it be 
+-- omitted)?
+def IsTrivialCast(targetType as Typ, sourceType as Typ) as Boolean
+  -- FIX: Replace type vars in source type with dynamic?
+  return sourceType is Void or IsSameType(targetType, sourceType) or
+         IsProperSubtype(sourceType, targetType) or sourceType is NilType 
+end

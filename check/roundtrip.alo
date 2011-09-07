@@ -1,0 +1,45 @@
+-- Tool for testing roundtrip functionality (identity source transformation).
+--
+-- TODO
+--  - use argparse for command line argument parsing
+
+import io, os
+import analyse, errors
+import output
+
+
+def Main(args)
+  if args.length() != 2
+    WriteLn("Usage: roundtrip.alo PROGRAM TMPDIR")
+    Exit(1)
+  end
+
+  try
+    var src = File(args[0]).read()
+    -- Parse and analyse the program.
+    var trees, symtable, types, typemap = Analyse(src, args[0], True, "")
+    for t in trees
+      if not t.path.endsWith("/std.alo") and not "-skip." in t.path
+        -- Output a file. Omit std module and files with -skip suffix.
+        var v = OutputVisitor()
+        t.accept(v)
+        var s = v.output()
+        if s != File(t.path).read()
+          -- The output is not identical to the source. Write the problematic
+          -- output to a file and display an error message.
+          WriteLn("problem with {}".format(t.path))
+          var dst = Join(args[1], BaseName(t.path))
+          var f = File(dst, Output)
+          f.write(s)
+          f.close()
+          WriteLn("  output file {}".format(dst))
+        end
+      end
+    end
+  except e is CompileError
+    -- Semantic analysis failed.
+    for s in e.messages
+      WriteLn(s)
+    end
+  end
+end

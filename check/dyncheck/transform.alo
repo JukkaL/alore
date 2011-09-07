@@ -1,0 +1,235 @@
+-- Transform source code to a version that verifies declared types at runtime
+-- when the types could otherwise be unsound at runtime.
+
+module dyncheck
+
+import output
+import types
+import checker
+import nodes
+import lex
+import reflect
+
+
+-- Parse tree Node visitor that transform a parse tree to one that does
+-- runtime type checking based on static types.
+class DyncheckTransformVisitor is TraverserVisitor
+  private const typeMap as Map<Node, Typ>
+  private const isPretty as Boolean
+  private const typeTf = TypeTransformer(self) as TypeTransformer
+  
+  -- Stack of function return types
+  private const returnTypes = [] as Array<Typ>
+  
+  -- Associate a Node with its start end line numbers.
+  const lineMap = Map() as Map<Node, (Int, Int)>
+  
+  
+  def create(typeMap as Map<Node, Typ>, isPretty as Boolean)
+    self.typeMap = typeMap
+    self.isPretty = isPretty
+  end
+  
+  
+  -- Definitions
+  -- -----------
+  
+  
+  -- Transform an Alore file.
+  def visitAloreFile(o as AloreFile)
+    var res = [] as <Node>
+    for d in o.defs
+      if d is TypeDef
+        -- Implicit cast from Array<TypeDef> to Array<Node> is safe below.
+        res.extend(self.typeTf.transformTypeDef(d as TypeDef) as dynamic)
+      else
+        d.accept(self)
+        res.append(d)
+      end
+    end
+    o.defs = res
+  end
+  
+  -- Transform a variable definition in-place. This is not suitable for member
+  -- variable definitions; they are transformed in TypeTransformer.
+  def visitVarDef(o as VarDef)
+    super.visitVarDef(o)
+    
+    -- Erase generic types in annotations.
+    EraseAnnotation(o.type)
+    
+    if o.init != nil
+      o.init = Coerce(o.init, o.names[0].type.type, getType(o.init))
+    end
+  end
+  
+  -- Transform a function definition in-place. This is not suitable for 
+  -- methods; they are transformed in FuncTransformer.
+  def visitFuncDef(fdef as FuncDef)
+    transformFunctionBody(fdef)
+    
+    -- Erase generic types in annotations.
+    EraseAnnotation(fdef.type)
+  end
+  
+  
+  -- Transform the body of a function.
+  def transformFunctionBody(fdef as FuncDef)
+    -- FIX intersection types
+    self.returnTypes.append((fdef.type.type as Callable).retType)
+    super.visitFuncDef(fdef)
+    self.returnTypes.removeAt(-1)
+  end
+  
+  
+  -- Statements
+  -- ----------
+  
+  
+  def transformBlock(block as Array<Node>)
+    for stmt in block
+      stmt.accept(self)
+    end
+  end
+  
+  def visitReturnStmt(s as ReturnStmt)
+    super.visitReturnStmt(s)
+    s.expr = Coerce(s.expr, self.returnTypes[-1], getType(s.expr))
+  end
+  
+  def visitAssignmentStmt(s as AssignmentStmt)
+    super.visitAssignmentStmt(s)
+    s.rvalue = Coerce(s.rvalue, getType(s.lvalues[0]), getType(s.rvalue))
+  end
+  
+  
+  -- Expressions
+  -- -----------
+  
+  
+  def visitMemberExpr(e as MemberExpr)
+    super.visitMemberExpr(e)
+    
+    var type = getType(e.expr)
+    var suffix as Str
+    if type is Instance
+      -- Reference to a statically-typed method variant with the suffix 
+      -- derived from the base object type.
+      suffix = getMemberReferenceSuffix(e.name, (type as Instance).type)
+    else
+      -- Reference to a dynamically-typed method variant.
+      suffix = dynamicSuffix()
+    end
+    
+    e.name += suffix
+    e.repr = MemberExprRepr(Token('.'), Token(e.name))
+    
+    -- FIX member variable references
+    -- FIX deal with other base types
+    -- IDEA: Retain whitespace when changing representation.
+  end
+  
+  def visitNameExpr(e as NameExpr)
+    super.visitNameExpr(e)
+    if e.kind == Mdef and e.node is FuncDef
+      -- Translate reference to a method.
+      var suffix = getMemberReferenceSuffix(e.name, e.info)
+      e.name += suffix
+      -- Update representation to have the correct name.
+      var prefix = e.repr.components[0].pre
+      e.repr = NameExprRepr([Token(prefix + e.name)])
+    end
+  end
+  
+  def getMemberReferenceSuffix(name as Str, info as TypeInfo) as Str
+    if info.hasPublicMethod(name)
+      var fdef = info.getPublicMethod(name)
+      return typeSuffix(fdef.info)
+    else
+      return ''
+    end      
+  end
+  
+  def visitCallExpr(e as CallExpr)
+    super.visitCallExpr(e)
+    
+    -- Do no coercions if this is a call to debugging facilities.
+    if isDebuggingCallExpr(e)
+      return
+    end
+    
+    var ctype = getType(e.callee)
+    for i in 0 to e.args.length()
+      var argType = Dynamic() as Typ
+      if ctype is Callable
+        argType = (ctype as Callable).argTypes[i]
+      end
+      
+      e.args[i] = Coerce(e.args[i], argType, getType(e.args[i]))
+    end
+    
+    if ctype is Callable and (ctype as Callable).boundVars != []
+      var boundVars = (ctype as Callable).boundVars
+      e.repr = PrependCallArgRepr(e.repr, e.args.length())
+      var types = [] as <Typ>
+      for i in 0 to boundVars.length()
+        types.append(boundVars[i][1])
+      end
+      e.args = [TypeExpr(types)] + e.args
+    end
+  end
+  
+  private def isDebuggingCallExpr(e)
+    return e.callee is NameExpr and e.callee.name in ['__Print']
+  end
+  
+  def visitCastExpr(e as CastExpr)
+    super.visitCastExpr(e)
+    if getType(e) is Dynamic
+      e.expr = Coerce(e.expr, Dynamic(), getType(e.expr))
+    end
+  end
+  
+  
+  -- Helpers
+  -- -------
+  
+  
+  -- Return the type of a node as reported by the type checker.
+  def getType(node as Node) as Typ
+    return self.typeMap[node]
+  end
+  
+  -- Return the type suffix for a statically-typed method specific to a
+  -- particular type.
+  def typeSuffix(info as TypeInfo) as Str
+    -- If info is nil, we have a global function => no suffix.
+    if info == nil
+      return ''
+    elif self.isPretty
+      return '`' + info.name
+    else
+      return '__' + info.name
+    end
+  end
+  
+  -- Return the suffix of a dynamic method/getter wrapper.
+  def dynamicSuffix() as Str
+    if self.isPretty
+      return '*'
+    else
+      return '___dyn'
+    end
+  end
+  
+  -- Add a line mapping for a wrapper. The node newNode has logically the same
+  -- line numbers as origNode. The nodes should be FuncDef/TypeDef nodes.
+  def addLineMapping(origNode as Node, newNode as Node)
+    if origNode.repr != nil
+      var startLine = origNode.line
+      var endTok = origNode.repr.endTok
+      var endLine = endTok.line + endTok.str.count(LF)
+      self.lineMap[newNode] = (startLine, endLine)
+    end
+  end
+end

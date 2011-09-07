@@ -1,0 +1,91 @@
+module parser
+
+-- Utility functions for the Alore parser.
+
+import nodes
+import lex
+import string
+
+
+-- Return a representation of a token that can be used in a parse error 
+-- message.
+private def TokenRepr(tok as Token) as Str
+  if tok is Break
+    return "end of line"
+  elif tok is Eof
+    return "end of file"
+  elif tok is Keyword or tok is Name
+    return """{}""".format(tok.str)
+  elif tok is IntLit or tok is FloatLit
+    return "numeric literal"
+  elif tok is StrLit
+    return "string literal"
+  elif tok is Punct or tok is Op
+    return tok.str
+  elif tok is Bom
+    return "byte order mark"
+  else
+    if tok is LexError
+      switch (tok as LexError).type
+        case NumericLiteralError
+          return "invalid numeric literal"
+        case UnterminatedStringLiteral
+          return "unterminated string literal"
+        case InvalidCharacter
+          var msg = "unrecognized character"
+          if Ord(tok.str) in 33 to 127
+            msg += " " + tok.str
+          end
+          return msg
+        case InvalidUtf8Sequence
+          return "invalid UTF-8 sequence"
+        case NonAsciiCharacterInComment
+          return "non-ASCII character in comment"
+        case NonAsciiCharacterInString
+          return "non-ASCII character in string"
+      end
+    end
+    raise ValueError("Unknown token {}".format(Repr(tok)))
+  end
+end
+
+
+-- If the node is a parenthesised expression, recursively find the first
+-- non-parenthesised subexpression and return that. Otherwise, return node.
+def UnwrapParens(node as Node) as Node
+  if node is ParenExpr
+    return UnwrapParens((node as ParenExpr).expr)
+  else
+    return node
+  end
+end
+
+
+-- Convert an expression node to the corresponding lvalue node. For 
+-- MemberLvalues, also initialize the isInit member with the argument value.
+--
+-- Perform the following conversions:
+--   MemberExpr -> MemberLvalue
+--   NameExpr   -> NameLvalue
+--   IndexExpr  -> IndexLvalue
+--   SuperExpr  -> SuperLvalue
+--
+-- Return other expressions unmodified.
+private def ToLvalue(lv as Node, isInit = False as Boolean) as Node
+  var n = lv
+  if lv is MemberExpr
+    var n2 = MemberLvalue((lv as MemberExpr).expr, 
+                          (lv as MemberExpr).name)
+    n2.isInit = isInit
+    n = n2
+  elif lv is NameExpr
+    n = NameLvalue((lv as NameExpr).name)
+  elif lv is IndexExpr
+    n = IndexLvalue((lv as IndexExpr).base, 
+                    (lv as IndexExpr).index)
+  elif lv is SuperExpr
+    n = SuperLvalue((lv as SuperExpr).name)
+  end
+  n.line = lv.line
+  return n
+end

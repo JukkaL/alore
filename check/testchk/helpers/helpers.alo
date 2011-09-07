@@ -1,0 +1,222 @@
+module testchk::helpers
+
+import unittest
+
+
+-- AssertStringArraysEqual displays special line alignment helper messages if 
+-- the first different line has at least this many characters,
+private const MinLineLengthForAlignment = 5
+
+
+-- Assert that two string arrays are equal. Display any differences in a 
+-- human-readable form.
+def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>, 
+                            msg as Str)
+  if actual != expected
+    var numSkipStart = NumSkippedPrefixLines(expected, actual)
+    var numSkipEnd = NumSkippedSuffixLines(expected, actual)
+    
+    WriteLn("Expected:")
+    
+    -- If omit some lines at the beginning, indicate it by displaying a line
+    -- with '...'.
+    if numSkipStart > 0
+      WriteLn("  ...")
+    end
+    
+    -- Keep track of the first different line.
+    var firstDiff = -1
+    
+    -- Display only this many first characers of identical lines.
+    var width = 75
+    
+    for i in numSkipStart to expected.length() - numSkipEnd
+      if i >= actual.length() or expected[i] != actual[i]
+        if firstDiff < 0
+          firstDiff = i
+        end
+        Write("  {-45:} (diff)".format(expected[i]))
+      else
+        var e = expected[i]
+        Write("  ", e[:width])
+        if e.length() > width
+          Write('...')
+        end
+      end
+      WriteLn()
+    end
+    if numSkipEnd > 0
+      WriteLn("  ...")
+    end
+    
+    WriteLn("Actual:")
+    
+    if numSkipStart > 0
+      WriteLn("  ...")
+    end
+    
+    for i in numSkipStart to actual.length() - numSkipEnd
+      if i >= expected.length() or expected[i] != actual[i]
+        Write("  {-45:} (diff)".format(actual[i]))
+      else
+        var a = actual[i]
+        Write("  ", a[:width])
+        if a.length() > width
+          Write('...')
+         end
+      end
+      WriteLn()
+    end
+    if actual == []
+      WriteLn("  (empty)")
+    end
+    if numSkipEnd > 0
+      WriteLn("  ...")
+    end
+    
+    if firstDiff >= 0 and firstDiff < actual.length() and
+       (expected[firstDiff].length() >= MinLineLengthForAlignment or
+        actual[firstDiff].length() >= MinLineLengthForAlignment)
+      -- Display message that helps visualize the differences between two
+      -- long lines.
+      ShowAlignMessage(expected[firstDiff], actual[firstDiff])
+    end
+    
+    raise AssertionFailure(msg)
+  end
+end
+
+
+-- Align s1 and s2 so that the their first difference is highlighted. For
+-- example, if s1 is 'foobar' and s2 is 'fobar', display the following lines:
+--
+--   E: foobar
+--   A: fobar
+--        ^
+--
+-- If s1 and s2 are long, only display a fragment of the strings around the
+-- first difference.
+def ShowAlignMessage(s1 as Str, s2 as Str)
+  var maxw = 72 -- Maximum number of characters shown
+  
+  WriteLn()
+  WriteLn('Alignment of first line difference:')
+  
+  var trunc = False
+  while s1[:30] == s2[:30]
+    s1 = s1[10:]
+    s2 = s2[10:]
+    trunc = True
+  end
+  
+  if trunc
+    s1 = '...' + s1
+    s2 = '...' + s2
+  end
+  
+  var maxLen = Max(s1.length(), s2.length())
+  var extra = ''
+  if maxLen > maxw
+    extra = '...'
+  end
+
+  -- Write a chunk of both lines, aligned.
+  WriteLn('  E: ', s1[:maxw], extra)
+  WriteLn('  A: ', s2[:maxw], extra)
+  -- Write an indicator character under the different columns.
+  Write('     ')
+  for j in 0 to Min(maxw, Max(s1.length(), s2.length()))
+    if s1[j:j+1] != s2[j:j+1]
+      Write('^') -- Difference
+      break
+    else
+      Write(' ') -- Equal
+    end
+  end
+  WriteLn()
+end
+
+
+-- Like above, but let a line with only "..." in expected match any number of
+-- lines in actual.
+def AssertStringArraysEqualWildcards(expected as Array<Str>, 
+                                     actual as Array<Str>, msg as Str)
+  while actual != [] and actual[-1] == ''
+    actual = actual[:-1]
+  end
+  
+  -- Expand "..." wildcards away.
+  expected = MatchArray(expected, actual)
+  AssertStringArraysEqual(expected, actual, msg)
+end
+
+
+-- Expand '...' wildcards in pattern by matching against target.
+def MatchArray(pattern as Array<Str>, target as Array<Str>) as Array<Str>
+  var res = [] as <Str>
+  var i = 0
+  var j = 0
+  
+  while i < pattern.length()
+    if pattern[i] == '...'
+      -- Wildcard in pattern.
+      if i + 1 == pattern.length()
+        -- Wildcard at end of pattern; match the rest of target.
+        res.extend(target[j:])
+        -- Finished.
+        break
+      else
+        -- Must find the instance of the next pattern line in target.
+        var jj = j
+        while jj < target.length()
+          if target[jj] == pattern[i + 1]
+            break
+          end
+          jj += 1
+        end
+        if jj == target.length()
+          -- No match. Get out.
+          res.extend(pattern[i:])
+          break
+        end
+        res.extend(target[j:jj])
+        i += 1
+        j = jj
+      end
+    elif j < target.length() and 
+         (pattern[i] == target[j] or
+           (i + 1 < pattern.length() and j + 1 < target.length() and
+            pattern[i + 1] == target[j + 1]))
+      -- In sync; advance one line. The above condition keeps sync also if 
+      -- only a single line is different, but loses it if two consecutive lines
+      -- fail to match.
+      res.append(pattern[i])
+      i += 1
+      j += 1
+    else
+      -- Out of sync. Get out.
+      res.extend(pattern[i:])
+      break
+    end
+  end
+  return res
+end
+
+
+private def NumSkippedPrefixLines(a1 as Array<Str>, a2 as Array<Str>) as Int
+  var numEq = 0
+  while numEq < Min(a1.length(), a2.length()) and a1[numEq] == a2[numEq]
+    numEq += 1
+  end
+  return Max(0, numEq - 4)
+end
+
+
+private def NumSkippedSuffixLines(a1 as Array<Str>, a2 as Array<Str>) as Int
+  var numEq = 0
+  while numEq < Min(a1.length(), a2.length()) and 
+        a1[-numEq -1] == a2[-numEq - 1]
+    numEq += 1
+  end
+  return Max(0, numEq - 4)
+end

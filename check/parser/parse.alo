@@ -1,0 +1,1735 @@
+module parser
+
+-- Alore parser. Constructs a parse tree based on a string representing a 
+-- source file. Performs only minimal semantic checks.
+
+import lex
+import nodes
+import types
+import errors
+
+
+const HighestPrec = 12 as Int
+
+const Precedence = Map(
+  "**" : 12,
+  "-u" : 11,
+  "*" : 10, "/" : 10, "div" : 10, "mod" : 10,
+  "+" : 9, "-" : 9,
+  "to" : 8,
+  "==" : 7, "!=" : 7, "<" : 7, ">" : 7, "<=" : 7, ">=" : 7, "is" : 7, "in" : 7,
+  ":" : 6,
+  "not" : 5,
+  "and" : 4,
+  "or" : 3,
+  "as" : 2,
+  "," : 1) as <Str, Int>
+  
+  
+const None = Token("") as Token -- Empty token
+
+
+-- Parse a source file, without doing any semantic analysis. Return the parse
+-- tree (AloreFile object).
+--
+-- If errors is not provided, raise ParseError on failure. Otherwise, use
+-- the errors object to report parse errors.
+def Parse(s as Str, fnam = nil as Str, errors = nil as Errors) as AloreFile
+  var parser = Parser(fnam, errors)
+  var tree = parser.parse(s)
+  tree.path = fnam
+  return tree
+end
+
+
+private class Parser
+  private var tok        as Array<Token>
+  private var ind        as Int
+  private const errors   as Errors
+  private const raiseOnError as Boolean
+
+  def create(fnam as Str, errors as Errors)
+    self.raiseOnError = errors == nil
+    if errors != nil
+      self.errors = errors
+    else
+      self.errors = Errors()
+    end
+    if fnam != nil
+      self.errors.setFile(fnam)
+    else
+      self.errors.setFile("<input>")
+    end
+  end
+  
+  def parse(s as Str) as AloreFile
+    self.tok = Lex(s)
+    self.ind = 0
+    var file = parseFile()
+    if self.raiseOnError and self.errors.isErrors()
+      self.errors.raiseError()
+    end
+    return file
+  end
+  
+  -- Parse an Alore source file.
+  def parseFile() as AloreFile
+    var isBom = parseBom()
+    var enc = parseEncoding()
+    var h = parseHeader()
+    var imp = parseImports()
+    var defs = parseDefs()
+    var eof = expectType(Eof)
+    var node = AloreFile(enc, h, imp, defs, isBom)
+    setRepr(node, AloreFileRepr(eof))
+    return node
+  end
+  
+  -- Parse the initial part
+  -------------------------
+  
+  -- Parse the optional byte order mark at the beginning of a file.
+  def parseBom() as Boolean
+    if currentToken() is Bom
+      expectType(Bom)
+      if currentToken() is Break
+        expectBreak()
+      end
+      return True
+    else
+      return False
+    end
+  end
+  
+  -- Parse the optional encoding declaration.
+  def parseEncoding() as Encoding
+    try
+      if currentTokenStr() == "encoding"
+        var encodingTok = expect("encoding")
+        var name = expectType(Name)
+        var br = expectBreak()      
+        var node = Encoding(name.str).setLine(encodingTok)
+        setRepr(node, EncodingRepr(encodingTok, name, br))
+        return node as Encoding
+      else
+        return nil
+      end
+    except ParseError
+      return nil
+    end
+  end
+  
+  -- Parse module header.
+  def parseHeader() as Header
+    try
+      if currentTokenStr() == "module"
+        var moduleTok = expect("module")
+        var name, components = parseQualifiedName()
+        var br = expectBreak()
+        var node = Header(name).setLine(moduleTok)
+        setRepr(node, HeaderRepr(moduleTok, components, br))
+        return node as Header
+      else
+        return nil
+      end
+    except ParseError
+      return nil
+    end
+  end
+  
+  -- Parse import declarations.
+  def parseImports() as Array<Import>
+    var imp = [] as <Import>
+    while currentTokenStr() == "import"
+      try
+        var importTok = expect("import")
+        var node, components as (Import, Array<Token>)
+        while True
+          var name as Str
+          name, components = parseQualifiedName()
+          node = Import(name).setLine(importTok) as Import
+          imp.append(node)
+          if currentTokenStr() != ","
+            break
+          end
+          var comma = expect(",")
+          setRepr(node, ImportRepr(importTok, components, comma))
+          importTok = None
+        end
+        var br = expectBreak()
+        setRepr(node, ImportRepr(importTok, components, br))
+      except ParseError
+      end
+    end
+    return imp
+  end
+  
+  -- Parse a name with an optional module qualifier, and that does not start
+  -- with '::'. Return a tuple with the name as a string and a token array
+  -- containing all the components of the name.
+  def parseQualifiedName() as (Str, Array<Token>)
+    var components = [] as <Token>
+    var tok = expectType(Name)
+    var n = tok.str
+    components.append(tok)
+    while currentTokenStr() == "::"
+      components.append(expect("::"))
+      tok = expectType(Name)
+      n += "::" + tok.str
+      components.append(tok)
+    end
+    return n, components
+  end
+  
+  -- Parsing global definitions
+  -----------------------------
+  
+  def parseDefs() as Array<Node>
+    var defs = [] as <Node>
+    while not eof()
+      try
+        var t = currentToken()
+        
+        var privToken = None
+        var isPrivate = False
+        if currentTokenStr() == "private"
+          isPrivate = True
+          privToken = skip()
+        end
+
+        var defn = nil as Node
+        switch currentTokenStr()
+          case "def", "sub"
+            if peek().str != "("
+              defn = parseFunction(False, isPrivate, privToken)
+            else
+              defn = parseStatement()
+            end
+          case "class", "interface"
+            defn = parseTypeDef(isPrivate, privToken)
+          case "var"
+            defn = parseVarDef(Gdef, False, isPrivate, privToken)
+          case "const"
+            defn = parseVarDef(Gdef, True, isPrivate, privToken)
+          else
+            defn = parseStatement()
+        end
+        
+        if defn != nil
+          defs.append(defn)
+          defs[-1].setLine(t)
+        end
+      except ParseError
+      end
+    end
+    return defs
+  end
+  
+  def parseFunction(isMethod = False as Boolean, 
+                    isPrivate = False as Boolean, 
+                    privToken = None as Token) as FuncDef
+    try
+      var name, args, init, isVarArg, isGetter, isSetter, type, isError, toks =
+          parseFunctionHeader(isPrivate, privToken, isMethod)
+      
+      -- Always succeeds.
+      var defBr = expectBreak()
+
+      var body = parseBlock()
+      var endTok, endBr = expectEnd()
+      
+      -- If there was a serious error, we really cannot build a parse tree
+      -- node.
+      if isError
+        return nil
+      end
+      
+      var node = FuncDef(name, args, init, body, isVarArg, isGetter, isSetter,
+                         isPrivate, type)
+      var defTok, nameTok, argReprs = toks
+      setRepr(node, FuncRepr(privToken, defTok, nameTok, argReprs, defBr, 
+                             endTok, endBr))
+      return node
+    finally
+      self.errors.setFunction(nil)
+    end
+  end
+  
+  def parseFunctionHeader(isPrivate as Boolean, privToken as Token, 
+                          isMethod as Boolean, 
+                          isInterface = False as Boolean) as
+                            (Str, 
+                             Array<Var>, 
+                             Array<Node>, 
+                             Boolean, 
+                             Boolean, 
+                             Boolean,
+                             Annotation, 
+                             Boolean, 
+                             (Token, Token, dynamic))
+    var args, init, isVarArg as (Array<Var>, Array<Node>, Boolean)
+    var isGetter = False
+    var isSetter = False
+      
+    var name, type as (Str, Annotation)
+    var isError = False
+    
+    var defTok = skip()
+    var nameTok = None
+    var argReprs as Array<FuncArgsRepr>
+
+    try
+      nameTok = expectType(Name)
+      name = nameTok.str
+
+      self.errors.setFunction(name)
+
+      if isMethod and currentTokenStr() != "(" and currentTokenStr() != "<"
+        -- Probably getter or setter
+        
+        var lseparator = None
+        var argTok = None
+        isVarArg = False
+        if currentTokenStr() == "="
+          lseparator = expect("=")
+          isSetter = True
+          argTok = expectType(Name)
+          args = [Var(argTok.str)]
+          setRepr(args[0], VarRepr(argTok, None))
+          init = [nil]
+        else
+          isGetter = True
+          args = []
+          init = []
+        end
+        type = parseAnnotation()
+        argReprs = [FuncArgsRepr(lseparator, 
+                                 None, 
+                                 [argTok], [], 
+                                 [], None, [], None)]
+      else
+        -- Ordinary function/method
+        args, init, isVarArg, type, argReprs = parseArgs(isInterface)
+      end
+      
+      if not currentToken() is Break      
+        parseError()
+      end
+    except ParseError
+      isError = True
+      if not currentToken() is Break
+        self.ind -= 1 -- Kludge: go back to the Break token
+      end
+    end
+    
+    return name, args, init, isVarArg, isGetter, isSetter, type, isError, 
+           (defTok, nameTok, argReprs)
+  end
+  
+  def parseTypeDef(isPrivateDef, privToken)
+    var isInterface = currentTokenStr() == "interface"
+    
+    -- Skip "class" or "interface".
+    var typeTok = skip()
+    
+    try
+      var nameTok, name, base, implementsTok, commas, headerBr
+      var isTok = None
+      var typeVars, baseTypes = nil, []
+      var implement
+      try
+        nameTok = expectType(Name)
+        name = nameTok.str
+        base = nil
+        
+        self.errors.setType(name, isInterface)
+        
+        if currentTokenStr() == "<"
+          try
+            typeVars, self.ind = ParseTypeVariables(self.tok, self.ind, False)
+          except e is TypeParseError
+            parseErrorAt(e.token)
+          end
+        end
+
+        if currentTokenStr() == "is"
+          var t
+          isTok = skip()
+          var tok = currentToken()
+          base, t = parseSuperType()
+          baseTypes.append(t)
+          base.setLine(tok)
+        else
+          baseTypes.append(nil)
+        end
+        
+        implement, implementsTok, commas = parseOptionalImplements(isInterface,
+                                                                   baseTypes)
+        
+        headerBr = expectBreak()
+      except ParseError
+      end
+
+      var binds, bindToks, bindBrs = parseOptionalBinds(isInterface)
+      var defs = []
+
+      while currentTokenStr() != "end" and not eof()
+        try
+          var t = currentToken()
+          var isPrivate = False
+          var memberPrivToken = None
+          if currentTokenStr() == "private" and not isInterface
+            isPrivate = True
+            memberPrivToken = skip()
+          end
+
+          var defn = parseMember(isInterface, isPrivate, memberPrivToken)
+          if defn != nil
+            defs.append(defn)
+            defs[-1].setLine(t)
+          end
+        except ParseError
+        end
+      end
+
+      var endTok, endBr = expectEnd()
+      
+      var node = TypeDef(name, defs, base, implement, isInterface, binds, 
+                         isPrivateDef, typeVars, baseTypes)
+      setRepr(node, TypeDefRepr(privToken, typeTok, nameTok, isTok, 
+                                implementsTok, commas, headerBr, bindToks, 
+                                bindBrs, endTok, endBr))
+      return node
+    finally
+      self.errors.setType(nil, False)
+    end
+  end
+  
+  def parseSuperType()
+    if (currentToken() is Name and currentTokenStr() != "void") or 
+       currentTokenStr() == "::"
+      var t
+      t, self.ind = ParseType(self.tok, self.ind)
+      if t.args != []
+        return NameExpr(t.name), t
+      else
+        var node = NameExpr(t.name)
+        setRepr(node, NameExprRepr(t.repr.components))
+        return node, nil
+      end
+    else
+      parseError()
+    end
+  end
+
+  -- Parse implements declarations.
+  def parseOptionalImplements(isInterface, baseTypes)
+    var implement = []
+    var commas = []
+    var tok = None
+    if currentTokenStr() == "implements" and not isInterface
+      tok = skip()
+      while True
+        var t = currentToken()
+        var base, typ = parseSuperType()
+        implement.append(base)
+        implement[-1].setLine(t)
+        baseTypes.append(typ)
+        if currentTokenStr() != ","
+          break
+        end
+        commas.append(skip())
+      end
+    end
+    return implement, tok, commas
+  end
+  
+  -- Parse "bind" declarations.
+  def parseOptionalBinds(isInterface)
+    var binds = []
+    var bindToks = []
+    var bindBrs = []
+    try
+      while isInterface and currentTokenStr() == "bind"
+        var t = skip()
+        bindToks.append(t)
+        binds.append(parseAnyNameExpr().setLine(t))
+        bindBrs.append(expectBreak())
+      end
+    except ParseError
+    end
+    return binds, bindToks, bindBrs
+  end
+  
+  def parseMember(isInterface, isPrivate, memberPrivToken)
+    if not isInterface
+      -- Parse class member.
+      switch currentTokenStr()
+        case "var"
+          return parseMemberVar(False, isPrivate, memberPrivToken)
+        case "const"
+          return parseMemberVar(True, isPrivate, memberPrivToken)
+        case "def", "sub"
+          return parseMethod(isPrivate, memberPrivToken)
+        else
+          parseError()
+      end
+    else
+      -- Parse interface member.
+      if currentTokenStr() in ("def", "sub")
+        return parseInterfaceMethod(isPrivate, memberPrivToken)
+      else
+        parseError()
+      end
+    end
+  end
+  
+  def parseMemberVar(isConst, isPrivate, privToken)
+    return parseVarDef(Mdef, isConst, isPrivate, privToken)
+  end
+  
+  def parseMethod(isPrivate, privToken)
+    return parseFunction(True, isPrivate, privToken)
+  end
+  
+  def parseInterfaceMethod(isPrivate, privToken)
+    try
+      var name, args, init, isVarArg, isGetter, isSetter, type, isError, toks =
+          parseFunctionHeader(isPrivate, privToken, True, True)
+      var defBr = expectBreak()
+      if not isError
+        var node = FuncDef(name, args, init, [], isVarArg, isGetter, isSetter, 
+                           isPrivate, type)
+        var defTok, nameTok, argReprs = toks
+        setRepr(node, FuncRepr(privToken, defTok, nameTok, argReprs, defBr,
+                               None, None))
+        return node
+      else
+        return nil
+      end
+    finally
+      self.errors.setFunction(nil)
+    end
+  end
+  
+  -- Parse function arguments.
+  def parseArgs(isInterface = False as Boolean) as 
+                    (Array<Var>,     -- Arguments
+                     Array<Node>,    -- Initialisation expressions (or nil)
+                     Boolean,        -- Varargs?
+                     Annotation,     -- Type signature (or nil)
+                     Array<FuncArgsRepr>)
+    var args, init, isVarArg, annotation, argRepr = parseArgsItem(isInterface)
+    
+    var argReprs = [argRepr]
+    
+    while currentTokenStr() == "or" and annotation != nil
+      var nextArgs, nextInit, nextIsVarArg, nextAnn as
+          (Array<Var>, Array<Node>, Boolean, Annotation)
+      
+      skip()
+      nextArgs, nextInit, nextIsVarArg, nextAnn, argRepr = 
+        parseArgsItem(True, True)
+        
+      var n1 = argReprs[0].argNames
+      var n2 = argRepr.argNames
+      
+      -- The argument names in the signature must match the first signature.
+      for i in 0 to Min(n1.length(), n2.length())
+        if n1[i].str != n2[i].str
+          self.errors.report(n2[i].line, 
+            "Name of argument ""{}"" does not match initial signature".
+              format(n2[i].str))
+        end
+      end
+      
+      argReprs.append(argRepr)
+      
+      var intersection = Intersection(annotation.type as FunctionLike,
+                                      nextAnn.type as FunctionLike, 
+                                      nil,
+                                      annotation.line)
+      annotation = Annotation(intersection, annotation.line)
+    end
+    
+    if annotation == nil and currentTokenStr() == "or"
+      self.errors.report(currentToken().line, 
+                    "Type signature expected when using ""or""")
+      skipUntilBreak()
+    end
+    
+    return args, init, isVarArg, annotation, argReprs
+  end
+  
+  -- Parse a function type signature, potentially prefixed with type variable 
+  -- specification within <...>. This function has to be called once per item 
+  -- to parse intersection types.
+  def parseArgsItem(isInterface = False as Boolean, 
+                    forceType = False as Boolean) as
+                        (Array<Var>,
+                         Array<Node>,
+                         Boolean,
+                         Annotation,
+                         FuncArgsRepr)
+    var typeVars = parseTypeVars()
+    
+    var lparen = expect("(")
+    
+    -- Parse the argument list (everything within '(' and ')').
+    var args, init, minArgs, isVarArg, hasInits, argNames, commas,
+        asterisk, assigns, asToks, argTypes = parseArgList(isInterface)
+    
+    var rparen = expect(")")
+    
+    var retType, asTok = parseReturnType()
+    asToks.append(asTok)
+    
+    var annotation = nil as Annotation
+    -- Are there any type annotations?
+    if retType != nil or argTypes != [nil] * argTypes.length() or 
+       typeVars.items != [] or forceType
+      -- Yes. Construct a type for the function signature.
+      var type = constructFunctionType(argTypes, minArgs, isVarArg, retType,
+                                       typeVars, lparen.line)
+      annotation = Annotation(type, lparen.line)
+      setRepr(annotation, AnnotationRepr(None, None))
+    end
+    
+    var orTok = None
+    if currentTokenStr() == "or"
+      orTok = currentToken()
+    end
+    
+    return args, init, isVarArg, annotation, 
+           FuncArgsRepr(lparen, rparen, argNames, commas, assigns, asterisk, 
+                        asToks, orTok)
+  end
+  
+  -- Parse function definition argument list (everything between '(' and ')').
+  def parseArgList(isInterface as Boolean) as
+                       (Array<Var>, Array<Node>, Int, Boolean, Boolean,
+                        Array<Token>, Array<Token>, Token, Array<Token>,
+                        Array<Token>, Array<Typ>)
+    var args = [] as <Var>
+    var init = [] as <Node>
+    var minArgs = 0
+    var isVarArg = False
+    var hasInits = False
+    
+    var argNames = [] as <Token>
+    var commas = [] as <Token>
+    var asterisk = None
+    var assigns = [] as <Token>
+    
+    var asToks = [] as <Token>
+    var argTypes = [] as <Typ>
+    
+    if currentTokenStr() != ")"
+      while True
+        var name as Token
+        if currentTokenStr() == "*"
+          asterisk = skip()
+          name = expectType(Name)
+          argNames.append(name)
+          args.append(Var(name.str))
+          isVarArg = True
+          
+          init.append(nil)
+          commas.append(None)
+          
+          setRepr(args[-1], VarRepr(name, None))
+          
+          var type, asTok = parseInlineType()
+          argTypes.append(type)
+          asToks.append(asTok)
+          
+          break
+        end
+        
+        name = expectType(Name)
+        argNames.append(name)
+        args.append(Var(name.str))
+        
+        if currentTokenStr() == "="
+          assigns.append(expect("="))
+          if not isInterface
+            init.append(parseExpression(Precedence["as"], False))
+          else
+            init.append(NilExpr().setLine(-1))
+          end
+          hasInits = True
+        else
+          -- After the first default argument value all the rest of the
+          -- args must have initialisers.
+          if hasInits
+            parseError()
+          end
+          init.append(nil)
+          assigns.append(None)
+          minArgs += 1
+        end
+        
+        var type, asTok = parseInlineType()
+        argTypes.append(type)
+        asToks.append(asTok)
+        
+        if currentToken().str != ","
+          setRepr(args[-1], VarRepr(name, None))
+          commas.append(None)
+          break
+        end
+        var comma = expect(",")
+        setRepr(args[-1], VarRepr(name, comma))
+        commas.append(comma)
+      end
+    end
+    
+    return args, init, minArgs, isVarArg, hasInits, argNames, commas,
+           asterisk, assigns, asToks, argTypes
+  end
+  
+  -- Parse the return type of a function. Return (type, as token).
+  def parseReturnType() as (Typ, Token)
+    if currentTokenStr() == "as" and peek().str == "void"
+      var asTok = skip()
+      var voidTok = skip()
+      return Void(nil, -1, VoidRepr(voidTok)), asTok
+    else
+      return parseInlineType()
+    end
+  end
+  
+  def constructFunctionType(argTypes as Array<Typ>, minArgs as Int, 
+                            isVarArg as Boolean, retType as Typ, 
+                            typeVars as TypeVars, line as Int) as Callable
+    -- Complete the type annotation by replacing omitted types with 
+    -- dynamic/void.
+    argTypes = argTypes.copy()
+    for i in 0 to argTypes.length()
+      if argTypes[i] == nil
+        argTypes[i] = Dynamic()
+      end
+    end
+    if retType == nil
+      retType = Void(nil)
+    end
+    return Callable(argTypes, minArgs, isVarArg, retType, False, nil,
+                    typeVars, [], line, nil)
+  end
+  
+  -- Parsing statements
+  ---------------------
+  
+  -- Parse variable/constant definition. This function is used for parsing 
+  -- global, local and member variable definitions.
+  def parseVarDef(kind as Constant, isConst as Boolean, isPrivate as Boolean, 
+                  privToken as Token) as VarDef
+    var tok as Token
+    if isConst
+      tok = expect("const")
+    else
+      tok = expect("var")
+    end
+    var n = parseVarList()
+    var init = nil as Node
+    var assignToken = None
+    if currentTokenStr() == "="
+      assignToken = expect("=")
+      init = parseExpression(0, False)
+    end
+    for nn in n
+      nn.isConst = isConst
+      nn.isPrivate = isPrivate
+      nn.isInit = init != nil
+    end
+    var type = parseAnnotation()
+    var breakToken = expectBreak()
+    
+    var node = VarDef(n, kind, isConst, init, isPrivate, type)
+    setRepr(node, VarDefRepr(privToken, tok, assignToken, breakToken))
+    return node
+  end
+  
+  def parseVarList() as Array<Var>
+    var tok = expectType(Name)
+    var n = [Var(tok.str)]
+    var r = [VarRepr(tok, None)]
+    while currentTokenStr() == ","
+      tok = expect(",")
+      r[-1] = VarRepr(r[-1].name, tok)
+      
+      tok = expectType(Name)
+      n.append(Var(tok.str))
+      r.append(VarRepr(tok, None))
+    end
+    for i in 0 to n.length()
+      setRepr(n[i], r[i])
+    end
+    return n
+  end
+  
+  -- Parsing statements
+  ---------------------
+  
+  def parseBlock() as Array<Node>
+    var stmt = [] as <Node>
+    while not currentTokenStr() in ("end", "elif", "else", "until",
+                                    "except", "finally", "case") and
+          not currentToken() is Eof
+      try
+        var s = parseStatement()
+        if s != nil
+          stmt.append(s)
+        end
+      except ParseError
+      end
+    end
+    return stmt
+  end
+
+  def parseStatement() as Node
+    var stmt as Node
+    var t = currentToken()
+    switch currentTokenStr()
+      case "var"
+        stmt = parseVarStmt()
+      case "if"
+        stmt = parseIfStmt()
+      case "while"
+        stmt = parseWhileStmt()
+      case "switch"
+        stmt = parseSwitchStmt()
+      case "return"
+        stmt = parseReturnStmt()
+      case "repeat"
+        stmt = parseRepeatStmt()
+      case "for"
+        stmt = parseForStmt()
+      case "try"
+        stmt = parseTryStmt()
+      case "break"
+        stmt = parseBreakStmt()
+      case "raise"
+        stmt = parseRaiseStmt()
+      else
+        stmt = parseExpressionOrAssignment()
+    end
+    if stmt != nil
+      stmt.setLine(t)
+    end
+    return stmt
+  end
+  
+  def parseVarStmt() as VarDef
+    return parseVarDef(Ldef, False, False, None)
+  end
+  
+  def parseExpressionOrAssignment() as Node
+    var e = parseExpression()
+    if currentTokenStr() == "="
+      return parseAssignment(e)
+    elif currentTokenStr() in ["+=", "-=", "*=", "/=", "**="]
+      -- Operator assignment statement.
+      var op = currentTokenStr()[:-1]
+      var assign = skip()
+      var r = parseExpression()
+      var br = expectBreak()
+      var node = OperatorAssignmentStmt(op, toLvalue(e), r)
+      setRepr(node, OperatorAssignmentStmtRepr(assign, br))
+      return node
+    else
+      -- Expression statement.
+      var br = expectBreak()
+      var node = ExpressionStmt(e)
+      setRepr(node, ExpressionStmtRepr(br))
+      return node
+    end
+  end
+  
+  -- Parse an assignment statement. Assume that lvalue has been parsed already,
+  -- and the current token is =.
+  def parseAssignment(lv) as AssignmentStmt
+    -- Assignment statement.
+    var assign = expect("=")
+    var r = parseExpression()
+    var br = expectBreak()
+    var commas = [] as <Token>
+    var lparens, rparens = parenRepr(lv)
+
+    -- Get a list of nodes representing lvalues.
+    lv = UnwrapParens(lv)
+    var items = [lv]
+    var isExpand = False
+    if lv is ArrayExpr or lv is TupleExpr
+      isExpand = True
+      items = lv.items
+      commas = repr(lv).commas
+      if lv is ArrayExpr
+        var rep = repr(lv)
+        lparens.append(rep.lbracket)
+        rparens.insertAt(0, rep.rbracket)
+      end
+    end
+
+    -- Translate ordinary expression nodes to lvalue expression nodes.
+    var newItems = [] as <Node>
+    for i in items
+      newItems.append(toLvalue(i))
+    end
+
+    var node = AssignmentStmt(newItems, r, isExpand)
+    setRepr(node, AssignmentStmtRepr(lparens, commas, rparens, assign, br))
+    return node
+  end
+  
+  def parseReturnStmt() as ReturnStmt
+    var returnTok = expect("return")
+    var expr = nil as Node
+    if not currentToken() is Break
+      expr = parseExpression()
+    end
+    var br = expectBreak()
+    var node = ReturnStmt(expr)
+    setRepr(node, ReturnStmtRepr(returnTok, br))
+    return node
+  end
+  
+  def parseRaiseStmt() as RaiseStmt
+    var raiseTok = expect("raise")
+    var expr = parseExpression()
+    var br = expectBreak()
+    var node = RaiseStmt(expr)
+    setRepr(node, RaiseStmtRepr(raiseTok, br))
+    return node
+  end
+  
+  def parseBreakStmt() as BreakStmt
+    var breakTok = expect("break")
+    var br = expectBreak()
+    var node = BreakStmt()
+    setRepr(node, BreakStmtRepr(breakTok, br))
+    return node
+  end
+  
+  def parseWhileStmt() as WhileStmt
+    var isError = False
+    var whileTok = expect("while")
+    var expr, whileBr as (Node, Token)
+    try
+      expr = parseExpression()
+      whileBr = expectBreak()
+    except ParseError
+      isError = True
+    end
+    var body = parseBlock()
+    var endTok, endBr = expectEnd()
+    if isError != nil
+      var node = WhileStmt(expr, body)
+      setRepr(node, WhileStmtRepr(whileTok, whileBr, endTok, endBr))
+      return node
+    else
+      return nil
+    end
+  end
+  
+  def parseRepeatStmt() as RepeatStmt
+    var repeatTok = expect("repeat")
+    var repeatBr = expectBreak()
+    var body = parseBlock()
+    var untilTok = expect("until")
+    var expr = parseExpression()
+    var untilBr = expectBreak()
+    var node = RepeatStmt(expr, body)
+    setRepr(node, RepeatStmtRepr(repeatTok, repeatBr, untilTok, untilBr))
+    return node
+  end
+  
+  def parseForStmt() as ForStmt
+    var isError = False
+    
+    var forTok = expect("for")
+    var inTok, forBr as (Token, Token)
+    -- Parse index variables.
+    var index = [] as <Var>
+    var types = [] as <Annotation>
+    var expr as Node
+    try
+      while True
+        var tok = expectType(Name)
+        var v = Var(tok.str).setLine(tok)
+        index.append(v as Var)
+        types.append(parseAnnotation())
+        if currentTokenStr() != ","
+          setRepr(v, VarRepr(tok, None))
+          break
+        end
+        var comma = skip()
+        setRepr(v, VarRepr(tok, comma))
+      end
+      
+      -- Cannot assign to index variables.
+      for i in index
+        i.isConst = True
+      end
+      inTok = expect("in")
+      expr = parseExpression()
+      forBr = expectBreak()
+    except ParseError
+      isError = True
+    end
+
+    var body = parseBlock()
+    var endTok, endBr = expectEnd()
+    
+    if not isError
+      var node = ForStmt(index, expr, body, types)
+      setRepr(node, ForStmtRepr(forTok, inTok, forBr, endTok, endBr))
+      return node
+    else
+      return nil
+    end
+  end
+  
+  def parseIfStmt() as IfStmt
+    var isError = False
+    
+    var ifTok = expect("if")
+    var ifBr as Token
+    var expr = [] as <Node>
+    try
+      expr.append(parseExpression())
+      ifBr = expectBreak()
+    except ParseError
+      isError = True
+    end
+    
+    var body = [parseBlock()]
+    
+    var elifToks, elifBrs = [] as <Token>, [] as <Token>
+    while currentTokenStr() == "elif"
+      elifToks.append(expect("elif"))
+      try
+        expr.append(parseExpression())
+        elifBrs.append(expectBreak())
+      except ParseError
+        isError = True
+      end
+      body.append(parseBlock())
+    end
+    
+    var elseBody = nil as Array<Node>
+    var elseTok, elseBr = None, None
+    if currentTokenStr() == "else"
+      elseTok = expect("else")
+      elseBr = expectBreak()
+      elseBody = parseBlock()
+    end
+    
+    var endTok, endBr = expectEnd()
+    
+    if not isError
+      var node = IfStmt(expr, body, elseBody)
+      setRepr(node, IfStmtRepr(ifTok, ifBr, elifToks, elifBrs, elseTok, elseBr,
+                               endTok, endBr))
+      return node
+    else
+      return nil
+    end
+  end
+  
+  def parseSwitchStmt() as SwitchStmt
+    var switchTok = expect("switch")
+    var expr = parseExpression()
+    var switchBr = expectBreak()
+    
+    var cases = [] as <Array<Node>>
+    var bodies = [] as <Array<Node>>
+    var caseToks, caseBrs, caseCommas = [] as <Token>, [] as <Token>, 
+                                        [] as <Array<Token>>
+    
+    while currentTokenStr() == "case"
+      caseToks.append(expect("case"))
+      var casee = [] as <Node>
+      var commas = [] as <Token>
+      while True
+        casee.append(parseExpression(Precedence[","]))
+        if currentTokenStr() != ","
+          break
+        end
+        commas.append(expect(","))
+      end
+      caseCommas.append(commas)
+      caseBrs.append(expectBreak())
+      cases.append(casee)
+      bodies.append(parseBlock())
+    end
+    var elseTok, elseBr = None, None
+    if currentTokenStr() == "else"
+      elseTok = expect("else")
+      elseBr = expectBreak()
+      bodies.append(parseBlock())
+    end
+    var endTok, endBr = expectEnd()
+    var node = SwitchStmt(expr, cases, bodies)
+    setRepr(node, SwitchStmtRepr(switchTok, switchBr, caseToks, caseCommas,
+                                 caseBrs, elseTok, elseBr, endTok, endBr))
+    return node
+  end
+  
+  def parseTryStmt() as Node
+    var tryTok = expect("try")
+    var tryBr = expectBreak()
+    var body = parseBlock()
+    if currentTokenStr() == "finally"
+      var finallyTok = expect("finally")
+      var finallyBr = expectBreak()
+      var finallyBody = parseBlock()
+      var endTok, endBr = expectEnd()
+      var node = TryFinallyStmt(body, finallyBody)    
+      setRepr(node, TryFinallyStmtRepr(tryTok, tryBr, finallyTok, finallyBr,
+                                       endTok, endBr))
+      return node
+    else
+      var isError = False
+      var vars = [] as <Var>
+      var types = [] as <NameExpr>
+      var handlers = [] as <Array<Node>>
+      var exceptToks, nameToks, isToks, exceptBrs = 
+          [] as <Token>, [] as <Token>, [] as <Token>, [] as <Token>
+      repeat
+        exceptToks.append(expect("except"))
+        try
+          if peek().str == "is"
+            var t = currentToken()
+            var v = Var(expectType(Name).str).setLine(t)
+            setRepr(v, VarRepr(t, None))
+            vars.append(v as Var)
+            isToks.append(expect("is"))
+          else
+            vars.append(nil)
+            nameToks.append(None)
+            isToks.append(None)
+          end
+          var t = currentToken()
+          types.append(parseAnyNameExpr().setLine(t) as NameExpr)
+          exceptBrs.append(expectBreak())
+        except ParseError
+          isError = True
+        end
+        handlers.append(parseBlock())
+      until currentTokenStr() == "end"
+      var endTok, endBr = expectEnd()
+      if not isError
+        var node = TryExceptStmt(body, vars, types, handlers)
+        setRepr(node, TryExceptStmtRepr(tryTok, tryBr, exceptToks, nameToks,
+                                        isToks, exceptBrs, endTok, endBr))
+        return node
+      else
+        return nil
+      end
+    end
+  end
+  
+  -- Parsing expressions
+  ----------------------
+  
+  -- Parse a subexpression within a specific precedence context. If allowCast
+  -- is True, allow (non-parenthesised) cast expressions; otherwise assume that
+  -- "as" is used for type declarations.
+  def parseExpression(prec = 0 as Int, allowCast = True as Boolean) as Node
+    var expr as Node
+    var t = currentToken() -- Remember token for setting the line number.
+    
+    -- Parse a "value" expression or unary operator expression and store that
+    -- in expr.
+    switch currentTokenStr()
+      case "nil"
+        -- nil expression.
+        expr = parseNilExpr()
+      case "self"
+        -- self expression.
+        expr = parseSelfExpr()
+      case "("
+        -- Parerenthesised expression.
+        expr = parseParentheses()
+      case "["
+        -- Array expression.
+        expr = parseArrayExpr()
+      case "::"
+        -- Name expression with :: prefix.
+        expr = parseThisModuleNameExpr()
+      case "-", "not"
+        -- Unary operation.
+        expr = parseUnaryExpr(allowCast)
+      case "super"
+        -- Super class reference.
+        expr = parseSuperExpr()
+      case "def", "sub"
+        -- Anonymous function expression.
+        expr = parseFuncExpr()
+      else
+        if currentToken() is Name
+          -- Name expression.
+          expr = parseNameExpr()
+        elif currentToken() is IntLit
+          -- Integer literal.
+          expr = parseIntExpr()
+        elif currentToken() is StrLit
+          -- String literal.
+          expr = parseStrExpr()
+        elif currentToken() is FloatLit
+          -- Float literal.
+          expr = parseFloatExpr()
+        else
+          -- Invalid expression.
+          parseError()
+        end
+    end
+    
+    -- Set the line of the expression node, if not specified. This simplifies
+    -- recording the line number as not every node type needs to deal with it
+    -- separately.
+    if expr.line < 0
+      expr.setLine(t)
+    end
+    
+    -- Parse operations that require a left argument (stored in expr).
+    while True
+      t = currentToken()
+      switch currentTokenStr()
+        case "("
+          -- Call expression.
+          expr = parseCallExpr(expr)
+        case "."
+          -- Member access expression.
+          expr = parseMemberExpr(expr)
+        case "["
+          -- Indexing expression.
+          expr = parseIndexExpr(expr)
+        case "as"
+          if peek().str == "<"
+            -- Type application "e as <...>".
+            expr = parseTypeApplicationExpr(expr)
+          elif not allowCast
+            break
+          elif Precedence["as"] > prec
+            expr = parseCastExpr(expr)
+          else
+            break
+          end
+        case ","
+          -- The comma operator is used to build tuples. Comma also separates
+          -- array items and function arguments, but in this case the 
+          -- precedence is too low to build a tuple.
+          if Precedence[","] > prec
+            expr = parseTupleExpr(expr, allowCast)
+          else
+            break
+          end
+        else
+          -- Binary operation, type application or a special case.
+          if currentToken() is Op
+            var op = currentTokenStr()
+            if op == ":" and peek().str == "]"
+              -- Probably an expression of form a[b:] or a[:]; let the caller 
+              -- handle it.
+              break
+            else
+              -- Binary operation.
+              var opPrec = Precedence[op]
+              if opPrec > prec
+                expr = parseBinOpExpr(expr, opPrec, allowCast)
+              else
+                -- The operation cannot be associated with the current left
+                -- operand due to the precedence context; let the caller handle
+                -- it.
+                break
+              end
+            end
+          else
+            -- Not an operation that accepts a left argument; let the caller
+            -- handle the rest.
+            break
+          end
+      end
+      
+      -- Set the line of the expression node, if not specified. This simplifies
+      -- recording the line number as not every node type needs to deal with it
+      -- separately.
+      if expr.line < 0
+        expr.setLine(t)
+      end
+    end
+    
+    return expr
+  end
+  
+  def parseNilExpr() as NilExpr
+    var tok = expect("nil")
+    var node = NilExpr()
+    setRepr(node, NilExprRepr(tok))
+    return node
+  end
+  
+  def parseSelfExpr() as SelfExpr
+    var tok = expect("self")
+    var node = SelfExpr()
+    setRepr(node, SelfExprRepr(tok))
+    return node
+  end
+
+  def parseParentheses() as Node
+    var expr as Node
+    var lparen = skip()
+    if currentTokenStr() == ")"
+      expr = parseEmptyTupleExpr(lparen)
+    else
+      -- Parenthesised expression.
+      expr = parseExpression(0, True)
+      var rparen = expect(")")
+      expr = ParenExpr(expr)
+      setRepr(expr, ParenExprRepr(lparen, rparen))
+    end
+    return expr
+  end
+  
+  def parseEmptyTupleExpr(lparen) as TupleExpr
+    var rparen = expect(")")
+    var node = TupleExpr([])
+    setRepr(node, TupleExprRepr(lparen, [], rparen))
+    return node
+  end
+  
+  def parseArrayExpr() as ArrayExpr
+    var items = [] as <Node>
+    var lbracket = expect("[")
+    var commas = [] as <Token>
+    while currentTokenStr() != "]" and not eol()
+      items.append(parseExpression(Precedence[","], True))
+      if currentTokenStr() != ","
+        break
+      end
+      commas.append(expect(","))
+    end
+    var rbracket = expect("]")
+    var node = ArrayExpr(items)
+    setRepr(node, ArrayExprRepr(lbracket, commas, rbracket))
+    return node
+  end
+  
+  def parseTupleExpr(expr, allowCast) as TupleExpr
+    var items = [expr]
+    var commas = [] as <Token>
+    repeat
+      commas.append(expect(","))
+      if currentTokenStr() in (")", "]", "=")
+        break
+      end
+      items.append(parseExpression(Precedence[","], allowCast))
+    until currentTokenStr() != ","
+    var node = TupleExpr(items)
+    setRepr(node, TupleExprRepr(None, commas, None))
+    return node
+  end
+  
+  def parseNameExpr() as NameExpr
+    var tok = expectType(Name)
+    var name = tok.str
+    var components = [tok]
+    while currentTokenStr() == "::"
+      components.append(expect("::"))
+      tok = expectType(Name)
+      name += "::" + tok.str
+      components.append(tok)
+    end
+    var node = NameExpr(name)
+    setRepr(node, NameExprRepr(components))
+    return node
+  end
+  
+  def parseThisModuleNameExpr() as NameExpr
+    var prefix = expect("::")
+    var name = expectType(Name)
+    var node = NameExpr("::" + name.str)
+    setRepr(node, NameExprRepr([prefix, name]))
+    return node
+  end
+  
+  def parseIntExpr() as IntExpr
+    var tok = expectType(IntLit)
+    var node = IntExpr(Int(tok.str))
+    setRepr(node, IntExprRepr(tok))
+    return node
+  end
+  
+  def parseStrExpr() as StrExpr
+    -- XXX \uxxxx literals
+    var tok = expectType(StrLit)
+    if tok is StrLit
+      var value = (tok as StrLit).parsed()
+      var node = StrExpr(value)
+      setRepr(node, StrExprRepr(tok))
+      return node
+    end
+  end
+  
+  def parseFloatExpr() as FloatExpr
+    var tok = expectType(FloatLit)
+    var node = FloatExpr(Float(tok.str))
+    setRepr(node, FloatExprRepr(tok))
+    return node
+  end
+  
+  def parseSuperExpr() as SuperExpr
+    var superTok = expect("super")
+    var dot = expect(".")
+    var name = expectType(Name)
+    var node = SuperExpr(name.str)
+    setRepr(node, SuperExprRepr(superTok, dot, name))
+    return node
+  end
+  
+  def parseCallExpr(callee) as CallExpr
+    var lparen = expect("(")
+    var args, isVarArg, commas, at = parseArgExpr()
+    var rparen = expect(")")
+    var node = CallExpr(callee, args, isVarArg)
+    setRepr(node, CallExprRepr(lparen, commas, at, rparen))
+    return node
+  end
+  
+  -- Parse arguments in a call expression (within '(' and ')').
+  def parseArgExpr() as (Array<Node>, Boolean, Array<Token>, Token)
+    var args = [] as <Node>
+    var isVarArg = False
+    var at = None
+    var commas = [] as <Token>
+    while currentTokenStr() != ")" and not eol()
+      if currentTokenStr() == "*"
+        isVarArg = True
+        at = expect("*")
+      end
+      args.append(parseExpression(Precedence[","], True))
+      if currentTokenStr() != ","
+        break
+      end
+      commas.append(expect(","))
+      if isVarArg
+        break
+      end
+    end
+    return args, isVarArg, commas, at
+  end
+  
+  def parseMemberExpr(expr) as MemberExpr
+    var dot = expect(".")
+    var name = expectType(Name)
+    var node = MemberExpr(expr, name.str)
+    setRepr(node, MemberExprRepr(dot, name))
+    return node
+  end
+  
+  def parseIndexExpr(base) as IndexExpr
+    var lbracket = expect("[")
+    var index as Node
+    if currentTokenStr() == ":"
+      -- Expression of form base[:index] or base[:]. Insert implicit nil
+      -- expression(s) to replace missing : operand(s).
+      var tok = expect(":")
+      var right as Node
+      if currentTokenStr() == "]"
+        right = NilExpr()
+      else
+        right = parseExpression(0, True)
+      end
+      index = OpExpr(":", NilExpr(), right).setLine(tok)
+      setRepr(index, OpExprRepr(tok, None))
+    else
+      index = parseExpression(0, True)
+      if currentTokenStr() == ":"
+        -- Expression of form base[index:]. Insert implicit nil
+        -- expression to replace the missing : operand.
+        var tok = expect(":")
+        index = OpExpr(":", index, NilExpr()).setLine(tok)
+        setRepr(index, OpExprRepr(tok, None))
+      end
+    end
+    var rbracket = expect("]")
+    var node = IndexExpr(base, index)
+    setRepr(node, IndexExprRepr(lbracket, rbracket))
+    return node
+  end
+  
+  def parseBinOpExpr(left as Node, prec as Int, allowCast as Boolean) as OpExpr
+    if currentTokenStr() == "not"
+      parseError()
+    end
+    var op = expectType(Op)
+    var br = None
+    if op.str == ">" and currentToken() is Break
+      br = skip()
+    end
+    var right = parseExpression(prec, allowCast)
+    var node = OpExpr(op.str, left, right)
+    setRepr(node, OpExprRepr(op, br))
+    return node
+  end
+  
+  def parseCastExpr(expr as Node) as CastExpr
+    var asTok = skip()
+    var name as NameExpr
+    if currentTokenStr() == "dynamic"
+      var tok = skip()
+      name = NameExpr("dynamic").setLine(tok) as NameExpr
+      setRepr(name, NameExprRepr([tok]))
+    else
+      name = parseAnyNameExpr().setLine(asTok) as NameExpr
+    end
+    var node = CastExpr(expr, name)
+    setRepr(node, CastExprRepr(asTok))
+    return node
+  end
+  
+  def parseUnaryExpr(allowCast as Boolean) as UnaryExpr
+    var opTok = skip()
+    var op = opTok.str
+    var prec as Int
+    if op == "-"
+      prec = Precedence["-u"]
+    else
+      prec = Precedence[op]
+    end
+    var expr = parseExpression(prec, allowCast)
+    var node = UnaryExpr(op, expr)
+    setRepr(node, UnaryExprRepr(opTok))
+    return node
+  end
+  
+  def parseFuncExpr() as FuncExpr
+    var isError = False
+    var defTok = skip()
+    
+    var args, init, isVarArg, type, argReprs, defBr as
+        (Array<Var>, Array<Node>, Boolean, Annotation, Array<FuncArgsRepr>, 
+         Token)
+    try
+      args, init, isVarArg, type, argReprs = parseArgs()
+      defBr = expectBreak()
+    except ParseError
+      isError = True
+    end
+    
+    var body = parseBlock()
+    var endTok = expect("end")
+    
+    if not isError
+      var node = FuncExpr(args, init, body, isVarArg, type)
+      setRepr(node, FuncRepr(None, defTok, None, argReprs, defBr, endTok, 
+                             None))
+      return node
+    else
+      return FuncExpr([], [], [], False)
+    end
+  end
+  
+  def parseAnyNameExpr() as NameExpr
+    if currentTokenStr() == "::"
+      return parseThisModuleNameExpr()
+    else
+      return parseNameExpr()
+    end
+  end
+  
+  def parseTypeApplicationExpr(expr) as TypeApplication
+    var asTok = expect("as")
+    var langle = expect("<")
+    try
+      var commas = [] as <Token>
+      var types = [] as <Typ>
+      while True
+        var type as Typ
+        type, self.ind = ParseType(self.tok, self.ind)
+        types.append(type)
+        if currentTokenStr() != ","
+          break
+        end
+        commas.append(skip())
+      end
+      var rangle = expect(">")
+      var node = TypeApplication(expr, types)
+      setRepr(node, TypeApplicationRepr(asTok, langle, commas, rangle))
+      return node
+    except e is TypeParseError
+      parseErrorAt(e.token)
+    end
+  end
+  
+  -- Helper methods
+  -----------------
+  
+  def skip() as Token
+    self.ind += 1
+    return self.tok[self.ind - 1]
+  end
+  
+  def expect(str as Str) as Token
+    if currentTokenStr() == str
+      self.ind += 1
+      return self.tok[self.ind - 1]
+    else
+      parseError()
+    end
+  end
+  
+  def expectType(type as Type) as Token
+    if currentToken() is type
+      self.ind += 1
+      return self.tok[self.ind - 1]
+    else
+      parseError()
+    end
+  end
+  
+  def expectBreak() as Token
+    return expectType(Break)
+  end
+  
+  def expectEnd() as (Token, Token)
+    return expect("end"), expectType(Break)
+  end
+  
+  def currentToken() as Token
+    return self.tok[self.ind]
+  end
+  
+  def currentTokenStr() as Str
+    return currentToken().str
+  end
+  
+  def peek() as Token
+    return self.tok[self.ind + 1]
+  end
+  
+  def parseError() as void
+    parseErrorAt(currentToken())
+  end
+  
+  def parseErrorAt(tok as Token, skip = True as Boolean)
+    var msg as Str
+    if tok is LexError
+      msg = TokenRepr(tok)
+      msg = msg[0].upper() + msg[1:]
+    else
+      msg = "Parse error before {}".format(TokenRepr(tok))
+    end
+    
+    self.errors.report(tok.line, msg)
+
+    if skip
+      skipUntilNextLine()
+    end
+    
+    raise ParseError()
+  end
+  
+  def skipUntilBreak() as void
+    while not currentToken() is Break and not currentToken() is Eof
+      skip()
+    end
+  end
+    
+  def skipUntilNextLine() as void
+    skipUntilBreak()
+    if currentToken() is Break
+      skip()
+    end
+  end
+  
+  def eol() as Boolean
+    return currentToken() is Break or eof()
+  end
+  
+  def eof() as Boolean
+    return currentToken() is Eof
+  end
+  
+  -- Type annotation related functionality
+  
+  private def parseInlineType() as (Typ, Token)
+    try
+      if currentTokenStr() == "as"
+        var asTok = skip()
+        var type as Typ
+        type, self.ind = ParseType(self.tok, self.ind)
+        return type, asTok
+      else
+        return nil, None
+      end
+    except e is TypeParseError
+      parseErrorAt(e.token)
+    end
+  end
+
+  -- Parse "as" followed by a type, or do nothing if "as" is not the
+  -- current token and return nil as the annotation object.
+  private def parseAnnotation() as Annotation
+    var type, asTok = parseInlineType()
+    if type == nil
+      return nil
+    end
+    var node = Annotation(type, asTok.line)
+    setRepr(node, AnnotationRepr(asTok, None))
+    return node
+  end
+  
+  -- Note: For type variables of generic functions only.
+  private def parseTypeVars() as TypeVars
+    var typeVars as TypeVars
+    if currentTokenStr() == "<"
+      typeVars, self.ind = ParseTypeVariables(self.tok, self.ind, True)
+    else
+      typeVars = TypeVars([])
+    end
+    return typeVars
+  end
+  
+  -- Representation management
+
+  def setRepr(node as Node, repr as dynamic)
+    node.repr = repr
+  end
+  
+  def repr(node as Node) as dynamic
+    return node.repr
+  end
+  
+  -- Convert an expression to a lvalue expression and keep track of the
+  -- representation.
+  def toLvalue(node as Node) as Node
+    var lp, rp = parenRepr(node)
+    node = UnwrapParens(node)
+    var lv = ToLvalue(node)
+    -- Reuse original textual representation, but add any surrounding 
+    -- parentheses.
+    setRepr(lv, LvalueRepr(lp, rp, node.repr))
+    return lv
+  end
+  
+  -- If e is a ParenExpr, return an array of left-paren tokens (more that one
+  -- if nested parens) and an array of corresponding right-paren tokens. 
+  -- Otherwise, return [], [].
+  def parenRepr(e as Node) as (Array<Token>, Array<Token>)
+    if e is ParenExpr
+      var lp, rp = parenRepr((e as ParenExpr).expr)
+      lp.insertAt(0, repr(e).lparen)
+      rp.append(repr(e).rparen)
+      return lp, rp
+    else
+      return [], []
+    end
+  end
+end
+
+
+private class ParseError is Exception
+end

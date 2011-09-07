@@ -1,0 +1,18 @@
+module semanal
+
+import nodes
+import string
+
+
+class TypeInfoMap is Map<Str, TypeInfo>
+  def _str() as Str
+    var a = ["TypeInfoMap("] as <Str>
+    for x, y in self
+      if x is Str and not x.startsWith("std::") -- not working 100% if submod.
+        a.append("  {} : {}".format(x, y))
+      end
+    end
+    a[-1] += ")"
+    return Newline.join(a)
+  end
+end

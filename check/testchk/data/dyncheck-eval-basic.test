@@ -1,0 +1,112 @@
+-- Test cases for evaluation after runtime checking transformation.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from evaluation. 
+
+
+[case testInvalidReturnValueType]
+class A
+  def f() as A
+    return B() as dynamic
+  end
+end
+class B
+end
+A().f()
+[out]
+Traceback:
+  at main level (__tmp.alo, line 8)
+  f of A (__tmp.alo, line 3)
+AnnotationError: A expected, but found B
+
+[case testInvalidArgumentType]
+class A
+  def g(b as B)
+  end
+  def f(d as dynamic) as void
+    self.g(d)
+  end
+end
+class B
+end
+A().f(A())
+[out]
+Traceback:
+  at main level (__tmp.alo, line 10)
+  f of A (__tmp.alo, line 5)
+AnnotationError: B expected, but found A
+
+[case testInvalidArgumentType2]
+class A
+  def f(b as dynamic)
+  end
+  def g(a as A)
+    a.f(A())
+  end
+end
+class B is A
+  def f(b as B)
+  end
+end
+A().g(B())
+[out]
+Traceback:
+  at main level (__tmp.alo, line 12)
+  g of A (__tmp.alo, line 5)
+  f of B (__tmp.alo, line 10)
+AnnotationError: B expected, but found A
+
+[case testInvalidConstructorArgument]
+class A
+  def f() as B
+    return B(A() as dynamic)
+  end
+end
+class B
+  def create(b as B)
+  end
+end
+A().f()
+[out]
+Traceback:
+  at main level (__tmp.alo, line 10)
+  f of A (__tmp.alo, line 3)
+AnnotationError: B expected, but found A
+
+[case testCoercingNil]
+var a = nil as dynamic
+var aa = a as A
+class A; end
+class B; end
+[out]
+
+[case testOutputWithoutException]
+__Print('hello')
+__Print('there')
+[out]
+hello
+there
+
+[case testOutputWithFailure]
+class A; end
+class B; end
+var a = A() as A
+__Print('here')
+var b = (a as dynamic) as B
+__Print('not')
+[out]
+here
+Traceback:
+  at main level (__tmp.alo, line 5)
+AnnotationError: B expected, but found A
+
+[case testPrintObject]
+class A; end
+__Print('foo', nil, Object(), A())
+[out]
+foo nil Object A
+
+
+-- additional features
+--   accessing members

@@ -1,0 +1,13 @@
+-- Fragment for a simple generic cell class.
+class Cell<T>
+  private var value as T
+  def create(value as T)
+    self.value = value
+  end
+  def get() as T
+    return self.value
+  end
+  def set(value as T)
+    self.value = value
+  end
+end

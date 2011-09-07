@@ -1,0 +1,104 @@
+module types
+
+
+-- These constants define the method used by TypeQuery to combine multiple
+-- query results, e.g. for tuple types. The strategy is not used for empty
+-- result lists; in that case the default value takes precedence.
+const AnyTypeStrategy,  -- Return True if one of the results is True.
+      AllTypesStrategy  -- Return True if all of the results are True.
+
+
+-- Visitor for performing simple boolean queries of types. This class allows
+-- defining the default value for leafs to simplify the implementation of many
+-- queries.
+class TypeQuery is TypeVisitor<Boolean>
+  private const default as Boolean   -- Default result
+  private const strategy as Constant -- Strategy for combining multiple values
+  
+  -- Construct a query visitor with the given default result and strategy for
+  -- combining multiple results. The strategy must be either AnyTypeStrategy or
+  -- AllTypesStrategy.
+  def create(default as Boolean, strategy as Constant)
+    self.default = default
+    self.strategy = strategy
+  end
+
+  def visitUnboundType(t as UnboundType) as Boolean
+    return self.default
+  end
+  
+  def visitErrorType(t as ErrorType) as Boolean
+    return self.default
+  end
+  
+  def visitDynamic(t as Dynamic) as Boolean
+    return self.default
+  end
+  
+  def visitVoid(t as Void) as Boolean
+    return self.default
+  end
+  
+  def visitNilType(t as NilType) as Boolean
+    return self.default
+  end
+  
+  def visitTypeVar(t as TypeVar) as Boolean
+    return self.default
+  end
+  
+  def visitInstance(t as Instance) as Boolean
+    return queryTypes(t.args)
+  end
+  
+  def visitCallable(t as Callable) as Boolean
+    -- FIX generics
+    return queryTypes(t.argTypes + [t.retType])
+  end
+  
+  def visitTupleType(t as TupleType) as Boolean
+    return queryTypes(t.items)
+  end
+  
+  def visitIntersection(t as Intersection) as Boolean
+    if self.strategy == AnyTypeStrategy
+      return t.item1.accept(self) or t.item2.accept(self)
+    else
+      return t.item1.accept(self) and t.item2.accept(self)
+    end
+  end
+  
+  def visitRuntimeTypeVar(t as RuntimeTypeVar) as Boolean
+    return self.default
+  end
+  
+  -- Perform a query for a list of types. Use the strategy constant to combine
+  -- the results.
+  def queryTypes(types as Array<Typ>) as Boolean
+    if types == []
+      -- Use default result for empty list.
+      return self.default
+    end
+    if self.strategy == AnyTypeStrategy
+      -- Return True if at least one component is true.
+      var res = False
+      for t in types
+        res = res or t.accept(self)
+        if res
+          break
+        end
+      end
+      return res        
+    else
+      -- Return True if all components are true.
+      var res = True
+      for t in types
+        res = res and t.accept(self)
+        if not res
+          break
+        end
+      end
+      return res
+    end
+  end
+end

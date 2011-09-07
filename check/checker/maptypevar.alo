@@ -1,0 +1,65 @@
+module checker
+
+import types
+import nodes
+
+
+-- Return a description of the relation between a supertype and subtype type
+-- variable, i.e. a description of how to get to subtype type variable value 
+-- from supertype type variable values. The index is 1-based.
+--
+--  - If tvar x in supertype maps directly to tvar subtvindex in subtype, 
+--    return [x]. 
+--  - If argument y of x maps to tvar subtvindex, return [x, y]. For argument z
+--    of argument y of x return [x, y, z], etc.
+--  - If there is no relation, return nil.
+--
+-- For example, consider the case of "class B<T> is A<X, Y<T>>". Now the 
+-- relation of T in B (index=1) to A is [2, 0]: T is an argument 0 of Y<T>, 
+-- and Y<T> is the second type argument of supertype A.
+def GetSupertypeToSubtypeTvarRelation(
+                   supertype as TypeInfo, subtype as TypeInfo, 
+                   subtvindex as Int) as Array<Int>
+  -- If there is no generic inheritance, the mapping will fail.
+  if subtype.bases[0] == nil
+    return nil
+  end
+  
+  -- The cast will succeed if we get here.
+  var base = (subtype.bases[0] as Instance) -- IDEA: Support interfaces
+  
+  -- Go through all the supertype tvars to find a match.
+  for i in 0 to base.args.length()
+    var mapping = FindTvarMapping(base.args[i], subtvindex)
+    if mapping != nil
+      return [i + 1] + mapping
+    end
+  end
+  
+  return nil
+end
+
+
+-- Recursively search for a type variable instance (with given index) within a
+-- supertype definition. Return the path to the first found instance.
+--
+--  - If t is a bare type variable with correct index, return [] as the path.
+--  - If type variable is within instance arguments, return the indexing 
+--    operations required to get it. For example, if t is A<X, Y, T`1> and 
+--    index==1, return [2] (2 for the third type argument). 
+private def FindTvarMapping(t as Typ, index as Int) as Array<Int>
+  if t is Instance and (t as Instance).args != []
+    var inst = (t as Instance)
+    for argi in 0 to inst.args.length()
+      var mapping = FindTvarMapping(inst.args[argi], index)
+      if mapping != nil
+        return [argi] + mapping
+      end
+    end
+    return nil
+  elif t is TypeVar and (t as TypeVar).id == index
+    return []    
+  else
+    return nil
+  end  
+end

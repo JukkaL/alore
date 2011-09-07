@@ -1,0 +1,564 @@
+module std
+
+
+-- Interfaces
+
+
+interface Iterable<T>
+  def iterator() as Iterator<T>
+end
+
+interface Iterator<T>
+  def hasNext() as Boolean
+  def next() as T
+end
+
+interface Sequence<T>
+  def _get(i as Int) as T
+  def length() as Int
+end
+
+interface Comparable<T>
+  def _lt(x as T) as Boolean
+  def _gt(x as T) as Boolean
+end
+
+interface Addable<T1, T2>
+  def _add(x as T1) as T2
+end
+
+interface Multipliable<T1, T2>
+  def _mul(x as T1) as T2
+end
+
+
+-- Types
+
+
+class Object
+  def create()
+  end
+
+  def _eq(x as Object) as Boolean
+  end
+end
+
+
+-- Primitive types
+
+class Int implements Comparable<Int>, Comparable<Float>,
+                     Comparable<Comparable<Int>> -- {not nil} FIX
+  -- FIX: _int method
+  def create(obj as Str, base = nil as Int) or
+            (obj as Object)
+  end
+
+  def _add(x as Int) as Int or
+          (x as Float) as Float or
+       <T>(x as Addable<Int, T>) as T
+  end
+  
+  def _sub(x as Int) as Int or
+          (x as Float) as Float
+  end
+  
+  def _mul(x as Int) as Int or
+          (x as Float) as Float or
+       <T>(x as Multipliable<Int, T>) as T
+  end
+  
+  def _div(x as Int) as Float or
+          (x as Float) as Float
+  end
+  
+  def _mod(x as Int) as Int or
+          (x as Float) as Float
+  end
+  
+  def _idiv(x as Int) as Int or
+           (x as Float) as Float
+  end
+  
+  def _pow(x as Int) as Int or
+          (x as Float) as Float
+  end
+  
+  def _neg() as Int
+  end
+  
+  def _eq(x as Object) as Boolean
+  end
+  
+  def _lt(x as Int) as Boolean or
+         (x as Float) as Boolean or
+         (x as Comparable<Int>) as Boolean
+  end
+  
+  def _gt(x as Int) as Boolean or
+         (x as Float) as Boolean or
+         (x as Comparable<Int>) as Boolean
+  end  
+  
+  def _hash() as Int
+  end
+  
+  def _str() as Str
+  end
+  
+  def _float() as Float
+  end
+end
+
+class Str implements Comparable<Str>, Sequence<Str>, Iterable<Str>, 
+                     Multipliable<Int, Str>
+  def create(obj as Object)
+  end
+
+  def length() as Int
+  end
+  
+  def lower() as Str
+  end
+  
+  def upper() as Str
+  end
+  
+  def find(substring as Str, start = 0 as Int) as Int
+  end
+  
+  def index(substring as Str) as Int
+  end
+  
+  def count(ch as Str) as Int
+  end
+  
+  def strip() as Str
+  end
+  
+  def format(*args as Object) as Str
+  end
+  
+  def replace(x as Str, y as Str, max = 1 as Int) as Str
+  end
+  
+  def startsWith(prefix as Str) as Boolean
+  end
+  
+  def endsWith(suffix as Str) as Boolean
+  end
+  
+  def split(sep = nil as Str, max = -1 as Int) as Array<Str>
+  end
+  
+  def join(seq as Sequence<Str>) as Str
+  end
+  
+  def iterator() as Iterator<Str>
+  end
+  
+  def _get(i as Int) as Str or
+          (i as Pair<Int, Int>) as Str
+  end
+  
+  def _add(s as Str) as Str
+  end
+  
+  def _in(s as Str) as Boolean
+  end
+  
+  def _mul(n as Int) as Str
+  end
+
+  def _eq(x as Object) as Boolean
+  end
+  
+  def _lt(x as Str) as Boolean
+  end
+  
+  def _gt(x as Str) as Boolean
+  end  
+  
+  def _int() as Int
+  end
+  
+  def _float() as Float
+  end
+  
+  def _hash() as Int
+  end
+end
+
+class Float implements Comparable<Float>, Comparable<Int>, 
+                       Comparable<Comparable<Float>> -- {not nil} FIX
+  -- FIX: _float method
+  def create(obj as Object)
+  end
+  
+  def _add(x as Float) as Float or
+          (x as Int) as Float or
+       <T>(x as Addable<Float, T>) as T
+  end
+  
+  def _sub(x as Float) as Float or
+          (x as Int) as Float
+  end
+  
+  def _mul(x as Float) as Float or
+          (x as Int) as Float or
+       <T>(x as Multipliable<Float, T>) as T
+  end
+  
+  def _div(x as Float) as Float or
+          (x as Int) as Float
+  end
+  
+  def _mod(x as Float) as Float or
+          (x as Int) as Float
+  end
+  
+  def _idiv(x as Float) as Float or
+           (x as Int) as Float
+  end
+  
+  def _pow(x as Float) as Float or
+          (x as Int) as Float
+  end
+  
+  def _neg() as Float
+  end
+
+  def _eq(x as Object) as Boolean
+  end
+  
+  def _lt(x as Float) as Boolean or
+         (x as Int) as Boolean or
+         (x as Comparable<Float>) as Boolean
+  end
+  
+  def _gt(x as Float) as Boolean or
+         (x as Int) as Boolean or
+         (x as Comparable<Float>) as Boolean
+  end
+
+  def _str() as Str
+  end
+  
+  def _int() as Int
+  end
+  
+  def _hash() as Int
+  end
+end
+
+class Boolean -- : {not nil} FIX
+  -- FIX: Should not allow calling the constructor.
+  
+  def _str() as Str
+  end
+end
+
+class Type
+  -- FIX: Should not allow calling the constructor.
+
+  def supertype() as Type
+  end
+  
+  def _str() as Str
+  end
+end
+
+class Function
+  -- FIX: Should not allow calling the constructor.
+  
+  def _str() as Str
+  end
+end
+
+class Constant
+  -- FIX: Should not allow calling the constructor.
+  
+  def _str() as Str
+  end
+end
+
+class Pair<TL, TR>
+  -- FIX: Should not allow calling the constructor.
+  
+  const left as TL
+  const right as TR
+  
+  def _eq(x as Object) as Boolean
+  end
+  
+  def _hash() as Int
+  end
+  
+  def _str() as Str
+  end
+end
+
+class Range implements Iterable<Int>
+  -- FIX: Should not allow calling the constructor.
+  
+  const start as Int
+  const stop as Int
+  
+  def iterator() as Iterator<Int>
+  end
+  
+  def _in(x as Int) as Boolean
+  end
+  
+  def _eq(x as Object) as Boolean
+  end
+  
+  def _hash() as Int
+  end
+  
+  def _str() as Str
+  end
+end
+
+-- Collection types
+
+class Array<T> implements Comparable<Array<T>>, Sequence<T>, Iterable<T>, 
+                          Multipliable<Int, Array<T>>
+  def create(seq = nil as Iterable<T>)
+  end
+  
+  def length() as Int
+  end
+  
+  def append(object as T)
+  end
+  
+  def insertAt(index as Int, object as T)
+  end
+  
+  def extend(a as Sequence<T>)
+  end
+  
+  def removeAt(index as Int) as T
+  end
+  
+  def find(item as Object) as Int
+  end
+  
+  def index(item as Object) as Int
+  end
+  
+  def count(item as Object) as Int
+  end
+  
+  def iterator() as Iterator<T>
+  end
+  
+  -- IDEA: type of self?
+  def copy() as Array<T>
+  end
+  
+  def _get(index as Int) as T or
+          (index as Pair<Int, Int>) as Array<T>
+  end
+  
+  def _set(index as Int, value as T)
+  end
+  
+  def _mul(n as Int) as Array<T>
+  end
+  
+  def _add<S is T>(x as Array<S>) as Array<T>
+  end
+  
+  def _in(x as Object) as Boolean
+  end
+  
+  -- FIX
+  --def _lt<S is Comparable<T>>(x as Array<S>) as Boolean
+  --end
+  def _lt(x as dynamic) as Boolean
+  end
+  
+  --def _gt<S is Comparable<T>>(x as Array<S>) as Boolean
+  --end
+  def _gt(x as dynamic) as Boolean
+  end
+  
+  def _str() as Str
+  end
+  
+  def _hash() as Int
+  end
+end
+
+class Map<KT, VT> implements Iterable<(KT, VT)>
+  def create(*args as Pair<KT, VT>)
+  end
+  
+  def length() as Int
+  end
+  
+  def get(key as KT, default as VT) as VT
+  end
+  
+  def hasKey(key as Object) as Boolean
+  end
+  
+  def remove(key as KT)
+  end
+  
+  def keys() as Array<KT>
+  end
+  
+  def values() as Array<VT>
+  end
+
+  def iterator() as Iterator<(KT, VT)>
+  end
+  
+  def _get(name as KT) as VT
+  end
+  
+  def _set(name as KT, value as VT)
+  end
+  
+  def _str() as Str
+  end
+end
+
+-- FIX only partial definition
+class Tuple implements Iterable
+  def length() as Int
+  end
+  
+  -- NOTE: Special type system support for (...) tuple types.
+  def iterator() as Iterator<Object>
+  end
+  
+  -- NOTE: Special type system support for (...) tuple types.
+  def _get(i as Int) as Object
+  end
+  
+  def _in(x as Object) as Boolean
+  end
+
+  def _eq(x as Object) as Boolean
+  end
+  
+  -- FIX type signature needs special type system support
+  def _lt(x) as Boolean
+  end
+  
+  -- FIX type signature needs special type system support
+  def _gt(x) as Boolean
+  end
+  
+  def _str() as Str
+  end
+  
+  def _hash() as Int
+  end
+end
+
+-- Functions
+
+def Print(*args as Object)
+end
+
+def Write(*args as Object)
+end
+
+def WriteLn(*args as Object)
+end
+
+def ReadLn() as Str
+end
+
+def Repr(object as Object) as Str
+end
+
+def Chr(n as Int) as Str
+end
+
+def Ord(ch as Str) as Int
+end
+
+def Abs(x as Int) as Int or
+       (x as Float) as Float
+end
+
+def Min<T is Comparable<T>>(x as T, y as T) as T
+end
+
+def Max<T is Comparable<T>>(x as T, y as T) as T
+end
+
+def Sort<T is Comparable<T>>(sequence as Sequence<T>, 
+                             func = nil as def (T, T) as Boolean) as Array<T>
+end
+
+def Reversed<T>(s as Iterable<T>) as Array<T>
+end
+
+def Hash(object as Object) as Int
+end
+
+def Exit(value = 0 as Int)
+end
+
+-- Constants
+
+const True = nil as Boolean
+const False = nil as Boolean
+
+const Tab = "\u0009" as Str
+const LF = "\u000a" as Str
+const CR = "\u000d"as Str
+const Newline = "\u000a" as Str
+
+-- Exceptions
+
+class Exception
+  const message
+
+  def create(message = nil as Str)
+  end
+end
+
+class ValueError is Exception
+end
+
+class TypeError is ValueError
+end
+
+class MemberError is ValueError
+end
+
+class ArithmeticError is ValueError
+end
+
+class IndexError is ValueError
+end
+
+class KeyError is ValueError
+end
+
+class ResourceError is Exception
+end
+
+class MemoryError is ResourceError
+end
+
+class RuntimeError is Exception
+end
+
+class IoError is Exception
+end
+
+class InterruptException is Exception
+end
+
+class ExitException is Exception
+  def create(code as Int)
+  end
+end

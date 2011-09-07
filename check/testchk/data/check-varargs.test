@@ -1,0 +1,569 @@
+-- Test cases for the type checker related to varargs.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Varargs within body
+-- -------------------
+
+
+[case testVarArgsWithinFunction]
+def f(*b as B)
+  b = ac -- Fail
+  ac = b -- Fail
+  b = ab
+  ab = b
+end
+
+var ab as Array<B>
+var ac as Array<C>
+
+class B; end
+class C; end
+[usestd fixtures/std-array.alo]
+[out]
+main: In function "f":
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+
+-- Calling varargs function
+-- ------------------------
+
+
+[case testCallingVarArgsFunction]
+f(c)       -- Fail
+f(a, b, c) -- Fail
+f(g())     -- Fail
+f(a, g())  -- Fail
+
+f()
+f(a)
+f(b)
+f(a, b, a, b)
+
+def f(*a as A)
+end
+
+def g() as void
+end
+
+var a as A
+var b as B
+var c as C
+
+class A; end
+class B is A; end
+class C; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Argument 1 to "f" has incompatible type "C"
+main, line 2: Argument 3 to "f" has incompatible type "C"
+main, line 3: "g" does not return a value
+main, line 4: "g" does not return a value
+
+[case testCallingVarArgsFunctionWithAlsoNormalArgs]
+f()        -- Fail
+f(a)       -- Fail
+f(c, c)    -- Fail
+f(c, a, b, c)  -- Fail
+
+f(c)
+f(c, a)
+f(c, b, b, a, b)
+
+def f(a as C, *b as A)
+end
+
+var a as A
+var b as B
+var c as C
+
+class A; end
+class B is A; end
+class C; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Too few arguments for "f"
+main, line 2: Argument 1 to "f" has incompatible type "A"
+main, line 3: Argument 2 to "f" has incompatible type "C"
+main, line 4: Argument 4 to "f" has incompatible type "C"
+
+[case testCallingVarArgsFunctionWithDefaultArgs]
+f(a)       -- Fail
+f(c, c)    -- Fail
+f(c, a, b, c)  -- Fail
+
+f()
+f(c)
+f(c, a)
+f(c, b, b, a, b)
+
+def f(a = nil as C, *b as A)
+end
+
+var a as A
+var b as B
+var c as C
+
+class A; end
+class B is A; end
+class C; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Argument 1 to "f" has incompatible type "A"
+main, line 2: Argument 2 to "f" has incompatible type "C"
+main, line 3: Argument 4 to "f" has incompatible type "C"
+
+
+-- Calling varargs function + type inference
+-- -----------------------------------------
+
+
+[case testTypeInferenceWithCalleeVarArgs]
+a = f(o) -- Fail
+b = f(b, a) -- Fail
+b = f(a, b) -- Fail
+
+o = f()
+a = f(a)
+a = f(b)
+a = f(a, b, a)
+o = f(a, b, o)
+c = f(c)
+
+def f<T>(*a as T) as T
+end
+
+var a as A
+var b as B
+var c as C
+var o as Object
+
+class A; end
+class B is A; end
+class C; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testTypeInferenceWithCalleeVarArgsAndDefaultArgs]
+a = f(o) -- Fail
+a = f(a, o) -- Fail
+a = f(a, a, o) -- Fail
+a = f(a, a, a, o) -- Fail
+
+a = f(a)
+a = f(a, a)
+a = f(a, a, a)
+
+def f<T>(a as T, b = nil as T, *c as T) as T
+end
+
+var a as A
+var o as Object
+
+class A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Calling normal function with varargs
+-- ------------------------------------
+
+
+[case testCallingWithArrayVarArgs]
+f(*aa)    -- Fail
+f(a, *ab) -- Fail
+
+f(a, b)
+(f as dynamic)(*aa)     -- IDEA: Move to check-dynamic?
+(f as dynamic)(a, *ab)  -- IDEA: Move to check-dynamic?
+
+var aa as Array<A>
+var ab as Array<B>
+var a as A
+var b as B
+
+def f(a as A, b as B)
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Too many arguments for "f"
+main, line 1: Argument 2 to "f" has incompatible type "A"
+main, line 2: Too many arguments for "f"
+
+[case testCallingWithTupleVarArgs]
+f(*(a, b, b)) -- Fail
+f(*(b, b, c)) -- Fail
+f(a, *(b, b)) -- Fail
+f(b, *(b, c)) -- Fail
+f(*(a, b))    -- Fail
+f(*(a, b, c, c)) -- Fail
+f(a, *(b, c, c)) -- Fail
+
+f(*(a, b, c))
+f(a, *(b, c))
+f(a, b, *(c,))
+f(a, *(b, cc))
+
+var a as A
+var b as B
+var c as C
+var cc as CC
+
+def f(a as A, b as B, c as C)
+end
+
+class A; end
+class B; end
+class C; end
+class CC is C; end
+[out]
+main, line 1: Argument 3 to "f" has incompatible type "B"
+main, line 2: Argument 1 to "f" has incompatible type "B"
+main, line 3: Argument 3 to "f" has incompatible type "B"
+main, line 4: Argument 1 to "f" has incompatible type "B"
+main, line 5: Too few arguments for "f"
+main, line 6: Too many arguments for "f"
+main, line 7: Too many arguments for "f"
+
+[case testInvalidVarArg]
+f(*nil) -- Fail
+f(*a)   -- Fail
+
+f(*(a,))
+
+def f(a as A)
+end
+
+var a as A
+
+class A; end
+[out]
+main, line 1: Array or tuple expected as variable arguments
+main, line 2: Array or tuple expected as variable arguments
+
+
+-- Calling varargs function with varargs
+-- -------------------------------------
+
+
+[case testCallingVarArgsFunctionWithArrayVarArgs]
+f(*aa)           -- Fail
+f(a, *aa)        -- Fail
+f(b, *ab)        -- Fail
+f(a, a, *ab)     -- Fail
+f(a, b, *aa)     -- Fail
+f(b, b, *ab)     -- Fail
+g(*ab)           -- Fail
+
+f(a, *ab)
+f(a, b, *ab)
+f(a, b, b, *ab)
+g(*aa)
+
+var aa as Array<A>
+var ab as Array<B>
+var a as A
+var b as B
+
+def f(a as A, *b as B)
+end
+
+def g(a as A, *b as A)
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible variable arguments in call
+main, line 2: Incompatible variable arguments in call
+main, line 3: Argument 1 to "f" has incompatible type "B"
+main, line 4: Argument 2 to "f" has incompatible type "A"
+main, line 5: Incompatible variable arguments in call
+main, line 6: Argument 1 to "f" has incompatible type "B"
+main, line 7: Incompatible variable arguments in call
+main, line 7: Argument 1 to "g" has incompatible type "B"
+
+[case testCallingWithTupleVarArgs]
+f(*(b, b, b))   -- Fail
+f(*(a, a, b))   -- Fail
+f(*(a, b, a))   -- Fail
+f(a, *(a, b))   -- Fail
+f(b, *(b, b))   -- Fail
+f(b, b, *(b,))  -- Fail
+f(a, a, *(b,))  -- Fail
+f(a, b, *(a,))  -- Fail
+f(*())          -- Fail
+
+f(*(a, b, b))
+f(a, *(b, b))
+f(a, b, *(b,))
+
+var a as A
+var b as B
+var c as C
+var cc as CC
+
+def f(a as A, *b as B)
+end
+
+class A; end
+class B; end
+class C; end
+class CC is C; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Argument 1 to "f" has incompatible type "B"
+main, line 2: Argument 2 to "f" has incompatible type "A"
+main, line 3: Argument 3 to "f" has incompatible type "A"
+main, line 4: Argument 2 to "f" has incompatible type "A"
+main, line 5: Argument 1 to "f" has incompatible type "B"
+main, line 6: Argument 1 to "f" has incompatible type "B"
+main, line 7: Argument 2 to "f" has incompatible type "A"
+main, line 8: Argument 3 to "f" has incompatible type "A"
+main, line 9: Too few arguments for "f"
+
+
+-- Varargs special cases
+-- ---------------------
+
+
+[case testDynamicVarArg]
+f(a, a, *d) -- Fail
+f(a, *d)    -- Fail
+
+f(*d)
+g(*d)
+g(a, *d)
+g(a, a, *d)
+
+var d as dynamic
+var a as A
+
+def f(a as A)
+end
+
+def g(a as A, *b as A)
+end
+
+class A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Too many arguments for "f"
+main, line 2: Too many arguments for "f"
+
+[case testArrayVarArgsAndSubtyping]
+g(*aa) -- Fail
+
+f(*aa)
+f(*ab)
+g(*ab)
+
+def f(*a as A)
+end
+
+def g(*a as B)
+end
+
+var aa as Array<A>
+var ab as Array<B>
+
+class A; end
+class B is A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible variable arguments in call
+
+[case testCallerVarArgsAndDefaultArgs]
+f(*())        -- Fail
+f(a, *[a])    -- Fail
+f(a, b, *[a]) -- Fail
+f(*(a, a, b)) -- Fail
+
+f(*(a,))
+f(*(a, b))
+f(*(a, b, b, b))
+f(a, *[])
+f(a, *[b])
+f(a, *[b, b])
+
+var a as A
+var b as B
+
+def f(a as A, b = nil as B, *c as B)
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Too few arguments for "f"
+main, line 2: Incompatible variable arguments in call
+main, line 2: Argument 2 to "f" has incompatible type "A"
+main, line 3: Incompatible variable arguments in call
+main, line 4: Argument 2 to "f" has incompatible type "A"
+
+
+-- Intersection types + varargs
+-- ----------------------------
+
+
+[case testIntersectionTypesAndVarArgs]
+b = f()        -- Fail (1)
+b = f(a)       -- Fail
+b = f(a, b)    -- Fail 
+a = f(b)       -- Fail
+a = f(b, b)    -- Fail (5)
+b = f(a, *[b]) -- Fail
+b = f(*())     -- Fail 
+b = f(*(a,))   -- Fail
+b = f(*(a, b)) -- Fail
+a = f(*(b,))   -- Fail (10)
+a = f(*(b, b)) -- Fail
+a = f(*[b])    -- Fail
+
+a = f()
+a = f(a)
+a = f(a, b)
+b = f(b)
+b = f(b, b)
+a = f(a, *[b])
+a = f(*())
+a = f(*(a,))
+a = f(*(a, b))
+b = f(*(b,))
+b = f(*(b, b))
+b = f(*[b])
+
+var a as A
+var b as B
+
+def f(a = nil as A, *b as B) as A or
+     (a as B, *b as B) as B
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+main, line 9: Incompatible types in assignment
+main, line 10: Incompatible types in assignment
+main, line 11: Incompatible types in assignment
+main, line 12: Incompatible types in assignment
+
+
+-- Caller varargs + type inference
+-- -------------------------------
+
+
+[case testCallerVarArgsArrayWithTypeInference]
+a, b = f(*aa)    -- Fail
+b, b = f(*aa)    -- Fail
+a, a = f(b, *aa) -- Fail
+b, b = f(b, *aa) -- Fail
+b, b = f(b, b, *aa) -- Fail
+
+a, b = f(a, *a)  -- Fail
+a, b = f(*a)     -- Fail
+
+a, a = f(*aa)
+b, a = f(b, *aa)
+b, a = f(b, a, *aa)
+
+var a as A
+var b as B
+var aa as Array<A>
+
+def f<S, T>(a as S, *b as T) as (S, T)
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 7: Array or tuple expected as variable arguments
+main, line 8: Array or tuple expected as variable arguments
+
+[case testCallerVarArgsTupleWithTypeInference]
+a, a = f(*(a, b))   -- Fail
+b, b = f(a, *(b,))  -- Fail
+a, a = f(*(a, b))   -- Fail
+b, b = f(a, *(b,))  -- Fail
+a, b = f(*(a, b, b)) -- Fail
+
+a, b = f(*(a, b))
+a, b = f(a, *(b,))
+
+var a as A
+var b as B
+
+def f<S, T>(a as S, b as T) as (S, T)
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Too many arguments for "f"
+
+[case testCallerVarargsAndRangeTypesWithTypeInference]
+a, aa  = G().f(*[a]) -- Fail
+aa, a  = G().f(*[a]) -- Fail
+ab, aa = G().f(*[a]) -- Fail
+
+ao, ao = G().f(*[a])
+aa, aa = G().f(*[a])
+
+var a as A
+var b as B
+
+var ao as Array<Object>
+var aa as Array<A>
+var ab as Array<B>
+
+class G<T>
+  def f<S>(*a as S) as (Array<S>, Array<T>)
+  end
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment

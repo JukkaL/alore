@@ -1,0 +1,138 @@
+module types
+
+
+-- Visitor for pretty-printing types into strings. Do not preserve original 
+-- formatting.
+--
+-- Notes:
+--  - Include argument ranges for Instance types, when present.
+--  - Include implicit bound type variables of callables.
+--  - Represent unbound types as Foo? or Foo?<...>.
+--  - Represent the nil type as Nil.
+--  - Represent intersection types as item1 /\ item2. 
+class TypeStrVisitor is TypeVisitor<Str>
+  def visitUnboundType(t)
+    var s = t.name + "?"
+    if t.args != []
+      s += "<{}>".format(listStr(t.args))
+    end
+    return s
+  end
+  
+  def visitErrorType(t)
+    return "<ERROR>"
+  end
+  
+  def visitDynamic(t)
+    return "dynamic"
+  end
+  
+  def visitVoid(t)
+    return "void"
+  end
+  
+  def visitNilType(t)
+    return "Nil"
+  end
+  
+  def visitInstance(t)
+    var s = t.type.fullName
+    if t.args != []
+      if t.argTops == nil
+        s += "<{}>".format(listStr(t.args))
+      else
+        -- The instance tyoe has argument ranges. Pretty-print them.
+        var a = []
+        for i in 0 to t.args.length()
+          a.append("{}..{}".format(t.args[i], t.argTops[i]))
+        end
+        s += "<{}>".format(listStr(a))
+      end
+    end
+    return s
+  end
+  
+  def visitTypeVar(t)
+    if t.name == nil
+      -- Anonymous type variable type (only numeric id).
+      return "`{}".format(t.id)
+    else
+      -- Named type variable type.
+      return "{}`{}".format(t.name, t.id)
+    end
+  end
+  
+  def visitCallable(t)
+    var s = listStr(t.argTypes[:t.minArgs])
+    
+    var opt = t.argTypes[t.minArgs:]
+    if t.isVarArg
+      opt = opt[:-1]
+    end
+    
+    for o in opt
+      if s != ""
+        s += ", "
+      end
+      s += Str(o) + "="
+    end
+    
+    if t.isVarArg
+      if s != ""
+        s += ", "
+      end
+      s += "*" + Str(t.argTypes[-1])
+    end
+    
+    s = "({})".format(s)
+      
+    if not t.retType is Void
+      s += " as {}".format(t.retType)
+    end
+    
+    if t.variables.items != []
+      s = "{} {}".format(t.variables, s)
+    end
+    
+    if t.boundVars != []
+      -- Include implicit bound type variables.
+      var a = []
+      for i, bt in t.boundVars
+        a.append("{}:{}".format(i, bt))
+      end
+      s = "[{}] {}".format(", ".join(a), s)
+    end
+    
+    return "def {}".format(s)
+  end
+  
+  def visitTupleType(t)
+    var s = listStr(t.items)
+    if t.items.length() == 1
+      s += ","
+    end
+    return "({})".format(s)      
+  end
+  
+  def visitIntersection(t)
+    return Str(t.item1) +  " /\ " + Str(t.item2)
+  end
+  
+  def visitRuntimeTypeVar(t)
+    return "<RuntimeTypeVar>"
+  end
+  
+  -- Convert items of an array to strings (pretty-print types) and join the
+  -- results with commas.
+  private def listStr(a)
+    var res = []
+    for t in a
+      if t is Typ
+        res.append(t.accept(self))
+      else
+        res.append(Str(t))
+      end
+    end
+    return ', '.join(res)    
+  end
+end

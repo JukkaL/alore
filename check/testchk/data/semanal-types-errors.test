@@ -1,0 +1,455 @@
+-- Test cases for semantic analyser errors related to type annotations. Each
+-- test case consists of two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- The input code will be stored as file "file.alo".
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+[case testUndefinedType]
+var x as y
+[out]
+main, line 1: "y" undefined
+
+[case testUndefinedTypeInFunctionType]
+def f(x as x)
+end
+[out]
+main: In function "f":
+main, line 1: "x" undefined
+
+[case testVariableAsTypeName]
+var x
+var y as x
+[out]
+main, line 2: Invalid type "x"
+
+[case testFunctionAsTypeName]
+def f()
+end
+var x as f
+[out]
+main, line 3: Invalid type "f"
+
+[case testLocalVariableAsTypeName]
+def f(x)
+  def () as
+             x
+  end
+end
+[out]
+main: In function "f":
+main, line 3: Invalid type "x"
+
+[case testMemberAsTypeName]
+class A
+  def f() as f
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 2: Invalid type "f"
+
+[case testInvalidTupleType]
+var x as (x,)
+var y as (y,
+         z)
+[out]
+main, line 1: Invalid type "x"
+main, line 2: Invalid type "y"
+main, line 3: "z" undefined
+
+[case testInvalidFunctionType]
+var x as def (z, x=, *y) as foo
+[out]
+main, line 1: "z" undefined
+main, line 1: Invalid type "x"
+main, line 1: "y" undefined
+main, line 1: "foo" undefined
+
+[case testInvalidTypeNameInIntersectionType]
+def f(x as x) or
+     (x as y)
+end
+[out]
+main: In function "f":
+main, line 1: "x" undefined
+main, line 2: "y" undefined
+
+[case testQualifiedUndefinedTypeName]
+var x as (std::x, z::y)
+[out]
+main, line 1: "std::x" undefined
+main, line 1: "z::y" undefined
+
+[case testUndefinedTypeNameDefinedInUnimportedModule]
+import a
+var x as (B, b::B, a::B)
+[file a/a-skip.alo]
+module a
+import b
+[file b/b-skip.alo]
+module b
+class B
+end
+[out]
+main, line 2: "B" undefined
+main, line 2: "b::B" undefined
+main, line 2: "a::B" undefined
+
+[case testInvalidReferenceToCurrentModule]
+import a, b
+[file a/a.alo]
+module a
+var x as ::A
+[file b/b.alo]
+module b
+class A
+end
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 2: "::A" undefined
+
+[case testInvalidIntersectionTypeForSimpleFunc1]
+def f(x as Object) or
+     ()
+end
+
+def g(x as Object) or
+     (x as Object, x as Object)
+end
+[out]
+main: In function "f":
+main, line 2: Missing argument type for "x" in type signature
+main: In function "g":
+main, line 6: Too many argument types in type signature
+
+[case testInvalidIntersectionTypeForSimpleFunc2]
+def g(x as B) or
+     (x= as A)
+end
+
+def h(x as A) or
+     (*x as B)
+end
+class A; end
+class B; end
+[out]
+main: In function "g":
+main, line 2: Type signature incompatible with function
+main: In function "h":
+main, line 6: Type signature incompatible with function
+
+[case testInvalidIntersectionTypeWithVarArgs]
+def f(x as A, *y as B) or
+     (*x as A)
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 2: Type signature incompatible with function
+
+[case testThreeInvalidIntersectionTypeItems]
+def f(x as Object, y as Object, z as Object) or
+     () or
+     (x as Object) or
+     (x as Object, y as Object)
+end
+[out]
+main: In function "f":
+main, line 2: Missing argument type for "x" in type signature
+main, line 3: Missing argument type for "y" in type signature
+main, line 4: Missing argument type for "z" in type signature
+
+[case testInvalidMethodIntersectionType]
+class A
+  def f(x as A) or
+       ()
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Missing argument type for "x" in type signature
+
+[case testClassTypeVariableNameClash]
+class A<T, T>
+end
+[out]
+main: In class "A":
+main, line 1: "T" multiply defined
+
+[case testInvalidTypeBound]
+class A<T is x>
+end
+[out]
+main: In class "A":
+main, line 1: "x" undefined
+
+[case testInvalidNumberOfTypeArgs]
+class A<T>
+end
+var x as A
+var y as A<Object, Object>
+[out]
+main, line 3: "A" expects 1 type argument, but none given
+main, line 4: "A" expects 1 type argument, but 2 given
+
+[case testInvalidNumberOfTypeArgs2]
+class A
+end
+var x as A<Object>
+var y as A<Object, Object>
+[out]
+main, line 3: "A" expects no type arguments, but 1 given
+main, line 4: "A" expects no type arguments, but 2 given
+
+[case testInvalidNumberOfTypeArgs3]
+class A<T, S>
+end
+var x as A<Object>
+var y as A<Object, Object, Object>
+[out]
+main, line 3: "A" expects 2 type arguments, but 1 given
+main, line 4: "A" expects 2 type arguments, but 3 given
+
+[case testTypeVariableOutOfScope]
+var x as T
+class A<T>
+end
+var y as T
+[out]
+main, line 1: "T" undefined
+main, line 4: "T" undefined
+
+[case testArgumentsToTypeVariable]
+class A<T>
+  var x as T<Object>
+end
+[out]
+main: In class "A":
+main, line 2: Type variable "T" used with arguments
+
+[case testInvalidBound]
+class A<T is X>
+end
+class B<T>
+end
+class C<T is B>
+end
+[out]
+main: In class "A":
+main, line 1: "X" undefined
+main: In class "C":
+main, line 5: "B" expects 1 type argument, but none given
+
+[case testWrongNumberOfArgumentsForSupertype]
+class A<T>
+end
+class B<T> is A
+end
+class C is A<B, B>
+end
+[out]
+main: In class "B":
+main, line 3: Type arguments for supertype "A" not specified
+main: In class "C":
+main, line 5: "A" expects 1 type argument, but 2 given
+main, line 5: Type arguments for supertype "A" not specified
+
+[case testUndefinedBaseTypeAnnotation]
+class B
+end
+class A is X<B>
+end
+[out]
+main, line 3: "X" undefined
+main: In class "A":
+main, line 3: "X" undefined
+
+[case testMissingGenericBaseTypeSpecification1]
+class B<T> is A
+end
+class A<T>
+end
+[out]
+main: In class "B":
+main, line 1: Type arguments for supertype "A" not specified
+
+[case testMissingGenericBaseTypeSpecification2]
+class B implements A, C<Object>
+end
+interface A<T>
+end
+interface C<T>
+end
+[out]
+main: In class "B":
+main, line 1: Type arguments for supertype "A" not specified
+
+[case testMissingGenericBaseTypeSpecification3]
+class A is B implements C<Object>, D
+end
+class B<T>
+end
+interface C<T>
+end
+interface D<T>
+end
+[out]
+main: In class "A":
+main, line 1: Type arguments for supertype "B" not specified
+main, line 1: Type arguments for supertype "D" not specified
+
+[case testInvalidBaseType]
+class A is (Object, Object)
+end
+class B is def ()
+end
+class C implements void
+end
+[out]
+main: In class "A":
+main, line 1: Parse error before (
+main: In class "B":
+main, line 3: Parse error before "def"
+main: In class "C":
+main, line 5: Parse error before "void"
+
+[case testDynamicTypeBound]
+class A<T is dynamic>
+end
+[out]
+main: In class "A":
+main, line 1: Invalid bound "dynamic"
+
+[case testAccessingGenericTypeVariableInCode]
+class A<T>
+  def f()
+    var x = T
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "T" is a type variable
+
+[case testTypeVariableShadowsGlobalName]
+var T
+class A<T>
+  var x = T
+end
+[out]
+main: In class "A":
+main, line 3: "T" is a type variable
+
+[case testLocalVariableShadowsClassTypeVariableName]
+class A<T>
+  def f(x)
+    var T
+    T = T
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Cannot redefine type variable "T"
+
+[case testRedefinitionAndImplicitCreate]
+class A<T>
+  var T
+end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" shadows a member
+
+[case testTypeVariableShadowsMemberName]
+class A<T, S, U, V>
+  var T
+  def S()
+  end
+  def U
+  end
+  private var V
+end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" shadows a member
+main, line 1: Type variable "S" shadows a member
+main, line 1: Type variable "U" shadows a member
+main, line 1: Type variable "V" shadows a member
+
+[case testTypeVariableShadowsInheritedMemberName]
+class B
+  var T
+  private var U
+end
+class A<T, U> is B
+end
+[out]
+main: In class "A":
+main, line 5: Type variable "T" shadows a member
+
+[case testLocalVariableShadowsTypeVariableName]
+class A<T>
+  def f()
+    var T
+    var x as T
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Cannot redefine type variable "T"
+main, line 4: Invalid type "T"
+
+[case testLocalVariableShadowsFunctionTypeVariableName]
+def f<T>(x as T) as T
+  var T
+  T = T
+end
+[out]
+main: In function "f":
+main, line 2: Cannot redefine type variable "T"
+
+[case testGenericFunctionTypeArgClash]
+def f<T, T>(x as T) as Object
+end
+[out]
+main: In function "f":
+main, line 1: "T" multiply defined
+
+[case testClassAndFunctionGenericTypeArgClash]
+class A<T>
+  def f<T, U, U>() as (T, U)
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 2: "T" multiply defined
+main, line 2: "U" multiply defined
+
+[case testClassTypeVariableOutOfScope]
+class A<T>
+end
+var x as T
+[out]
+main, line 3: "T" undefined
+
+[case testFunctionTypeVariableOutOfScope]
+def f<T>()
+end
+var x as T
+[out]
+main, line 3: "T" undefined
+
+[case testMethodTypeVariableOutOfScope]
+class A
+  def f<T>()
+  end
+  var x as T
+end
+[out]
+main: In class "A":
+main, line 4: "T" undefined

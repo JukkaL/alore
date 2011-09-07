@@ -1,0 +1,344 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+[case testEmptyFile]
+[out]
+
+
+-- Basic type use cases
+-- --------------------
+
+
+[case testConstructionAndAssignment]
+var x as A
+x = A()
+x = B()
+
+class A
+end
+class B
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testInheritanceBasedSubtyping]
+var x as A
+var y as B
+x = B() -- Ok
+y = A() -- Fail
+
+class A
+end
+class B is A
+end
+[out]
+main, line 4: Incompatible types in assignment
+
+
+-- Simple functions and calling
+-- ----------------------------
+
+
+[case testFunction]
+def f(x as A)
+end
+f(A())
+f(B()) -- Fail
+
+class A
+end
+class B
+end
+[out]
+main, line 4: Argument 1 to "f" has incompatible type "B"
+
+[case testNotCallable]
+A()()
+class A
+end
+[out]
+main, line 1: "A" not callable
+
+[case testSubtypeArgument]
+def f(x as A, y as B)
+end
+f(B(), A()) -- Fail
+f(B(), B())
+
+class A
+end
+class B is A
+end
+[out]
+main, line 3: Argument 2 to "f" has incompatible type "A"
+
+[case testInvalidArgumentCount]
+def f(x, y) as (Object, Object)
+end
+f(Object())
+f(Object(), Object(), Object())
+[out]
+main, line 3: Too few arguments for "f"
+main, line 4: Too many arguments for "f"
+
+
+-- Local variables
+-- ---------------
+
+
+[case testLocalVariables]
+def f() as void
+  var x as A
+  var y as B
+  x = x
+  x = y -- Fail
+end
+class A
+end
+class B
+end
+[out]
+main: In function "f":
+main, line 5: Incompatible types in assignment
+
+[case testLocalVariableScope]
+def f() as void
+  var x as A
+  x = A()
+end
+def g() as void
+  var x as B
+  x = A() -- Fail
+end
+class A; end
+class B; end
+[out]
+main: In function "g":
+main, line 7: Incompatible types in assignment
+
+[case testMultipleLocals]
+def f() as void
+  var x, y as (A, B)
+  x = y -- Fail
+  y = B()
+end
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Incompatible types in assignment
+
+[case testFunctionArguments]
+def f(x as A, y as B)
+  x = y -- Fail
+  x = x
+  y = B()
+end
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 2: Incompatible types in assignment
+
+
+-- Variable initialization
+-- -----------------------
+
+
+[case testVariableInitialization]
+var x = A() as A
+var y = B() as A -- Fail
+def f() as void
+  var a = A() as A
+  var b = B() as A -- Fail
+end
+class A; end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+main: In function "f":
+main, line 5: Incompatible types in assignment
+
+[case testVariableInitializationWithSubtype]
+var x = B() as A
+var y = A() as B
+class A; end
+class B is A; end
+[out]
+main, line 2: Incompatible types in assignment
+
+
+-- Error message formatting, context etc.
+-- --------------------------------------
+
+
+[case testTopLevelContext]
+def f() as A
+  return B()
+end
+var a = B() as A
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 2: Incompatible return value type
+main: At top level:
+main, line 4: Incompatible types in assignment
+
+
+-- Variable scoping and shadowing
+-- ------------------------------
+
+
+[case testLocalVariableShadowing]
+var a as A
+a = B()       -- Fail
+a = A()
+def f() as void
+  var a as B
+  a = A()     -- Fail
+  a = B()
+end
+a = B()       -- Fail
+a = A()
+
+class A; end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+main: In function "f":
+main, line 6: Incompatible types in assignment
+main: At top level:
+main, line 9: Incompatible types in assignment
+
+[case testLocalVariableScopeAndShadowing]
+var a as A
+a = B()       -- Fail
+a = A()
+def f() as void
+  try
+    var a as B
+    a = A()     -- Fail
+    a = B()
+  finally
+    var a as C
+    a = B()   -- Fail
+    a = C()
+  end
+end
+a = B()       -- Fail
+a = A()
+
+class A; end
+class B; end
+class C; end
+[out]
+main, line 2: Incompatible types in assignment
+main: In function "f":
+main, line 7: Incompatible types in assignment
+main, line 11: Incompatible types in assignment
+main: At top level:
+main, line 15: Incompatible types in assignment
+
+
+-- Global constants
+-- ----------------
+
+
+[case testSymbolicConstants]
+c = o  -- Fail
+a = c1 -- Fail
+a = c2 -- Fail
+a = c3 -- Fail
+a = c4 -- Fail
+const cc as A              -- Fail
+const cc1, cc2 as Constant -- Fail
+const cc3, cc4 as (A, A)   -- Fail
+const cc56 as Object       -- Fail
+
+c = c1
+c = c2
+c = c3
+c = c4
+o = c1
+
+const c1
+const c2 as Constant
+const c3, c4
+
+var c as Constant
+var o as Object
+var a as A
+
+class A; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Constant
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Type "Constant" or initializer expected
+main, line 7: Tuple type expected in annotation
+main, line 8: Type "Constant" or initializer expected
+main, line 9: Type "Constant" or initializer expected
+
+[case testGlobalConstants]
+const c1 = b as A               -- Fail
+const c2, c3 = a, b as (A, A)   -- Fail
+c1 = a  -- Fail
+c1 = b  -- Fail
+
+const c6 = a as A
+const c7, c8 = a, b as (A, B)
+
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Invalid lvalue in assignment
+main, line 4: Invalid lvalue in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- More generics
+-- -------------
+
+-- intersection types
+-- bounded polymorphism
+-- f-bounded polymorphism
+
+
+-- Special cases
+-- ------------
+
+-- test semanal and type check errors in the same program
+--   test type checking unbound types
+--   test type checking unbound names
+
+-- test type of special methods (warning or error)
+--   return type of _str, _int, _float, _eq, _in, _lt, _gt
+--   _get is not void
+--   _set is void
+--   _add, _mul etc. return a value
+--   number of arguments for all of them
+
+-- test member variable that shadows globals

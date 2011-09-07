@@ -1,0 +1,360 @@
+module dyncheck
+
+import types
+import nodes
+
+
+-- TODO
+--  - intersection types
+--  - generate semantic analysis info during transform (e.g. 
+--    transformMethodImplementation, Var constructors, NameExpr)
+
+
+-- Class for transforming methods for runtime type checking.
+class FuncTransformer
+  -- Used for common transformation operations
+  private const tf as DyncheckTransformVisitor
+  
+  
+  def create(tf as DyncheckTransformVisitor)
+    self.tf = tf
+  end
+  
+  
+  -- Transform a method. The result is one or more methods.
+  def transformMethod(fdef as FuncDef) as Array<FuncDef>
+    -- Transform the body of the method.
+    tf.transformFunctionBody(fdef)
+
+    var res as Array<FuncDef>
+
+    if fdef.isConstructor()
+      -- The method is a construct. Constructors are transformed to one method.
+      res = [transformMethodImplementation(fdef, fdef.name)]
+    else
+      -- Normal methods are transformed to 2 or 3 variants. The first is the
+      -- main implementation of the method, and the second is the 
+      -- dynamically-typed wrapper. The third variant is for method overrides,
+      -- and represents the overridden supertype method.
+
+      res = [transformMethodImplementation(
+                               fdef, fdef.name + tf.typeSuffix(fdef.info))]
+
+      if fdef.info.base != nil and fdef.info.base.hasPublicMethod(fdef.name)
+        -- Create a wrapper for overridden superclass method.
+        res.append(overrideMethodWrapper(fdef))
+      end
+
+      -- Create a dynamically-typed method wrapper.
+      res.append(dynamicMethodWrapper(fdef))
+    end
+
+    return res
+  end
+  
+
+  private def transformMethodImplementation(fdef as FuncDef, 
+                                            name as Str) as FuncDef
+    var repr = FuncReprWithName(fdef, name)
+    var args = fdef.args
+
+    -- Erase generic types in signature.
+    var type = Annotation(EraseGenericTypes(fdef.type.type))    
+    type.repr = fdef.type.repr
+
+    var init = fdef.initExpressions()
+
+    if IsGeneric(fdef)
+      -- Prepend type variable argument.
+      args = [Var('__tv')] + args
+      type.type = PrependArgType(type.type as Callable, Dynamic())
+      init = [nil] + init
+      repr = PrependArgRepr(repr, '__tv')
+    end
+
+    var fdef2 = FuncDef(
+                  name, args, init, fdef.body,
+                  fdef.isVarArg, fdef.isGetter, fdef.isSetter, fdef.isPrivate,
+                  type)
+    fdef2.repr = repr
+    fdef2.info = fdef.info
+    return fdef2
+  end
+
+
+  -- Construct a method wrapper for an overridden method.
+  private def overrideMethodWrapper(fdef as FuncDef) as FuncDef
+    var origFdef = fdef.info.base.getPublicMethod(fdef.name)
+    return methodWrapper(origFdef, fdef, False, False)
+  end
+
+
+  -- Construct a dynamically-typed method wrapper.
+  private def dynamicMethodWrapper(fdef as FuncDef) as FuncDef
+    return methodWrapper(fdef, fdef, True, False)
+  end
+
+  
+  -- Construct wrapper class methods for a method of a generic class.
+  def genericMethodWrappers(fdef as FuncDef) as Array<FuncDef>
+    return [genericStaticMethodWrapper(fdef),
+            genericDynamicMethodWrapper(fdef)]
+  end
+  
+  
+  -- Construct statically-typed wrapper class method.
+  private def genericStaticMethodWrapper(fdef as FuncDef) as FuncDef
+    return methodWrapper(fdef, fdef, False, True)
+  end
+  
+  -- Construct dynamically-typed wrapper class method.
+  private def genericDynamicMethodWrapper(fdef as FuncDef) as FuncDef
+    return methodWrapper(fdef, fdef, True, True)
+  end
+  
+  
+  -- Construct a method wrapper that acts as a specific method, coerces
+  -- arguments, calls the target method and finally coerces the return value.
+  private def methodWrapper(actAsFuncDef as FuncDef,
+                            targetFuncDef as FuncDef,
+                            isDynamic as Boolean,
+                            isWrapperClass as Boolean) as FuncDef
+    var isOverride = actAsFuncDef.info != targetFuncDef.info
+    
+    -- Determine suffixes.
+    var targetSuffix = tf.typeSuffix(targetFuncDef.info)
+    var wrapperSuffix = getWrapperSuffix(actAsFuncDef, isDynamic)
+    
+    -- Determine function signatures.
+    var targetSig = getTargetSig(actAsFuncDef, targetFuncDef, isDynamic, 
+                                 isWrapperClass)
+    var wrapperSig = getWrapperSig(actAsFuncDef, isDynamic)
+    var callSig = getCallSig(actAsFuncDef, isDynamic, isWrapperClass, 
+                             isOverride)
+    
+    var extraTargetArg = getExtraTargetArg(actAsFuncDef, targetFuncDef, 
+                                           isWrapperClass, isDynamic)
+    
+    -- Use an extra coercion for the return types generic wrappers to verify
+    -- that the values with type variable types match the runtime value of 
+    -- the type variable. For example, if the return type of function is T
+    -- (typevar), add a coercion T <= dyn. The source type is type-erased
+    -- version of the target method return type.
+    var extraReturnCoercion = nil as Typ
+    if isWrapperClass
+      extraReturnCoercion = ReplaceTypeVars(targetSig.retType)
+    end
+    
+    var callStmt = callWrapper(actAsFuncDef, isWrapperClass, targetSig,
+                               callSig, targetSuffix, extraTargetArg,
+                               extraReturnCoercion)
+
+    var wrapperArgs = getWrapperArgs(actAsFuncDef, isDynamic)    
+    var wrapperFuncDef = FuncDef(actAsFuncDef.name + wrapperSuffix,
+                                 wrapperArgs,
+                                 [nil] * wrapperArgs.length(), -- inits
+                                 [callStmt],
+                                 False, False, False, False,
+                                 Annotation(wrapperSig))
+                                 
+    tf.addLineMapping(targetFuncDef, wrapperFuncDef)
+    
+    return wrapperFuncDef
+  end
+    
+  
+  -- Return the target method signature for a method wrapper.
+  private def getTargetSig(actAsFuncDef as FuncDef, targetFuncDef as FuncDef, 
+                           isDynamic as Boolean, 
+                           isWrapperClass as Boolean) as Callable
+    var sig = (targetFuncDef.type.type as Callable)
+    if actAsFuncDef.info != targetFuncDef.info
+      -- If the act-as function is defined in a supertype, we need to translate
+      -- the target signature to the supertype so that the coercions match
+      -- (otherwise we could have a mix of references to subtype's and 
+      -- supertype's type variables).
+      sig = MapTypeToSupertype(sig, targetFuncDef.info, actAsFuncDef.info) as
+            Callable
+    end
+    if isWrapperClass
+      return TranslateTypeVarsToWrapperVars(sig) as Callable
+    elif isDynamic
+      return ReplaceTypeVars(sig) as Callable
+    else
+      return sig
+    end
+  end
+  
+  
+  -- Return the signature of the wrapper method. The wrapper method signature 
+  -- has an additional type variable argument (with type "dynamic"), and all 
+  -- type variables have been erased. 
+  private def getWrapperSig(actAsFuncDef as FuncDef, 
+                            isDynamic as Boolean) as Callable
+    var sig = (actAsFuncDef.type.type as Callable)
+    if isDynamic
+      return DynamicSig(sig)
+    elif IsGeneric(actAsFuncDef)
+      return PrependArgType(EraseGenericTypes(sig) as Callable, Dynamic())
+    else
+      return sig
+    end
+  end
+  
+  
+  -- Return the signature used for as the source signature in a wrapped call.
+  -- It has type variables replaced with "dynamic", but as an 
+  -- exception, type variables are intact in the return type in generic 
+  -- wrapper classes. The exception allows omitting an extra return value 
+  -- coercion, as the target return type and the source return type will be 
+  -- the same. This signature does not have the extra type variable argument.
+  def getCallSig(actAsFuncDef as FuncDef, isDynamic, 
+                 isWrapperClass as Boolean, isOverride as Boolean) as Callable
+    var sig = (actAsFuncDef.type.type as Callable)
+    if isDynamic
+      return DynamicSig(sig)
+    elif IsGeneric(actAsFuncDef)
+      var callSig = sig
+      -- If this is an override wrapper, keep type variables intact. Otherwise
+      -- replace them with dynamic to get desired coercions that check argument
+      -- types.
+      if not isOverride or isWrapperClass
+        callSig = (ReplaceTypeVars(callSig) as Callable)
+      end
+      if isWrapperClass
+        -- Replace return type with the original return within wrapper classes
+        -- to get rid of an unnecessary coercion. There will still be a 
+        -- coercion due to the extra coercion generated for generic wrapper 
+        -- classes.
+        callSig = ReplaceRetType(
+                     callSig, TranslateTypeVarsToWrapperVars(sig.retType))
+      end
+      return callSig
+    else
+      return sig
+    end
+  end
+  
+  
+  -- Return the extra type variable argument needed in a call to a wrapped 
+  -- method; return nil if no extra target argument is needed.
+  private def getExtraTargetArg(actAsFuncDef as FuncDef,
+                                targetFuncDef as FuncDef, 
+                                isWrapperClass as Boolean, 
+                                isDynamic as Boolean) as Node
+    if IsGeneric(targetFuncDef)
+      if isWrapperClass
+        return wrapperTvar()
+      elif isDynamic
+        return dynamicTypeParam(targetFuncDef.info)
+      else
+        -- An override wrapper. Map supertype type variables to subtype type
+        -- variables.
+        return SubtypeTvars(actAsFuncDef.info, targetFuncDef.info)
+      end
+    else
+      -- No type variable argument for non-generic cases.
+      return nil
+    end
+  end
+  
+  
+  -- Return the formal arguments of a wrapper method. These may include the 
+  -- type variable argument.
+  private def getWrapperArgs(actAsFuncDef as FuncDef,
+                             isDynamic as Boolean) as Array<Var>
+    var args = [] as <Var>
+    var extraWrapperArg = getExtraWrapperArg(actAsFuncDef, isDynamic)
+    if extraWrapperArg != nil
+      args.append(extraWrapperArg)
+    end
+    for a in actAsFuncDef.args
+      args.append(Var(a.name))
+    end
+    return args
+  end
+  
+  
+  -- Return the extra formal type variable for a method wrapper or nil if it
+  -- is not needed.
+  private def getExtraWrapperArg(actAsFuncDef as FuncDef, 
+                                 isDynamic as Boolean) as Var
+    if isDynamic or not IsGeneric(actAsFuncDef)
+      return nil
+    else
+      return Var('__tv')
+    end
+  end
+  
+  
+  -- Return the body of wrapper method. The body contains only a call to the
+  -- wrapped method and a return statement (if the call returns a value).
+  private def callWrapper(fdef as FuncDef, 
+                          isWrapperClass as Boolean, 
+                          targetAnn as Callable, 
+                          curAnn as Callable, 
+                          targetSuffix as Str, 
+                          extraArg as Node,
+                          extraReturnCoercion as Typ) as Node
+    var callee as Node
+    var member = fdef.name + targetSuffix
+    if not isWrapperClass
+      callee = NameExpr(member)
+    else
+      callee = MemberExpr(MemberExpr(SelfExpr(), '__o'),
+                          member)
+    end
+    var args = callArgs(extraArg, fdef, targetAnn, curAnn, isWrapperClass)
+    var call = CallExpr(callee, args) as Node
+    if extraReturnCoercion != nil
+      call = Coerce(call, targetAnn.retType, extraReturnCoercion, 
+                    isWrapperClass)
+    end
+    call = Coerce(call, curAnn.retType, targetAnn.retType, isWrapperClass)
+    if not targetAnn.retType is Void
+      return ReturnStmt(call)
+    else
+      return ExpressionStmt(call)
+    end
+  end
+  
+  
+  -- Construct the arguments of a wrapper call expression. Insert coercions as
+  -- needed.
+  private def callArgs(extraArg as Node, fdef as FuncDef, 
+                       targetAnn as Callable, curAnn as Callable, 
+                       isWrapperClass as Boolean) as Array<Node>
+    var args = [] as <Node>
+    if extraArg != nil
+      args.append(extraArg)
+    end
+    for i in 0 to fdef.args.length()
+      var a = fdef.args[i]
+      var name = NameExpr(a.name)
+      args.append(Coerce(name, targetAnn.argTypes[i], curAnn.argTypes[i],
+                         isWrapperClass))
+    end
+    return args
+  end
+  
+  
+  private def getWrapperSuffix(funcDef, isDynamic)  
+    if isDynamic
+      return tf.dynamicSuffix()
+    else
+      return tf.typeSuffix(funcDef.info)
+    end
+  end
+  
+  
+  private def wrapperTvar() as Node
+    return MemberExpr(SelfExpr(), '__tv')
+  end
+  
+  
+  -- Return the type parameter for a dynamic wrapper method of a generic 
+  -- class. Use type 'dynamic' for all parameters.
+  private def dynamicTypeParam(info as TypeInfo) as TypeExpr
+    return TypeExpr([Dynamic()] * info.typeVars.length())
+  end
+end
