@@ -1330,6 +1330,12 @@ static AToken *ParseBindDeclarations(AToken *tok, ATypeInfo *type)
         tok = AAdvanceTok(tok);
 
         tok = AParseAnyGlobalVariable(tok, &target, FALSE);
+
+        /* Map symbols such as std::Str (which refer to functions in the
+           implementation level, not types) to the corresponding internal type
+           symbols such as std::__Str. */
+        target = AInternalTypeSymbol(target);
+        
         if (target->type != ID_ERR_PARSE) {
             if (target->type == ID_GLOBAL_CLASS) {
                 ATypeInfo *targetType = AValueToType(

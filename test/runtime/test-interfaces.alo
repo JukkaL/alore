@@ -93,6 +93,12 @@ class InterfacesSuite is Suite
   def testMultipleBinding()
     Assert(CBind4() is Bind4)
   end
+  
+  def testBindingBuiltInTypes()
+    Assert(1 is BindBuiltIns)
+    Assert('x' is BindBuiltIns)
+    Assert(not 1.1 is BindBuiltIns)
+  end
 end
 
 
@@ -160,4 +166,12 @@ end
 interface Bind4
   bind CBind4
   bind CBind4
+end
+
+
+-- Bind interface to built-in types with function type representation and
+-- hidden class.
+interface BindBuiltIns
+  bind Int
+  bind Str
 end
