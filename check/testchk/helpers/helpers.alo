@@ -1,6 +1,8 @@
 module testchk::helpers
 
 import unittest
+import testchk -- For Prefix
+import os
 
 
 -- AssertStringArraysEqual displays special line alignment helper messages if 
@@ -12,6 +14,8 @@ private const MinLineLengthForAlignment = 5
 -- human-readable form.
 def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>, 
                             msg as Str)
+  actual = CleanUp(actual)
+  
   if actual != expected
     var numSkipStart = NumSkippedPrefixLines(expected, actual)
     var numSkipEnd = NumSkippedSuffixLines(expected, actual)
@@ -141,6 +145,8 @@ end
 -- lines in actual.
 def AssertStringArraysEqualWildcards(expected as Array<Str>, 
                                      actual as Array<Str>, msg as Str)
+  actual = CleanUp(actual)
+  
   while actual != [] and actual[-1] == ''
     actual = actual[:-1]
   end
@@ -148,6 +154,17 @@ def AssertStringArraysEqualWildcards(expected as Array<Str>,
   -- Expand "..." wildcards away.
   expected = MatchArray(expected, actual)
   AssertStringArraysEqual(expected, actual, msg)
+end
+
+
+-- Remove common directory prefix from all strings in a (perform a naive 
+-- string replace; it seems to work well enough).
+private def CleanUp(a)
+  var res = []
+  for s in a
+    res.append(s.replace(Prefix + Separator, ''))
+  end
+  return res
 end
 
 

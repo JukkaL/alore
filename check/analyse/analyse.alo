@@ -137,8 +137,20 @@ class Analysis
 end
 
 
+-- Convert a path that is relative to check/ to an absolute path.
 private def ModulePath(dir as Str) as Str
-  return FixPath(Join(DirName(ProgramPath), dir))
+  -- IDEA: Detect the base path more reliably.
+
+  -- Assume program is in the check/ directory (e.g. check.alo).
+  var basePath = DirName(ProgramPath)
+  
+  if BaseName(ProgramPath) == "test.alo"
+    -- When called by the test runner, the basePath will point to test/.
+    -- Convert it to point to check/ instead.
+    basePath = Join(DirName(basePath), "check")
+  end
+  
+  return FixPath(Join(basePath, dir))
 end
 
 

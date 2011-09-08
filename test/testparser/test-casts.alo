@@ -1,4 +1,4 @@
-module parser
+module testparser
 
 -- Test cases for parsing cast expressions. 
 --

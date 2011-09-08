@@ -17,7 +17,7 @@ def ParseTestCases(path as Str,
   var l = File(path).readLines()
   var p = ParseTestData(l, path)
   var out = [] as <DataDrivenTestCase>
-
+  
   -- Process the parsed items. Each item has a header of form [id args], 
   -- optionally followed by lines of text.
   var i = 0

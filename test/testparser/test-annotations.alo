@@ -1,4 +1,4 @@
-module parser
+module testparser
 
 -- This file contains test cases for parsing type annotations for a 
 -- dynamically-typed implementation that simply ignores type annotations. The 

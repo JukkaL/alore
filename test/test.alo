@@ -9,16 +9,17 @@
 
 import unittest
 import io
-import parser
+import testparser
 import codegen
 import runtime
 import libs
+import testchk -- Note: located under check/
 
 
 class FullSuite is Suite
   -- Parser test cases
 
-  const testParserSuite = ParserSuite()
+  const testParserSuite = testparser::ParserSuite()
   const testAnnotationsSuite = AnnotationsSuite()
   const testLineContinuationSuite = LineContinuationSuite()
   const testInterfaceParserSuite = InterfaceParserSuite()
@@ -123,6 +124,9 @@ class FullSuite is Suite
   const testArgparseArguments = ArgparseArgumentsSuite()
   const testArgparseUsage = ArgparseUsageSuite()
   const testArgparseHelp = ArgparseHelpSuite()
+  
+  -- Type checker test cases
+  const testChecker = CheckerSuite()
 
   -- Thread test cases
 
