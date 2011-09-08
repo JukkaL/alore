@@ -23,6 +23,12 @@ class MatchResult
   def group(n as Int) as Str
   end
   
+  def start(n as Int) as Int
+  end
+  
+  def stop(n as Int) as Int
+  end
+  
   def span(n as Int) as Pair<Int, Int>
   end
 end
@@ -127,8 +133,8 @@ def Split(str as Str, re as RE) as Array<Str>
 end
 
 
-def FindAll(re, str)
-  var res = []
+def FindAll(re as RE, str as Str) as Array<MatchResult>
+  var res = [] as <MatchResult>
   var i = 0
   while True
     var m = Search(re, str, i)
