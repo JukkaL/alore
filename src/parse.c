@@ -17,6 +17,7 @@
 #include "dynaload.h"
 #include "internal.h"
 #include "debug_runtime.h"
+#include "std_module.h"
 #include "gc.h" /* IDEA: Use cmem instead? */
 
 
@@ -2875,6 +2876,10 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
             ADebugCompilerMsg(("Unresolved superclass for %i\n",
                                unresolv->type->sym));
         }
+    } else if (!unresolv->type->isInterface) {
+        /* Default to Object as the superclass (unless type is interface). */
+        AValue objectType = AGlobalByNum(AStdObjectNum);
+        unresolv->type->super = AValueToType(objectType);
     }
 
     /* Bind the interfaces, if present. */

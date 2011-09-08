@@ -20,4 +20,24 @@ class CodeGenRegressionsSuite is Suite
   private def f(x, y = x.z.z)
     return y
   end
+
+  -- For a class with an implemented interface, the implicit Object superclass
+  -- was not set. This also resulted in the _eq method to be sometimes 
+  -- ignored.
+  def testObjectSuperclassWithImplements()
+    AssertEqual(ObjectSuperclassWithInterfaceRegression.supertype(), Object)
+    AssertEqual(ObjectSuperclassWithInterfaceRegression() == 2, True)
+  end
+end
+
+
+-- Helpers used by testObjectSuperclassWithImplements().
+
+private class ObjectSuperclassWithInterfaceRegression implements EqTestIface
+  def _eq(x)
+    return True
+  end
+end
+
+private interface EqTestIface
 end
