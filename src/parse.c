@@ -2872,7 +2872,7 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
                          -1);
         else {
             /* Superclass was undefined, probably due to programmer error. */
-            ADebugCompilerMsg(("Uunresolved superclass for %i\n",
+            ADebugCompilerMsg(("Unresolved superclass for %i\n",
                                unresolv->type->sym));
         }
     }
