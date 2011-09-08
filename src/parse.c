@@ -97,6 +97,7 @@ static AToken *ParseFunctionArguments(AToken *tok, int *minArgs, int *maxArgs,
 static AToken *ParseAdditionalFunctionSignatures(AToken *tok, int minArgs,
                                                  int maxArgs);
 static AToken *ParseTypeDefinition(AToken *tok);
+static AToken *ParseBindDeclarations(AToken *tok, ATypeInfo *type);
 static void BuildConstructor(void);
 static AToken *ParseBlock(AToken *tok);
 static AToken *ParseBlockWithTerminator(AToken *tok, ATokenType terminator,
@@ -1245,33 +1246,8 @@ static AToken *ParseTypeDefinition(AToken *tok)
     isPrivate = FALSE;
 
     /* Parse bind declarations. */
-    while (tok->type == TT_BIND && isInterface) {
-        ASymbolInfo *target;
-        int line = tok->lineNumber;
-
-        if (ASuperType(type) != NULL)
-            AGenerateError(tok->lineNumber, ErrBindWithSuperinterface);
-        
-        tok = AAdvanceTok(tok);
-
-        tok = AParseAnyGlobalVariable(tok, &target, FALSE);
-        if (target->type != ID_ERR_PARSE) {
-            if (target->type == ID_GLOBAL_CLASS) {
-                ATypeInfo *targetType = AValueToType(
-                    AGlobalByNum(target->num));
-                if (!AAddInterface(targetType, type, TRUE))
-                    AGenerateOutOfMemoryError();
-                AVerifyInterface(targetType, type, line, FALSE);
-            } else if (target->type != ID_ERR_UNDEFINED) {
-                AGenerateError(tok->lineNumber, ErrInvalidBindTarget,
-                               target);
-            }
-        }
-        
-        if (tok->type != TT_NEWLINE)
-            tok = AGenerateParseError(tok);
-        tok = AAdvanceTok(tok);
-    }
+    if (isInterface)
+        tok = ParseBindDeclarations(tok, type);
 
     while (tok->type != TT_END && tok->type != TT_EOF) {
         switch (tok->type) {
@@ -1336,6 +1312,42 @@ static AToken *ParseTypeDefinition(AToken *tok)
     
     ACurClass = NULL;
     
+    return tok;
+}
+
+
+/* Parse bind declarations. Assume tok points to the next token after
+   interface header. */
+static AToken *ParseBindDeclarations(AToken *tok, ATypeInfo *type)
+{
+    while (tok->type == TT_BIND) {
+        ASymbolInfo *target;
+        int line = tok->lineNumber;
+
+        if (ASuperType(type) != NULL)
+            AGenerateError(tok->lineNumber, ErrBindWithSuperinterface);
+        
+        tok = AAdvanceTok(tok);
+
+        tok = AParseAnyGlobalVariable(tok, &target, FALSE);
+        if (target->type != ID_ERR_PARSE) {
+            if (target->type == ID_GLOBAL_CLASS) {
+                ATypeInfo *targetType = AValueToType(
+                    AGlobalByNum(target->num));
+                if (!AAddInterface(targetType, type, TRUE))
+                    AGenerateOutOfMemoryError();
+                AVerifyInterface(targetType, type, line, FALSE);
+            } else if (target->type != ID_ERR_UNDEFINED) {
+                AGenerateError(tok->lineNumber, ErrInvalidBindTarget,
+                               target);
+            }
+        }
+        
+        if (tok->type != TT_NEWLINE)
+            tok = AGenerateParseError(tok);
+        tok = AAdvanceTok(tok);
+    }
+
     return tok;
 }
 
