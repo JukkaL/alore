@@ -1,9 +1,18 @@
 module codegen
 
+-- Regression test cases for the bytecode compiler. These cover special cases
+-- that have caused problems in earlier versions.
+--
+-- IDEA: Maybe combine with the parser module and rename to compiler or 
+--       something similar; codegen implies that this is more specialized than
+--       really makes sense.
+
 import unittest
 
 
 class CodeGenRegressionsSuite is Suite
+  -- Complex expression as the default argument expression was miscompiled
+  -- in early versions.
   def testComplexDefaultArgumentExpression()
     AssertEqual(f(1, "x"), "x")
   end
