@@ -1,0 +1,41 @@
+module testchk
+
+import unittest
+import testchk::dynchkops -- For DyncheckOpsSuite
+
+
+-- Suite the contains all the test cases for the type checker.
+class CheckerSuite is Suite
+  -- Parser test cases
+  const testParser = ParserSuite()
+  const testParseErrors = ParseErrorSuite()
+  const testEncodings = EncodingsSuite()
+  -- Type test cases
+  const testTypes = TypesSuite()
+  const testTypeParser = TypeParserSuite()
+  -- Semantic analysis test cases
+  const testSemAnal = SemAnalSuite()
+  const testSemAnalErrors = SemAnalErrorSuite()
+  const testSemAnalSymtable = SemAnalSymtableSuite()
+  -- Test cases for semantic analysis of types
+  const testTypeSemAnal = TypeSemAnalSuite()
+  const testTypeSemAnalErrors = TypeSemAnalErrorSuite()
+  -- Type inference related test cases (functionality used in type checking)
+  const testConstraintGeneration = ConstraintGenerationSuite()
+  const testSubtyping = SubtypingSuite()
+  const testJoin = JoinSuite()
+  const testMeet = MeetSuite()
+  const testSolve = SolveSuite()
+  -- Misc type operation test cases related to type checking
+  const testTypeOps = TypeOpsSuite()
+  -- Type checking test cases
+  const testTypeCheck = TypeCheckSuite()
+  -- Test cases for source-to-source transformation that preserves formatting
+  const testRoundtrip = RoundtripSuite()
+  -- Test cases for exporting type after type checking
+  const testTypeExport = TypeExportSuite()
+  -- Runtime type checking related test cases
+  const testDyncheckTransform = DyncheckTransformSuite()
+  const testDyncheckOps = DyncheckOpsSuite()
+  const testDyncheckEval = DyncheckEvalSuite()
+end
