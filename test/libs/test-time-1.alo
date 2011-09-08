@@ -166,9 +166,9 @@ class TimeSuite is Suite
   end
   
   def testDateAddition()
-    Assert(Date(2004, 11, 11) + 10 == Date(2004, 11, 21))
-    Assert(Date(2001, 12, 8) + 365 == Date(2002, 12, 8))
-    Assert(1 + Date(2001, 12, 31) == Date(2002, 1, 1))
+    AssertEqual(Date(2004, 11, 11) + 10, Date(2004, 11, 21))
+    AssertEqual(Date(2001, 12, 8) + 365, Date(2002, 12, 8))
+    AssertEqual(1 + Date(2001, 12, 31), Date(2002, 1, 1))
   end
   
   def testDateFormat()
@@ -694,7 +694,7 @@ class TimeSuite is Suite
     Assert(t.minute == 30)
     Assert(t.second == 0)
     t = Time("", "")
-    Assert(t == Time(0))
+    AssertEqual(t, Time(0))
     
     -- Missing year, month, day, hour or minute in Date or DateTime 
     -- construction is an error.
