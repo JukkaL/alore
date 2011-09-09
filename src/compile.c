@@ -83,7 +83,7 @@ static ABool MakeAbsolutePath(char *path, const char *src);
 int ALoadAloreProgram(AThread **t, const char *file,
                       const char *interpreter, const char *modulePath,
                       ABool isStandalone, int argc, char **argv,
-                      AFileInterface *iface, unsigned long maxHeap)
+                      AFileInterface *iface, Asize_t maxHeap)
 {
     int num;
     int i;
