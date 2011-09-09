@@ -20,10 +20,10 @@
 
 
 typedef struct {
-    ABool displayCode;
-    ABool checksDefined;
-    ABool checkFirstDefined;
     Asize_t maxHeap;
+
+    /* Debugging-related option values */
+    ABool displayCode;
 } AOptions;
 
 
@@ -46,14 +46,14 @@ int main(int argc, char **argv)
     char *interp;
     AOptions options;
 
+    /* Store and skip interpreter program path (argument 0). */
     interp = argv[0];
-
-    /* Skip interpreter program path (argument 0). */
     argv++;
     argc--;
 
+    /* Parse command line options. */
     ParseOptions(&argc, &argv, &options);
-        
+    
     if (argc >= 1) {
         /* Get the name of the program to run. */
         file = argv[0];
@@ -65,18 +65,6 @@ int main(int argc, char **argv)
         /* Get rid of warning (never executed). */
         file = NULL;
     }
-
-#ifdef A_DEBUG
-    /* If any periodic check related parameters are defined, also update
-       DebugCheckFirst (otherwise the parameters would have no effect). */
-    if (options.checksDefined && !options.checkFirstDefined) {
-#ifdef A_DEBUG_COMPILER
-        ADebugCheckFirst = 0;
-#else
-        ADebugCheckFirst = 1;
-#endif
-    }
-#endif
     
     returnValue = 0;
 
@@ -119,7 +107,7 @@ int main(int argc, char **argv)
    positional argument. Fully initialize and populate the options struct.
 
    Note that some options are only available in builds with extra debugging
-   features.
+   features. These may directly modify the ADebug* configuration variables.
 
    This function does not return if one of options is invalid or is completely
    processed by this function (e.g. -v). */
@@ -127,6 +115,10 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
 {
     int argc = *argcp;
     char **argv = *argvp;
+#ifdef A_DEBUG
+    ABool checksDefined = FALSE;
+    ABool checkFirstDefined = FALSE;
+#endif
 
     InitializeOptions(options);
 
@@ -184,7 +176,7 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
 
         case 'D':
             /* Set periodic instruction checking options. */
-            options->checksDefined = TRUE;
+            checksDefined = TRUE;
             switch (argv[0][2]) {
             case 'n':
                 /* Debug every Nth instruction. */
@@ -199,7 +191,7 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
                 argv++;
                 argc--;
                 ADebugCheckFirst = atoi(argv[0]);
-                options->checkFirstDefined = TRUE;
+                checkFirstDefined = TRUE;
                 break;
             case 'l':
                 /* Set last instruction to check. */
@@ -220,6 +212,18 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
         argc--;
     }
 
+#ifdef A_DEBUG
+    /* If any periodic check related parameters are defined, also update
+       ADebugCheckFirst (otherwise the parameters would have no effect). */
+    if (checksDefined && !checkFirstDefined) {
+#ifdef A_DEBUG_COMPILER
+        ADebugCheckFirst = 0;
+#else
+        ADebugCheckFirst = 1;
+#endif
+    }
+#endif
+
     /* Update caller's argument information. */
     *argcp = argc;
     *argvp = argv;
@@ -229,10 +233,8 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
 /* Initialize options struct to default values. */
 static void InitializeOptions(AOptions *options)
 {
-    options->checksDefined = FALSE;
-    options->checkFirstDefined = FALSE;
-    options->displayCode = FALSE;
     options->maxHeap = 0;
+    options->displayCode = FALSE;
 }
 
 
