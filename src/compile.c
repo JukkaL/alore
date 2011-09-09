@@ -80,6 +80,11 @@ static ABool MakeAbsolutePath(char *path, const char *src);
 #define INTERNAL_ERROR_STATUS 4
 
 
+/* Initialize the VM and compiler and compile program specified by the file
+   argument. Return the global num of the function that can be used to run
+   the program, or -1 if compilation failed. If there was a compile error,
+   display error messages. If there is a serious error, this function may
+   forcibly terminate the process using exit(). */
 int ALoadAloreProgram(AThread **t, const char *file,
                       const char *interpreter, const char *modulePath,
                       ABool isStandalone, int argc, char **argv,
@@ -94,7 +99,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
                              maxHeap))
         FailAndExit("Out of memory during initialization");
 
-    /* Store program path. */
+    /* Determine program path. */
     if (isStandalone)
         result = FindProgram(path, interpreter);
     else
@@ -104,6 +109,8 @@ int ALoadAloreProgram(AThread **t, const char *file,
     AProgramPath = ADupStr(path);
     if (AProgramPath == NULL)
         FailAndExit("Out of memory during initialization");
+
+    /* Determine interpreter path unless running standalone (compiled). */
     if (!isStandalone) {
         AInterpreterPath = ADupStr(interpreter);
         if (AInterpreterPath == NULL)
@@ -114,6 +121,8 @@ int ALoadAloreProgram(AThread **t, const char *file,
     if (iface != NULL)
         ASetupFileInterface(iface);
 
+    /* Populate the symbol table with information about available
+       statically-linked C modules. */
     for (i = 0; AAllModules[i] != NULL; i++) {
         if (!ACreateModule(AAllModules[i], FALSE)) {
             FailAndExit("CompileError in module initialization");
@@ -121,6 +130,8 @@ int ALoadAloreProgram(AThread **t, const char *file,
         }
     }
 
+    /* Old generation garbage collection may interfere with compilation, so
+       disable it during compilation. */
     if (!ADisallowOldGenGC())
         FailAndExit("Could not disallow old gen gc");
 
@@ -132,6 +143,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
         /* IDEA: Call AAllowOldGenGC()? */
         return -1;
     } else {
+        /* Enable old generation garbage collection after compilation. */
         AAllowOldGenGC();
         ADebugVerifyMemory();
         return num;
@@ -142,7 +154,8 @@ int ALoadAloreProgram(AThread **t, const char *file,
 /* This function is called after running an Alore program. Check the return
    value of an Alore program and display a stack traceback (if needed) and
    call any exit callbacks. The val argument should be the return value from
-   the Main function. */
+   the Main function. Return the process exit status for the program
+   (0 == no error). */
 int AEndAloreProgram(AThread *t, AValue val)
 {
     /* IDEA: Check what happens if en exception is raised here. */
@@ -200,6 +213,9 @@ int AEndAloreProgram(AThread *t, AValue val)
 }
 
 
+/* Convert src to an absolute path and store it at the path buffer, if src is
+   a relative path. If src is already an absolute path, copy src to path.
+   Return FALSE if failed. */
 static ABool MakeAbsolutePath(char *path, const char *src)
 {
     strcpy(path, src);
@@ -220,6 +236,11 @@ static ABool MakeAbsolutePath(char *path, const char *src)
 }
 
 
+/* Look up the path to a program (the src argument), if src does not include a
+   directory component. Use the PATH environment variable to find the path. If
+   src includes a directory component, return src unmodified. The result is
+   stored in the buffer pointed to by path. Return FALSE if failed.
+   The path buffer should have at least A_MAX_PATH_LEN characters. */
 static ABool FindProgram(char *path, const char *src)
 {
     int i;
@@ -265,6 +286,11 @@ static ABool FindProgram(char *path, const char *src)
 }
 
 
+/* Return the directory (which may be relative or absolute, but never empty)
+   of the interpreter. The src argument specifies the interpreter, and it can
+   be a path or a program name (which is looked up using the PATH environment
+   variable). Store the result in path. Return FALSE if failed. The path
+   buffer should have at least A_MAX_PATH_LEN characters. */
 static ABool GetRealInterpreterDir(char *path, const char *src)
 {
     int i;
@@ -282,12 +308,17 @@ static ABool GetRealInterpreterDir(char *path, const char *src)
 }
 
 
+/* Return library path derived from the interpreter path. Store this path in
+   the path argument. Determine if the interpreter is running in a build
+   directory or it has been installed, and construct the path accordingly.
+   Return FALSE if failed. */
 static ABool GetInterpreterLibPath(char *path, const char *interpreter)
 {
     if (!GetRealInterpreterDir(path, interpreter))
         return FALSE;
 
 #ifndef A_HAVE_WINDOWS
+    /* Non-Windows implementation */
     if (AEndsWith(path, "/") && strlen(path) > 1)
         path[strlen(path) - 1] = '\0';
     if (AEndsWith(path, "/bin")) {
@@ -299,6 +330,7 @@ static ABool GetInterpreterLibPath(char *path, const char *interpreter)
             strcpy(path, "");
     }
 #else
+    /* Windows implementation */
     /* Remove trailing / or \ (unless the path refers to a root directory). */
     if (APathEndsWith(path, "/") && strlen(path) > 1 &&
         (path[1] != ':' || strlen(path) > 3))
@@ -317,6 +349,7 @@ static ABool GetInterpreterLibPath(char *path, const char *interpreter)
 }
 
 
+/* Initialize the compiler and VM. Return FALSE if failed. */
 ABool AInitializeCompiler(AThread **t, const char *additModuleSearchPath,
                           const char *interpreter, ABool isStandalone,
                           unsigned long maxHeap)
