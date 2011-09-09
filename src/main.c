@@ -79,6 +79,7 @@ int main(int argc, char **argv)
 
     /* Was compilation successful? */
     if (num >= 0) {
+        /* Yes. */
         if (options.displayCode)
             DisplayCode();
         else {
@@ -98,8 +99,11 @@ int main(int argc, char **argv)
             
             returnValue = AEndAloreProgram(t, val);
         }
+    } else {
+        /* Compilation failed. Return error status. */
+        returnValue = 1;
     }
-
+    
     return returnValue;
 }
 
