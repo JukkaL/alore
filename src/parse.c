@@ -2097,7 +2097,6 @@ static AToken *ParseTryStatement(AToken *tok)
             tok = AAdvanceTok(tok);
         }
     } else if (tok->type == TT_FINALLY) {
-        int finallyIndex;
         ABreakList *exit;
         AReturnList *ret;
 
@@ -2111,8 +2110,6 @@ static AToken *ParseTryStatement(AToken *tok)
 
         AEmitOpcode2Args(OP_ASSIGN_IL, 0, TryLocalVar);
         
-        finallyIndex = AGetCodeIndex();
-
         AEmitFinally(TryLocalVar);
 
         /* Make break statements contained within the try statement point at

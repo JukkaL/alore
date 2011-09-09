@@ -349,8 +349,6 @@ AValue AStdRepr(AThread *t, AValue *frame)
         }
     } else if (AIsMethod(frame[0])) {
         char buf[1000];
-        AValue f;
-        f = AValueToMixedObject(frame[0])->data.boundMethod.method;
         AFormatMessage(buf, 1000, "%F",
                       AValueToFunction(AGlobalByNum(AValueToInt(
                           AValueToMixedObject(

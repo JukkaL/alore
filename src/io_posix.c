@@ -320,11 +320,8 @@ AValue AFile_Write(AThread *t, AValue *frame)
    A_FILE_METHOD (for File) or A_SOCKET_METHOD (for Socket). */
 AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
 {
-    AInstance *inst;
     int aLen;
     AValue first;
-
-    inst = AValueToInstance(frame[0]);
 
     aLen = AArrayLen(frame[1]);
 

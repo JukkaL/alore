@@ -783,17 +783,12 @@ AValue AStrDecode(AThread *t, AValue *frame)
 /* Str encode(encoding[, strictness]) */
 AValue AStrEncode(AThread *t, AValue *frame)
 {
-    ABool isStrict = TRUE;
-    
     frame[0] = AWrapObject(t, frame[0]);
     
     if (AIsDefault(frame[2]))
         frame[2] = ACallValue(t, frame[1], 0, frame + 2);
-    else {
-        if (frame[2] == AGlobalByNum(AUnstrictNum))
-            isStrict = FALSE;
+    else
         frame[2] = ACallValue(t, frame[1], 1, frame + 2);
-    }
     
     if (AIsError(frame[2]))
         return AError;
@@ -1650,7 +1645,6 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
     Assize_t len;
     AString *str;
     AWideString *wideStr;
-    Assize_t sLen;
 
     if (begInd < 0) {
         begInd = AStrLen(strVal) + begInd;
@@ -1674,7 +1668,6 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
         AString *newStr;
         
         str = AValueToStr(strVal);
-        sLen = AGetStrLen(str);
 
       NarrowStr:
         
@@ -1754,8 +1747,6 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
 
         ss = AValueToSubStr(strVal);
 
-        sLen = AValueToInt(ss->ind) + AValueToInt(ss->len);
-        
         begInd += AValueToInt(ss->ind);
         endInd += AValueToInt(ss->ind);
 
@@ -1772,7 +1763,6 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
         AWideString *newWideStr;
         
         wideStr = AValueToWideStr(strVal);
-        sLen = AGetWideStrLen(wideStr);
 
       WideStr:
 

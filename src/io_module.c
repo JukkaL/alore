@@ -667,23 +667,18 @@ static AValue StreamReadAll(AThread *t, AValue *frame)
     /* Read data from the stream a block at a time. */
     for (;;) {
         AValue v;
-        int len;
 
         frame[1] = AIntToValue(A_IO_BUFFER_SIZE);
         v = ACallMethodByNum(t, AM__READ, 1, frame);
         if (AIsError(v))
             return AError;
 
-        if (AIsNarrowStr(v))
-            len = AGetStrLen(AValueToStr(v));
-        else if (AIsWideStr(v))
-            len = AGetWideStrLen(AValueToWideStr(v));
-        else if (AIsSubStr(v))
-            len = AGetSubStrLen(AValueToSubStr(v));
-        else if (AIsNil(v))
-            break;
-        else
-            return ARaiseTypeErrorND(t, NULL);
+        if (!AIsNarrowStr(v) &&  !AIsWideStr(v) && !AIsSubStr(v)) {
+            if (AIsNil(v))
+                break;
+            else
+                return ARaiseTypeErrorND(t, NULL);
+        }
 
         AAppendArray(t, frame[2], v);
         

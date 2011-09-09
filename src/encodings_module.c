@@ -179,15 +179,10 @@ static AValue Decode(AThread *t, AValue *frame)
    [Deprecated] This is almost identical to encode method of std::Str. */
 static AValue Encode(AThread *t, AValue *frame)
 {
-    ABool isStrict = TRUE;
-    
     if (AIsDefault(frame[2]))
         frame[2] = ACallValue(t, frame[1], 0, frame + 2);
-    else {
-        if (frame[2] == AGlobalByNum(AUnstrictNum))
-            isStrict = FALSE;
+    else
         frame[2] = ACallValue(t, frame[1], 1, frame + 2);
-    }
     
     if (AIsError(frame[2]))
         return AError;

@@ -430,7 +430,6 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
     const char *str;
     ABool isPrivate;
     ABool isInterface;
-    AModuleDef *create;
     AModuleDef *def;
 
     ADebugCompilerMsg(("Create C type '%s'", clDef->str));
@@ -460,7 +459,6 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
     if (def == NULL)
         return NULL;
     
-    create = NULL;
     if (!isInterface) {
         /* Find constructor. */
         if (!ProcessConstructor(def, type))

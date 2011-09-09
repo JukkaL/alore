@@ -3235,8 +3235,6 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
            thread->exception == raised instance, if exception == EX_RAISED
            stack == current stack frame */
 
-        ATypeInfo *exceptType;
-
         /* If the exception instance hasn't been generated yet (ie only the
            type is known), create it. */
         if (exception != EX_RAISED) {
@@ -3271,8 +3269,6 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
         /* Return temp stack to its initial position. */
         t->tempStackPtr = args;
-
-        exceptType = AGetInstanceType(AValueToInstance(t->exception));
 
         /* Unwind the stack a frame at a time. */
         for (;;) {

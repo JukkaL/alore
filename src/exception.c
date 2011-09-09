@@ -124,7 +124,6 @@ ABool ADisplayStackTraceback(AThread *t,
                            ABool (*display)(const char *msg, void *data),
                            void *data)
 {
-    AValue *stack;
     char msg[MAX_TRACEBACK_MESSAGE_LENGTH];
     char buf[MAX_TRACEBACK_MESSAGE_LENGTH];
     char buf2[MAX_TRACEBACK_MESSAGE_LENGTH];
@@ -144,8 +143,6 @@ ABool ADisplayStackTraceback(AThread *t,
     if (AIsError(TMP[0]))
         goto Fail;
 
-    stack = t->uncaughtExceptionStackPtr;
-    
     if (!display("Traceback (most recent call last):", data))
         goto Fail;
         
