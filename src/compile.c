@@ -149,6 +149,8 @@ int AEndAloreProgram(AThread *t, AValue val)
     
     int returnValue = 0;
 
+    ADebugVerifyMemory();
+    
     if (t->contextIndex != 0) {
         char buf[200];
         sprintf(buf, "Internal error: contextIndex == %d at program exit",

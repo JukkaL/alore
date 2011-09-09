@@ -19,7 +19,9 @@
 #define USAGE "Usage: alore [option] ... programfile [arg] ..."
 
 
+/* Representation of command line option values */
 typedef struct {
+    /* Maximum size of the Alore heap */
     Asize_t maxHeap;
 
     /* Debugging-related option values */
@@ -33,6 +35,8 @@ static void InvalidOption(const char *opt);
 static void InvalidOptionValue(const char *opt, const char *value);
 static void ShowHelp(void);
 static void ShowVersion(void);
+static void DisplayCode(void);
+static void SetDebugInstructionCounter(void);
 static ABool ParseSize(const char *s, Asize_t *size);
 
 
@@ -68,33 +72,30 @@ int main(int argc, char **argv)
     
     returnValue = 0;
 
+    /* Compile the program. The return value is the global num of the function
+       that runs the program. */
     num = ALoadAloreProgram(&t, file, interp, "", FALSE, argc, argv, NULL,
                             options.maxHeap);
+
+    /* Was compilation successful? */
     if (num >= 0) {
-#ifdef A_DEBUG        
         if (options.displayCode)
-            ADisplayCode();
-        else
-#endif
-        {
+            DisplayCode();
+        else {
             AValue val;
+
+            SetDebugInstructionCounter();
             
-#ifdef A_DEBUG_COMPILER
-            ADebugInstructionCounter = 1000000;
-#endif
             if (ATry(t)) {
                 /* An uncaught direct exception was raised somewhere in the
                    program. We must not call AEndTry. */
                 val = AError;
-                goto Error;
-            } else
+            } else {
+                /* Run the program. */
                 val = ACallValue(t, AGlobalByNum(num), 0, NULL);
-            AEndTry(t);
+                AEndTry(t);
+            }
             
-          Error:
-            
-            ADebugVerifyMemory();
-
             returnValue = AEndAloreProgram(t, val);
         }
     }
@@ -283,6 +284,27 @@ static void ShowVersion(void)
     printf("Alore %s\n"
            "Copyright (c) 2010-2011 Jukka Lehtosalo\n", AVersion);
     exit(0);
+}
+
+
+/* Dump all compiled code and exit. Only supported in debug builds. */
+static void DisplayCode(void)
+{
+#ifdef A_DEBUG
+    ADisplayCode();
+#else
+    AEpicInternalFailure("Request to display code on non-debug build");
+#endif
+}
+
+
+/* Initialize ADebugInstructionCounter in debug builds. Otherwise, do
+   nothing. */
+static void SetDebugInstructionCounter(void)
+{
+#ifdef A_DEBUG_COMPILER
+    ADebugInstructionCounter = 1000000;
+#endif
 }
 
 
