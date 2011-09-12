@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 
 /* Usage string shown at the start of cmd line argument help message. */
@@ -41,6 +42,7 @@ static void ShowHelp(void);
 static void ShowVersion(void);
 static void DisplayCode(void);
 static int PerformTypeCheck(void);
+static void GetCheckerPath(char *path);
 static void SetDebugInstructionCounter(void);
 static ABool ParseSize(const char *s, Asize_t *size);
 
@@ -332,18 +334,53 @@ static void DisplayCode(void)
 
 
 /* Type checking the target program. Assume that the program has been
-   loaded already. Return 0 if successful and 1 if there were errors. */
+   loaded already. Return 0 if successful and a positive value if there were
+   errors or if failed to run the type checker.
+
+   This function may display and error message and halt the program if
+   something unexpected happens. */
 static int PerformTypeCheck(void)
 {
-    char cmd[1024];
+    char checkerPath[A_MAX_PATH_LEN];
+    char cmd[A_MAX_PATH_LEN * 3 + 10];
+    int status;
 
-    sprintf(cmd, "%s check/check.alo %s", AInterpreterPath, AProgramPath);
+    GetCheckerPath(checkerPath);
+
+    /* FIX: Support spaces in path names properly. */
+
+    /* Build the command line for running the checker. */
+    sprintf(cmd, "%s %s %s", AInterpreterPath, checkerPath, AProgramPath);
     
-    printf("type check!\n");
-    printf("cmd: %s\n", cmd);
-    printf("%s\n", AInterpreterPath);
-    printf("%s\n", AProgramPath);
-    return 0;
+    status = system(cmd);
+
+    /* If the command did not return successfully, something unexpected
+       happened; perhaps somebody killed the type checker. In these
+       cases display a generic error message and exit. */
+    if (!WIFEXITED(status)) {
+        fprintf(stderr, "alore: Running type checker failed");
+        exit(2);
+    }
+
+    /* Return the exit status of the type checker. */
+    return WEXITSTATUS(status);
+}
+
+
+/* Determine the path to the type checker. */
+static void GetCheckerPath(char *path)
+{
+    /* FIX: Cross-platform support */
+    /* FIX: Length checks */
+    /* FIX: It should be possible to run this when installed. */
+    int i;
+    
+    strcpy(path, AInterpreterPath);
+    for (i = strlen(path); i > 1 && !A_IS_DIR_SEPARATOR(path[i - 1]); i--)
+        ;
+
+    path[i] = '\0';
+    strcat(path, "check/check.alo");
 }
 
 
