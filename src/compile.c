@@ -36,10 +36,26 @@
 #define INITIAL_INPUT_BUFFER_LENGTH (1024 + 256)
 
 
+/* Function pointers to file operations used by the bytecode compiler */
 AFileInterface AFileIface;
+
+/* Base module search path. Includes ALOREPATH environment variable,
+   user-supplied additional paths (if any) and OS/build-dependent base path. */
 char *ADefaultModuleSearchPath;
+
+/* Current module search path. Includes directory of the main source file
+   (and potentially additional user-supplied paths) in addition to
+   ADefaultModuleSearch. */
 char *AModuleSearchPath;
+
+/* Absolute path to the program that is currently being executed. */
 char *AProgramPath;
+
+/* Absolute or relative path to the alore interpreter. May be NULL if the
+   program is standalone (i.e. compiled to a binary). If path is relative, it
+   is relative to the current working directory when the program was being
+   compiled; if the program changes the working directory, this may no longer
+   be usable. */
 char *AInterpreterPath;
 
 int ANumActiveFiles;
