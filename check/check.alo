@@ -37,7 +37,7 @@ def Main(args)
   except e is CompileError
     -- Type checking failed. Display error messages.
     for m in e.messages
-      WriteLn(m)
+      StdErr.writeLn(m)
     end
     Exit(1)
   end
