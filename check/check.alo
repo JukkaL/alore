@@ -1,6 +1,6 @@
 -- check.alo
 --
--- Type check a program.
+-- Type check an Alore program.
 --
 -- TODO
 --  - use argparse to parse arguments
@@ -16,7 +16,7 @@ def Main(args)
   var fnam
   var showMain = False
   
-  -- The -t options causes the output to be compatible with type case 
+  -- The -t options causes the output to be compatible with type test case 
   -- descriptions.
   if args[0] == "-t"
     showMain = True

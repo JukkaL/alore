@@ -51,14 +51,18 @@ def Analyse(programText          as Str,
 end
 
 
+-- Class for performing semantic analysis and type checking of an Alore 
+-- program.
 class Analysis
   const isTypeCheck as Boolean      -- Do we perform a type check?
   var libPath       as Array<Str>   -- Library path for looking up modules
   var semAnal       as SemanticAnal -- Semantic analyser
   var checker       as TypeChecker  -- Type checker
-  var errors = Errors() as Errors
+  var errors = Errors() as Errors   -- For reporting all errors
 
+  -- States of all individual files that are being processed.
   const states = []         as Array<State>
+  -- Map from module name to source files in the module.
   const moduleFiles = Map() as Map<Str, Array<Str>>
 
   def create(libPath as Array<Str>, isTypeCheck as Boolean)
