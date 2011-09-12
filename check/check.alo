@@ -39,5 +39,6 @@ def Main(args)
     for m in e.messages
       WriteLn(m)
     end
+    Exit(1)
   end
 end
