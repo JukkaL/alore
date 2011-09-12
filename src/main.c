@@ -23,6 +23,10 @@
 typedef struct {
     /* Maximum size of the Alore heap */
     Asize_t maxHeap;
+    /* Perform type check and exit? */
+    ABool typeCheckAndExit;
+    /* Perform type before running program? */
+    ABool typeCheckAndRun;
 
     /* Debugging-related option values */
     ABool displayCode;
@@ -36,6 +40,7 @@ static void InvalidOptionValue(const char *opt, const char *value);
 static void ShowHelp(void);
 static void ShowVersion(void);
 static void DisplayCode(void);
+static int PerformTypeCheck(void);
 static void SetDebugInstructionCounter(void);
 static ABool ParseSize(const char *s, Asize_t *size);
 
@@ -83,21 +88,28 @@ int main(int argc, char **argv)
         if (options.displayCode)
             DisplayCode();
         else {
-            AValue val;
-
-            SetDebugInstructionCounter();
+            /* Do we need to type check the program? */
+            if (options.typeCheckAndRun || options.typeCheckAndExit)
+                returnValue = PerformTypeCheck();
             
-            if (ATry(t)) {
-                /* An uncaught direct exception was raised somewhere in the
-                   program. We must not call AEndTry. */
-                val = AError;
-            } else {
-                /* Run the program. */
-                val = ACallValue(t, AGlobalByNum(num), 0, NULL);
-                AEndTry(t);
+            /* Run the program unless there was a type check error or the
+               user requested to exit after type checking. */
+            if (!options.typeCheckAndExit && returnValue == 0) {
+                AValue val;
+                SetDebugInstructionCounter();
+            
+                if (ATry(t)) {
+                    /* An uncaught direct exception was raised somewhere in the
+                       program. We must not call AEndTry. */
+                    val = AError;
+                } else {
+                    /* Run the program. */
+                    val = ACallValue(t, AGlobalByNum(num), 0, NULL);
+                    AEndTry(t);
+                }
+            
+                returnValue = AEndAloreProgram(t, val);
             }
-            
-            returnValue = AEndAloreProgram(t, val);
         }
     } else {
         /* Compilation failed. Return error status. */
@@ -139,6 +151,16 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
         case 'v':
             ShowVersion();
             break;
+
+        case 'c':
+            /* Perform type checking and exit. */
+            options->typeCheckAndExit = TRUE;
+            break;
+
+        case 't':
+            /* Perform type checking before running the program. */
+            options->typeCheckAndRun = TRUE;
+            break;            
 
         case '-':
             /* Long argument with -- prefix. */
@@ -239,6 +261,8 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
 static void InitializeOptions(AOptions *options)
 {
     options->maxHeap = 0;
+    options->typeCheckAndExit = FALSE;
+    options->typeCheckAndRun = FALSE;
     options->displayCode = FALSE;
 }
 
@@ -268,16 +292,21 @@ static void ShowHelp(void)
 {
     fprintf(stderr, "%s\n", USAGE);
     fprintf(stderr, "Options and arguments:\n"
-           "  -v, --version  Show version information and exit\n"
+            "  -c             type check program and exit\n"
+            "  -t             type check program before running it\n"
+            "  -v, --version  show version information and exit\n"
 #ifdef A_DEBUG
-           "  -d             DEBUG: Dump bytecode and exit\n"
-           "  -m             DEBUG: Memory dump\n"
-           "  -t             DEBUG: Memory trace\n"
-           "  -Dn N          DEBUG: Check every Nth instruction\n"
-           "  -Df N          DEBUG: Specify first checked instruction\n"
-           "  -Dl N          DEBUG: Specify last checked instruction\n"
+            "  -d             DEBUG: dump bytecode and exit\n"
+            "  -m             DEBUG: memory dump\n"
+            "  -t             DEBUG: memory trace\n"
+            "  -Dn N          DEBUG: check every Nth instruction\n"
+            "  -Df N          DEBUG: specify first checked instruction\n"
+            "  -Dl N          DEBUG: specify last checked instruction\n"
 #endif
-           "  args           Arguments to Main function\n");
+            "  arg ...        arguments passed to Main (also in sys::Args)\n");
+    fprintf(stderr, "Environment variables:\n"
+            "  ALOREPATH      directories prefixed to the default module search path,\n"
+            "                 separated by '%c'\n", A_PATH_SEPARATOR);
     exit(1);
 }
 
@@ -299,6 +328,22 @@ static void DisplayCode(void)
 #else
     AEpicInternalFailure("Request to display code on non-debug build");
 #endif
+}
+
+
+/* Type checking the target program. Assume that the program has been
+   loaded already. Return 0 if successful and 1 if there were errors. */
+static int PerformTypeCheck(void)
+{
+    char cmd[1024];
+
+    sprintf(cmd, "%s check/check.alo %s", AInterpreterPath, AProgramPath);
+    
+    printf("type check!\n");
+    printf("cmd: %s\n", cmd);
+    printf("%s\n", AInterpreterPath);
+    printf("%s\n", AProgramPath);
+    return 0;
 }
 
 
