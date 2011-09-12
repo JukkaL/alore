@@ -46,6 +46,10 @@ def Analyse(programText          as Str,
   -- InitializeNormalize()
   
   var analysis = Analysis(path, isTypeCheck)
+  
+  -- Ignore current directory prefix in error messages.
+  analysis.errors.setIgnorePrefix(CurrentDir())
+  
   return analysis.process(WaitingFile((programFnam, nil, [], analysis), 
                                       programText))
 end

@@ -45,6 +45,8 @@ class Errors
   -- Current error context.
   -- Import context, as a list of (path, line) pairs.
   private var importCtx = []         as Array<(Str, Int)>
+  -- Path name prefix that is removed from all paths, if set.
+  private var ignorePrefix = nil as Str
   private var file = nil             as Str     -- Path to current file.
   -- Short name of current type (or nil).
   private var typeName = nil         as Str
@@ -56,9 +58,24 @@ class Errors
   def create() as void
   end
   
+  -- Set path prefix that will be removed from all paths.
+  def setIgnorePrefix(prefix as Str)
+    prefix = NormPath(prefix)
+    -- Add separator to the end, if not given.
+    if BaseName(prefix) != ''
+      prefix += Separator
+    end
+    self.ignorePrefix = prefix
+  end
+  
   -- Set the path of the current file.
   def setFile(file as Str)
-    self.file = NormPath(file)
+    file = NormPath(file)
+    -- Remove ignored prefix, if set and present.
+    if self.ignorePrefix != nil and file.startsWith(self.ignorePrefix)
+      file = file[self.ignorePrefix.length():]
+    end
+    self.file = file
   end
   
   -- Set the current function or member short name (it can be nil).
