@@ -237,7 +237,9 @@ AToken *AParseAssignmentOrExpression(AToken *tok)
                               IOF_TOO_MANY_VARS_IN_MULTIPLE_ASSIGN);
             else
                 AGenerateError(tok->lineNumber, ErrInvalidLvalue);
+            /* Create dummy lvalue that does not cause any further errors. */
             lvalue.type = ET_LOCAL_LVALUE;
+            lvalue.num = 0;
         }
 
         if (AIsArrayExpression(lvalue.type) ||
@@ -347,13 +349,17 @@ static AToken *ParseOperatorAssignment(AExpression *lvalue, AToken *tok)
     /* Check if we have a valid lvalue expression. */
     if (!AIsLvalueExpression(lvalue->type)) {
         AGenerateError(tok->lineNumber, ErrInvalidLvalue);
+        /* Create a dummy lvalue to avoid further errors. */
         lvalue->type = ET_LOCAL_LVALUE;
+        lvalue->num = 0;
     }
 
     /* If the lvalue was invalid, act as if nothing has happened to avoid
        problems later. The compilation will fail anyway. */
-    if (lvalue->type == ET_ERROR)
+    if (lvalue->type == ET_ERROR) {
         lvalue->type = ET_LOCAL_LVALUE;
+        lvalue->num = 0;
+    }
         
     if (!AIsArrayExpression(lvalue->type) &&
         !AIsTupleExpression(lvalue->type)) {
@@ -688,6 +694,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
         if (ACurClass == NULL) {
             AGenerateError(tok->lineNumber, ErrSelfUsedInNonMemberFunction);
             left.type = ET_LOCAL;
+            left.num = 0;
             break;
         }
 
@@ -743,6 +750,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
            variable instead. This won't matter, since the compilation will
            fail. */
         left.type = ET_LOCAL_LVALUE;
+        left.num = 0;
         
         if (ACurClass == NULL) {
             AGenerateError(tok->lineNumber, ErrSuperUsedInNonMemberFunction);
