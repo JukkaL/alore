@@ -134,7 +134,7 @@ lib/libalorec.a: $(COMPILED_OBJ)
 	ranlib $@
 
 test: alore $(MODULES)
-	export ALOREPATH=../check && cd test && ../alore test.alo
+	test/test.sh
 
 doc:	alore $(MODULES)
 	util/conv.sh
