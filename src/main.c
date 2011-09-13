@@ -186,7 +186,7 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
             ADebug_MemoryDump = 1;
             break;
             
-        case 't':
+        case 'T':
             /* Memory trace (IDEA: explain) */
             ADebug_MemoryTrace = 1;
             break;
@@ -300,7 +300,7 @@ static void ShowHelp(void)
 #ifdef A_DEBUG
             "  -d             DEBUG: dump bytecode and exit\n"
             "  -m             DEBUG: memory dump\n"
-            "  -t             DEBUG: memory trace\n"
+            "  -T             DEBUG: memory trace\n"
             "  -Dn N          DEBUG: check every Nth instruction\n"
             "  -Df N          DEBUG: specify first checked instruction\n"
             "  -Dl N          DEBUG: specify last checked instruction\n"
