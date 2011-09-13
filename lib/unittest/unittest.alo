@@ -214,8 +214,8 @@ def RunTest(t as Suite, args = [] as Array<Str>)
       WriteLn("*** OK ***")
     end
   else
-    WriteLn(numFail, "/", numTotal, " test cases failed", skipMsg, ".")
-    WriteLn("*** FAILURE ***")
+    StdErr.writeLn(numFail, "/", numTotal, " test cases failed", skipMsg, ".")
+    StdErr.writeLn("*** FAILURE ***")
   end
   
   --for x, y in Sort(Times)[-20:]
@@ -275,15 +275,15 @@ def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int,
             else
               msg = ""
             end
-            WriteLn("Traceback (most recent call last):")
+            StdErr.writeLn("Traceback (most recent call last):")
             var tb = CleanTraceback(traceback[1])
             for s in Reversed(tb)
-              WriteLn("  ", s)
+              StdErr.writeLn("  ", s)
             end
-            WriteLn("{}{}".format(TypeOf(e), msg))
-            WriteLn()
-            WriteLn("{} failed".format(name))
-            WriteLn()
+            StdErr.writeLn("{}{}".format(TypeOf(e), msg))
+            StdErr.writeLn()
+            StdErr.writeLn("{} failed".format(name))
+            StdErr.writeLn()
             numFail += 1
           end
         end
