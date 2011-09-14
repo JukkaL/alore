@@ -631,3 +631,14 @@ file.alo: In function "isect2":
 file.alo, line 5: Name of argument "b" does not match initial signature
 file.alo: In function "isect3":
 file.alo, line 8: Name of argument "b" does not match initial signature
+
+[case testInvalidGenericFunctionAnnotation]
+def f<a a a>()
+end
+def g<(>()
+end
+[out]
+file.alo: In function "f":
+file.alo, line 1: Parse error before "a"
+file.alo: In function "g":
+file.alo, line 3: Parse error before (

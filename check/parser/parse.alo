@@ -1686,7 +1686,11 @@ private class Parser
   private def parseTypeVars() as TypeVars
     var typeVars as TypeVars
     if currentTokenStr() == "<"
-      typeVars, self.ind = ParseTypeVariables(self.tok, self.ind, True)
+      try
+        typeVars, self.ind = ParseTypeVariables(self.tok, self.ind, True)
+      except e is TypeParseError
+        parseErrorAt(e.token)
+      end
     else
       typeVars = TypeVars([])
     end
