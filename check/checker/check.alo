@@ -88,7 +88,9 @@ class TypeChecker is NodeVisitor<Typ>
         var target = defn.type.type
         if defn.names.length() == 1
           checkAssignment(target, nil, initType, defn.init)
-        else
+        elif target is TupleType
+          -- Note that if the target type is not a tuple, the error will be
+          -- reported elsewhere.
           var ttarget = (target as TupleType)
           checkMultiAssignment(ttarget.items, [nil] * ttarget.items.length(),
                                initType, defn.init)

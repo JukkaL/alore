@@ -353,3 +353,13 @@ end
 class B is A
 end
 [out]
+
+
+-- Variable definition (special cases)
+-- -----------------------------------
+
+
+[case testInvalidTypeForMultipleVariableDefinition]
+var a, b = nil as def ()
+[out]
+main, line 1: Tuple type expected in annotation
