@@ -1,7 +1,6 @@
 module testchk
 
 import unittest
-import testchk::dynchkops -- For DyncheckOpsSuite
 
 
 -- Suite the contains all the test cases for the type checker.
@@ -34,8 +33,4 @@ class CheckerSuite is Suite
   const testRoundtrip = RoundtripSuite()
   -- Test cases for exporting type after type checking
   const testTypeExport = TypeExportSuite()
-  -- Runtime type checking related test cases
-  const testDyncheckTransform = DyncheckTransformSuite()
-  const testDyncheckOps = DyncheckOpsSuite()
-  const testDyncheckEval = DyncheckEvalSuite()
 end
