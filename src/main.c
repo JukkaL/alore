@@ -10,6 +10,7 @@
 #include "compile.h"
 #include "debug_runtime.h"
 #include "version.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -370,17 +371,27 @@ static int PerformTypeCheck(void)
 /* Determine the path to the type checker. */
 static void GetCheckerPath(char *path)
 {
-    /* FIX: Cross-platform support */
+    /* FIX: Windows support */
     /* FIX: Length checks */
-    /* FIX: It should be possible to run this when installed. */
+    /* IDEA: Make the directories configurable instead of hard-coding them. */
     int i;
     
+    /* Get the directory that contains the interpreter. */
     strcpy(path, AInterpreterPath);
     for (i = strlen(path); i > 1 && !A_IS_DIR_SEPARATOR(path[i - 1]); i--)
         ;
-
     path[i] = '\0';
-    strcat(path, "check/check.alo");
+
+    /* Are we running an installed copy? */
+    if (AEndsWith(path, "/bin/")) {
+        /* Yes. */
+        /* Remove bin/ suffix to get the directory prefix. */
+        path[strlen(path) - 4] = '\0';
+        AJoinPath(path, path, "share/alore/check/check.alo");
+    } else {
+        /* No. Assume that we are running in a build directory. */
+        AJoinPath(path, path, "check/check.alo");
+    }
 }
 
 
