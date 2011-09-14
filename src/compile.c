@@ -51,11 +51,8 @@ char *AModuleSearchPath;
 /* Absolute path to the program that is currently being executed. */
 char *AProgramPath;
 
-/* Absolute or relative path to the alore interpreter. May be NULL if the
-   program is standalone (i.e. compiled to a binary). If path is relative, it
-   is relative to the current working directory when the program was being
-   compiled; if the program changes the working directory, this may no longer
-   be usable. */
+/* Absolute path to the alore interpreter. May be NULL if the program is
+   standalone (i.e. compiled to a binary).  */
 char *AInterpreterPath;
 
 int ANumActiveFiles;
@@ -82,6 +79,8 @@ ABool AIsJitModule;
 #endif
 
 
+static void DetermineInterpreterPath(ABool isStandalone,
+                                     const char *interpreter);
 static ABool ReadFile(char *path, AToken **tokPtr);
 static ABool InitializeInput(void);
 static void DeinitializeInput(void);
@@ -89,6 +88,7 @@ static ABool CompileImportedModules(AToken *tok);
 static ABool AddFile(AFileList **files, char *path);
 static void FailAndExit(const char *msg);
 static ABool FindProgram(char *path, const char *src);
+static ABool GetRealInterpreterDir(char *path, const char *src);
 static ABool MakeAbsolutePath(char *path, const char *src);
 
 
@@ -127,12 +127,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
         FailAndExit("Out of memory during initialization");
 
     /* Determine interpreter path unless running standalone (compiled). */
-    if (!isStandalone) {
-        AInterpreterPath = ADupStr(interpreter);
-        if (AInterpreterPath == NULL)
-            FailAndExit("Out of memory during initialization");
-    } else
-        AInterpreterPath = NULL;
+    DetermineInterpreterPath(isStandalone, interpreter);
 
     if (iface != NULL)
         ASetupFileInterface(iface);
@@ -164,6 +159,23 @@ int ALoadAloreProgram(AThread **t, const char *file,
         ADebugVerifyMemory();
         return num;
     }
+}
+
+
+/* Initialize AInterpreterPath to point to the alore interpreter; its value
+   will be NULL if running standalone. */
+static void DetermineInterpreterPath(ABool isStandalone,
+                                     const char *interpreter)
+{
+    char path[A_MAX_PATH_LEN];
+    if (!isStandalone) {
+        if (!FindProgram(path, interpreter))
+            FailAndExit("Could not determine path to interpreter");
+        AInterpreterPath = ADupStr(path);
+        if (AInterpreterPath == NULL)
+            FailAndExit("Out of memory during initialization");
+    } else
+        AInterpreterPath = NULL;
 }
 
 
@@ -252,11 +264,10 @@ static ABool MakeAbsolutePath(char *path, const char *src)
 }
 
 
-/* Look up the path to a program (the src argument), if src does not include a
-   directory component. Use the PATH environment variable to find the path. If
-   src includes a directory component, return src unmodified. The result is
-   stored in the buffer pointed to by path. Return FALSE if failed.
-   The path buffer should have at least A_MAX_PATH_LEN characters. */
+/* Look up the absolute path to a program (the src argument). Use the PATH
+   environment variable to find the path, if src does not include a directory.
+   The result is stored in the buffer pointed to by path. Return FALSE if
+   failed. The path buffer should have at least A_MAX_PATH_LEN characters. */
 static ABool FindProgram(char *path, const char *src)
 {
     int i;
@@ -302,11 +313,11 @@ static ABool FindProgram(char *path, const char *src)
 }
 
 
-/* Return the directory (which may be relative or absolute, but never empty)
-   of the interpreter. The src argument specifies the interpreter, and it can
-   be a path or a program name (which is looked up using the PATH environment
-   variable). Store the result in path. Return FALSE if failed. The path
-   buffer should have at least A_MAX_PATH_LEN characters. */
+/* Return the directory (which may be relative or absolute, but never an empty
+   path) of the interpreter. The src argument specifies the interpreter, and
+   it can be a path or a program name (which is looked up using the PATH
+   environment variable). Store the result in path. Return FALSE if failed.
+   The path buffer should have at least A_MAX_PATH_LEN characters. */
 static ABool GetRealInterpreterDir(char *path, const char *src)
 {
     int i;
