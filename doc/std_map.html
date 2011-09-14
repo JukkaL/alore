@@ -1,7 +1,10 @@
 @head
 @module std
-@title Class <tt>std::Map</tt>
+@title Class <tt>std::Map&lt;KT, VT&gt;</tt>
 @index Map
+
+@implements Iterable<(KT, VT)>
+@supertypes
 
 <p>The <tt>Map</tt> class implements a mapping from <i>keys</i> to 
 <i>values</i>. Keys may be any objects that provide a hash value 
@@ -10,7 +13,7 @@ support the == operator, while values may be arbitrary objects.
 At most a single object can be associated with a specific key. If several
 values are assigned to a key, the later assignments replace the earlier values.
 
-@class Map(...)
+@class Map(... as Pair<KT, VT>)
 @desc Construct a <tt>Map</tt> object.  The constructor accepts
     an arbitrary number of <tt>Pair</tt> objects that define the initial 
     (key, value) pairs to be added to the map. The left item of each
@@ -24,42 +27,42 @@ values are assigned to a key, the later assignments replace the earlier values.
 
 <h2><tt>Map</tt> methods</h2>
 
-@fun get(key, default)
+@fun get(key as KT, default as VT) as VT
 @desc Return the value associated with <tt>key</tt> if the key is in the map.
       Otherwise, return <tt>default</tt>.
 @end
 
-@fun length()
+@fun length() as Int
 @desc Return the number of keys in a map.
 @end
 
-@fun hasKey(key)
+@fun hasKey(key as Object) as Boolean
 @desc Return <tt>True</tt> if the key is in the map, or <tt>False</tt>
       otherwise.
 @end
   
-@fun remove(key)
+@fun remove(key as KT)
 @desc Remove a key and the corresponding value from the map.
       Raise @ref{KeyError} if the key is not in the map.
 @end
 
-@fun keys()
+@fun keys() as Array<KT>
 @desc Return an array of all the keys in the map. The keys are returned in an
       arbitrary order.
 @end
 
-@fun values()
+@fun values() as Array<VT>
 @desc Return an array of all the values in the map (one per key).
       The values are returned in an arbitrary order.
 @end
 
-@fun items()
+@fun items() as Array<(KT, VT)>
 @desc Return an array of all the <tt>(key, value)</tt> pairs in the map.
       Each pair is represented as a tuple. The items are returned in an
       arbitrary order.
 @end
 
-@fun iterator()
+@fun iterator() as Iterator<(KT, VT)>
 @desc Return an iterator object that returns all the (key, value) pairs
       in the map, in an arbitrary order. Each item in the iteration is a
       tuple with two items, key and value.
@@ -72,17 +75,17 @@ values are assigned to a key, the later assignments replace the earlier values.
 
 <p><tt>Map</tt> objects support the following operations:
 
-@op map[key]
+@op map[key] @optype{Map<KT, VT>[KT] -> VT}
 @desc Return the value associated with a key, or raise 
       @ref{KeyError} if the key is not in the map.
 @end
 
-@op map[key] = value
+@op map[key] = value @optype{Map<KT, VT>[KT] = VT}
 @desc Add a new association to the map, or replace an existing association, if
       the key already exists.
 @end
 
-@op for key, value in map
+@op for key, value in map @optype{for KT, VT in Map<KT, VT>}
 @desc Map contents can be iterated with a for loop. Each item in the 
       iteration is a tuple (key, value). The items are iterated
       in an arbitrary order.

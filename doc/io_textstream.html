@@ -3,12 +3,15 @@
 @title Class <tt>io::TextStream</tt>
 @index TextStream
 
+@inherits Stream
+@supertypes
+
 <p>The <tt>TextStream</tt> class represents an encoded text stream.
 
 @see The @ref{encodings} module defines several encoding classes.
 @end
 
-@class TextStream(stream[, encoding], ...)
+@class TextStream(stream as Stream[, encoding as Encoding], ...)
 @desc Construct an encoded text stream. The stream argument should conform to
       the @ref{Stream} interface. It is used for reading and writing the
       encoded (narrow) text data, i.e. the <tt>TextStream</tt>
@@ -22,7 +25,7 @@
       @ref{Unbuffered}) and either @ref{encodings::Strict} or
       @ref{encodings::Unstrict}.
       The default options are <tt>Buffered</tt> and <tt>Strict</tt>.
-      <p><tt>TextStream</tt> inherits from @ref{Stream}. All
+      <p>All
       input and output operations return and expect Unicode encoded strings.
       If an attempt is made to write a character that cannot be represented by
       the stream encoding, an @ref{encodings::EncodeError} exception will be

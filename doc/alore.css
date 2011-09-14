@@ -139,8 +139,35 @@ h3 tt {
     color: black;
 }
 
+/* Function, class and variable names */
 .hili {
     font-weight: bold;
+}
+
+/* Keyword (e.g. 'as') in function/variable/class definition */
+.hili2 {
+    color: #282850;
+}
+
+/* Unknown type id in function/variable/class definition */
+.hili3 {
+    color: black;
+}
+
+/* Linked type id in function/variable/class definition */
+a.annref {
+    text-decoration: none;
+    font-family: monospace;
+    line-height: 1em;
+}
+
+a.annref:hover {
+    text-decoration: underline;
+}
+
+.optype {
+    font-weight: normal;
+    padding-left: 6px;
 }
 
 .author {
@@ -164,6 +191,17 @@ h3 tt {
 .note-header {
     font-weight: bold;
     padding-right: 1px;
+}
+
+.implements {
+    margin-top: 0;
+    padding-left: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.implements-header {
+    font-style: italic;
+    padding-right: 4px;
 }
 
 ul.sep {

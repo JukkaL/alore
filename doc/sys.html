@@ -7,7 +7,7 @@ and its environment.
 
 <h2>Constants</h2>
 
-@var Args
+@var Args as Array<Str>
 @desc Command line arguments given to current program as a string array.
       These do not include the path to the current program. Consider this
       example:
@@ -18,12 +18,12 @@ and its environment.
       <tt>["arg1", "arg2"]</tt>.
 @end
 
-@var ProgramPath
+@var ProgramPath as Str
 @desc Path to current program. It can be a relative or an absolute path, and it
       can refer to an Alore source file or a compiled binary executable file.
 @end
 
-@var InterpreterPath
+@var InterpreterPath as Str
 @desc Path to the Alore interpreter. It can be a relative or an absolute path.
       Multiple versions of the Alore interpreter may be installed at the same
       time, and the path always refers to the one that is running the current
@@ -31,7 +31,7 @@ and its environment.
       is <tt>True</tt>.
 @end
 
-@var Platform
+@var Platform as Str
 @desc String identifying the current platform, in lower case. Currently
       supported values are
       <tt>"windows"</tt> (for all desktop and server variants of Microsoft
@@ -43,7 +43,7 @@ and its environment.
       <!-- "mac os" for Mac OS X? -->
 @end
 
-@var IsStandalone
+@var IsStandalone as Boolean
 @desc Boolean indicating whether the current program is a standalore executable
       (compiled binary file instead of an Alore source file).
 @end

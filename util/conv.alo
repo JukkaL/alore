@@ -1,3 +1,7 @@
+-- Conversion script for Alore documentation. Convert input files (which are
+-- formatted in modified HTML with additional @-prefixed tags) to HTML files. 
+-- Process links to files and definitions; also generate indexes.
+
 import io
 import string
 import re
@@ -38,8 +42,9 @@ def Main(args)
     args = args[1:]
   end
   
-  Preprocess(args[0])
-  Convert(args[0], args[1], args[2], ignoreBrokenLinks)
+  var conv = Converter()
+  conv.preprocess(args[0])
+  conv.convert(args[0], args[1], args[2], ignoreBrokenLinks)
   if Platform != "windows"
     System("cp alore.css " + args[1])
   else
@@ -48,61 +53,385 @@ def Main(args)
 end
 
 
-var Hierarchy = Stack()
-var Order = []
-var NameMap = Map()
-var Titles = Set()
-var Modules = Set()
-var GrammarRules = []
-var IndexItems = []
-var Scope = "(undefined)"
-
-
-def Convert(path, outDir, release, ignoreBrokenLinks)
-  var a
-  try
-    a = File(path).readLines()
-  except e is IoError
-    WriteLn("Could not open ", path)
-    return ""
-  end
-  var i = 0
+-- State of the conversion of a single file. This is stored in a class since
+-- multiple recursive file conversions can be active at a time.
+class ConversionState
+  const path
+  const outDir
+  const release
+  const ignoreBrokenLinks
+  
   var out = []
   var state = Stack()
-  var prev = ""
-  var titleIndex = -1
-  var title = ""
-  var content
-  var topIndex
-  var shortTitle = nil
-  var sectionType = nil
   var curMod = nil
   var curClass = nil
   var anchors = Set()
+  var sectionType = nil
+  var title = ""
+  var shortTitle = nil
+  var titleIndex = -1
+  var topIndex = -1
+  var content = nil
+  var prev  = ""
   
-  state.push("top")
+  -- Collect interfaces specified by @implements, used by @supertypes.
+  var interfaces = []
+  -- Collect supertype information for @supertypes.
+  var inherits = nil
+end
+
+
+-- This class performs the conversion and manages the state of the entire 
+-- conversion process.
+class Converter
+  -- Page nesting; each item is a (path, title) pair. Used to generate the
+  -- "bread crumb" trail at the top and bottom of pages.
+  var hierarchy = Stack() as Stack<(Str, Str)>
+  -- List of processed paths in order; used for generating prev/next links.
+  -- An empty path ("") signifies a break in the chain.
+  var order = []          as Array<Str>
+  -- Map from a link target name (anchor) to a path. The name can be based on
+  -- a short name, a fully qualified name or a heading.
+  var nameMap = Map()     as Map<Str, Str>
+  -- Set of anchors representing headings/titles. This can be used to check if
+  -- a link target is a heading.
+  var titles = Set()      as Set<Str>
+  -- Set of all module names.
+  var modules = Set()     as Set<Str>
+  -- All grammar rules are collected in this list, in the order they appear.
+  -- This is used for producing the grammar definition page.
+  var grammarRules = []   as Array<Str>
+  -- Index items are collected in this list. Each item is in one of the 
+  -- following forms:
+  --   [name, "module",    scope]     (module name)
+  --   [name, moduleName,  className] (function or variable)
+  --   [name, moduleName,  scope]     (class)
+  --   [name, "indexitem", scope]     (uncategorized)
+  var indexItems = []     as Array<Array<Str>>
+  -- The current index scope. This allows generating multiple disjoint indexes.
+  var scope = "(undefined)"
+
+
+  def convert(path, outDir, release, ignoreBrokenLinks)
+    var a
+    try
+      a = File(path).readLines()
+    except e is IoError
+      WriteLn("Could not open ", path)
+      return ""
+    end
+    var i = 0
+    var st = ConversionState(path, outDir, release, ignoreBrokenLinks)
+
+    st.state.push("top")
+
+    while i < a.length()
+      var s, ss = replaceInlineTags(a[i], st)
+
+      var tag = ""
+      if ss.startsWith("@")
+        var arg
+        tag, arg = ParseTag(ss)
+        processTag(tag, arg, st)
+      else
+        if ss != ""
+          if st.state.top() == "dl"
+            st.state.pop()
+            st.out.append("</dl>")
+          end
+        end
+        if st.state.top() != "pre"
+          st.out.append(s)
+        else
+          st.content.append(s)
+        end
+      end
+      
+      if ss != ""
+        st.prev = tag
+      end
+      
+      i += 1
+    end
+
+    -- Output closing tags for unclosed tags.
+    while st.state.top() != "top"
+      if st.state.top() == "dl"
+        st.out.append("</dl>")
+      end
+      st.state.pop()
+    end
+
+    outputNavToolbar(st.out, path, False)
+    st.out.append("</body>")
+    st.out.append("</html>")
+
+    var f = File(Join(outDir, BaseName(path)), Output)
+    for s in st.out
+      f.writeLn(s)
+    end
+    f.close()
+
+    if st.title != ""
+      self.hierarchy.pop()
+    end
+
+    return st.title
+  end
   
-  while i < a.length()
-    var s = a[i]
-    
+  -- Replace inline tags of form @x and @x{...}. Inline tags can appear
+  -- anywhere within a line.
+  def replaceInlineTags(s, st)
     -- Replace certain @ sequences with constant strings.
-    s = s.replace("@raise-direct", 
-      "Raise a direct exception on all error conditions.")
-    s = s.replace("@deprecated", 
-      "<span class=""deprecated"">Deprecated " + 
-      "(this feature will be removed in a future Alore version).</span>")
-    
+    s = ReplaceConstants(s, st.release)
+
     var ss = s.strip()
-    var tag = ""
+
+    -- Replace href and ref tags with HTML links.
+    s, ss = replaceRefs(s, ss, st.ignoreBrokenLinks, st.path)
     
-    -- Replace href and ref tags with html links.
+    return s, ss
+  end
+
+  def processTag(tag, arg, st)
+    switch tag
+      case "@head"
+        processHead(st)
+      case "@module"
+         st.curMod = arg
+         if arg != "implicit_interfaces"
+           addIndexItem([arg, "module"])
+         end
+      case "@fun", "@exception"
+        processFunOrException(arg, st)
+      case "@h2"
+        processHeading(arg, st)
+      case "@class"
+        processClass(arg, st)
+      case "@class-hidden"
+        processHiddenClass(arg, st)
+      case "@end-class"
+        st.curClass = nil
+      case "@op"
+        processOp(arg, st)
+      case "@var"
+        processVar(arg, st)
+      case "@desc"
+        processDesc(arg, st)
+      case "@end"
+        processEnd(st)
+      case "@shorttitle"
+        st.shortTitle = arg
+      case "@title"
+        processTitle(arg, st)
+      case "@index"
+        st.title = arg
+      case "@example"
+        st.out.append("<pre class='ex'>")
+        st.state.push("pre")
+        st.content = []
+      case "@implements"
+        st.interfaces.append(arg)
+      case "@inherits"
+        st.inherits = arg
+      case "@supertypes"
+        processSupertypes(st)
+      case "@grammar"
+        st.out.append("<pre class='ex'>")
+        st.state.push("pre")
+        st.sectionType = Grammar
+        st.content = []
+      case "@see"
+        st.out.append("<p class='note'>")
+        st.out.append("<span class='note-header'>See&nbsp;also:</span>")
+        st.out.append(arg)
+        st.state.push("p")
+      case "@note"
+        st.out.append("<p class='note'>")
+        st.out.append("<span class='note-header'>Note:</span>")
+        st.out.append(arg)
+        st.state.push("p")
+      case "@link"
+        processLink(arg, st)
+      case "@complete-grammar"
+        st.out.append("<pre class='ex'>")
+        for l in RemoveSpacePrefix(self.grammarRules)
+          st.out.append(l)
+        end
+        st.out.append("</pre>")
+      case "@alpha-index"
+        outputIndex(st.out)
+      case "@scope"
+        self.scope = arg
+      case "@indexitem"
+        -- Add an uncategorized indexed item.
+        st.out.append(Anchor(nil, arg))
+        addIndexItem([arg, "indexitem"])
+    end
+  end
+
+  -- Process @head.
+  def processHead(st)
+    for h in HtmlHeader
+      st.out.append(h)
+    end
+    st.out.append("")
+    st.titleIndex = st.out.length() - 1
+    st.topIndex = st.out.length()
+  end
+
+  -- Process @title.
+  def processTitle(arg, st)
+    st.out.append("<h1>" + arg + "</h1>")
+    st.title = arg
+    arg = arg.replace("<tt>", "")
+    arg = arg.replace("</tt>", "")
+    if st.shortTitle != nil
+      self.hierarchy.append((st.path, st.shortTitle))
+    else
+      self.hierarchy.append((st.path, arg))
+    end
+    if st.titleIndex >= 0
+      st.out[st.titleIndex] = "  <title>" + arg + "</title>"
+    end
+    var nav = []
+    outputNavToolbar(nav, st.path, True)
+    st.out.insertAt(st.topIndex, Newline.join(nav))
+  end
+  
+  -- Process @fun or @exception.
+  def processFunOrException(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) + 
+                  formatDef(arg))
+    addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+  end
+  
+  -- Process @class.
+  def processClass(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + Anchor(st.anchors, arg) + 
+                  formatDef("class " + arg))
+    addIndexItem([DefName(arg), st.curMod])
+    st.curClass = DefName(arg)
+  end
+  
+  -- Process @class-hidden.
+  def processHiddenClass(arg, st)
+    st.out.append(Anchor(st.anchors, arg))
+    addIndexItem([DefName(arg), st.curMod])
+    st.curClass = DefName(arg)
+  end
+  
+  -- Process @op.
+  def processOp(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    arg = arg.replace('->', '&rArr;')
+    arg = arg.replace('<', '&lt;')
+    arg = arg.replace('>', '&gt;')
+    arg = Subst(arg, '@optype\{(.*?)\}', def (m)
+                  var s = formatTypeNames(m.group(1))
+                  return '<span class="optype">({})</span>'.format(s)
+                end)
+    st.out.append("<dt>" + HiliSpan(arg))
+  end
+  
+  -- Process @var.
+  def processVar(arg, st)
+    if st.state.top() != "dl"
+      st.state.push("dl")
+      st.out.append("<dl>")
+    end
+    st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + formatDef(arg))
+    addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
+  end
+  
+  def processDesc(arg, st)
+    st.out.append("<dd>")
+    st.state.push("dd")
+    st.out.append(arg)
+  end
+
+  -- Process @supertypes.
+  def processSupertypes(st)
+    if st.inherits != nil or st.interfaces != []
+      st.out.append("<p class='implements'>")
+      if st.inherits != nil
+        st.out.append(HiliSpan('Inherits', 'implements-header'))
+        st.out.append(formatTypeNames(st.inherits, False))
+      end
+      if st.interfaces != []
+        if st.inherits != nil
+          st.out.append('<br>')
+        end
+        st.out.append(HiliSpan("Implements", 'implements-header'))
+        var a = []
+        for iface in st.interfaces
+          a.append(formatTypeNames(iface, False))
+        end
+        st.out.append(", ".join(a))
+      end
+      
+      st.inherits = nil
+      st.interfaces = []
+    end
+  end
+  
+  -- Process @end.
+  def processEnd(st)
+    if st.prev == "@end" and st.state.top() == "dl"
+      st.state.pop()
+      st.out.append("</dl>")
+    elif st.state.top() == "pre"
+      for l in RemoveSpacePrefix(st.content)
+        var ll = l
+        if st.sectionType == Grammar
+          ll = FormatGrammar(l, self.nameMap)
+        end
+        st.out.append(ll)
+      end
+      st.out.append("</pre>")
+    end
+    st.state.pop()
+    st.sectionType = nil
+  end
+  
+  -- Process @h2.  
+  def processHeading(arg, st)
+    if st.state.top() == "dl"
+      st.state.pop()
+      st.out.append("</dl>")
+    end
+    st.out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
+  end
+  
+  -- Process @link.
+  def processLink(arg, st)
+    var t = convert(arg, st.outDir, st.release, st.ignoreBrokenLinks)
+    if t == ""
+      t = arg
+    end
+    st.out.append("<a href=""{}"">{}</a>".format(arg, t))
+  end
+
+  -- Replace @ref and @href tags with HTML links.
+  def replaceRefs(s, ss, ignoreBrokenLinks, path)
     while True
       var m = Search("@(h?ref)(l?)\{(.*?)\}", ss)
       if m == nil
         break
       end
       var t, anchor = NormLinkTarget(m.group(3))
-      if not NameMap.hasKey(t)
+      if not self.nameMap.hasKey(t)
         -- Invalid link target
         if not ignoreBrokenLinks
           WriteLn("{}: Missing link target {}".format(path, t))
@@ -115,215 +444,272 @@ def Convert(path, outDir, release, ignoreBrokenLinks)
         end
       else
         -- Valid link target
-        var url = NameMap[t]
-        if not t in Modules and not t in Titles
-          url += "#" + BaseName(anchor)
-        end
-        var st, et = "", ""
-        if m.group(1) == "ref"
-          st, et = "<span class='ref'>", "</span>"
-        end
-        var text = m.group(3).replace(".", "&nbsp;")
-        if m.group(2) == "l"
-          text = text.lower()
-        end
-        var ref = "<a href=""{}"">{}{}{}</a>".format(url, st, text, et)
+        var ref = makeLink(m.group(3), m.group(1) == "ref", m.group(2) == "l")
         ss = ss.replace(m.group(0), ref)
         s = s.replace(m.group(0), ref)
       end
     end
-    
-    s = s.replace("@release", release)
-    s = s.replace("@email", ObfuscateEmail(EmailAddress))
-    
-    if ss.startsWith("@")
-      tag = "@"
-      var arg = ""
-      var j = 1
-      while j < ss.length() and (IsWordChar(ss[j]) or ss[j] == "-")
-        tag += ss[j]
-        j += 1
-      end
-      if j < ss.length() - 1 and ss[j] == " "
-        arg = ss[j + 1:]
-      end
-      switch tag
-        case "@head"
-          for h in HtmlHeader
-            out.append(h)
-          end
-          out.append("")
-          titleIndex = out.length() - 1
-          
-          topIndex = out.length()
+    return s, ss
+  end
+  
+  -- Return the HTML for a link to a definition or a heading.
+  def makeLink(target, isIdRef = True, isLower = False, isAnn = False)
+    var t, anchor = NormLinkTarget(target)
+    var url = self.nameMap[t]
+    if not t in self.modules and not t in self.titles
+      url += "#" + BaseName(anchor)
+    end
+    var st, et, aclass = "", "", ""
+    if isAnn
+      aclass = 'class="annref" '
+    end
+    if isIdRef
+      st, et = "<span class='ref'>", "</span>"
+    end
+    var text = target.replace(".", "&nbsp;")
+    if isLower
+      text = text.lower()
+    end
+    return "<a {}href=""{}"">{}{}{}</a>".format(aclass, url, st, text, et)
+  end
 
-        case "@module"
-           curMod = arg
-           if arg != "implicit_interfaces"
-             AddIndexItem([arg, "module"])
-           end
-        case "@fun", "@exception"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + Anchor(anchors, arg, curClass) + 
-                     HighlightDef(arg))
-          AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
-        case "@h2"
-          if state.top() == "dl"
-            state.pop()
-            out.append("</dl>")
-          end
-          out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
-        case "@class"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + Anchor(anchors, arg) + 
-                     HighlightDef("class " + arg))
-          AddIndexItem([DefName(arg), curMod])
-          curClass = DefName(arg)
-        case "@class-hidden"
-          out.append(Anchor(anchors, arg))
-          AddIndexItem([DefName(arg), curMod])
-          curClass = DefName(arg)
-        case "@end-class"
-          curClass = nil
-        case "@op"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + HiliSpan(arg))
-        case "@var"
-          if state.top() != "dl"
-            state.push("dl")
-            out.append("<dl>")
-          end
-          out.append("<dt>" + Anchor(nil, arg, curClass) + HiliSpan(arg))
-          AddIndexItem(IndexItem(DefName(arg), curMod, curClass))
-        case "@desc"
-          out.append("<dd>" + arg)
-          state.push("dd")
-        case "@end"
-          if prev == "@end" and state.top() == "dl"
-            state.pop()
-            out.append("</dl>")
-          elif state.top() == "pre"
-            for l in RemoveSpacePrefix(content)
-              var ll = l
-              if sectionType == Grammar
-                ll = FormatGrammar(l)
-              end
-              out.append(ll)
-            end
-            out.append("</pre>")
-          end
-          state.pop()
-          sectionType = nil
-        case "@shorttitle"
-          shortTitle = arg
-        case "@title"
-          out.append("<h1>" + arg + "</h1>")
-          title = arg
-          arg = arg.replace("<tt>", "")
-          arg = arg.replace("</tt>", "")
-          if shortTitle != nil
-            Hierarchy.append((path, shortTitle))
-          else
-            Hierarchy.append((path, arg))
-          end
-          if titleIndex >= 0
-            out[titleIndex] = "  <title>" + arg + "</title>"
-          end
-          var nav = []
-          OutputNavToolbar(nav, path, True)
-          out.insertAt(topIndex, Newline.join(nav))
-        case "@index"
-          title = arg
-        case "@example"
-          out.append("<pre class='ex'>")
-          state.push("pre")
-          content = []
-        case "@grammar"
-          out.append("<pre class='ex'>")
-          state.push("pre")
-          sectionType = Grammar
-          content = []
-        case "@see"
-          out.append("<p class='note'>")
-          out.append("<span class='note-header'>See&nbsp;also:</span>")
-          out.append(arg)
-          state.push("p")
-        case "@note"
-          out.append("<p class='note'>")
-          out.append("<span class='note-header'>Note:</span>")
-          out.append(arg)
-          state.push("p")
-        case "@link"
-          var t = Convert(arg, outDir, release, ignoreBrokenLinks)
-          if t == ""
-            t = arg
-          end
-          out.append("<a href=""{}"">{}</a>".format(arg, t))
-        case "@complete-grammar"
-          out.append("<pre class='ex'>")
-          for l in RemoveSpacePrefix(GrammarRules)
-            out.append(l)
-          end
-          out.append("</pre>")
-        case "@alpha-index"
-          OutputIndex(out)
-        case "@scope"
-          Scope = arg
-        case "@indexitem"
-          -- Add an uncategorized indexed item.
-          out.append(Anchor(nil, arg))
-          AddIndexItem([arg, "indexitem"])
-      end
+  -- Output the navigation toolbar.
+  def outputNavToolbar(out, path, isTop)
+    if isTop
+      out.append("</head>")
+      out.append("<body>")
+      out.append("<div id='navi-top'>")
     else
-      if ss != ""
-        if state.top() == "dl"
-          state.pop()
-          out.append("</dl>")
+      out.append("</div></div>")
+      out.append("<div id='navi-bottom'>")
+    end
+    out.append("  <div class='navi-trail'>")
+
+    var l = []
+    for url, title in self.hierarchy[0:-1]
+      l.append("<a href=""{}"">{}</a>".format(url, title))
+    end
+    l.append(self.hierarchy[-1][1])
+
+    out.append("    " + " &gt; ".join(l))
+
+    out.append("  </div>")
+    out.append("  <div class='navi-browse'>")
+
+    l = []
+    var o = PathOrder(self.order, path)
+    if o > 0 and self.order[o - 1] != ""
+      l.append("&lt; <a href='{}'>Previous</a>".format(self.order[o - 1]))
+    end
+    if o < self.order.length() - 1 and self.order[o + 1] != ""
+      l.append("<a href='{}'>Next</a> &gt;".format(self.order[o + 1]))
+    end
+    out.append("  " + " | ".join(l))
+    out.append("  </div>")
+    out.append("  <div class='clear'></div>")
+    out.append("</div>")
+    if isTop
+      out.append("<div id='wrapper'><div id='content'>")
+    end
+  end
+
+  -- Preprocess a file (and recursively all linked files). Record all 
+  -- reference targets.
+  def preprocess(path, depth = 1)
+    var i, curMod
+    var sectionType = nil
+
+    self.order.append(path)
+
+    if not IsFile(path)
+      raise IoError("{} missing".format(path))
+    end
+    var l = File(path).readLines()
+    for s in l
+      var ss = s.strip()
+      if ss.startsWith("@link ")
+        if depth == 1
+          self.order.append("")
+        end
+        var target = ss[6:]
+        preprocess(target, depth + 1)
+      elif ss.startsWith("@fun ") or ss.startsWith("@class ") or
+           ss.startsWith("@module ") or ss.startsWith("@var") or
+           ss.startsWith("@exception") or ss.startsWith("@class-hidden")
+        var tag, rest = ss.split(" ", 1)
+        var name = NormAnchor(DefName(rest))
+        if not self.nameMap.hasKey(name)
+          self.nameMap[name] = path
+        end
+        if curMod != nil
+          self.nameMap[curMod + "::" + name] = path
+        end
+        if tag == "@module"
+          curMod = rest
+          self.modules.add(rest)
+        end
+      elif ss.startsWith("@h2 ")
+        var tag, rest = ss.split(" ", 1)
+        self.nameMap[NormAnchor(rest)] = path
+      elif ss.startsWith("@title ") or ss.startsWith("@indexitem ")
+        var tag, rest = ss.split(" ", 1)
+        var anchor = NormAnchor(rest)
+        self.nameMap[anchor] = path
+        self.titles.add(anchor)
+      elif ss == "@grammar"
+        sectionType = Grammar
+      elif ss.startsWith("@end")
+        sectionType = nil
+      elif sectionType == Grammar
+        if Match("[a-z0-9-]+ ?::", ss) != nil
+          self.nameMap[ss.split("::")[0].strip() + "::"] = path
+        end
+        self.grammarRules.append(s)
+      end
+    end
+  end
+
+  -- Output an alphabetical index. It contains all index items defined in the 
+  -- current scope, including modules, classes, functions and constants.
+  def outputIndex(out)
+    -- Sort index items.
+    var items = Uniq(Sort(self.indexItems, IndexComp))
+    -- These are all the alphabetical categories.
+    var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#"
+
+    -- Output each alphetical category separately.
+    for i in 0 to alpha.length()
+      -- Get the prefix character of this category (e.g. A or _).
+      var c = alpha[i]
+
+      -- Within the capi scope, all items start with A (e.g. AAdd).
+      if self.scope == "capi" and c != "#"
+        c = "A" + c
+      end
+
+      -- Filter all items in this category to res.
+      var res = []
+      for x, y, scope in items
+        if x.upper().startsWith(c) and scope == self.scope
+          res.append([x, y])
         end
       end
-      if state.top() != "pre"
-        out.append(s)
-      else
-        content.append(s)
+
+      -- Output category only if it's not empty.
+      if res.length() > 0
+        -- Output title.
+        var title = c
+        if title == "_"
+          title = "_ (underscore)"
+        end
+        out.append("<h2>{}</h2>".format(title))
+
+        -- Output index items.
+        out.append("<p>")
+        var j = 0
+        while j < res.length()
+          var x, y = res[j]
+          var ref = "#{}".format(NormAnchor(x))
+          if y == "module"
+            ref = ""
+          end
+          var hh = " ({})".format(y)
+          if "implicit_interfaces" in y
+            hh = " (implicit interface)"
+          end
+          if (j == 0 or res[j - 1][0] != x) and 
+             (j == res.length() - 1 or res[j + 1][0] != x)
+            hh = ""
+          end
+          if not self.nameMap.hasKey(NormAnchor(x))
+            WriteLn(x)
+          end
+          var url = self.nameMap[NormAnchor(x)]
+          if "::" in y and y.lower() != y
+            -- Get class name.
+            var cl = y.replace("<tt>", "")
+            cl = cl.replace("</tt>", "")
+            url = self.nameMap[cl]
+            ref += "-" + cl.split("::")[-1]
+          end
+          out.append("<a href='{}{}'>{}</a>{}<br>".format(url, ref, x, hh))
+          j += 1
+        end
       end
     end
-    i += 1
-    if ss != ""
-      prev = tag
+  end
+
+  def addIndexItem(item)
+    if item.length() < 3
+      item += [self.scope]
     end
+    self.indexItems.append(item)
   end
-  
-  while state.top() != "top"
-    if state.top() == "dl"
-      out.append("</dl>")
+
+  -- Return a variable or function declaration modified so that the name of the
+  -- declaration is within a highlight span and the rest is formatted as HTML. 
+  -- Also replace < and > with the corresponding HTML sequences.
+  def formatDef(defn)
+    defn = defn.replace('<', '&lt;')
+    defn = defn.replace('>', '&gt;')
+    var pre, base, args = SplitDef(defn)
+
+    -- Also format keywords in function/class definitions.
+    if args.startsWith('(') or args.startsWith('<') or True -- FIX?
+      args = Subst(args, '\<(as|def)\>', def (m)
+                     return HiliSpan(m.group(0), 'hili2')
+                   end)
     end
-    state.pop()
+
+    -- Change type names into links.
+    args = formatTypeNames(args)
+
+    return pre + HiliSpan(base) + args
   end
-  
-  OutputNavToolbar(out, path, False)
-  out.append("</body>")
-  out.append("</html>")
-  
-  var f = File(Join(outDir, BaseName(path)), Output)
-  for s in out
-    f.writeLn(s)
+
+  -- Replace type names in the string with links to the relevant types.
+  -- Assumes type names start with a capital letter.
+  def formatTypeNames(s, isAnn = True)
+    return Subst(s, '\<([a-z_]+::)*[A-Z][a-zA-Z0-9_]*\>', def (m)
+                   var name = m.group(0)
+                   if self.nameMap.hasKey(NormAnchor(name))
+                     return makeLink(name, not isAnn, False, isAnn)
+                   else
+                     return HiliSpan(m.group(0), 'hili3')
+                   end
+                 end)
   end
-  f.close()
-  
-  if title != ""
-    Hierarchy.pop()
+end
+
+
+-- Replace constant @ sequences such as @deprecated in s with corresponding
+-- HTML sequences.
+def ReplaceConstants(s, release)
+  s = s.replace("@raise-direct", 
+                "Raise a direct exception on all error conditions.")
+  s = s.replace("@deprecated", 
+                "<span class=""deprecated"">Deprecated " + 
+          "(this feature will be removed in a future Alore version).</span>")
+  s = s.replace("@release", release)
+  s = s.replace("@email", ObfuscateEmail(EmailAddress))
+  return s
+end
+
+
+-- Split a string of form '@tag ...' into tag and argument (which may be 
+-- empty). Return tuple (tag, argument).
+def ParseTag(ss)
+  var tag = "@"
+  var arg = ""
+  var j = 1
+  while j < ss.length() and (IsWordChar(ss[j]) or ss[j] == "-")
+    tag += ss[j]
+    j += 1
   end
-  
-  return title
+  if j < ss.length() - 1 and ss[j] == " "
+    arg = ss[j + 1:]
+  end
+  return tag, arg
 end
 
 
@@ -354,9 +740,10 @@ def SplitDef(defn)
   var pre = ""
   var base = defn
   var args = ""
-  if "(" in defn
-    base = defn[:defn.index("(")]
-    args = defn[defn.index("("):]
+  var m = Search('[(<]|&lt;| as ', defn)
+  if m != nil
+    base = defn[:m.start(0)]
+    args = defn[m.start(0):]
     if " " in base.strip()
       var i = FindLastChar(base, " ")
       pre = base[:i + 1]
@@ -367,7 +754,6 @@ def SplitDef(defn)
       end
     end
   end
-  -- WriteLn([pre, base.strip(), args])
   return pre, base.strip(), args
 end
 
@@ -381,18 +767,13 @@ def FindLastChar(s, c)
     end
     i += 1
   end
-  return x    
+  return x
 end
 
 
--- Return a variable or function declaration modified so that the name of the
--- declaration is within a highlight span and the rest is unmodified.
-def HighlightDef(defn)
-  var pre, base, args = SplitDef(defn)
-  return pre + HiliSpan(base) + args
-end
-
-
+-- Modify a string so that it is a valid HTML anchor (link target). The 
+-- resulting string resembles the original string, but it has e.g. spaces
+-- replaced with underscores.
 def NormAnchor(s)
   s = s.replace(" ", "_")
   s = s.replace("*", "_")
@@ -463,108 +844,10 @@ def RemoveSpacePrefix(a)
 end
 
 
--- Output the navigation toolbar.
-def OutputNavToolbar(out, path, isTop)
-  if isTop
-    out.append("</head>")
-    out.append("<body>")
-    out.append("<div id='navi-top'>")
-  else
-    out.append("</div></div>")
-    out.append("<div id='navi-bottom'>")
-  end
-  out.append("  <div class='navi-trail'>")
-  
-  var l = []
-  for url, title in Hierarchy[0:-1]
-    l.append("<a href=""{}"">{}</a>".format(url, title))
-  end
-  l.append(Hierarchy[-1][1])
-  
-  out.append("    " + " &gt; ".join(l))
-  
-  out.append("  </div>")
-  out.append("  <div class='navi-browse'>")
-  
-  l = []
-  var o = PathOrder(path)
-  if o > 0 and Order[o - 1] != ""
-    l.append("&lt; <a href='{}'>Previous</a>".format(Order[o - 1]))
-  end
-  if o < Order.length() - 1 and Order[o + 1] != ""
-    l.append("<a href='{}'>Next</a> &gt;".format(Order[o + 1]))
-  end
-  out.append("  " + " | ".join(l))
-  out.append("  </div>")
-  out.append("  <div class='clear'></div>")
-  out.append("</div>")
-  if isTop
-    out.append("<div id='wrapper'><div id='content'>")
-  end
-end
-
-
-def PathOrder(path)
-  for i in 0 to Order.length()
-    if Order[i] == path
+def PathOrder(order, path)
+  for i in 0 to order.length()
+    if order[i] == path
       return i
-    end
-  end
-end
-
-
--- Preprocess a file (and recursively all linked files). Record all reference 
--- targets.
-def Preprocess(path, depth = 1)
-  var i, curMod
-  var sectionType = nil
-
-  Order.append(path)
-  
-  if not IsFile(path)
-    raise IoError("{} missing".format(path))
-  end
-  var l = File(path).readLines()
-  for s in l
-    var ss = s.strip()
-    if ss.startsWith("@link ")
-      if depth == 1
-        Order.append("")
-      end
-      var target = ss[6:]
-      Preprocess(target, depth + 1)
-    elif ss.startsWith("@fun ") or ss.startsWith("@class ") or
-         ss.startsWith("@module ") or ss.startsWith("@var") or
-         ss.startsWith("@exception") or ss.startsWith("@class-hidden")
-      var tag, rest = ss.split(" ", 1)
-      var name = NormAnchor(DefName(rest))
-      if not NameMap.hasKey(name)
-        NameMap[name] = path
-      end
-      if curMod != nil
-        NameMap[curMod + "::" + name] = path
-      end
-      if tag == "@module"
-        curMod = rest
-        Modules.add(rest)
-      end
-    elif ss.startsWith("@h2 ")
-      var tag, rest = ss.split(" ", 1)
-      NameMap[NormAnchor(rest)] = path
-    elif ss.startsWith("@title ") or ss.startsWith("@indexitem ")
-      var tag, rest = ss.split(" ", 1)
-      var anchor = NormAnchor(rest)
-      NameMap[anchor] = path
-      Titles.add(anchor)
-    elif ss == "@grammar"
-      sectionType = Grammar
-    elif ss.startsWith("@end")
-      sectionType = nil
-    elif sectionType == Grammar
-      if Match("[a-z0-9-]+ ?::", ss) != nil
-        NameMap[ss.split("::")[0].strip() + "::"] = path
-      end
-      GrammarRules.append(s)
     end
   end
 end
@@ -577,7 +860,7 @@ def BaseName(id)
 end
 
 
-def FormatGrammar(s)
+def FormatGrammar(s, nameMap)
   var pre = ""
   var post = s
   if "::" in s
@@ -600,10 +883,10 @@ def FormatGrammar(s)
     r += post[i]
     if m != nil
       var key = m.group(1) + "::"
-      if not NameMap.hasKey(key)
+      if not nameMap.hasKey(key)
         WriteLn("Missing: ", m.group(1))
       end
-      var url = NameMap[key] + "#" + m.group(1)
+      var url = nameMap[key] + "#" + m.group(1)
       r += "<a href=""{}"">{}</a>".format(url, m.group(1))
       i += m.group(0).length() - 1
     else
@@ -612,85 +895,6 @@ def FormatGrammar(s)
   end
   
   return pre + r[:-1]
-end
-
-
-def AddIndexItem(item)
-  if item.length() < 3
-    item += [Scope]
-  end
-  IndexItems.append(item)
-end
-
-
--- Output an alphabetical index. It contains all index items defined in the 
--- current scope, including modules, classes, functions and constants.
-def OutputIndex(out)
-  -- Sort index items.
-  var items = Uniq(Sort(IndexItems, IndexComp))
-  -- These are all the alphabetical categories.
-  var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#"
-  
-  -- Output each alphetical category separately.
-  for i in 0 to alpha.length()
-    -- Get the prefix character of this category (e.g. A or _).
-    var c = alpha[i]
-    
-    -- Within the capi scope, all items start with A (e.g. AAdd).
-    if Scope == "capi" and c != "#"
-      c = "A" + c
-    end
-    
-    -- Filter all items in this category to res.
-    var res = []
-    for x, y, scope in items
-      if x.upper().startsWith(c) and scope == Scope
-        res.append([x, y])
-      end
-    end
-    
-    -- Output category only if it's not empty.
-    if res.length() > 0
-      -- Output title.
-      var title = c
-      if title == "_"
-        title = "_ (underscore)"
-      end
-      out.append("<h2>{}</h2>".format(title))
-      
-      -- Output index items.
-      out.append("<p>")
-      var j = 0
-      while j < res.length()
-        var x, y = res[j]
-        var ref = "#{}".format(NormAnchor(x))
-        if y == "module"
-          ref = ""
-        end
-        var hh = " ({})".format(y)
-        if "implicit_interfaces" in y
-          hh = " (implicit interface)"
-        end
-        if (j == 0 or res[j - 1][0] != x) and 
-           (j == res.length() - 1 or res[j + 1][0] != x)
-          hh = ""
-        end
-        if not NameMap.hasKey(NormAnchor(x))
-          WriteLn(x)
-        end
-        var url = NameMap[NormAnchor(x)]
-        if "::" in y and y.lower() != y
-          -- Get class name.
-          var cl = y.replace("<tt>", "")
-          cl = cl.replace("</tt>", "")
-          url = NameMap[cl]
-          ref += "-" + cl.split("::")[-1]
-        end
-        out.append("<a href='{}{}'>{}</a>{}<br>".format(url, ref, x, hh))
-        j += 1
-      end
-    end
-  end
 end
 
 
@@ -749,14 +953,15 @@ end
 
 -- Return HTML code representing a highlighted variable/function name or 
 -- an operation.
-def HiliSpan(html)
-  return "<span class=""hili"">{}</span>".format(html)
+def HiliSpan(html, cls = "hili")
+  return '<span class="{}">{}</span>'.format(cls, html)
 end
 
 
 -- Obfuscate an email address by creating a JavaScript fragment that constructs
 -- the address.
 def ObfuscateEmail(email)
+  -- Try to find a character not in the email address (repl).
   var repl
   for ch in "xz-_#"
     if not ch in email
@@ -768,13 +973,18 @@ def ObfuscateEmail(email)
     raise ValueError("Unsupported email address")
   end
   
+  -- Modify the email address by inserting copies of the character to the 
+  -- email address.
   var obfuscated = email[:2] + repl + email[2:5] + repl + email[5:8] + repl +
     email[8:]
 
+  -- Construct JavaScript fragment that simplifies the modified email address
+  -- and inserts it. Also build the email address string using concetenation 
+  -- to give some further obfuscation.
   var res = "<script type='text/javascript'>" + 
             "document.write(('{}' + '{}').replace(/{}/g, ''));".format(
               obfuscated[:4], obfuscated[4:], repl) +
             "</script>";
-            
+  
   return res
 end

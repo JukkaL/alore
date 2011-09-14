@@ -3,6 +3,9 @@
 @title Class <tt>std::Float</tt>
 @index Float
 
+@implements Comparable<Float>
+@supertypes
+  
 <p>Instances of the <tt>Float</tt> class are floating-point numbers (floats). A
 float is an approximation of a real number, and can represent whole and
 fractional numbers, both small and large in magnitude. Internally
@@ -24,24 +27,39 @@ with up to 15 significant digits of accuracy.
 <p><tt>Float</tt> objects support the following operations (<tt>f</tt> below
 refers to a <tt>Float</tt> value):
 
-@op f + x
-@op f * x
-@desc Perform an addition or multiplication operation. If the right operand
-      <tt>x</tt> is an integer or a float, the result is a float.
-      If <tt>x</tt> is neither an integer or a float,
-      return <tt>x + n</tt> (or <tt>x * n</tt> for a multiplication operation)
-      instead.
+@op f + x @optype{Float + Float -> Float; Float + Int -> Float}
+@desc Perform a floating point addition operation. The right operand
+      <tt>x</tt> may be an integer or a float; the result is a float.
 @end
 
-@op f - x
-@op f / x
-@desc Perform a subtraction or a division operation. The right operands
+@op f + x @optype{Float + Addable<Float, T> -> T}
+@desc If <tt>x</tt> is neither an integer or a float,
+      return <tt>x + n</tt> (switch operands).
+@end
+
+@op f * x @optype{Float * Float -> Float; Float * Int -> Float}
+@desc Perform a floating point multiplication operation. The right operand
+      <tt>x</tt> may be an integer or a float; the result is a float.
+@end
+
+@op f * x @optype{Float * Multipliable<Float, T> -> T}
+@desc If <tt>x</tt> is neither an integer or a float,
+      return <tt>x * n</tt> (switch operands).
+@end
+
+@op f - x @optype{Float - Float -> Float; Float - Int -> Float}
+@desc Perform a subtraction operation. The right operands
       <tt>x</tt> may be an integer or a float, and the result is a float.
 @end
 
-@op f div x
-@desc Perform integer division. The result is <tt>f</tt> / <tt>x</tt> rounded down
-      to the nearest integer represented as a float. The right operand
+@op f / x @optype{Float / Float -> Float; Float / Int -> Float}
+@desc Perform a division operation. The right operands
+      <tt>x</tt> may be an integer or a float, and the result is a float.
+@end
+
+@op f div x @optype{Float div Float -> Int; Float div Int -> Int}
+@desc Perform integer division. The result is <tt>f</tt> / <tt>x</tt> rounded
+      down to the nearest integer represented as a float. The right operand
       <tt>x</tt> may be an integer or
       a float.
       @example
@@ -50,7 +68,7 @@ refers to a <tt>Float</tt> value):
       @end
 @end
 
-@op f mod x
+@op f mod x @optype{Float mod Float -> Float; Float mod Int -> Float}
 @desc Perform the modulus operation. The result is chosen so that
       (<tt>f div x) * x + f mod x</tt> == <tt>f</tt>
       (the equality is only
@@ -59,7 +77,7 @@ refers to a <tt>Float</tt> value):
       may be an integer or a float, and the result is a float.
 @end
 
-@op f ** x
+@op f ** x @optype{Float ** Float -> Float; Float ** Int -> Float}
 @desc Perform the exponentiation (power) operation. The right operand may be
       an integer or a float, and the result is a float. The operator
       follows the following rules in special conditions:
@@ -72,11 +90,11 @@ refers to a <tt>Float</tt> value):
       </ul>
 @end
 
-@op -f
+@op -f @optype{-Float -> Float}
 @desc Return the negation of a float.
 @end  
 
-@op f == x
+@op f == x @optype{Float == Object -> Boolean}
 @desc Floats can be compared for equality with arbitrary objects.
   A float object is equal to an equivalent float or integer value.
   If <tt>x</tt> is neither an integer nor a float,
@@ -86,7 +104,8 @@ refers to a <tt>Float</tt> value):
   @end
 @end
 
-@op f &lt; x, f &gt; x
+@op f &lt; x @optype{Float < Float -> Boolean; Float < Int -> Boolean}
+@op f &gt; x @optype{Float > Float -> Boolean; Float > Int -> Boolean}
 @desc Floats can be compared for order with floats and integers.
   If <tt>x</tt> is neither a float nor an integer,
   the operation is evaluated as <tt>x</tt> &gt; <tt>f</tt>

@@ -10,14 +10,16 @@ memory-based streams.
 
 <h2>Class <tt>MemoryStream</tt></h2>
 
-@class MemoryStream([contents])
+@inherits Stream
+@supertypes
+
+@class MemoryStream([contents as Str])
 @desc Construct a <tt>MemoryStream</tt> instance. If the contents argument is
       provided,
       the stream initially contains this string argument. Otherwise, the stream
       is initially empty. The stream pointer will always be initially 
       at the start of the stream. <tt>MemoryStream</tt> instances are always 
       buffered and support both reading and writing.
-      <tt>MemoryStream</tt> inherits from @ref{io::Stream}.
 @end
 
 <h3><tt>MemoryStream</tt> methods</h3>
@@ -25,21 +27,21 @@ memory-based streams.
 <p>MemoryStream supports all the @ref{Stream} methods and the following
 additional methods:
 
-@fun seek(n)
+@fun seek(n as Int)
 @desc Move the stream pointer to the specified index. 0 refers to the start
       of the stream, 1 to the position between the first and the second
       character, and so on.
 @end
 
-@fun pos()
+@fun pos() as Int
 @desc Return the current stream pointer index.
 @end
 
-@fun size()
+@fun size() as Int
 @desc Return the length of the stream contents.
 @end
 
-@fun contents()
+@fun contents() as Str
 @desc Return the contents of the stream as a string. This method works also if
       the stream is closed.
 @end

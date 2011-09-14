@@ -170,9 +170,12 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 
 <h2>Class <tt>PackStream</tt></h2>
 
+@inherits Stream
+@supertypes
+
 @class PackStream(stream[, packer][, bufMode])
 @desc Construct a <tt>PackStream</tt> instance that uses another stream for 
-      input/output. Inherits from @ref{Stream}. The <i>packer</i> argument,
+      input/output. The <i>packer</i> argument,
       if present, must be a packer object. If omitted, the big endian packer
       will be used. The <i>bufMode</i> argument may be @ref{Buffered},
       @ref{LineBuffered} or @ref{Unbuffered}. If omitted, full buffering will
@@ -238,12 +241,14 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 
 <h2>Class <tt>PackFile</tt></h2>
 
+@inherits PackStream
+@supertypes
+
 @class PackFile(path[, packer], ...)
 @desc Open a binary file for reading and/or writing. The supported additional
       arguments are the same as for @ref{io::File}. The <i>packer</i>
       argument, if present, must be a packer object (see above). If omitted,
       the big endian packer will be used.
-      <p><tt>PackFile</tt> inherits from @ref{PackStream}.
       
       <p>Example:
       @example

@@ -16,27 +16,27 @@ values are used as conditions in if statements and loops.
 
 <h2>Operations</h2>
 
-@op Str(boolean)
-@desc Return the string <tt>"True"</tt> or <tt>"False"</tt>.
-@end
-
-@op boolean == x
+@op boolean == x @optype{Boolean == Object -> Boolean}
 @desc A boolean is equal only to itself.
 @end
 
-@op not boolean
+@op not boolean @optype{not Boolean -> Boolean}
 @desc Return the boolean negation of the value.
 @end
 
-@op b1 and b2
+@op b1 and b2 @optype{Boolean and Boolean -> Boolean}
 @desc Return the boolean <i>and</i> of the booleans <tt>b1</tt> and
       <tt>b2</tt>. The right
       operand expression if evaluated only if <tt>b1</tt> evaluates to
       <tt>True</tt>.
 @end
 
-@op b1 or b2
+@op b1 or b2 @optype{Boolean or Boolean -> Boolean}
 @desc Return the boolean <i>or</i> of the booleans <tt>b1</tt> and
       <tt>b2</tt>. The right operand
       expression is evaluated only if <tt>b1</tt> evaluates to <tt>False</tt>.
+@end
+
+@op Str(boolean)
+@desc Return the string <tt>"True"</tt> or <tt>"False"</tt>.
 @end

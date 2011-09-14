@@ -20,14 +20,14 @@ and <tt>interface</tt> constructs.
 
 <h2>Methods</h2>
 
-@fun members()
+@fun members() as Array<Str>
 @desc Return an array of all defined public member names for the type. The
       order of the names is arbitrary. The array includes both members defined
       directly in the type and any inherited members.
       <b>Not implemented yet</b>
 @end
 
-@fun supertype()
+@fun supertype() as Type
 @desc Return the direct superclass (if the type is a class) or superinterface
       (if the type is an interface) of the type, or <tt>nil</tt> if none
       exists.
@@ -48,7 +48,7 @@ and <tt>interface</tt> constructs.
   @end
 @end
 
-@op x is type
+@op x is type @optype{Object is Type}
 @desc Return a boolean indicating whether <tt>x</tt> is an instance of 
   <tt>type</tt> or a subtype of <tt>type</tt>. If <tt>x</tt> is <tt>nil</tt>,
   return <tt>False</tt>.

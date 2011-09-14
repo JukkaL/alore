@@ -11,11 +11,16 @@ additions and removals is not significant &#8212; a set object only records
 which objects are currently included in the set, but the objects have no
 specific order.
 
+@h2 Class <tt>Set&lt;T&gt;</tt>
+
+@implements Iterable<T>
+@supertypes
+
 @class Set()
 @desc Construct an empty set. 
 @end
 
-@class Set(iterable)
+@class Set(iterable as Iterable<T>)
 @desc Construct and initialize a set. Iterate over the contents of the
       argument, which must be an iterable object, and add them to the set.
       Example:
@@ -24,48 +29,48 @@ specific order.
       @end
 @end
 
-<h2><tt>Set</tt> methods</h2>
+<h3><tt>Set</tt> methods</h3>
 
-@fun length()
+@fun length() as Int
 @desc Return the number of objects in the set.
 @end
 
-@fun add(object)
+@fun add(object as T)
 @desc Add an object to the set. If the object is already in the set, this
     operation does nothing.
 @end
     
-@fun remove(object)
+@fun remove(object as T)
 @desc Remove an object from the set. Do nothing if the object is not included
       in the set.
 @end
 
-@fun iterator()
+@fun iterator() as Iterator<T>
 @desc Return an iterator object that iterates over all the objects in the set
   in an arbitrary order.
 @end
 
-@fun copy()
+@fun copy() as Set<T>
 @desc Return a copy of the set with the same items as the original set.
   @note Only item references are copied to the new set
     &#8212; the items itself are not duplicated.
   @end
 @end
 
-<h2><tt>Set</tt> operations</h2>
+<h3><tt>Set</tt> operations</h3>
 
 <p><tt>Set</tt> objects support the following operations:
 
-@op x in set
+@op x in set @optype{Object in Set<T> -> Boolean}
 @desc Test whether a set contains a specific object.
 @end
 
-@op for x in set
+@op for x in set @optype{for T in Set<T>}
 @desc Set contents can be iterated with a for loop. The objects are
       iterated in an arbitrary order.
 @end
 
-@op set1 == set2
+@op set1 == set2 @optype{Set<T> == Object}
 @desc Compare sets for equality. Two sets are equal if they contain the same
   objects.
 @end

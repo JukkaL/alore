@@ -3,6 +3,9 @@
 @title Class <tt>std::Tuple</tt>
 @index Tuple
 
+@implements Iterable
+@supertypes
+
 @class-hidden Tuple
 
 <p>Instances of the <tt>Tuple</tt> class are fixed-length, immutable sequences
@@ -26,11 +29,11 @@ tuple:
 
 <h2><tt>Tuple</tt> methods</h2>
 
-@fun length()
+@fun length() as Int
 @desc Return the length of the tuple.
 @end
 
-@fun iterator()
+@fun iterator() as Iterator<Object>
 @desc Return an iterator object that can be used to sequentially iterate over
   the tuple items, starting from the first item.
 @end

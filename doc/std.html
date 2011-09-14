@@ -116,12 +116,12 @@ and its services are used by practically every Alore program.
       break. This is a shorthand for <tt>io::StdOut.writeLn</tt>.
 @end
 
-@fun ReadLn()
+@fun ReadLn() as Str
 @desc Read a line from @ref{StdIn}, and return the line without the line 
       ending. This is a shorthand for <tt>io::StdIn.readLn</tt>.
 @end
 
-@fun Repr(object)
+@fun Repr(object) as Str
 @desc Return a representation of the argument as a string. This is similar to
     the <tt>Str</tt> constructor, but this function may return
     more detailed information. <tt>Repr</tt> works with objects of all types.
@@ -131,17 +131,18 @@ and its services are used by practically every Alore program.
     indicates the type of the object.
 @end
   
-@fun Chr(n)
+@fun Chr(n as Int) as Str
 @desc Return a single-character string with character code <tt>n</tt>.
     The valid range of values for <tt>n</tt> is from 0 to 65535, inclusive.
 @end
   
-@fun Ord(ch)
+@fun Ord(ch as Str) as Int
 @desc Return the character code of a single-character string. The return value
      is an integer in the range from 0 to 65535, inclusive.
 @end
 
-@fun Abs(x)
+@fun Abs(x as Int) as Int
+@fun Abs(x as Float) as Float
 @desc Return the absolute value of an integer or a float.
 @end
 
@@ -176,7 +177,7 @@ and its services are used by practically every Alore program.
     earlier than the second argument in the sorted sequence.
 @end
 
-@fun Reversed(iterable)
+@fun Reversed<T>(iterable as Iterable<T>) as Array<T>
 @desc Return an array that has all the items in the iterable in reverse
       order. Examples:
       @example
@@ -186,7 +187,7 @@ and its services are used by practically every Alore program.
       @end
 @end
 
-@fun Hash(object)
+@fun Hash(object) as Int
 @desc Return the hash value of an object as an integer.
     If the object has the <tt>_hash()</tt> method, return the result of
     calling that method with no arguments. This method should return an
@@ -202,7 +203,7 @@ and its services are used by practically every Alore program.
     2**29.
 @end
   
-@fun Exit([value])
+@fun Exit([value as Int])
 @desc Exit the program. The optional argument specifies an integer return value
     to the operating system. The function is implemented by raising an
     <tt>ExitException</tt>. It can be caught using a <tt>try</tt> statement
@@ -240,6 +241,32 @@ and its services are used by practically every Alore program.
 @desc The carriage return character (code 13).
 @end
 
+<h2>Interfaces</h2>
+
+<!--
+    @link interfaces.html
+    -->
+    
+<dl>
+  <dt><b>@href{Sequence}</b>
+  <dd>A sequence of values
+  
+  <dt><b>@href{Iterable}</b>
+  <dd>An object that supports iteration
+  
+  <dt><b>@href{Iterator}</b>
+  <dd>An iterator object
+  
+  <dt><b>@href{Comparable}</b>
+  <dd>An object that supports comparisons using &lt; and &gt;
+  
+  <dt><b>@href{Addable}</b>
+  <dd>An object that supports addition
+  
+  <dt><b>@href{Multipliable}</b>
+  <dd>An object that supports multiplication  
+</dl>
+
 <h2>Exceptions</h2>
 
 <p>The exception classes in the <tt>std</tt> module form this inheritance
@@ -273,7 +300,7 @@ hierarchy:
 <p>These exception classes have similar functionality inherited from
 <tt>Exception</tt>:
 
-@class Exception([message])
+@class Exception([message as Str])
 @desc The base class of all exceptions. <tt>Exception</tt> has a single
       member, 
       <tt>message</tt>, that contains the error message argument given to the 
@@ -281,7 +308,7 @@ hierarchy:
       it was <tt>nil</tt>.
 @end
 
-@class ValueError([message])
+@class ValueError([message as Str])
 @desc Raised when the input values of an operation or a function have invalid
     types or values. Typically, <tt>ValueError</tt> signifies a programming 
     error, but
@@ -289,66 +316,66 @@ hierarchy:
     of <tt>ValueError</tt> indicate more specific conditions.
 @end
     
-@class TypeError([message])
+@class TypeError([message as Str])
 @desc Raised when the inputs of an operation or a function have unsupported
     types. Note that <tt>MemberError</tt> will be often raised in similar 
     situations.
 @end
 
-@class MemberError([message])
+@class MemberError([message as Str])
 @desc Raised when an object does not have a requested member or the member
     being assigned to cannot be modified.
 @end
 
-@class ArithmeticError([message])
+@class ArithmeticError([message as Str])
 @desc Raised when an arithmetic operation or function receives invalid inputs.
     A typical example is division by zero.
 @end
 
-@class IndexError([message])
+@class IndexError([message as Str])
 @desc Raised when the index of a sequence object such as an array is out of
     bounds or otherwise invalid.
 @end
 
-@class KeyError([message])
+@class KeyError([message as Str])
 @desc Raised when a key of a mapping object is not present or is otherwise
       invalid.
 @end
 
-@class CastError([message])
+@class CastError([message as Str])
 @desc Raised when a cast operation fails.
 @end
 
-@class ResourceError([message])
+@class ResourceError([message as Str])
 @desc Raised when a resource is exhausted. This exception can be triggered by
     lack of disk space or by too many open files, for example.
 @end
 
-@class MemoryError([message])
+@class MemoryError([message as Str])
 @desc Raised when a memory allocation request cannot be fulfilled. This
     exception may also be raised if only a specific kind of memory pool is
     exhausted, even though there might be memory available for other purposes.
 @end
 
-@class RuntimeError([message])
+@class RuntimeError([message as Str])
 @desc Raised when there is a run-time error during execution that does not have
       a more specific exception class.
 @end
 
-@class InterruptException([message])
+@class InterruptException([message as Str])
 @desc Raised when the user interrupts the program by pressing Ctrl+C.
 @end
 
 <h3><tt>ExitException</tt></h3>
 
-@class ExitException(code)
+@class ExitException(code as Int)
 @desc Raised by the <tt>std::Exit</tt> function. The argument specifies the 
       integer return value reported to the operating system. 
 @end
 
 <h3><tt>IoError</tt></h3>
 
-@class IoError([message[, error]])
+@class IoError([message as Str[, error as Constant]])
 @desc Raised as a response to an operating system error. This
       exception can be raised by several modules such as @ref{io} and @ref{os}.
       Typical reasons
@@ -365,7 +392,7 @@ hierarchy:
 
 <p><tt>IoError</tt> also has the following member constants:
 
-@var code
+@var code as Constant
 @desc The symbolic constant representing the error. If an integer value was
       passed to the constructor, <tt>IoError</tt> tries to map the integer
       to a symbolic constant using the @ref{errno} module; failing that, or
@@ -373,7 +400,7 @@ hierarchy:
       value is <tt>nil</tt>.
 @end
 
-@var errno
+@var errno as Int
 @desc The integer <tt>errno</tt> value representing the error. If a symbolic
       constant was passed to the constructor, <tt>IoError</tt> tries to map the
       constant to an integer value using the @ref{errno} module; failing that,
