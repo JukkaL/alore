@@ -33,21 +33,25 @@ def Main(args)
     StdErr.writeLn("Usage: check.alo [-t] FILE")
     Exit(2)
   end
-  
-  -- Read the contents of the main source file.
-  var fnam = args[0]
-  var text = File(fnam).read()
-  
-  -- Determine the file name to show for the main program.
-  var showFnam = fnam
-  if showMain
-    showFnam = "main"
-  end
+ 
+  try  
+    -- Read the contents of the main source file.
+    var fnam = args[0]
+    var text = File(fnam).read()
 
-  try
+    -- Determine the file name to show for the main program.
+    var showFnam = fnam
+    if showMain
+      showFnam = "main"
+    end
+
     -- Perform type checking for the program. Ignore return value.
     var trees, symtable, typeinfos, types = 
-      Analyse(text, showFnam, True, nil, True)
+        Analyse(text, showFnam, True, nil, True)
+  except e is IoError
+    -- IO error reading a source file or directory. Display error message.
+    StdErr.writeLn("alore: " + e.message)
+    Exit(2)
   except e is CompileError
     -- Type checking failed. Display error messages.
     for m in e.messages
