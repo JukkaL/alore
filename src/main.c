@@ -348,10 +348,11 @@ static int PerformTypeCheck(void)
 
     GetCheckerPath(checkerPath);
 
-    /* FIX: Support spaces in path names properly. */
-
+    /* FIX: Support double quotes in path names properly. */
+    
     /* Build the command line for running the checker. */
-    sprintf(cmd, "%s %s %s", AInterpreterPath, checkerPath, AProgramPath);
+    sprintf(cmd, "\"%s\" \"%s\" \"%s\"", AInterpreterPath, checkerPath,
+            AProgramPath);
     
     status = system(cmd);
 
