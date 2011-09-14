@@ -2,6 +2,7 @@ module dyncheck
 
 import types
 import nodes
+import checker
 
 
 -- TODO

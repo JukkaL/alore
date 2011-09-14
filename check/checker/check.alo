@@ -4,7 +4,6 @@ import nodes
 import types
 import semanal -- for SymbolTable
 import errors
-import dyncheck -- FIX bad
 
 
 -- Flag signifying inverted relational operation (>= or <=).
@@ -594,7 +593,7 @@ class TypeChecker is NodeVisitor<Typ>
         -- the type to supertypes, up to and including the type containing the
         -- overridden definition.
         try
-          dyncheck::MapTypeToSupertype(type, info, n.info)
+          MapTypeToSupertype(type, info, n.info)
         except SupertypeMapError
           self.msg.incompleteTypeVarMatch(member, context)
         end

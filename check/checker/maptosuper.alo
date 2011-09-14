@@ -1,4 +1,4 @@
-module dyncheck
+module checker
 
 import types
 import nodes
