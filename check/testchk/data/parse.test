@@ -162,6 +162,7 @@ AloreFile:1(
 a >; 2
 a +
    3
+a +; 4
 [out]
 AloreFile:1(
   ExpressionStmt:1(
@@ -173,7 +174,12 @@ AloreFile:1(
     OpExpr:2(
       +
       NameExpr(a)
-      IntExpr(3))))
+      IntExpr(3)))
+  ExpressionStmt:4(
+    OpExpr:4(
+      +
+      NameExpr(a)
+      IntExpr(4))))
 
 [case testParseHeader]
 module foo::bar
@@ -1457,3 +1463,27 @@ AloreFile:1(
         CastExpr:2(
           NameExpr(b)
           NameExpr(Str))))))
+
+[case testMultipleSemicolons]
+1 ; ; 2
+2 > ; ; 3
+f(2 > ; ; 3)
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    IntExpr(1))
+  ExpressionStmt:1(
+    IntExpr(2))
+  ExpressionStmt:2(
+    OpExpr:2(
+      >
+      IntExpr(2)
+      IntExpr(3)))
+  ExpressionStmt:3(
+    CallExpr:3(
+      NameExpr(f)
+      Args(
+        OpExpr:3(
+          >
+          IntExpr(2)
+          IntExpr(3))))))

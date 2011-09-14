@@ -342,7 +342,7 @@ private class Lexer
   -- Analyse a statement break (line break or a semicolon).
   def lexBreak() as void
     var s = match(breakExp)
-    if ignoreBreak() and s != ";"
+    if ignoreBreak()
       addPre(s)
     else
       addToken(Break(s))
