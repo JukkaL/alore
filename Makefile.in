@@ -11,6 +11,7 @@ incdir = @includedir@
 mandir = @mandir@
 alorelibdir = @alorelibdir@
 aloreincdir = @aloreincdir@
+aloredatadir = @aloredatadir@
 
 CC = @CC@
 LD = $(CC)
@@ -181,6 +182,23 @@ install: alore alorec
 	cp alore $(bindir)
 	cp alorec $(bindir)
 	cp lib/libalorec.a $(libdir)
+	mkdir -p "$(aloredatadir)/check"
+	cp check/check.alo "$(aloredatadir)/check"
+	@echo "Copy checker modules:"
+	@for modp in check/*; do \
+	  mod=`basename $$modp`; \
+	  if [ -d $$modp ] && [ $$mod != testchk ] && [ $$mod != tmp ]; then \
+	    echo "  $$modp -> $(aloredatadir)/$$modp"; \
+	    mkdir -p "$(aloredatadir)/$$modp"; \
+	    cp $$modp/*.alo "$(aloredatadir)/$$modp"; \
+	  fi; \
+	done
+	@echo "Copy library stubs:"
+	@for modp in stubs/*; do \
+	  echo "  $$modp -> $(aloredatadir)/$$modp"; \
+	  mkdir -p "$(aloredatadir)/$$modp"; \
+	  cp $$modp/*.alo "$(aloredatadir)/$$modp"; \
+	done
 	if test $(PLATFORM) != windows; then \
 	  if [ ! -d $(mandir) ]; then mkdir -p $(mandir); fi; \
 	  if [ ! -d $(mandir)/man1 ]; then mkdir -p $(mandir)/man1; fi; \
