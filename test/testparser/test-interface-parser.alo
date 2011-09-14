@@ -18,7 +18,7 @@ class InterfaceParserSuite is Suite
 end
 
 
-interface If1a<def ()>
+interface If1a<T is def ()>
 end
 
 

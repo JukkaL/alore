@@ -107,7 +107,7 @@ class AnnotationsSuite is Suite
   end
   
   def testComplexFunctionSignature()
-    var f = def (x, y = def () as X; end as 1, *z) as Z
+    var f = def (x, y = def () as Int; end as Int, *z) as Int
               return x, y
             end as xxx
     var a, b = f(1)
@@ -179,7 +179,7 @@ class AnnotationsSuite is Suite
   def testComplexInlineAnnotation()
     var a = [1, 2, 3] as <Array<Map<Int, Str>, (Int, Str)>> + [4]
     AssertEqual(a, [1, 2, 3, 4])
-    var b = [1, 2] as <((([[[A]]])))> + [3]
+    var b = [1, 2] as <(((A,),),)> + [3]
     AssertEqual(b, [1, 2, 3])
   end
   
@@ -231,7 +231,7 @@ private class Ann1<T>
 end
 
 
-private class Ann2<def ()> is Ann1<def ()>
+private class Ann2<T is def ()> is Ann1<def ()>
   var x
 
   def p as def ()
@@ -257,7 +257,7 @@ private const C5, C6 = 2, 3 as def ()
 
 private var I = [1, 1].count(1) as <def ()>
 private var I2
-I2 = 5 as <def> - 1
+I2 = 5 as <def ()> - 1
 
 
 private def F3(x = (1, 3) as <def()>[1])
@@ -265,7 +265,7 @@ private def F3(x = (1, 3) as <def()>[1])
 end
 
 
-private def FG<A<X>, (((def ())))>(x as def ()) as def ()
+private def FG<T is A<X>, S is (((def (),),),)>(x as def ()) as def ()
   return x + 7
 end
 
@@ -276,24 +276,24 @@ private def Isect1(x as X) or
 end
 
 
-private def Isect2(x as X, y as (Array<<>>)) or
+private def Isect2(x as X, y as (Array<Array<Int>>, Int)) or
                   (x as def (), y as def ())
   return x + y
 end
 
 
-private def Isect3(x as X) as def (<>) or
-                  (x as Y) as def (<>)
+private def Isect3(x as X) as def (Array<Int>) or
+                  (x as Y) as def (Array<Int>)
   return x + 4
 end
 
-private def Isect4<def(), def(<>)>(x as X) or
-                  <def(), def(<>)>(x as Y)
+private def Isect4<T is def(), S is def(Array<Int>)>(x as X) or
+                  <T is def(), S is def(Array<Int>)>(x as Y)
   return x + 5
 end
 
 private def Isect5(a as X, b = 1 as Y) or
-                  (a as Y, b= as def (<>))
+                  (a as Y, b= as def (Array<Int>))
   return a + b + 1
 end
 
