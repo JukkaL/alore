@@ -79,6 +79,8 @@ def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>,
       StdErr.writeLn("  ...")
     end
     
+    StdErr.writeLn()
+    
     if firstDiff >= 0 and firstDiff < actual.length() and
        (expected[firstDiff].length() >= MinLineLengthForAlignment or
         actual[firstDiff].length() >= MinLineLengthForAlignment)
@@ -100,11 +102,16 @@ end
 --        ^
 --
 -- If s1 and s2 are long, only display a fragment of the strings around the
--- first difference.
+-- first difference. If s1 is very short, do nothing.
 def ShowAlignMessage(s1 as Str, s2 as Str)
+  -- Seeing what went wrong is trivial even without alignment if the expected
+  -- string is very short. In this case do nothing to simplify output.
+  if s1.length() < 4
+    return
+  end
+
   var maxw = 72 -- Maximum number of characters shown
   
-  StdErr.writeLn()
   StdErr.writeLn('Alignment of first line difference:')
   
   var trunc = False
