@@ -1,6 +1,6 @@
 module thread
 
-class Thread as <T>
+class Thread<T>
   def create(function as def () as T)
   end
   
