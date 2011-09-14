@@ -18,13 +18,15 @@ Alore is licensed under the terms of the MIT license.  See the file
 LICENSE.txt in the distribution.
 
 
-Quick start (Linux, Unix, OS X)
--------------------------------
+Quick start (Linux, OS X, Unix-like)
+------------------------------------
 
 To get started under a Unix-like operating system, type
 
   ./configure
   make
+
+You need a basic C development tool chain for the build.
 
 You can now run the Alore interpreter as ./alore. To also install Alore
 under /usr/local:
@@ -32,7 +34,7 @@ under /usr/local:
   su root
   make install
 
-(or "sudo make install" on some operating systems)
+(or "sudo make install", depending on your configuration)
 
 
 Quick start (Windows)
@@ -83,7 +85,7 @@ This creates the executable "program" (or "program.exe").
 
 Note that the source code is directly included in the executable file.
 
-  
+
 Software requirements
 ---------------------
 
@@ -141,9 +143,9 @@ Known bugs and limitations
 
 A partial list of major bugs and limitations in the current Alore release:
 
- * limited testing for some operating systems
+ * not much testing on some supported operating systems
  * big-endian architectures not supported
  * incomplete support for 64-bit operating systems
-   * 64-bit Windows not tested
+   * 64-bit Windows builds not tested
  * limited support for non-ASCII paths and file names
- * file owners cannot be accessed in Windows
+ * file owner information cannot be accessed in Windows
