@@ -12,6 +12,7 @@ import string
 import reflect
 import __testc
 import time
+import re
 
 
 class AssertionFailure is Exception
@@ -280,7 +281,8 @@ def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int,
             for s in Reversed(tb)
               StdErr.writeLn("  ", s)
             end
-            StdErr.writeLn("{}{}".format(TypeOf(e), msg))
+            var type = Subst(Str(TypeOf(e)), "^unittest::", "")
+            StdErr.writeLn("{}{}".format(type, msg))
             StdErr.writeLn()
             StdErr.writeLn("{} failed".format(name))
             StdErr.writeLn()
