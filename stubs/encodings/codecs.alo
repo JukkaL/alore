@@ -1,0 +1,136 @@
+module encodings
+
+
+const Strict, Unstrict
+const Bom = "" as Str -- FIX initialize
+
+
+interface Encoding
+  def create(strictness= as Constant)
+  def encode(s as Str) as Str
+  def decode(s as Str) as Str
+  def unprocessed() as Str
+end
+
+
+private class BaseEncoding implements Encoding
+  def create(strictness = Strict as Constant)
+  end
+
+  def encode(s as Str) as Str
+  end
+  
+  def decode(s as Str) as Str
+  end
+  
+  def unprocessed() as Str
+  end
+end
+
+
+class Ascii is BaseEncoding
+end
+
+class Utf8 is BaseEncoding
+end
+
+class Utf16 is BaseEncoding
+end
+
+class Utf16Le is BaseEncoding
+end
+
+class Utf16Be is BaseEncoding
+end
+
+class Iso8859_1 is BaseEncoding 
+end
+const Latin1 = Iso8859_1 as def (Constant=) as Encoding
+
+class Iso8859_2 is BaseEncoding
+end
+const Latin2 = Iso8859_2 as def (Constant=) as Encoding
+
+class Iso8859_3 is BaseEncoding
+end
+const Latin3 = Iso8859_3 as def (Constant=) as Encoding
+
+class Iso8859_4 is BaseEncoding
+end
+const Latin4 = Iso8859_4 as def (Constant=) as Encoding
+
+class Iso8859_5 is BaseEncoding
+end
+
+class Iso8859_6 is BaseEncoding
+end
+
+class Iso8859_7 is BaseEncoding
+end
+
+class Iso8859_8 is BaseEncoding
+end
+
+class Iso8859_9 is BaseEncoding
+end
+const Latin5 = Iso8859_9 as def (Constant=) as Encoding
+
+class Iso8859_10 is BaseEncoding
+end
+const Latin6 = Iso8859_10 as def (Constant=) as Encoding
+
+class Iso8859_11 is BaseEncoding
+end
+
+class Iso8859_13 is BaseEncoding
+end
+const Latin7 = Iso8859_13 as def (Constant=) as Encoding
+
+class Iso8859_14 is BaseEncoding
+end
+const Latin8 = Iso8859_14 as def (Constant=) as Encoding
+
+class Iso8859_15 is BaseEncoding
+end
+const Latin9 = Iso8859_15 as def (Constant=) as Encoding
+
+class Iso8859_16 is BaseEncoding
+end
+const Latin10 = Iso8859_16 as def (Constant=) as Encoding
+
+class Windows1250 is BaseEncoding
+end
+
+class Windows1251 is BaseEncoding
+end
+
+class Windows1252 is BaseEncoding
+end
+
+class Cp437 is BaseEncoding
+end
+
+class Cp850 is BaseEncoding
+end
+
+class Koi8R is BaseEncoding
+end
+
+class Koi8U is BaseEncoding
+end
+
+
+def Decode(string as Str, enc as def (Constant=) as Encoding, 
+           strictness = Strict as Constant)
+end
+
+def Encode(string as Str, enc as def (Constant=) as Encoding, 
+           strictness = Strict as Constant)
+end
+
+
+class EncodeError is ValueError
+end
+
+class DecodeError is ValueError
+end

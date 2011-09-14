@@ -15,11 +15,12 @@ import set
 private const FormatSymbolMap = 
   Map(Date : Set(["Y", "M", "D", "W"]), 
       Time : Set(["d", "h", "m", "s", "p", "P", "H"]),
-      DateTime : Set(["Y", "M", "D", "W", "h", "m", "s", "p", "P", "H"]))
+      DateTime : Set(["Y", "M", "D", "W", "h", "m", "s", "p", "P", "H"])) as
+        Map<Type, Set<Str>>
 
 
-private def FormatDateTime(cl, d, f)
-  var l = []
+private def FormatDateTime(cl as Type, d as IDateTime, f as Str) as Str
+  var l = [] as <Str>
   var symbols = FormatSymbolMap[cl]
   var is12Hour = False
   
@@ -40,7 +41,7 @@ private def FormatDateTime(cl, d, f)
   while i < f.length()
     if f[i] in symbols
       var n = 1
-      var fract = nil
+      var fract = nil as Int
       while i + n < f.length() and f[i + n] == f[i]
         n += 1
       end
@@ -134,7 +135,7 @@ private def FormatDateTime(cl, d, f)
        end
       i += 1
     elif f[i] == "[" and (cl == Time or cl == DateTime)
-      var am, pm
+      var am, pm as (Str, Str)
       am, pm, i = ParseAmPm(f, i)
       if d.hour < 12
         l.append(am)

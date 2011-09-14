@@ -63,7 +63,7 @@ typedef struct AFileInterface_ {
 int ALoadAloreProgram(struct AThread_ **t, const char *file,
                       const char *interpreter, const char *modulePath,
                       ABool isStandalone, int argc, char **argv,
-                      AFileInterface *iface, unsigned long maxHeap);
+                      AFileInterface *iface, Asize_t maxHeap);
 int AEndAloreProgram(struct AThread_ *t, AValue mainReturnValue);
 
 

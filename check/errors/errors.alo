@@ -1,0 +1,310 @@
+module errors
+
+-- Facilities for reporting errors in Alore parser, semantic analyser and
+-- type checker.
+
+import os
+
+
+-- Representation of a single error message.
+private class ErrorInfo
+  -- Description of a sequence of imports that refer to the source file
+  -- related to this error. Each item is a (path, line number) tuple. 
+  const importCtx        as Array<(Str, Int)>
+  -- The source file that was the source of this error.
+  const file             as Str
+  -- The name of the type in which this error is located at.
+  const type             as Str     -- Unqualified, may be nil
+  -- It the error located within an interface?
+  const isInterface      as Boolean
+  -- The name of the function or member in which this error is located at.
+  const functionOrMember as Str     -- Unqualified, may be nil
+  -- The line number related to this error within file.
+  const line             as Int     -- -1 if unknown
+  -- The error message.
+  const message          as Str
+  
+  -- Return "interface" or "class" depending on the context of the error.
+  -- Call this method only if the type member != nil.
+  def typeId() as Str
+    if self.isInterface
+      return "interface"
+    else
+      return "class"
+    end
+  end
+end
+
+
+-- Container that generates and keeps tracks of compile errors and the current
+-- error context.
+class Errors
+  -- List of generated error messages.
+  private var errorInfo = []         as Array<ErrorInfo>
+  
+  -- Current error context.
+  -- Import context, as a list of (path, line) pairs.
+  private var importCtx = []         as Array<(Str, Int)>
+  -- Path name prefix that is removed from all paths, if set.
+  private var ignorePrefix = nil as Str
+  private var file = nil             as Str     -- Path to current file.
+  -- Short name of current type (or nil).
+  private var typeName = nil         as Str
+  -- Is the current type an interface?
+  private var isInterface = False    as Boolean
+  -- Short name of current function or member (or nil). 
+  private var functionOrMember = nil as Str
+  
+  def create() as void
+  end
+  
+  -- Set path prefix that will be removed from all paths.
+  def setIgnorePrefix(prefix as Str)
+    prefix = NormPath(prefix)
+    -- Add separator to the end, if not given.
+    if BaseName(prefix) != ''
+      prefix += Separator
+    end
+    self.ignorePrefix = prefix
+  end
+  
+  -- Set the path of the current file.
+  def setFile(file as Str)
+    file = NormPath(file)
+    -- Remove ignored prefix, if set and present.
+    if self.ignorePrefix != nil and file.startsWith(self.ignorePrefix)
+      file = file[self.ignorePrefix.length():]
+    end
+    self.file = file
+  end
+  
+  -- Set the current function or member short name (it can be nil).
+  def setFunction(name as Str)
+    self.functionOrMember = name
+  end
+  
+  -- Set the short name of the current type (it can be nil).
+  def setType(name as Str, isInterface as Boolean)
+    self.typeName = name
+    self.isInterface = isInterface
+  end
+  
+  -- Add a (file, line) tuple to the import context.
+  def pushImportContext(path as Str, line as Int)
+    self.importCtx.append((NormPath(path), line))
+  end
+  
+  -- Remove the topmost item from the import context.
+  def popImportContext() as void
+    self.importCtx.removeAt(-1)
+  end
+  
+  -- Return a copy of the import context.
+  def importContext() as Array<(Str, Int)>
+    return self.importCtx.copy()
+  end
+  
+  -- Replace the entire import context with a new value.
+  def setImportContext(ctx as Array<(Str, Int)>)
+    self.importCtx = ctx.copy()
+  end
+  
+  -- Report a message at the given line using the current error context.
+  def report(line as Int, message as Str)
+    var info = ErrorInfo(importContext(), self.file, self.typeName, 
+                         self.isInterface, self.functionOrMember, 
+                         line, message)
+    self.errorInfo.append(info)
+  end
+  
+  -- Return the number of generated messages.
+  def numMessages() as Int
+    return self.errorInfo.length()
+  end
+  
+  -- Are there any generated errors?
+  def isErrors() as Boolean
+    return self.errorInfo.length() > 0
+  end
+  
+  -- Raise a CompileError with the generated messages. Render the messages
+  -- suitable for displaying.
+  def raiseError() as void
+    raise CompileError(messages())
+  end
+  
+  -- Return a string array that represents the error messages in a form
+  -- suitable for displaying to the user.
+  def messages() as Array<Str>
+    var a = [] as <Str>
+    var errors = renderMessages(sortMessages(self.errorInfo))
+    errors = removeDuplicates(errors)
+    for file, line, message in errors
+      var s as Str
+      if file != nil
+        if line != nil and line >= 0
+          s = "{}, line {}: {}".format(file, line, message)
+        else
+          s = "{}: {}".format(file, message)
+        end
+      else
+        s = message
+      end
+      a.append(s)
+    end
+    return a
+  end
+  
+  -- Translate the messages into a sequence of (path, line, message) tuples.
+  -- The rendered sequence includes information about error contexts. The path
+  -- item may be nil. If the line item is negative, the line number is not
+  -- defined for the tuple.
+  private def renderMessages(errors as Array<ErrorInfo>) as 
+                                               Array<(Str, Int, Str)>
+    var result = [] as <(Str, Int, Str)> -- (path, line, message)
+    
+    var prevImportContext = [] as <(Str, Int)>
+    var prevFunctionOrMember = nil as Str
+    var prevType = nil as Str
+    
+    for e in errors
+      -- Report module import context, if different from previous message.
+      if e.importCtx != prevImportContext
+        var last = e.importCtx.length() - 1
+        var i = last
+        while i >= 0
+          var path, line = e.importCtx[i]
+          var fmt = "In module imported in {}, line {}"
+          if i < last
+            fmt =   "                   in {}, line {}"
+          end
+          if i > 0
+            fmt += ","
+          else
+            fmt += ":"
+          end
+          result.append((nil, -1, fmt.format(path, line)))
+          i -= 1
+        end
+      end
+
+      -- Report context within a source file.
+      if e.functionOrMember != prevFunctionOrMember or e.type != prevType
+        if e.functionOrMember == nil
+          if e.type == nil
+            result.append((e.file, -1, "At top level:"))
+          else
+            result.append(
+              (e.file, -1, "In {} ""{}"":".format(e.typeId(), e.type)))
+          end
+        else
+          if e.type == nil
+            result.append(
+              (e.file, -1, "In function ""{}"":".format(e.functionOrMember)))
+          else
+            result.append(
+              (e.file, -1, "In member ""{}"" of {} ""{}"":".format(
+               e.functionOrMember, e.typeId(), e.type)))
+          end
+        end
+      elif e.type != prevType
+        if e.type == nil
+          result.append((e.file, -1, "At top level:"))
+        else
+          result.append(
+            (e.file, -1, "In {} ""{}"":".format(e.typeId(), e.type)))
+        end
+      end
+      
+      result.append((e.file, e.line, e.message))
+      
+      prevImportContext = e.importCtx
+      prevFunctionOrMember = e.functionOrMember
+      prevType = e.type
+    end
+    
+    return result
+  end
+  
+  -- Sort an array of error messages locally by line number, i.e. sort a
+  -- run of consecutive messages with the same file context by line number,
+  -- but otherwise retain the general ordering of the messages.
+  private def sortMessages(errors as Array<ErrorInfo>) as Array<ErrorInfo>
+    var result = [] as <ErrorInfo>
+    var i = 0
+    while i < errors.length()
+      var i0 = i
+      -- Find neighbouring errors with the same context and file.
+      while i + 1 < errors.length() and 
+               errors[i + 1].importCtx == errors[i].importCtx and
+               errors[i + 1].file == errors[i].file
+        i += 1
+      end
+      i += 1
+      
+      -- Sort the errors specific to a file according to line number.
+      var a = StableSort(errors[i0:i], def (a, b)
+                                         return a.line < b.line
+                                       end)
+      result.extend(a)               
+    end
+    return result
+  end
+  
+  -- Remove duplicates from a sorted error list.
+  private def removeDuplicates(errors as Array<(Str, Int, Str)>) as
+                                              Array<(Str, Int, Str)>
+    var res = [] as <(Str, Int, Str)>
+    var i = 0
+    while i < errors.length()
+      var dup = False
+      var j = i - 1
+      while j >= 0 and 
+            errors[j][0] == errors[i][0] and errors[j][1] == errors[i][1]
+        if errors[j] == errors[i]
+          dup = True
+          break
+        end
+        j -= 1
+      end
+      if not dup
+        res.append(errors[i])
+      end
+      i += 1
+    end
+    return res
+  end
+end
+
+
+-- Exception raised when there is a parse, semantic analysis, type check or
+-- other compilation-related error.
+class CompileError is Exception
+  var messages as Array<Str>
+  
+  sub create(messages as Array<Str>)
+    super.create()
+    self.messages = messages
+  end
+end
+
+
+-- Perform a stable sort of a sequence, i.e. if the original sequence has
+-- a[n] == a[n+m] (when comparing using the comparison function f), in the
+-- sorted sequence item a[n] will be at an earlier index than a[n + m].
+private def StableSort<T>(a as Sequence<T>, 
+                          f as def (T, T) as Boolean) as Array<T>
+  var a2 = [] as <(T, Int)>
+  for i in 0 to a.length()
+    a2.append((a[i], i))
+  end
+  a2 = Sort(a2, def (s as (T, Int), t as (T, Int)) as Boolean
+                  return f(s[0], t[0]) or 
+                         (not f(t[0], s[0]) and s[1] < t[1])
+                end)
+  var a3 = [] as <T>
+  for x, y in a2
+    a3.append(x)
+  end
+  return a3
+end

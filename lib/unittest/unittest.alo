@@ -15,7 +15,7 @@ import time
 
 
 class AssertionFailure is Exception
-  def create(s = nil)
+  def create(s = nil as Str)
     if s != nil
       super.create(s)
     else
@@ -30,21 +30,21 @@ class SkipTestCaseException is Exception
 end
 
 
-def Assert(b, msg = nil)
+def Assert(b as Boolean, msg = nil as Str)
   if not b
     raise AssertionFailure(msg)
   end
 end
 
 
-def AssertEqual(a, b, fmt = "{} != {}")
+def AssertEqual(a as Object, b as Object, fmt = "{} != {}" as Str)
   if a != b
     raise AssertionFailure(fmt.format(Repr(a), Repr(b)))
   end
 end
 
 
-def AssertNotEqual(a, b, fmt = "{} == {}")
+def AssertNotEqual(a as Object, b as Object, fmt = "{} == {}" as Str)
   if a == b
     raise AssertionFailure(fmt.format(Repr(a), Repr(b)))
   end
@@ -55,15 +55,17 @@ end
 --
 -- Call function with the given arguments and expect an exception of the given
 -- type.
-def AssertRaises(type, *rest)
+--
+-- FIX: The type is probably too complex to be supported...
+def AssertRaises(type as Type, *rest as dynamic)
   -- Parse arguments.
-  var msg = nil
+  var msg = nil as Str
   if rest[0] is Str or rest[0] == nil
     msg = rest[0]
     rest = rest[1:]
   end  
   var f = rest[0]
-  var args = []
+  var args = [] as <Str>
   if rest.length() > 1
     args = rest[1]
     if rest.length() > 2
@@ -85,64 +87,64 @@ def AssertRaises(type, *rest)
 end
 
 
-def AssertType(type, value)
+def AssertType(type as Type, value as Object)
   if TypeOf(value) != type
     raise AssertionFailure("Invalid type {}, expected {}".format(TypeOf(value), type))
   end
 end
 
 
-def Fail()
+def Fail() as void
   raise AssertionFailure()
 end
 
 
 class TestCase
-  def create(name, suite = nil, func = nil)
+  def create(name as Str, suite = nil as Suite, func = nil as def ())
     self.func = func
     self.name = name
     self.suite = suite
   end
   
-  def run()
+  def run() as void
     if func != nil
       func()
     end
   end
   
-  def setUp()
+  def setUp() as void
     if suite != nil
       suite.setUp()
     end
   end
   
-  def tearDown()
+  def tearDown() as void
     if suite != nil
       suite.tearDown()
     end
   end
   
-  var name
+  var name as Str
   
-  private const func
-  private const suite
+  private const func as def ()
+  private const suite as Suite
 end
 
 
 class Suite
-  private var testCases = []
+  private var testCases = [] as Array<dynamic> -- TestCase or (Str, func)
   
-  def create()
+  def create() as void
     init()
   end
   
-  def setUp()
+  def setUp() as void
   end
   
-  def tearDown()
+  def tearDown() as void
   end
 
-  def init()
+  def init() as void
     for m in Members(self)
       if m.startsWith("test")
         var t = GetMember(self, m)
@@ -155,28 +157,29 @@ class Suite
     end
   end
   
-  def addTest(test)
+  def addTest(test as TestCase) or
+             (test as (Str, def ()))
     self.testCases.append(test)
   end
   
-  def cases()
+  def cases() as Array<dynamic>
     return self.testCases[:]
   end
   
-  const prefix = UnqualifyName(Str(TypeOf(self))) + "."
+  const prefix = UnqualifyName(Str(TypeOf(self))) + "." as Str
   
-  def skip()
+  def skip() as void
     raise SkipTestCaseException()
   end
 end
 
 
-private var IsVerbose
-private var IsQuiet
-private var Patterns
+private var IsVerbose as Boolean
+private var IsQuiet as Boolean
+private var Patterns as Array<Str>
 
 
-def RunTest(t, args = [])
+def RunTest(t as Suite, args = [] as Array<Str>)
   IsVerbose = False
   IsQuiet = False
   Patterns = []
@@ -211,8 +214,8 @@ def RunTest(t, args = [])
       WriteLn("*** OK ***")
     end
   else
-    WriteLn(numFail, "/", numTotal, " test cases failed", skipMsg, ".")
-    WriteLn("*** FAILURE ***")
+    StdErr.writeLn(numFail, "/", numTotal, " test cases failed", skipMsg, ".")
+    StdErr.writeLn("*** FAILURE ***")
   end
   
   --for x, y in Sort(Times)[-20:]
@@ -221,7 +224,10 @@ def RunTest(t, args = [])
 end
 
 
-def RunTestRecursive(t, numTotal, numFail, numSkip, prefix, depth)
+-- The first argument may be TestCase, Suite or (Str, Suite).
+def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int, 
+                     numSkip as Int, prefix as Str, depth as Int) as 
+                                                             (Int, Int, Int)
   if t is TestCase
     var name = prefix + t.name
     
@@ -244,7 +250,7 @@ def RunTestRecursive(t, numTotal, numFail, numSkip, prefix, depth)
       var traceback = CallTrace(t.run)
       t.tearDown() -- FIX: check exceptions
       
-      Times.append([DateTime() - t1, name])
+      Times.append((DateTime() - t1, name))
       
       if traceback[1] != nil
         var e = traceback[0]
@@ -263,21 +269,21 @@ def RunTestRecursive(t, numTotal, numFail, numSkip, prefix, depth)
               StdErr.writeLn()
               StdErr.writeLn()
             end
-            var msg
+            var msg as Str
             if e.message != nil
               msg = ": " + e.message
             else
               msg = ""
             end
-            WriteLn("Traceback (most recent call last):")
+            StdErr.writeLn("Traceback (most recent call last):")
             var tb = CleanTraceback(traceback[1])
             for s in Reversed(tb)
-              WriteLn("  ", s)
+              StdErr.writeLn("  ", s)
             end
-            WriteLn("{}{}".format(TypeOf(e), msg))
-            WriteLn()
-            WriteLn("{} failed".format(name))
-            WriteLn()
+            StdErr.writeLn("{}{}".format(TypeOf(e), msg))
+            StdErr.writeLn()
+            StdErr.writeLn("{} failed".format(name))
+            StdErr.writeLn()
             numFail += 1
           end
         end
@@ -287,8 +293,8 @@ def RunTestRecursive(t, numTotal, numFail, numSkip, prefix, depth)
       numTotal += 1
     end
   else
-    var suite
-    var suitePrefix
+    var suite as Suite
+    var suitePrefix as Str
     if t is Array or t is Tuple
       suite = t[1]
       suitePrefix = t[0]
@@ -310,7 +316,7 @@ def RunTestRecursive(t, numTotal, numFail, numSkip, prefix, depth)
 end
 
 
-private def UnqualifyName(s)
+private def UnqualifyName(s as Str) as Str
   var begIndex = 0
   for i in 0 to s.length()
     if s[i] == ":"
@@ -321,7 +327,7 @@ private def UnqualifyName(s)
 end
 
 
-private def MatchPattern(s, p)
+private def MatchPattern(s as Str, p as Str) as Boolean
   if p.length() == 0
     return s.length() == 0
   elif p[0] == "*"
@@ -343,13 +349,13 @@ private def MatchPattern(s, p)
 end
 
 
-private def CleanTraceback(tb)
+private def CleanTraceback(tb as Array<Str>) as Array<Str>
   -- Remove clutter from the traceback.
   if tb != [] and tb[-1].find("run of unittest::TestCase") >= 0
     tb = tb[:-1]
   end
-  for f in "Assert", "AssertEqual", "AssertNotEqual", "AssertRaises", 
-           "AssertType"
+  for f in ["Assert", "AssertEqual", "AssertNotEqual", "AssertRaises", 
+            "AssertType"]
     if tb != [] and tb[0].find("unittest::{}".format(f)) >= 0
       tb = tb[1:]
     end
@@ -358,4 +364,4 @@ private def CleanTraceback(tb)
 end
 
 
-private var Times = []
+private var Times = [] as Array<(Time, Str)>

@@ -1,0 +1,250 @@
+-- Miscellaneous functions related to semantic analysis
+
+module semanal
+
+import nodes
+import types
+import string
+import set
+import io
+import os
+
+
+-- Type for reporting parsing context in error messages.
+interface Context
+  bind Typ
+  bind Node
+  bind TypeVarDef
+  
+  def line as Int
+end
+
+
+-- Supertype for while and repeat statements.
+interface LoopStmt
+  bind WhileStmt
+  bind RepeatStmt
+
+  def expr as Node
+  def body as Array<Node>
+end
+
+
+-- Find and read the source files of a module. Return an array of 
+-- (file contents, path) pairs. Return nil if the module could not be imported.
+--
+-- id is a string of form "foo" or "foo::bar" (module name)
+def ModuleSources(id as Str, paths as Array<Str>) as Array<(Str, Str)>
+  for libpath in paths
+    var comp = id.split("::")
+    var path = Join(libpath, Separator.join(comp))
+    if IsDir(path)
+      var a = [] as <(Str, Str)>
+      try
+        for fnam in Sort(ListDir(path, "*.alo"))
+          var fpath = Join(path, fnam)
+          var f = File(fpath)
+          try
+            a.append((f.read(), fpath))
+          finally
+            f.close()
+          end
+        end
+      except IoError
+        return nil
+      end
+      -- Fail if there were no source files in the module directory.
+      if a != []
+        return a
+      else
+        return nil
+      end
+    end
+  end
+  return nil
+end
+
+
+def MatchingNames(name as Str, symtable as SymbolTable, imports as Set<Str>,
+                  curModId as Str) as Array<SymbolTableNode>
+  if not ":" in name
+    -- An unqualified name.
+    
+    -- Verify that the name is defined in the symbol table.
+    if not symtable.hasKey(name)
+      return []
+    end
+    
+    var syms = symtable[name]
+    -- First priority: local or member references.
+    for sym in Reversed(syms)
+      if sym.kind != Gdef
+        return [sym]
+      end
+    end
+    -- Second priority: global names in the current module.
+    for sym in syms
+      if sym.modId == curModId
+        return [sym]
+      end
+    end
+    -- Third priority: imported global names.
+    var res = [] as <SymbolTableNode>
+    for sym in syms
+      if sym.modId in imports and not sym.node.isPrivate
+        res.append(sym)
+      end
+    end
+    return res
+  else
+    -- A fully or partially qualified name.
+    var globalsPartial = [] as <SymbolTableNode>
+    
+    var comp = name.split("::")
+    var last = comp[-1]
+    var prefix = comp[:-1]
+    if symtable.hasKey(last)
+      for sym in symtable[last]
+        if sym.kind == Gdef and ((sym.modId == curModId and prefix == [""]) or 
+             (sym.modId in imports and not sym.node.isPrivate))
+          var n = MatchModulePrefix(sym.modId, prefix, curModId)
+          if n == 1
+            return [sym] -- Only a single full match is possible.
+          elif n == 2
+            -- Partial match.
+            globalsPartial.append(sym)
+          end
+        end
+      end
+    end
+    return globalsPartial
+  end
+end
+
+
+-- Return 1 if modId and components are fully matched. Return 2 if components
+-- is a suffix of modId. Return nil if no match was found.
+private def MatchModulePrefix(modId as Str, components as Array<Str>, 
+                              curModId as Str) as Int
+  if modId == nil
+    if components == [""]
+      return 1
+    end
+  elif modId == curModId and components == [""]
+    return 1
+  else
+    var c2 = modId.split("::")
+    if c2[-components.length():] == components
+      if c2.length() == components.length()
+        return 1
+      else
+        return 2
+      end
+    end
+  end
+  return nil
+end
+
+
+-- Return the import in a file as a set of module ids. Also include std 
+-- (if useStd is true) but not the actual module.
+def GetImports(tree as AloreFile) as Set<Str>
+  var s = Set(["std"])
+  for i in tree.imports
+    s.add(i.id)
+  end
+  return s
+end
+
+
+-- Return a boolean indicating whether a call expression has a (potentially)
+-- compatible number of arguments for calling a function.
+private def IsValidArgc(callExpr as CallExpr, funcDef as FuncDef) as Boolean
+  var nargs = callExpr.args.length()
+  if callExpr.isVarArg
+    if funcDef.isVarArg
+      return True
+    else
+      return nargs - 1 <= funcDef.maxFixedArgc()
+    end
+  elif funcDef.isVarArg
+    return nargs >= funcDef.minArgs
+  else
+    return nargs == funcDef.args.length() or 
+             (nargs < funcDef.args.length() and funcDef.init[nargs] != nil)
+  end
+end
+
+
+def InvalidArgcMessage(callExpr as CallExpr, funcDef as FuncDef) as Str
+  var isLess as Boolean
+  if callExpr.isVarArg
+    isLess = False
+  else
+    isLess = callExpr.args.length() < funcDef.minArgs
+  end
+  if isLess
+    return "Too few arguments"
+  else
+    return "Too many arguments"
+  end
+end
+
+  
+-- Create the implicit create method than initializes member variables 
+-- without explicit initializers. Note that the returned method still has 
+-- to be semantically analysed elsewhere.
+def CreateImplicitCreate(defn as TypeDef, force = False as Boolean) as FuncDef
+  var args = [] as <Var>
+  var body = [] as <Node>
+
+  for n in UninitializedMemberVars(defn)
+    args.append(Var(n.name))
+    var m = MemberLvalue(SelfExpr(), n.name)
+    body.append(AssignmentStmt([m], NameExpr(n.name), False, True))
+  end
+
+  if args.length() > 0 or defn.fullName == "std::Object" or force
+    var fdef = FuncDef("create", args, [nil] * args.length(), body)
+    return fdef
+  else
+    return nil
+  end
+end
+
+
+-- Return all the Var nodes of unitialized public member variables defined
+-- in defn (omit inherited members).
+def UninitializedMemberVars(defn as TypeDef) as Array<Var>
+  var vars = [] as <Var>
+  var done = Set() as <Str> -- Use this set to avoid duplicates
+  for d in defn.defs
+    if d is VarDef
+      var vd = (d as VarDef)
+      if not vd.isInit and not vd.isPrivate
+        for n in vd.names
+          if not n.name in done
+            vars.append(n)
+            done.add(n.name)
+          end
+        end
+      end
+    end
+  end
+  return vars
+end
+
+  
+-- Infer and set the type signature of the implicit create method of type.
+def InferImplicitCreateSignature(type as TypeInfo, method as FuncDef)
+  var argTypes = [] as <Typ>
+  for n in UninitializedMemberVars(type.defn)
+    if n.type != nil
+      argTypes.append(n.type.type)
+    else
+      argTypes.append(Dynamic())
+    end
+  end
+  method.type = Annotation(Callable(argTypes, argTypes.length(), False,
+                                    Void(nil), False), -1)
+end

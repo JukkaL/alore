@@ -1,0 +1,13 @@
+module testchk
+
+import unittest
+import testchk::helpers
+import os
+
+
+class TypeSemAnalErrorSuite is Suite
+  def cases()
+    return ParseTestCases(Join(TestDataPrefix, "semanal-types-errors.test"), 
+                          TestSemAnalError, TestTempDir)
+  end
+end

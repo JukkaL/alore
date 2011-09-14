@@ -1,0 +1,28 @@
+module thread
+
+class Thread as <T>
+  def create(function as def () as T)
+  end
+  
+  def join() as T
+  end
+end
+
+class Mutex
+  def lock() as void
+  end
+  
+  def unlock() as void
+  end
+end
+
+class Condition
+  def wait(mutex as Mutex)
+  end
+  
+  def signal() as void
+  end
+  
+  def broadcast() as void
+  end
+end

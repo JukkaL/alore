@@ -1,0 +1,41 @@
+module testchk
+
+-- Test cases for the contents of the symbol table after semantic analysis.
+
+import unittest
+import analyse
+import errors
+import testchk::helpers
+import os
+
+
+class SemAnalSymtableSuite is Suite
+  -- Test case descriptions
+  const files = ["semanal-symtable.test"]
+
+  def cases()
+    var c = []
+    for f in files
+      c += ParseTestCases(Join(TestDataPrefix, f), runTest, TestTempDir)
+    end
+    return c
+  end
+
+  -- Perform a test case.
+  private def runTest(testcase)
+    var a
+    try
+      -- Build test case input.
+      var src = LF.join(testcase.input)
+      var trees, symtable, infos, types = 
+                     Analyse(src, "main", False, TestTempDir)
+      -- The output is the symbol table converted into a string.
+      a = Str(symtable).split(LF)
+    except e is CompileError
+      a = e.messages
+    end
+    AssertStringArraysEqual(testcase.output, a, 
+                            "Invalid semantic analyser output ({}, line {})".
+                              format(testcase.file, testcase.line))
+  end
+end

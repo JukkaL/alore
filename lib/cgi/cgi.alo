@@ -19,10 +19,10 @@ import email
 
 
 -- Default maximum post size
-private var MaxPostSize = 10 * 1024 * 1024
+private var MaxPostSize = 10 * 1024 * 1024 as Int
 
 
-def HtmlEncode(s)
+def HtmlEncode(s as Str) as Str
   s = s.replace("&", "&amp;")
   s = s.replace("<", "&lt;")
   s = s.replace(">", "&gt;")
@@ -31,7 +31,7 @@ def HtmlEncode(s)
 end
 
 
-def HtmlEncodeQuotes(s)
+def HtmlEncodeQuotes(s as Str) as Str
   s = HtmlEncode(s)
   s = s.replace("'", "&#39;")
   return s
@@ -39,10 +39,10 @@ end
 
 
 class Request is Map
-  def create()
+  def create() as void
     super.create()
     
-    var opts
+    var opts as Map<Str, Str>
   
     method = GetEnv("REQUEST_METHOD")
     pathInfo = GetEnv("PATH_INFO")
@@ -63,7 +63,7 @@ class Request is Map
     uploadMap = Map()
     
     -- Handle query (GET, POST and HEAD are supported).
-    var q = nil
+    var q = nil as Str
     if method == "POST"
       if contentType == "application/x-www-form-urlencoded"
         q = RawStdIn.read(contentLength)
@@ -80,7 +80,7 @@ class Request is Map
     end
   end
   
-  def valueList(name)
+  def valueList(name as Str) as Array<Str>
     if multiMap.hasKey(name)
       return [self[name]] + multiMap[name]
     elif hasKey(name)
@@ -90,19 +90,19 @@ class Request is Map
     end
   end
   
-  def hasUpload(name)
+  def hasUpload(name as Str) as Boolean
     return uploadMap.hasKey(name) and uploadMap[name] != []
   end
   
-  def uploadList(name)
+  def uploadList(name as Str) as Array<UploadInfo>
     if not uploadMap.hasKey(name)
       return []
     end
     return uploadMap[name].copy()
   end
   
-  def uploads()
-    var res = []
+  def uploads() as Array<Str>
+    var res = [] as <Str>
     for n in uploadMap.keys()
       if uploadMap[n] != []
         res.append(n)
@@ -111,18 +111,18 @@ class Request is Map
     return res
   end
   
-  const method
-  const contentType
-  const contentLength
-  const pathInfo
-  const remoteAddr
-  const remoteHost
-  const userAgent
+  const method as Str
+  const contentType as Str
+  const contentLength as Int
+  const pathInfo as Str
+  const remoteAddr as Str
+  const remoteHost as Str
+  const userAgent as Str
   
-  private var multiMap
-  private var uploadMap
+  private var multiMap as Map<Str, Array<Str>>
+  private var uploadMap as Map<Str, Array<UploadInfo>>
   
-  private def addFormParam(name, value)
+  private def addFormParam(name as Str, value as Str)
     if not hasKey(name)
       self[name] = value
     else
@@ -133,7 +133,7 @@ class Request is Map
     end
   end
   
-  private def parseMultipart(boundary, len)
+  private def parseMultipart(boundary as Str, len as Int)
     var s = RawStdIn.read(len)    
     for part in ParseParts(s, boundary)
       var m = Message(part)
@@ -146,7 +146,7 @@ class Request is Map
           --       do any decoding and simply return the raw data.
           addFormParam(name, m.body)
         else
-          var type = nil
+          var type = nil as Str
           if m.hasKey("Content-Type")
             type = m["Content-Type"]
           end
@@ -161,13 +161,13 @@ class Request is Map
 end
 
 
-def SetMaxPostSize(n)
+def SetMaxPostSize(n as Int)
   MaxPostSize = n
 end
 
 
-def ParseQuery(s)
-  var res = []
+def ParseQuery(s as Str) as Array<Pair<Str, Str>>
+  var res = [] as Array<Pair<Str, Str>>
   for x in s.split("&")
     if "=" in x
       var key, val = x.split("=")
@@ -178,7 +178,7 @@ def ParseQuery(s)
 end
 
 
-def DumpEnv()
+def DumpEnv() as void
   var s = RawStdOut
   s.write("<pre>")
   for e in ListEnv()
@@ -189,17 +189,17 @@ end
 
 
 class UploadInfo
-  const fileName
-  const contentType
-  const data
+  const fileName as Str
+  const contentType as Str
+  const data as Str
 end
 
 
 -- Parse a multipart message into parts.  
-private def ParseParts(s, boundaryId)
+private def ParseParts(s as Str, boundaryId as Str) as Array<Str>
   var boundary = "--" + boundaryId + CR + LF
   var endBoundary = "--" + boundaryId + "--"
-  var p = []
+  var p = [] as Array<Str>
   var i = 0
   while True
     var last = False
@@ -224,13 +224,13 @@ end
 
 -- Parse a header string of the form "value[; opt=value ...]".
 -- Return the main value and a map of options.
-private def ParseHeader(header)
+private def ParseHeader(header as Str) as (Str, Map<Str, Str>)
   if header == nil
     return nil, nil
   end
   var a = header.split(";")
   var main = a[0].strip()
-  var map = Map()
+  var map = Map() as Map<Str, Str>
   for s in a[1:]
     var key, val = s.split("=", 1)
     val = val.strip()

@@ -1,0 +1,86 @@
+module types
+
+-- Representation classes for Typ subclasses and TypeVars. These are used for 
+-- source-source transformation that preserves original formatting and 
+-- comments.
+
+
+-- Representation of UnboundType.
+class UnboundTypeRepr
+  const components   -- Array<Token>
+  const langle       -- May be None
+  const commas       -- Array<Token>
+  const rangle       -- May be None
+end
+
+
+-- Representation of Dynamic.
+class DynamicRepr
+  const dynamicTok
+end
+
+
+-- Representation of Void.
+class VoidRepr
+  const void
+end
+
+
+-- Representation of Nil.
+class NilTypeRepr
+end
+
+
+-- Representation of Instance.
+class InstanceRepr
+  const components  -- Array<Token>
+  const langle      -- May be None
+  const commas      -- Array<Token>
+  const rangle      -- May be None
+end
+
+
+-- Representation of TypeVar.
+class TypeVarRepr
+  const name
+end
+
+
+-- Representation of Callable.
+class CallableRepr
+  const defTok    -- May be None
+  const lparen
+  const commas    -- Array<Token>
+  const assigns   -- Array<Token>
+  const asterisk  -- May be None
+  const rparen
+  const asTok     -- May be None
+end
+
+
+-- Representation of TupleType.
+class TupleTypeRepr
+  const lparen
+  const commas   -- Array<Token>
+  const rparen
+end
+
+
+-- Not used at the moment.
+class IntersectionRepr
+end
+
+
+-- Representation of TypeVars.
+class TypeVarsRepr
+  const langle
+  const commas   -- Array<Token>
+  const rangle
+end
+
+
+-- Representation of TypeVarDef.
+class TypeVarDefRepr
+  const name
+  const isTok   -- May be None
+end

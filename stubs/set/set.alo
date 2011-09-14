@@ -1,0 +1,34 @@
+module set
+
+
+class Set<T> implements Iterable<T>
+  def create(arg = nil as Iterable<T>)
+  end
+  
+  def length() as Int
+  end
+  
+  def add(object as T)
+  end
+  
+  def remove(object as T)
+  end
+  
+  def iterator() as Iterator<T>
+  end
+  
+  def copy() as Set<T>
+  end
+  
+  def _eq(x as Object) as Boolean
+  end
+  
+  def _in(x as Object) as Boolean
+  end
+  
+  def _str() as Str
+  end
+  
+  def _hash() as Int
+  end
+end

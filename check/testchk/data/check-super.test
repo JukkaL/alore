@@ -1,0 +1,211 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Supertype member reference
+-- --------------------------
+
+
+[case testAccessingSupertypeMethod]
+class A is B
+  def f() as A
+    var a as A
+    var b as B
+    a = super.f() -- Fail
+    a = super.g() -- Fail
+    b = super.f()
+  end
+end
+class B
+  def f() as B
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 5: Incompatible types in assignment
+main, line 6: "g" undefined in superclass
+
+[case testAccessingSuperTypeMethodWithArgs]
+class A is B
+  def f(x as B)
+    var a as A
+    var b as B
+    super.f(b) -- Fail
+    super.f(a)
+    f(b)
+    f(a)
+  end
+end
+class B
+  def f(y as A)
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 5: Argument 1 to method "f" of "B" has incompatible type "B"
+
+[case testAccessingSuperCreate]
+class A is B
+  def create() as void
+    super.create(B(nil)) -- Fail
+    super.create()       -- Fail
+    super.create(A())
+  end
+end
+class B
+  def create(x as A)
+  end
+end
+[out]
+main: In member "create" of class "A":
+main, line 3: Argument 1 to "B" has incompatible type "B"
+main, line 4: Too few arguments for method "create" of "B"
+
+[case testAccessingSuperVarGetter]
+class A is B
+  def b as B
+    var aa as A
+    aa = super.b    -- Fail
+    return super.b
+  end
+end
+class B
+  var b as B
+end
+[out]
+main: In member "b" of class "A":
+main, line 4: Incompatible types in assignment
+
+[case testAccessingSuperVarSetter]
+class A is B
+  def a = x as A
+    var b as B
+    super.a = b   -- Fail
+    super.a = x
+  end
+end
+class B
+  var a as A
+end
+[out]
+main: In member "a" of class "A":
+main, line 4: Incompatible types in assignment
+
+[case testAccessingSuperConst]
+class A is B
+  def b as B
+    var aa as A
+    aa = super.b    -- Fail
+    super.b = nil   -- Fail
+    return super.b
+  end
+end
+class B
+  const b as B
+end
+[out]
+main: In member "b" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 5: Invalid lvalue "b"
+
+[case testAccessingSuperGetter]
+class A is B
+  def b as B
+    var aa as A
+    aa = super.b    -- Fail
+    super.b = nil   -- Fail
+    return super.b
+  end
+end
+class B
+  def b as B
+  end
+end
+[out]
+main: In member "b" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 5: Invalid lvalue "b"
+
+[case testAccessingSuperSetter]
+class A is B
+  def a = x as A
+    var b as B
+    super.a = b   -- Fail
+    super.a = x
+  end
+end
+class B
+  def a as A
+  end
+  def a = x as A
+  end
+end
+[out]
+main: In member "a" of class "A":
+main, line 4: Incompatible types in assignment
+
+[case testAssigningToSuperMethod]
+class A is B
+  def f() as void
+    super.f = nil -- Fail
+  end
+end
+class B
+  def f() as void
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Invalid lvalue "f"
+
+[case testAccessingPrivateSuperMember]
+class A is B
+  def f() as void
+    super.g()         -- Fail
+    super.a = super.a -- Fail
+    super.b = super.b -- Fail
+  end
+end
+class B
+  private def g() as ()
+  end
+  private var a as A
+  private def b as A
+  end
+  private def b = x as A
+  end  
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: "g" undefined in superclass
+main, line 4: "a" undefined in superclass
+main, line 4: Invalid lvalue "a"
+main, line 5: "b" undefined in superclass
+main, line 5: Invalid lvalue "b"
+
+[case testAccessingSuperMemberWithDeepHierarchy]
+class A is B
+  def f() as void
+    super.b = nil -- Fail
+    super.f()
+    super.a = super.a
+  end
+end
+class B is C
+end
+class C
+  def f() as void
+  end
+  var a as A
+  const b as A
+end
+[out]
+main: In member "f" of class "A":
+main, line 3: Invalid lvalue "b"

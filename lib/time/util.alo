@@ -11,7 +11,8 @@ import string
 import math
 
 
-private def ParseInt(s, i, min, max = 100)
+private def ParseInt(s as Str, i as Int, min as Int, max = 100 as Int) as
+                    (Int, Int)
   var n = 0
   while n < min
     if not IsDigit(s[i + n])
@@ -26,13 +27,13 @@ private def ParseInt(s, i, min, max = 100)
 end
 
 
-private def TruncN(f, nfrac)
+private def TruncN(f as Float, nfrac as Int) as Float
   return Trunc(10**nfrac * f) / 10**nfrac
 end
 
 
 -- Parse [../..] starting at s[i] (s[i] must be "[").
-private def ParseAmPm(s, i)
+private def ParseAmPm(s as Str, i as Int) as (Str, Str, Int)
   var slash = i
   while slash < s.length() and s[slash] != "/"
     slash += 1

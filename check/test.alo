@@ -1,0 +1,10 @@
+-- Test cases for Alore parser, semantic analyser, type checker, runtime type 
+-- checker and source-to-source roundtrip transformation.
+
+import unittest
+import testchk
+
+
+def Main(args)
+  RunTest(CheckerSuite(), args)
+end

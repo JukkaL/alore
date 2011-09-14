@@ -1,0 +1,737 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Simple expressions
+-- ------------------
+
+
+[case testNilAsRvalue]
+var a = nil as A
+class A; end
+[out]
+
+[case testNilAsArgument]
+def f(x, y) as (A, B)
+end
+f(nil, nil)
+class A; end
+class B is A; end
+[out]
+
+[case testIntLiteral]
+var a as Int
+var b as A
+b = 1
+a = 1
+class A; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Int
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testStrLiteral]
+var a as Str
+var b as A
+b = "x"
+a = "x"
+class A; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Str
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testFloatLiteral]
+var a as Float
+var b as A
+b = 1.1
+a = 1.1
+class A; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Float
+end
+[out]
+main, line 3: Incompatible types in assignment
+
+
+-- Binary operators
+-- ----------------
+
+
+[case testAdd]
+var a, b, c as (A, B, C)
+c = a + c  -- Fail
+a = a + b  -- Fail
+c = b + a  -- Fail
+c = a + b
+
+class A
+  def _add(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for + ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for + ("B")
+
+[case testSub]
+var a, b, c as (A, B, C)
+c = a - c  -- Fail
+a = a - b  -- Fail
+c = b - a  -- Fail
+c = a - b
+
+class A
+  def _sub(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for - ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for - ("B")
+
+[case testMul]
+var a, b, c as (A, B, C)
+c = a * c  -- Fail
+a = a * b  -- Fail
+c = b * a  -- Fail
+c = a * b
+
+class A
+  def _mul(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for * ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for * ("B")
+
+[case testDiv]
+var a, b, c as (A, B, C)
+c = a / c  -- Fail
+a = a / b  -- Fail
+c = b / a  -- Fail
+c = a / b
+
+class A
+  def _div(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for / ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for / ("B")
+
+[case testIntDiv]
+var a, b, c as (A, B, C)
+c = a div c  -- Fail
+a = a div b  -- Fail
+c = b div a  -- Fail
+c = a div b
+
+class A
+  def _idiv(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for div ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for div ("B")
+
+[case testMod]
+var a, b, c as (A, B, C)
+c = a mod c  -- Fail
+a = a mod b  -- Fail
+c = b mod a  -- Fail
+c = a mod b
+
+class A
+  def _mod(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for mod ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for mod ("B")
+
+[case testPow]
+var a, b, c as (A, B, C)
+c = a ** c  -- Fail
+a = a ** b  -- Fail
+c = b ** a  -- Fail
+c = a ** b
+
+class A
+  def _pow(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Unsupported operand types for ** ("A" and "C")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for ** ("B")
+
+[case testAndOr]
+var a, b as (A, Boolean)
+b = b and a  -- Fail
+a = b and b  -- Fail
+b = a and b  -- Fail
+b = b and b
+b = b or a  -- Fail
+a = b or b  -- Fail
+b = a or b  -- Fail
+b = b or b
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 2: Unsupported operand types for and ("Boolean" and "A")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported left operand type for and ("A")
+main, line 6: Unsupported operand types for or ("Boolean" and "A")
+main, line 7: Incompatible types in assignment
+main, line 8: Unsupported left operand type for or ("A")
+
+[case testInOperator]
+var a, b, c as (A, B, Boolean)
+c = c in a  -- Fail
+a = b in a  -- Fail
+c = a in b  -- Fail
+c = b in a
+
+class A
+  def _in(x as B) as Boolean
+  end
+end
+class B; end
+class C; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 2: Unsupported operand types for in ("Boolean" and "A")
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported right operand type for in ("B")
+
+-- Pair test cases are in check-inference-ranges.test since they depend on
+-- generics.
+
+[case testToOperator]
+var a, r as (A, Range)
+r = a to 1    -- Fail
+r = 1 to a    -- Fail
+a = 1 to 2    -- Fail
+r = 1 to 2
+r = nil to nil
+
+class A; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Range
+end
+class Int
+end
+[out]
+main, line 2: Unsupported operand types for to ("A" and "Int")
+main, line 3: Unsupported operand types for to ("Int" and "A")
+main, line 4: Incompatible types in assignment
+
+[case testIsOperator]
+var a, b, t as (A, Boolean, Type)
+b = a is b      -- Fail
+b = a is f      -- Fail
+b = a is a.f    -- Fail
+a = a is t      -- Fail
+
+b = a is t
+b = a is A
+b = A is A
+b = nil is A
+b = f is A
+b = a is B
+b = a is C
+
+class A
+  def f() as void
+  end
+end
+class B
+  def create() as void
+  end
+end
+class C
+  def create()
+  end
+end
+
+def f() as void
+end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 2: Type expected as right operand of "is"
+main, line 3: Type expected as right operand of "is"
+main, line 4: Type expected as right operand of "is"
+main, line 5: Incompatible types in assignment
+
+[case testEquality]
+var a, b as (A, Boolean)
+a = a == a    -- Fail
+b = a() == a  -- Fail
+b = a == a()  -- Fail
+
+a = a != a    -- Fail
+b = a() != a  -- Fail
+b = a != a()  -- Fail
+
+b = a == a
+b = a == b
+b = nil == a
+b = a == nil
+
+b = a != a
+b = a != b
+b = nil != a
+b = a != nil
+
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: "A" not callable
+main, line 4: "A" not callable
+main, line 6: Incompatible types in assignment
+main, line 7: "A" not callable
+main, line 8: "A" not callable
+
+[case testLessThan]
+var a, b, c as (A, Boolean, C)
+b = a < a   -- Fail
+b = a >= a  -- Fail
+b = c < a   -- Fail
+b = c >= a  -- Fail
+
+a = a < c   -- Fail
+a = a >= c  -- Fail
+
+b = a < c
+b = a >= c
+
+class A
+  def _lt(x as C) as Boolean
+  end
+end
+class C; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 2: Unsupported operand types for < ("A" and "A")
+main, line 3: Unsupported operand types for >= ("A" and "A")
+main, line 4: Unsupported left operand type for < ("C")
+main, line 5: Unsupported left operand type for >= ("C")
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+
+[case testGreaterThan]
+var a, b, c as (A, Boolean, C)
+b = a > a   -- Fail
+b = a <= a  -- Fail
+b = c > a   -- Fail
+b = c <= a  -- Fail
+
+a = a > c   -- Fail
+a = a <= c  -- Fail
+
+b = a > c
+b = a <= c
+
+class A
+  def _gt(x as C) as Boolean
+  end
+end
+class C; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 2: Unsupported operand types for > ("A" and "A")
+main, line 3: Unsupported operand types for <= ("A" and "A")
+main, line 4: Unsupported left operand type for > ("C")
+main, line 5: Unsupported left operand type for <= ("C")
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+
+
+-- Unary operators
+-- ---------------
+
+
+[case testUnaryMinus]
+var a, b as (A, B)
+a = -a   -- Fail
+b = -b   -- Fail
+b = -a
+
+class A
+  def _neg() as B
+  end
+end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Unsupported operand type for unary - ("B")
+
+[case testUnaryNot]
+var a, b as (A, Boolean)
+a = not b  -- Fail
+b = not a  -- Fail
+b = not b
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Boolean value expected for not operand
+
+
+-- Indexing
+-- --------
+
+
+[case testIndexing]
+var a, b, c as (A, B, C)
+c = a[c]  -- Fail
+a = a[b]  -- Fail
+c = b[a]  -- Fail
+c = a[b]
+
+class A
+  def _get(x as B) as C
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Invalid index type "C" for "A"
+main, line 3: Incompatible types in assignment
+main, line 4: Value of type "B" is not indexable
+
+[case testIndexingAsLvalue]
+var a, b, c as (A, B, C)
+a[c] = c  -- Fail
+a[b] = a  -- Fail
+b[a] = c  -- Fail
+a[b] = c
+
+class A
+  def _set(x as B, y as C)
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 2: Invalid index type "C" for "A"
+main, line 3: Incompatible types in assignment
+main, line 4: Unsupported target for indexed assignment
+
+
+-- Cast expression
+-- ---------------
+
+
+[case testCastExpressions]
+var a, b, c as (A, B, C)
+a = a() as A       -- Fail
+a = b as A         -- Fail
+a = a() as dynamic -- Fail
+b = a as A         -- Fail
+
+a = a as A
+c = a as C
+a = c as A
+a = b as dynamic
+b = a as dynamic
+
+class A; end
+class B; end
+class C is A; end
+[out]
+main, line 2: "A" not callable
+main, line 3: Cannot cast from "B" to "A"
+main, line 4: "A" not callable
+main, line 5: Incompatible types in assignment
+
+
+-- Void type
+-- ---------
+
+
+[case testVoidTypeBasics]
+var a, o as (A, Object)
+a = f()         -- Fail
+o = A().g(a)    -- Fail
+A().g(f())      -- Fail
+var x = f() as A -- Fail
+f()
+A().g(a)
+
+def f() as void
+end
+
+class A
+  def g(x as Object)
+  end
+end
+[out]
+main, line 2: "f" does not return a value
+main, line 3: Method "g" of "A" does not return a value
+main, line 4: "f" does not return a value
+main, line 5: "f" does not return a value
+
+[case testVoidWithStatements]
+raise f()   -- Fail
+if f()      -- Fail
+elif f()    -- Fail
+end
+switch f()  -- Fail
+  case f()  -- Fail
+end
+while f()   -- Fail
+end
+repeat
+until f()   -- Fail
+def g() as Object
+  return f() -- Fail
+end
+
+def f() as void
+end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Boolean
+end
+class Exception
+end
+[out]
+main, line 1: "f" does not return a value
+main, line 2: "f" does not return a value
+main, line 3: "f" does not return a value
+main, line 5: "f" does not return a value
+main, line 6: "f" does not return a value
+main, line 8: "f" does not return a value
+main, line 11: "f" does not return a value
+main: In function "g":
+main, line 13: "f" does not return a value
+
+[case testVoidWithExpressions]
+var a as A
+[f()]       -- Fail
+(f() : nil) -- Fail
+f() + a     -- Fail
+a + f()     -- Fail
+f() == a    -- Fail
+a != f()    -- Fail
+f() as A    -- Fail
+f().foo     -- Fail
+f() to nil  -- Fail
+nil to f()  -- Fail
+
+def f() as void
+end
+
+class A
+  def _add(x as A) as A
+  end
+end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Type
+end
+class Boolean
+end
+class Pair
+end
+class Array<T>
+end
+class Range
+end
+class Int
+end
+[out]
+main, line 2: "f" does not return a value
+main, line 3: "f" does not return a value
+main, line 4: "f" does not return a value
+main, line 5: "f" does not return a value
+main, line 6: "f" does not return a value
+main, line 7: "f" does not return a value
+main, line 8: "f" does not return a value
+main, line 9: "f" does not return a value
+main, line 10: "f" does not return a value
+main, line 11: "f" does not return a value
+
+[case testVoidWithExpressions2]
+var a, b as (A, Boolean)
+a < f()    -- Fail
+f() <= a   -- Fail
+f() in a   -- Fail
+a in f()   -- Fail
+-f()       -- Fail
+not f()    -- Fail
+f() and b  -- Fail
+b or f()   -- Fail
+f() is A   -- Fail
+a is f()   -- Fail
+
+def f() as void
+end
+
+class A
+  def _add(x as A) as A
+  end
+end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 2: Unsupported left operand type for < ("A")
+main, line 3: "f" does not return a value
+main, line 4: Unsupported right operand type for in ("A")
+main, line 5: "f" does not return a value
+main, line 6: "f" does not return a value
+main, line 7: "f" does not return a value
+main, line 8: "f" does not return a value
+main, line 9: "f" does not return a value
+main, line 10: "f" does not return a value
+main, line 11: Type expected as right operand of "is"
+
+
+-- Special cases
+-- -------------
+
+[case testOperationsWithNonInstanceTypes]
+var a as A
+nil + a   -- Fail
+f + a     -- Fail
+a + f     -- Fail
+f as A    -- Fail
+
+def f() as void
+end
+
+class A
+  def _add(a as A) as A
+  end
+end
+[out]
+main, line 2: Unsupported left operand type for + (nil)
+main, line 3: Unsupported left operand type for + (function)
+main, line 4: Unsupported operand types for + ("A" and function)
+main, line 5: Cannot cast from function to "A"
+
+[case testOperatorMethodWithInvalidArgCount]
+var a as A
+a + a  -- Fail
+
+class A
+  def _add() as A
+  end
+end
+[out]
+main, line 2: Too many arguments for method "_add" of "A"
+
+[case testOperatorMethodAsVar]
+var a as A
+a + a   -- Should fail
+
+class A
+  var _add as dynamic
+end
+[out]
+main, line 2: Expected operator method "_add" in "A"
+
+[case testIndexedLvalueWithSubtypes]
+var a, b, c as (A, B, C)
+a[c] = c
+a[b] = c
+a[c] = b
+
+class A
+  def _set(x as B, y as B)
+  end
+end
+class B
+end
+class C is B
+end
+[out]
+
+[case testLtOrGtOrInMethodReturningNonBoolean]
+b = a < a  -- Fail
+b = a > a  -- Fail
+b = a <= a -- Fail
+b = a >= a -- Fail
+b = a in a -- Fail
+
+var a as A
+var b as Boolean
+
+class A
+  def _lt(x as A) as Object
+  end
+  
+  def _gt(x as A) as Object
+  end
+  
+  def _in(x as A) as Object
+  end
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 1: Boolean return value expected for method "_lt"
+main, line 2: Boolean return value expected for method "_gt"
+main, line 3: Boolean return value expected for method "_gt"
+main, line 4: Boolean return value expected for method "_lt"
+main, line 5: Boolean return value expected for method "_in"
+
+
+-- FIX test call operator overloading
+-- FIX test _add as variable with correct function type

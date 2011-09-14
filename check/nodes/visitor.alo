@@ -1,0 +1,129 @@
+module nodes
+
+
+-- Empty base class for parse tree node visitors. The T type argument 
+-- specifies the return type of the visit methods. As all methods defined here
+-- return nil by default, subclasses do not always need to override all the
+-- methods.
+class NodeVisitor<T>
+  -- Top-level structures
+
+  def visitAloreFile(o as AloreFile) as T
+  end
+  
+  def visitEncoding(o as Encoding) as T
+  end
+  def visitHeader(o as Header) as T
+  end
+  def visitImport(o as Import) as T
+  end
+  
+  -- Definitions
+  
+  def visitFuncDef(o as FuncDef) as T
+  end
+  def visitTypeDef(o as TypeDef) as T
+  end
+  def visitVarDef(o as VarDef) as T
+  end
+  
+  def visitVar(o as Var) as T
+  end
+  
+  def visitAnnotation(o as Annotation) as T
+  end
+  
+  -- Statements
+
+  -- Visit a block. Unlike other methods, this does not correspond to a
+  -- specific class, but an array of Nodes. All block statements and function
+  -- definitions call this method to visit the component statements 
+  -- instead of iterating over them directly.  
+  def visitBlock(o as Array<Node>) as T
+  end
+  
+  def visitExpressionStmt(o as ExpressionStmt) as T
+  end
+  def visitAssignmentStmt(o as AssignmentStmt) as T
+  end
+  def visitOperatorAssignmentStmt(o as OperatorAssignmentStmt) as T
+  end
+  def visitWhileStmt(o as WhileStmt) as T
+  end
+  def visitRepeatStmt(o as RepeatStmt) as T
+  end
+  def visitForStmt(o as ForStmt) as T
+  end
+  def visitReturnStmt(o as ReturnStmt) as T
+  end
+  def visitIfStmt(o as IfStmt) as T
+  end
+  def visitBreakStmt(o as BreakStmt) as T
+  end
+  def visitRaiseStmt(o as RaiseStmt) as T
+  end
+  def visitTryExceptStmt(o as TryExceptStmt) as T
+  end
+  def visitTryFinallyStmt(o as TryFinallyStmt) as T
+  end
+  def visitSwitchStmt(o as SwitchStmt) as T
+  end
+  
+  -- Expressions
+  
+  -- Lvalue expressions.
+  def visitNameLvalue(o as NameLvalue) as T
+  end
+  def visitMemberLvalue(o as MemberLvalue) as T
+  end
+  def visitIndexLvalue(o as IndexLvalue) as T
+  end
+  def visitSuperLvalue(o as SuperLvalue) as T
+  end
+  
+  -- This is called before and in addition to one of the following methods.
+  def visitExpression(o as Node) as T
+  end
+  
+  def visitIntExpr(o as IntExpr) as T
+  end
+  def visitStrExpr(o as StrExpr) as T
+  end
+  def visitFloatExpr(o as FloatExpr) as T
+  end
+  def visitNilExpr(o as NilExpr) as T
+  end
+  def visitSelfExpr(o as SelfExpr) as T
+  end
+  def visitParenExpr(o as ParenExpr) as T
+  end
+  def visitNameExpr(o as NameExpr) as T
+  end
+  def visitMemberExpr(o as MemberExpr) as T
+  end
+  def visitCallExpr(o as CallExpr) as T
+  end
+  def visitOpExpr(o as OpExpr) as T
+  end
+  def visitCastExpr(o as CastExpr) as T
+  end
+  def visitUnaryExpr(o as UnaryExpr) as T
+  end
+  def visitArrayExpr(o as ArrayExpr) as T
+  end
+  def visitTupleExpr(o as TupleExpr) as T
+  end
+  def visitIndexExpr(o as IndexExpr) as T
+  end
+  def visitSuperExpr(o as SuperExpr) as T
+  end
+  def visitTypeApplication(o as TypeApplication) as T
+  end
+  def visitFuncExpr(o as FuncExpr) as T
+  end
+  
+  def visitCoerceExpr(o as CoerceExpr) as T
+  end
+  def visitTypeExpr(o as TypeExpr) as T
+  end
+end

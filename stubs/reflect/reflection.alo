@@ -1,0 +1,13 @@
+module reflect
+
+def GetMember(instance as Object, id as Str) as dynamic
+end
+
+def SetMember(instance as Object, id as Str, value as Object)
+end
+
+def HasMember(instance as Object, id as Str) as Boolean
+end
+
+def TypeOf(instance as Object) as Type
+end

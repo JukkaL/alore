@@ -1,0 +1,1459 @@
+-- Test cases for parser. Each test case consists of two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+[case testParseBasics]
+def Main()
+  var x
+  x = f(1, nil)
+  123 + (2 + x)
+  "hello"
+  return 1.23
+end
+
+def Foo(x, y)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    Main
+    Body(
+      VarDef:2(
+        Var(x))
+      AssignmentStmt:3(
+        Lvalues(
+          NameLvalue(x))
+        CallExpr:3(
+          NameExpr(f)
+          Args(
+            IntExpr(1)
+            NilExpr())))
+      ExpressionStmt:4(
+        OpExpr:4(
+          +
+          IntExpr(123)
+          ParenExpr:4(
+            OpExpr:4(
+              +
+              IntExpr(2)
+              NameExpr(x)))))
+      ExpressionStmt:5(
+        StrExpr(hello))
+      ReturnStmt:6(
+        FloatExpr(1.23))))
+  FuncDef:9(
+    Foo
+    Args(
+      Var(x)
+      Var(y))))
+
+[case testStrLiterals]
+"", "a""b", "'", "\", "\u1234"
+'', 'a''b', '"', '\', '\u1234'
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    TupleExpr:1(
+      StrExpr()
+      StrExpr(a"b)
+      StrExpr(')
+      StrExpr(\)
+      StrExpr(\u1234)))
+  ExpressionStmt:2(
+    TupleExpr:2(
+      StrExpr()
+      StrExpr(a'b)
+      StrExpr(")
+      StrExpr(\)
+      StrExpr(\u1234))))
+
+[case testParseClass]
+class Foo
+  var x
+  
+  def foo(y)
+    self.x
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    Foo
+    VarDef:2(
+      Var(x))
+    FuncDef:4(
+      foo
+      Args(
+        Var(y))
+      Body(
+        ExpressionStmt:5(
+          MemberExpr:5(
+            SelfExpr()
+            x))))))
+            
+[case testParseArray]
+def Main()
+  var a
+  a = []
+  a = [1, 2]
+  a[[1]] = a[2]
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    Main
+    Body(
+      VarDef:2(
+        Var(a))
+      AssignmentStmt:3(
+        Lvalues(
+          NameLvalue(a))
+        ArrayExpr:3())
+      AssignmentStmt:4(
+        Lvalues(
+          NameLvalue(a))
+        ArrayExpr:4(
+          IntExpr(1)
+          IntExpr(2)))
+      AssignmentStmt:5(
+        Lvalues(
+          IndexLvalue:5(
+            NameExpr(a)
+            ArrayExpr:5(
+              IntExpr(1))))
+        IndexExpr:5(
+          NameExpr(a)
+          IntExpr(2))))))
+
+[case testParseTuple]
+()
+(1,)
+(1, foo)
+var a, b = 1, (2, 3)
+
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    TupleExpr:1())
+  ExpressionStmt:2(
+    ParenExpr:2(
+      TupleExpr:2(
+        IntExpr(1))))
+  ExpressionStmt:3(
+    ParenExpr:3(
+      TupleExpr:3(
+        IntExpr(1)
+        NameExpr(foo))))
+  VarDef:4(
+    Var(a)
+    Var(b)
+    TupleExpr:4(
+      IntExpr(1)
+      ParenExpr:4(
+        TupleExpr:4(
+          IntExpr(2)
+          IntExpr(3))))))
+
+[case testParseLinebreaks]
+a >; 2
+a +
+   3
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    OpExpr:1(
+      >
+      NameExpr(a)
+      IntExpr(2)))
+  ExpressionStmt:2(
+    OpExpr:2(
+      +
+      NameExpr(a)
+      IntExpr(3))))
+
+[case testParseHeader]
+module foo::bar
+
+def Main()
+end
+[out]
+AloreFile:1(
+  Header(foo::bar)
+  FuncDef:3(
+    Main))
+
+[case testNestedParentheses]
+((((1))))
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    ParenExpr:1(
+      ParenExpr:1(
+        ParenExpr:1(
+          ParenExpr:1(
+            IntExpr(1)))))))
+
+[case testParenthesesWithinIndexing]
+1[(2)]
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    IndexExpr:1(
+      IntExpr(1)
+      ParenExpr:1(
+        IntExpr(2)))))
+
+[case testParenthesisedLvalue]
+var a
+(a) = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a))
+    IntExpr(1)))
+
+[case testParenthesisedLvalue2]
+var a
+((((a)))) = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a))
+    IntExpr(1)))
+
+[case testParseMultiAssign1]
+var a, b
+a, b = 1, 2
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a)
+      NameLvalue(b))
+    TupleExpr:2(
+      IntExpr(1)
+      IntExpr(2))))
+
+[case testParseMultiAssign2]
+var a, b
+ [a, b] = [1, 2]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a)
+      NameLvalue(b))
+    ArrayExpr:2(
+      IntExpr(1)
+      IntExpr(2))))
+
+[case testParseMultiAssign3]
+var a, b
+(a, b) = 1, 2
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a)
+      NameLvalue(b))
+    TupleExpr:2(
+      IntExpr(1)
+      IntExpr(2))))
+
+[case testParseMultiAssign4]
+var a, b
+ [a[1]] = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  AssignmentStmt:2(
+    Lvalues(
+      IndexLvalue:2(
+        NameExpr(a)
+        IntExpr(1)))
+    IntExpr(1)))
+
+[case testParseMultiAssign5]
+var a, b
+(a.foo,) = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  AssignmentStmt:2(
+    Lvalues(
+      MemberLvalue:2(
+        NameExpr(a)
+        foo))
+    IntExpr(1)))
+
+[case testParseMultiAssign6]
+var a
+a, = 1
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  AssignmentStmt:2(
+    Lvalues(
+      NameLvalue(a))
+    IntExpr(1)))
+
+[case testParseIfWhile]
+def x()
+  while x < y
+    x = x + 1
+  end
+  if x
+    return
+  elif y
+    123
+  else
+    f()
+  end
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    x
+    Body(
+      WhileStmt:2(
+        OpExpr:2(
+          <
+          NameExpr(x)
+          NameExpr(y))
+        Body(
+          AssignmentStmt:3(
+            Lvalues(
+              NameLvalue(x))
+            OpExpr:3(
+              +
+              NameExpr(x)
+              IntExpr(1)))))
+      IfStmt:5(
+        If(
+          NameExpr(x))
+        Then(
+          ReturnStmt:6())
+        If(
+          NameExpr(y))
+        Then(
+          ExpressionStmt:8(
+            IntExpr(123)))
+        Else(
+          ExpressionStmt:10(
+            CallExpr:10(
+              NameExpr(f)
+              Args())))))))
+
+[case testParseIndexing]
+var a, b
+a[:5]
+a[:b + 5]
+a[1:2]
+a[5:]
+a[b + 5:]
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    Var(b))
+  ExpressionStmt:2(
+    IndexExpr:2(
+      NameExpr(a)
+      OpExpr:2(
+        :
+        NilExpr()
+        IntExpr(5))))
+  ExpressionStmt:3(
+    IndexExpr:3(
+      NameExpr(a)
+      OpExpr:3(
+        :
+        NilExpr()
+        OpExpr:3(
+          +
+          NameExpr(b)
+          IntExpr(5)))))
+  ExpressionStmt:4(
+    IndexExpr:4(
+      NameExpr(a)
+      OpExpr:4(
+        :
+        IntExpr(1)
+        IntExpr(2))))
+  ExpressionStmt:5(
+    IndexExpr:5(
+      NameExpr(a)
+      OpExpr:5(
+        :
+        IntExpr(5)
+        NilExpr())))
+  ExpressionStmt:6(
+    IndexExpr:6(
+      NameExpr(a)
+      OpExpr:6(
+        :
+        OpExpr:6(
+          +
+          NameExpr(b)
+          IntExpr(5))
+        NilExpr()))))
+
+[case testParseUnaryExpr]
+-1 + 2
+not a is b
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    OpExpr:1(
+      +
+      UnaryExpr:1(
+        -
+        IntExpr(1))
+      IntExpr(2)))
+  ExpressionStmt:2(
+    UnaryExpr:2(
+      not
+      OpExpr:2(
+        is
+        NameExpr(a)
+        NameExpr(b)))))
+
+[case testSubKeyword]
+sub f()
+  var a
+end
+var a = sub (); return a; end
+class A
+  sub m()
+  end
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(a))))
+  VarDef:4(
+    Var(a)
+    FuncExpr:4(
+      Body(
+        ReturnStmt:4(
+          NameExpr(a)))))
+  TypeDef:5(
+    A
+    FuncDef:6(
+      m)))
+
+[case testArrayCopyUsingSlice]
+a[:]
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    IndexExpr:1(
+      NameExpr(a)
+      OpExpr:1(
+        :
+        NilExpr()
+        NilExpr()))))
+
+[case testParseFuncAnnot]
+def f(x as Int, y as Array<Str>)
+end
+
+def h() as (Int, Str)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def (Int?, Array?<Str?>)))
+  FuncDef:4(
+    h
+    Type:4(def () as (Int?, Str?))))
+
+[case testOmittingArgTypes1]
+def f(x, y) as Array<Str>
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y))
+    Type:1(def (dynamic, dynamic) as Array?<Str?>)))
+
+[case testOmittingArgTypes1]
+def f(x) as void
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Type:1(def (dynamic))))
+
+[case testOmittingArgTypes1]
+def f(x, y as X, z)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x)
+      Var(y)
+      Var(z))
+    Type:1(def (dynamic, X?, dynamic))))
+    
+[case testFuncAnnotWithIntersectionType]
+def isect(a as Str, b = 1 as Int) or
+      <T>(a as T) as T
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    isect
+    Args(
+      Var(a)
+      Var(b))
+    Type:1(def (Str?, Int?=) /\ def <T> (T?) as T?)
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(b))
+        IntExpr(1)))))
+
+[case testOmittingArgumentTypesWithIntersectionType1]
+def isect(a as Str, b) or
+         (a, b as Str)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    isect
+    Args(
+      Var(a)
+      Var(b))
+    Type:1(def (Str?, dynamic) /\ def (dynamic, Str?))))
+
+[case testOmittingArgumentTypesWithIntersectionType2]
+def isect(a as Str, b) or
+         (a, b)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    isect
+    Args(
+      Var(a)
+      Var(b))
+    Type:1(def (Str?, dynamic) /\ def (dynamic, dynamic))))
+
+[case testOmittingArgumentTypesWithIntersectionTypeVarArgs]
+def isect(a, *b as Arg) or
+         (a as X, *b)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    isect
+    Args(
+      Var(a)
+      Var(b))
+    Type:1(def (dynamic, *Arg?) /\ def (X?, *dynamic))
+    VarArg))
+
+[case testOmittingArgumentTypesWithIntersectionTypeDefaultArg]
+def isect(a, b = 1 as Arg) or
+         (a as X, b=)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    isect
+    Args(
+      Var(a)
+      Var(b))
+    Type:1(def (dynamic, Arg?=) /\ def (X?, dynamic=))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(b))
+        IntExpr(1)))))
+
+[case testParseMethodAnnot]
+class A
+  def m(x as Int) or
+       (x as Str)
+  end
+  
+  def g() as Int
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      m
+      Args(
+        Var(x))
+      Type:2(def (Int?) /\ def (Str?)))
+    FuncDef:6(
+      g
+      Type:6(def () as Int?))))
+
+[case testParseGetterAnnot]
+class A
+  def b as Str
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      b
+      Getter
+      Type:2(Str?))))
+
+[case testParseSetterAnnot]
+class A
+  def a
+  end
+
+  def a = x as Str
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter)
+    FuncDef:5(
+      a
+      Setter
+      Args(
+        Var(x))
+      Type:5(Str?))))
+
+[case testSimpleGlobalVariableAnnot]
+var x as Int
+
+const x, y as (Int, Str)
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Type:1(Int?))
+  VarDef:3(
+    Var(x)
+    Var(y)
+    Type:3((Int?, Str?))
+    Const))
+
+[case testSimpleMemberVariableAnnot]
+class A
+  var x as Int
+  
+  const x, y as (Int, Str)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(x)
+      Type:2(Int?))
+    VarDef:4(
+      Var(x)
+      Var(y)
+      Type:4((Int?, Str?))
+      Const)))
+
+[case testSimpleLocalVariableAnnot]
+def f()
+  var x as Int
+  var x, y as (Int, Str)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(x)
+        Type:2(Int?))
+      VarDef:3(
+        Var(x)
+        Var(y)
+        Type:3((Int?, Str?))))))
+
+[case testGlobalVariableAnnotationWithInitializer]
+var x = 1 as Int
+const x, y = 1, 2 as (Int, Str)
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    IntExpr(1)
+    Type:1(Int?))
+  VarDef:2(
+    Var(x)
+    Var(y)
+    TupleExpr:2(
+      IntExpr(1)
+      IntExpr(2))
+    Type:2((Int?, Str?))
+    Const))
+
+[case testLocalVariableAnnotationWithInitializer]
+def f()
+  var x = 1 as Int
+  var y, z = 1, "x" as (Int, Str)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(x)
+        IntExpr(1)
+        Type:2(Int?))
+      VarDef:3(
+        Var(y)
+        Var(z)
+        TupleExpr:3(
+          IntExpr(1)
+          StrExpr(x))
+        Type:3((Int?, Str?))))))
+
+[case testMemberVariableAnnotationWithInitializer]
+class A
+  var x = 1 as Int
+  const x, y = 1, 2 as (Int, Str)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(x)
+      IntExpr(1)
+      Type:2(Int?))
+    VarDef:3(
+      Var(x)
+      Var(y)
+      TupleExpr:3(
+        IntExpr(1)
+        IntExpr(2))
+      Type:3((Int?, Str?))
+      Const)))
+
+[case testPairExpressions]
+def f(x = 1 : 2)
+  f(1 : 2),
+  (1 : 2),
+  [1 : 2],
+  a[1 : 2]
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(x))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(x))
+        OpExpr:1(
+          :
+          IntExpr(1)
+          IntExpr(2))))
+    Body(
+      ExpressionStmt:2(
+        TupleExpr:2(
+          CallExpr:2(
+            NameExpr(f)
+            Args(
+              OpExpr:2(
+                :
+                IntExpr(1)
+                IntExpr(2))))
+          ParenExpr:3(
+            OpExpr:3(
+              :
+              IntExpr(1)
+              IntExpr(2)))
+          ArrayExpr:4(
+            OpExpr:4(
+              :
+              IntExpr(1)
+              IntExpr(2)))
+          IndexExpr:5(
+            NameExpr(a)
+            OpExpr:5(
+              :
+              IntExpr(1)
+              IntExpr(2))))))))
+
+[case testGenericClassAnnotation]
+class A<T, H is Str<X>>
+  var a
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    TypeVars(
+      T
+      H is Str?<X?>)
+    VarDef:2(
+      Var(a))))
+
+[case testSuperClassAnnotation1]
+class A is ::B<Str>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    NameExpr(::B)
+    BaseType(
+      ::B?<Str?>)
+  ))
+
+[case testSuperClassAnnotation2]
+class A is B<Str>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    NameExpr(B)
+    BaseType(
+      B?<Str?>)
+  ))
+
+[case testComplexClassAnnotation]
+class A<T> is B<X>
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    NameExpr(B)
+    TypeVars(
+      T)
+    BaseType(
+      B?<X?>)
+  ))
+
+[case testForLoopAnnotationGlobal]
+for x as Int in 1, 2
+  var a
+end
+[out]
+AloreFile:1(
+  ForStmt:1(
+    Var(x)
+    Type:1(Int?)
+    TupleExpr:1(
+      IntExpr(1)
+      IntExpr(2))
+    Body(
+      VarDef:2(
+        Var(a)))))
+
+[case testForLoopAnnotationLocal]
+def f()
+  var a
+  for x as X, y as Y in a
+    var b
+  end
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(a))
+      ForStmt:3(
+        Var(x)
+        Var(y)
+        Type:3(X?)
+        Type:3(Y?)
+        NameExpr(a)
+        Body(
+          VarDef:4(
+            Var(b)))))))
+
+[case testAnonymousFunctionAnnotation1]
+def () as void; end
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    FuncExpr:1(
+      Type:1(def ()))))
+
+[case testAnonymousFunctionAnnotation2]
+f(def (x = 1:2 as x) as y
+    return a
+  end)
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      NameExpr(f)
+      Args(
+        FuncExpr:1(
+          Args(
+            Var(x))
+          Type:1(def (x?=) as y?)
+          Init(
+            AssignmentStmt:1(
+              Lvalues(
+                NameLvalue(x))
+              OpExpr:1(
+                :
+                IntExpr(1)
+                IntExpr(2))))
+          Body(
+            ReturnStmt:2(
+              NameExpr(a))))))))
+
+[case testInlineCallAnnotation]
+f as <Int>(1)
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      TypeApplication:1(
+        NameExpr(f)
+        Types(
+          Int?))
+      Args(
+        IntExpr(1)))))
+
+[case testInlineArrayAnnotation]
+var a = [1, 2] as <Int>
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    TypeApplication:1(
+      ArrayExpr:1(
+        IntExpr(1)
+        IntExpr(2))
+      Types(
+        Int?))))
+
+[case testInlineMethodAnnotation]
+f.m as <Int>(1)
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      TypeApplication:1(
+        MemberExpr:1(
+          NameExpr(f)
+          m)
+        Types(
+          Int?))
+      Args(
+        IntExpr(1)))))
+
+[case testInlineAnnotationWithMultipleTypeArguments]
+f as <Int, Str>()
+g as <Int, (), dynamic>()
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      TypeApplication:1(
+        NameExpr(f)
+        Types(
+          Int?
+          Str?))
+      Args()))
+  ExpressionStmt:2(
+    CallExpr:2(
+      TypeApplication:2(
+        NameExpr(g)
+        Types(
+          Int?
+          ()
+          dynamic))
+      Args())))
+
+[case testComplexInlineAnnotationWithGenerics]
+f as <Array<Int, Str>>()
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      TypeApplication:1(
+        NameExpr(f)
+        Types(
+          Array?<Int?, Str?>))
+      Args())))
+
+[case testTupleInlineAnnotation]
+(1, "x", nil) as <Int, Str, dynamic>
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    TypeApplication:1(
+      ParenExpr:1(
+        TupleExpr:1(
+          IntExpr(1)
+          StrExpr(x)
+          NilExpr()))
+      Types(
+        Int?
+        Str?
+        dynamic))))
+
+[case testNotCalledMethodInlineAnnotation]
+var f = a.m as <Int>
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(f)
+    TypeApplication:1(
+      MemberExpr:1(
+        NameExpr(a)
+        m)
+      Types(
+        Int?))))
+
+[case testRecursiveTypeAnnotations]
+[(1, x) as <Int, Str>, (a, nil) as <Int, Str>] as <(Int, Str)>
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    TypeApplication:1(
+      ArrayExpr:1(
+        TypeApplication:1(
+          ParenExpr:1(
+            TupleExpr:1(
+              IntExpr(1)
+              NameExpr(x)))
+          Types(
+            Int?
+            Str?))
+        TypeApplication:1(
+          ParenExpr:1(
+            TupleExpr:1(
+              NameExpr(a)
+              NilExpr()))
+          Types(
+            Int?
+            Str?)))
+      Types(
+        (Int?, Str?)))))
+
+[case testMultipleAnnotations]
+f as <Int> as <Str>
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    TypeApplication:1(
+      TypeApplication:1(
+        NameExpr(f)
+        Types(
+          Int?))
+      Types(
+        Str?))))
+
+[case testEmptyInterface]
+interface Foo
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    Foo
+    Interface
+  ))
+
+[case testInterfaceWithMethod]
+interface Foo
+  def f()
+  def m(x, y, *z)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    Foo
+    Interface
+    FuncDef:2(
+      f)
+    FuncDef:3(
+      m
+      Args(
+        Var(x)
+        Var(y)
+        Var(z))
+      VarArg)))
+
+[case testInterfaceWithDefaultArgs]
+interface A
+  def f(x=)
+  def g(x, y=, z=, *a)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      f
+      Args(
+        Var(x))
+      Init(
+        AssignmentStmt:-1(
+          Lvalues(
+            NameLvalue(x))
+          NilExpr())))
+    FuncDef:3(
+      g
+      Args(
+        Var(x)
+        Var(y)
+        Var(z)
+        Var(a))
+      Init(
+        AssignmentStmt:-1(
+          Lvalues(
+            NameLvalue(y))
+          NilExpr())
+        AssignmentStmt:-1(
+          Lvalues(
+            NameLvalue(z))
+          NilExpr()))
+      VarArg)))
+
+[case testInterfaceWithGetter]
+interface A
+  def f
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      f
+      Getter)))
+
+[case testInterfaceWithSetter]
+interface A
+  def f=x
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      f
+      Setter
+      Args(
+        Var(x)))))
+
+[case testInterfaceWithMethodAnnotations]
+interface A
+  def f(x as Int) or
+       (x as Str)
+  def g() as X
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      f
+      Args(
+        Var(x))
+      Type:2(def (Int?) /\ def (Str?)))
+    FuncDef:4(
+      g
+      Type:4(def () as X?))))
+
+[case testInterfaceWithGetterAnnotations]
+interface A
+  def g as Y
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      g
+      Getter
+      Type:2(Y?))))
+
+[case testInterfaceWithSetterAnnotations]
+interface A
+  def g = y as Y
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      g
+      Setter
+      Args(
+        Var(y))
+      Type:2(Y?))))
+
+[case testInterfaceExtendingAnother]
+interface A is B
+  def f()
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    NameExpr(B)
+    FuncDef:2(
+      f)))
+
+[case testClassImplementingInterface]
+class A implements B
+end
+class A is B implements B, C
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Implements(
+      NameExpr(B))
+  )
+  TypeDef:3(
+    A
+    NameExpr(B)
+    Implements(
+      NameExpr(B)
+      NameExpr(C))
+  ))
+
+[case testClassImplementingGenericInterface]
+class A is B implements B<X>, B<Y>, C
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    NameExpr(B)
+    BaseType(
+      B?<X?>
+      B?<Y?>)
+    Implements(
+      NameExpr(B)
+      NameExpr(B)
+      NameExpr(C))
+  ))
+
+[case testCastExpression]
+b as c
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CastExpr:1(
+      NameExpr(b)
+      NameExpr(c))))
+
+[case testCastAsRvalue]
+a = b as c
+[out]
+AloreFile:1(
+  AssignmentStmt:1(
+    Lvalues(
+      NameLvalue(a))
+    CastExpr:1(
+      NameExpr(b)
+      NameExpr(c))))
+
+[case testCastInDefinition]
+var a = (b as c)
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    ParenExpr:1(
+      CastExpr:1(
+        NameExpr(b)
+        NameExpr(c)))))
+
+[case testCastAndTypeInDefinition]
+var a = (b as c) as d
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    ParenExpr:1(
+      CastExpr:1(
+        NameExpr(b)
+        NameExpr(c)))
+    Type:1(d?)))
+
+[case testCastInCallArgument]
+f(x as y, z)
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    CallExpr:1(
+      NameExpr(f)
+      Args(
+        CastExpr:1(
+          NameExpr(x)
+          NameExpr(y))
+        NameExpr(z)))))
+
+[case testParenthesisSpecialCases]
+(x).y
+(x), y
+(x) + 1
+[out]
+AloreFile:1(
+  ExpressionStmt:1(
+    MemberExpr:1(
+      ParenExpr:1(
+        NameExpr(x))
+      y))
+  ExpressionStmt:2(
+    TupleExpr:2(
+      ParenExpr:2(
+        NameExpr(x))
+      NameExpr(y)))
+  ExpressionStmt:3(
+    OpExpr:3(
+      +
+      ParenExpr:3(
+        NameExpr(x))
+      IntExpr(1))))
+
+[case testBindInterface]
+interface A
+  bind Object
+  def _eq(x)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    Bind(
+      NameExpr(Object))
+    FuncDef:3(
+      _eq
+      Args(
+        Var(x)))))
+
+[case testBindInterface2]
+interface A
+  bind ::B
+  bind std::Object
+end
+class B
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    Bind(
+      NameExpr(::B)
+      NameExpr(std::Object))
+  )
+  TypeDef:5(
+    B
+  ))
+
+[case testAsExpressions]
+a = 5 as Int
+if a as Int
+end
+return a as Int
+[out]
+AloreFile:1(
+  AssignmentStmt:1(
+    Lvalues(
+      NameLvalue(a))
+    CastExpr:1(
+      IntExpr(5)
+      NameExpr(Int)))
+  IfStmt:2(
+    If(
+      CastExpr:2(
+        NameExpr(a)
+        NameExpr(Int)))
+    Then())
+  ReturnStmt:4(
+    CastExpr:4(
+      NameExpr(a)
+      NameExpr(Int))))
+
+[case testAsExpressions2]
+var a = (b as Int)
+f(a as Int, b as Str)
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a)
+    ParenExpr:1(
+      CastExpr:1(
+        NameExpr(b)
+        NameExpr(Int))))
+  ExpressionStmt:2(
+    CallExpr:2(
+      NameExpr(f)
+      Args(
+        CastExpr:2(
+          NameExpr(a)
+          NameExpr(Int))
+        CastExpr:2(
+          NameExpr(b)
+          NameExpr(Str))))))

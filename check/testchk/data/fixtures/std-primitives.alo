@@ -1,0 +1,17 @@
+module std
+
+-- Std module stub with non-generic primitive types.
+
+class Object
+end
+
+class Int
+end
+class Str
+end
+class Float
+end
+class Boolean
+end
+class Constant
+end

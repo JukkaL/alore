@@ -1,0 +1,424 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Basic
+-- -----
+
+
+[case testIncompatibleSetterAndGetterTypes1]
+class A
+  def p as A -- Fail
+  end
+  def p = x as B
+  end
+end
+class B is A; end
+[out]
+main: In member "p" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+[case testIncompatibleSetterAndGetterTypes2]
+class A is B
+  def p as A -- Fail
+  end
+  def p = x as B
+  end
+end
+class B; end
+[out]
+main: In member "p" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+[case testInvalidGetterReturnValue]
+class A
+  def p as A
+    return Object() -- Fail
+  end
+end
+[out]
+main: In member "p" of class "A":
+main, line 3: Incompatible return value type
+
+[case testAccessingGetterOutsideClass]
+var a as A
+a = a.x -- Fail
+var b as B
+b = a.x
+class A
+  def x as B
+  end
+end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+
+[case testAssigningWithOnlyGetter]
+var a as A
+a.x = B() -- Fail
+a.x = A() -- Fail
+class A
+  def x as B
+  end
+end
+class B; end
+[out]
+main, line 2: Member "x" is not assignable
+main, line 3: Member "x" is not assignable
+
+[case testSetterArgument]
+class A
+  def x = y as B
+    var a = y as A -- Fail
+    var b = y as B
+  end  
+  def x as B
+  end
+end
+class B; end
+[out]
+main: In member "x" of class "A":
+main, line 3: Incompatible types in assignment
+
+[case testAccessingSetterOutsideClass]
+var a as A
+a.x = A() -- Fail
+a.x = B()
+
+class A
+  def x as B
+  end
+  def x = y as B
+  end
+end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+
+[case testAccessingGetterWithinClassDirectly]
+class A
+  def f() as void
+    var a as A
+    a = x      -- Fail
+    var b as B
+    x = b      -- Fail
+    b = x
+  end
+
+  def x as B
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 6: Invalid lvalue in assignment
+
+[case testAccessingGetterWithinClassUsingSelf]
+class A
+  def f() as void
+    var a as A
+    a = self.x    -- Fail
+    var b as B
+    self.x = b    -- Fail
+    b = self.x
+  end
+
+  def x as B
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 6: "x" not assignable
+
+[case testAccessingSetterWithinClassDirectly]
+class A
+  def f() as void
+    var a as A
+    a = x      -- Fail
+    x = a      -- Fail
+    var b as B
+    x = b
+    b = x
+  end
+
+  def x as B
+  end
+  def x = y as B
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testAccessingSetterWithinClassUsingSelf]
+class A
+  def f() as void
+    var a as A
+    a = self.x      -- Fail
+    self.x = a      -- Fail
+    var b as B
+    self.x = b
+    b = self.x
+  end
+
+  def x as B
+  end
+  def x = y as B
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testReturningValueFromSetter]
+class A
+  def x = y as A
+    return A()
+  end
+  def x as A
+  end
+end
+[out]
+main: In member "x" of class "A":
+main, line 3: No return value expected
+
+
+-- Overriding
+-- ----------
+
+
+[case testOverridingGetter]
+class A is B
+  def x as A -- Fail
+  end
+  def y as B -- fail
+  end
+  def z as A
+  end
+end
+class B is C
+  def x as B
+  end
+  def z as A
+  end
+end
+class C
+  def y as A
+  end
+end
+[out]
+main: In member "x" of class "A":
+main, line 2: Type of "x" incompatible with supertype "B"
+main: In member "y" of class "A":
+main, line 4: Type of "y" incompatible with supertype "C"
+
+[case testOverridingSetter]
+class A is B
+  def x = v as A -- Fail
+  end
+  def y = v as B -- fail
+  end
+  def z = v as A
+  end
+end
+class B is C
+  def x = v as B
+  end
+  def z = v as A
+  end
+end
+class C
+  def y = v as A
+  end
+  def x as B; end
+  def y as A; end
+  def z as A; end
+end
+[out]
+main: In member "x" of class "A":
+main, line 2: Type of "x" incompatible with supertype "B"
+main: In member "y" of class "A":
+main, line 4: Type of "y" incompatible with supertype "C"
+
+[case testOverridingVarWithGetter]
+class A is B
+  def x as B -- Fail
+  end
+  def y as A -- Fail
+  end
+  def z as A
+  end
+end
+class B is C
+  var x as A
+  var z as A
+end
+class C
+  var y as B
+end
+[out]
+main: In member "x" of class "A":
+main, line 2: Type of "x" incompatible with supertype "B"
+main: In member "y" of class "A":
+main, line 4: Type of "y" incompatible with supertype "C"
+
+[case testOverridingVarWithSetter]
+class A is B
+  def x = v as B -- Fail
+  end
+  def y = v as A -- Fail
+  end
+  def z = v as A
+  end
+end
+class B is C
+  var x as A
+  var z as A
+end
+class C
+  var y as B
+end
+[out]
+main: In member "x" of class "A":
+main, line 2: Type of "x" incompatible with supertype "B"
+main: In member "y" of class "A":
+main, line 4: Type of "y" incompatible with supertype "C"
+
+
+-- Inheritance and private accessors
+-- ---------------------------------
+
+
+[case testInheritingAccessors]
+var a as A
+var b as B
+a.x = Object()  -- Fail
+a = a.x         -- Fail
+a.x = B()
+b = a.x
+
+class A is B
+end
+class B
+  def x as B
+  end
+  def x = y as B
+  end
+end
+[out]
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testAccessingPrivateAccessorsOutside]
+var a as A
+a.x = a  -- Fail
+a = a.x  -- Fail
+
+class A
+  private def x as A
+  end
+  private def x = y as A
+  end
+end
+[out]
+main, line 2: "x" is private in "A"
+main, line 3: "x" is private in "A"
+
+[case testAccessingPrivateAccessorsDirectly]
+class A
+  def f() as void
+    var b as B
+    b = x     -- Fail
+    x = b     -- Fail
+    var a as A
+    a = x
+    x = a    
+  end
+
+  private def x as A
+  end
+  private def x = y as A
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testAccessingPrivateAccessorsWithSelf]
+class A
+  def f() as void
+    var b as B
+    b = self.x   -- Fail
+    self.x = b   -- Fail
+    var a as A
+    a = self.x
+    self.x = a    
+  end
+
+  private def x as A
+  end
+  private def x = y as A
+  end
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testInheritanceAndPrivateAccessors]
+class A is B
+  def f() as void
+    var a as A
+    a = x      -- Fail
+    x = a      -- Fail
+    a = self.x -- Fail
+    self.x = a -- Fail
+  end
+end
+class B
+  private def x as A
+  end
+  private def x = y as A
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 4: "x" undefined
+main, line 5: "x" undefined
+main, line 5: Invalid lvalue in assignment
+main, line 6: "A" has no member "x"
+main, line 7: "A" has no member "x"
+
+[case testInheritanceAndAccessorsOutsideClass]
+var a as A
+a = a.x  -- Fail
+a.x = a  -- Fail
+
+class A is B
+end
+class B
+  private def x as A
+  end
+  private def x = y as A
+  end
+end
+[out]
+main, line 2: "A" has no member "x"
+main, line 3: "A" has no member "x"

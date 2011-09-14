@@ -118,6 +118,20 @@ class OSSuite is Suite
     Remove("TMPDIR")
   end
   
+  -- Test return value of System().
+  def testSystemReturnValueWithNormalExit()
+    -- System returns the exit status if there is a normal exit.
+    AssertEqual(System("exit 0"), 0)
+    AssertEqual(System("exit 4"), 4)
+  end
+  
+  -- Test return value of System() when the process was terminated by a signal.
+  def testSystemReturnValueWithSignal()
+    -- Execute a shell command that kills itself (the shell process). The 
+    -- return value must be negative.
+    Assert(System("kill $$") < 0)
+  end
+  
   -- Test querying whether a name refers to a directory (or a symlink pointing
   -- to a directory).
   def testIsDir()

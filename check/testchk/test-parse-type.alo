@@ -1,0 +1,256 @@
+module testchk
+
+-- Test cases for parsing types (in annotations).
+
+import unittest
+import parser
+import lex
+
+
+class TypeParserSuite is Suite
+  -- Test parsing different kinds of type.
+
+  def testDynamic()
+    assertTypeParse("dynamic", "dynamic")
+  end
+  
+  def testSimpleNamedType()
+    assertTypeParse("Foo", "Foo?")
+    assertTypeParse("yz_123", "yz_123?")
+  end
+  
+  def testTupleType()
+    assertTypeParse("()", "()")
+    assertTypeParse("(X,)", "(X?,)")
+    assertTypeParse("(X, (Y, dynamic))", "(X?, (Y?, dynamic))")
+  end
+  
+  def testSimpleFunctionType()
+    assertTypeParse("def ()", "def ()")
+    assertTypeParse("def () as X", "def () as X?")
+  end
+  
+  def testFunctionTypeWithArguments()
+    assertTypeParse("def (X)", "def (X?)")
+    assertTypeParse("def (X, (dynamic, Y))", "def (X?, (dynamic, Y?))")
+  end
+  
+  def testFunctionTypeWithDefaultArguments()
+    assertTypeParse("def (X=)", "def (X?=)")
+    assertTypeParse("def (X, (dynamic, Y)=)", "def (X?, (dynamic, Y?)=)")
+    assertTypeParse("def (X=, Y=)", "def (X?=, Y?=)")
+  end
+  
+  def testFunctionTypeWithVarArgs()
+    assertTypeParse("def (*X)", "def (*X?)")
+    assertTypeParse("def (X, *Y)", "def (X?, *Y?)")
+    assertTypeParse("def (X=, *Y)", "def (X?=, *Y?)")
+    assertTypeParse("def (dynamic, X=, *Y)", "def (dynamic, X?=, *Y?)")
+  end
+  
+  def testFunctionTypeWithComplexReturnValue()
+    assertTypeParse("def (*X) as (Y, def ())", "def (*X?) as (Y?, def ())")
+    assertTypeParse("def () as def () as X", "def () as def () as X?")
+  end
+  
+  def testTypeArguments()
+    assertTypeParse("Foo<X>", "Foo?<X?>")
+    assertTypeParse("Foo<X, dynamic>", "Foo?<X?, dynamic>")
+    assertTypeParse("X<X, Y<Z>>", "X?<X?, Y?<Z?>>")
+  end
+  
+  def testScopedNames()
+    assertTypeParse("x::Y", "x::Y?")
+    assertTypeParse("::Y", "::Y?")
+    assertTypeParse("def (x::Y) as (::X, Z)", "def (x::Y?) as (::X?, Z?)")
+  end
+  
+  def testFunctionSignatures()
+    assertTypeParse("def ()", "def ()")
+    assertTypeParse("def (X) as Y", "def (X?) as Y?")
+    assertTypeParse("def (X, (dynamic, dynamic)) as def ()", 
+                         "def (X?, (dynamic, dynamic)) as def ()")
+  end
+  
+  def testTypeVariables()
+    assertTypeVariableParse("<T>", "<T>")
+    assertTypeVariableParse("<T, K>", "<T, K>")
+  end
+  
+  def testTypeVariablesWithBounds()
+    assertTypeVariableParse("<T is X, K>", "<T is X?, K>")
+    assertTypeVariableParse("<T is X, K is Y<T>>", "<T is X?, K is Y?<T?>>")
+    assertTypeVariableParse("<T is Y<T, dynamic>>", "<T is Y?<T?, dynamic>>")
+  end
+  
+  def testGenericSignatures()
+    assertTypeParse("def <T> (T) as T", "def <T> (T?) as T?")
+    assertTypeParse("def <T, K is A<T>> (T) as K", 
+                         "def <T, K is A?<T?>> (T?) as K?")
+  end
+  
+  -- Test different forms of whitespace when parsing types.
+  def testWhitespaceAndLayout()
+    assertTypeParse(Tab + "   Foo   <   " + LF + "  X  >   ", "Foo?<X?>")
+    assertTypeParse("def()as X", "def () as X?")
+    assertTypeParse(" def ( ) as X ", "def () as X?")
+  end
+  
+  -- Test type parse errors.
+  def testParseErrors()
+    -- Named type.
+    assertParseError("A<", "Break()")
+    assertParseError("A<B", "Break()")
+    assertParseError("A<B,", "Break()")
+    assertParseError("A<B,>", "Op(>)")
+    assertParseError("::1", "IntLit(1)")
+    assertParseError("X::1", "IntLit(1)")
+    
+    -- Tuple type.
+    assertParseError("(", "Break()")
+    assertParseError("(A", "Break()")
+    assertParseError("(A,", "Break()")
+    assertParseError("(A,B,)", "Punct())")
+    assertParseError("(A)", "Punct())")
+    
+    -- Simple function type.
+    assertParseError("def", "Break()")
+    assertParseError("def (", "Break()")
+    assertParseError("def (A", "Break()")
+    assertParseError("def (A,", "Break()")
+    assertParseError("def (A,)", "Punct())")
+    assertParseError("def (A) as", "Break()")
+    assertParseError("def (A) as (", "Break()")
+  end
+  
+  -- Test type parse errors related to function types.
+  def testFunctionTypeErrors()    
+    -- Function with default arguments.
+    assertParseError("def (=A)", "Punct(=)")
+    assertParseError("def (A=, B)", "Punct())")
+    assertParseError("def (A= =)", "Punct( =)")
+    
+    -- Function with varargs.
+    assertParseError("def (*", "Break()")
+    assertParseError("def (*A", "Break()")
+    assertParseError("def (*A,", "Punct(,)")
+    assertParseError("def (*A B", "Name( B)")
+    assertParseError("def (*A, B)", "Punct(,)")
+    assertParseError("def (*A=)", "Punct(=)")
+    
+    -- Generic function type.
+    assertParseError("def <", "Break()")
+    assertParseError("def <A", "Break()")
+    assertParseError("def <A,", "Break()")
+    assertParseError("def <A,>", "Op(>)")
+    assertParseError("def <A,B", "Break()")
+    assertParseError("def <A is", "Break()")
+    assertParseError("def <A is A", "Break()")
+    assertParseError("def <A is A<", "Break()")
+    assertParseError("def <A>", "Break()")
+    assertParseError("def <A> (", "Break()")
+    assertParseError("def <1", "IntLit(1)")
+  end
+  
+  -- Test that the parser reports the next node after the parsed input
+  -- correctly.
+  def testExtraInput()    
+    assertExtraInput("X Y", "Name( Y)")
+    assertExtraInput("A,", "Punct(,)")
+    assertExtraInput("X 1", "IntLit( 1)")
+  end
+  
+  -- Test line numbers reported by the parser.
+  def testLineNumber()
+    assertParseLineNumber("::X", def (t)
+                                   AssertEqual(t.line, 1)
+                                 end)
+    assertParseLineNumber(LF + "X", def (t)
+                                      AssertEqual(t.line, 2)
+                                    end)
+    assertParseLineNumber("X<" + LF + "Y>", 
+      def (t)
+        AssertEqual(t.line, 1)
+        AssertEqual(t.args[0].line, 2)
+      end)
+    assertParseLineNumber(LF + "dynamic", def (t)
+                                            AssertEqual(t.line, 2)
+                                          end)
+    assertParseLineNumber(LF + "(" + LF + "X, " + LF + "Y)", 
+      def (t)
+        AssertEqual(t.line, 2)
+        AssertEqual(t.items[0].line, 3)
+        AssertEqual(t.items[1].line, 4)
+      end)
+    assertParseLineNumber(LF + "def (" + LF + "X) as Y", 
+      def (t)
+        AssertEqual(t.line, 2)
+        AssertEqual(t.argTypes[0].line, 3)
+        AssertEqual(t.retType.line, 3)
+      end)
+    assertParseLineNumber("def ()", 
+      def (t)
+        AssertEqual(t.line, 1)
+        AssertEqual(t.retType.line, -1)
+      end)
+    assertParseLineNumber("def <" + LF + "X is Y> ()", 
+      def (t)
+        AssertEqual(t.line, 1)
+        AssertEqual(t.variables.items[0].line, 2)
+        AssertEqual(t.variables.items[0].bound.line, 2)
+      end)
+  end
+  
+  -- Parse string orig as a type and verify that it is equal to final when 
+  -- pretty-printed.
+  private def assertTypeParse(orig, final)
+    var tok = Lex(orig)
+    var t, i = ParseType(tok, 0)
+    AssertEqual(i, tok.length() - 2)
+    AssertEqual(Str(t), final)
+  end
+  
+  -- Parse string orig as type variables (e.g. <T, S>) and verify that they
+  -- are equal to final when pretty-printed.
+  private def assertTypeVariableParse(orig, final)
+    var tok = Lex(orig)
+    var t, i = ParseTypeVariables(tok, 0, False)
+    AssertEqual(i, tok.length() - 2)
+    AssertEqual(Str(t), final)
+  end
+  
+  -- Verify that parsing str results in error at the given token (when the 
+  -- token is converted to a string).
+  private def assertParseError(str, errToken)
+    var tok = Lex(str)
+    var t, i
+    try
+      t, i = ParseType(tok, 0)
+    except e is TypeParseError
+      AssertEqual(Str(e.token), errToken)
+      return
+    end
+    raise AssertionFailure("No error")
+  end
+  
+  -- Verify that the string representation of the next unparsed token after 
+  -- parsing str is nextTok.
+  private def assertExtraInput(str, nextTok)
+    var tok = Lex(str)
+    var t, i = ParseType(tok, 0)    
+    AssertEqual(Str(tok[i]), nextTok)
+    Assert(i < tok.length() - 2)
+  end
+  
+  -- Parse str as a type. Pass the result type to function f, which should 
+  -- verify some properties of the line numbers of the type.
+  private def assertParseLineNumber(str, f)
+    var tok = Lex(str)
+    var i = 0
+    while tok[i] is Break
+      i += 1
+    end
+    var t, j = ParseType(tok, i)
+    f(t)
+  end
+end

@@ -1,0 +1,88 @@
+-- Test cases for the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Modules
+-- -------
+
+
+[case testModuleWithMultipleFiles]
+import a
+[file a/a.alo]
+module a
+var a as A
+var b as B
+a = bb -- Fail
+a = aa
+class A; end
+[file a/b.alo]
+module a
+var aa as A
+var bb as B
+bb = a -- Fail
+bb = b
+class B; end
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo, line 4: Incompatible types in assignment
+tmp/a/b.alo, line 4: Incompatible types in assignment
+
+
+-- Error messages with multiple files
+-- ----------------------------------
+
+
+[case testErrorMessagesFromMultipleTopLevels]
+import a
+[file a/a.alo]
+module a
+class A
+  def f(x = y) -- Fail
+  end
+end
+nil() -- Fail
+[file a/b.alo]
+module a
+nil.x -- Fail
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo: In member "f" of class "A":
+tmp/a/a.alo, line 3: "y" undefined
+tmp/a/a.alo: At top level:
+tmp/a/a.alo, line 6: nil not callable
+tmp/a/b.alo, line 2: nil has no member "x"
+
+[case testErrorMessagesFromMethodsWithSameNameInDifferentFiles]
+import a
+[file a/a.alo]
+module a
+class A
+  def create() as void
+    self.y
+  end
+end
+[file a/b.alo]
+module a
+class B
+  def create() as void
+    self.x
+  end
+end
+[out]
+In module imported in main, line 1:
+tmp/a/a.alo: In member "create" of class "A":
+tmp/a/a.alo, line 4: "A" has no member "y"
+tmp/a/b.alo: In member "create" of class "B":
+tmp/a/b.alo, line 4: "B" has no member "x"
+
+
+-- test long import paths
+-- test circular module dependencies
+-- test name shadowing

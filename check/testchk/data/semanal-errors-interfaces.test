@@ -1,0 +1,391 @@
+-- Test cases for semantic analyser errors. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Interface-related semantic analysis errors
+-- ------------------------------------------
+
+[case testMultipleMethodDefinitionInInterface]
+interface A
+  def f()
+  def f(x, y)
+end
+[out]
+main: In interface "A":
+main, line 3: "f" multiply defined
+
+[case testMultipleAccessorDefinitionInInterface]
+interface A
+  def f
+  def f
+  def f = x
+  def f = x
+end
+[out]
+main: In interface "A":
+main, line 3: "f" multiply defined
+main, line 5: "f" multiply defined
+
+[case testIncompatibleMultipleDefinitionInInterface]
+interface A
+  def a()
+  def a
+  def b()
+  def b = x
+end
+[out]
+main: In interface "A":
+main, line 3: "a" multiply defined
+main, line 5: "b" multiply defined
+
+[case testOnlySetterInInterface]
+interface A
+  def x = y
+end
+[out]
+main: In interface "A":
+main, line 2: "x" write-only
+
+[case testInvalidCreateInInterface1]
+interface A
+  def create
+end
+[out]
+main: In interface "A":
+main, line 2: "create" must be a method
+
+[case testInvalidCreateInInterface2]
+interface A
+  def create = x
+end
+[out]
+main: In interface "A":
+main, line 2: "create" must be a method
+main, line 2: "create" write-only
+
+[case testInvalidInterfaceSuperType]
+interface a is Object
+end
+interface b is x
+end
+interface c is f
+end
+var x
+def f()
+end
+[out]
+main, line 1: Interface cannot extend a class
+main, line 3: Invalid supertype
+main, line 5: Invalid supertype
+
+[case testClassInheritingInterface]
+class A is B
+end
+interface B
+end
+[out]
+main, line 1: "B" is an interface; use "implements" instead of "is"
+
+[case testUndefinedSuperInterfaceInClass]
+class a implements x
+end
+[out]
+main, line 1: "x" undefined
+
+[case testUndefinedSuperInterfaceInClass2]
+class a implements x, y
+end
+interface x
+end
+[out]
+main, line 1: "y" undefined
+
+[case testInvalidTypeOfImplementsTarget]
+class a implements x
+end
+class b implements f
+end
+class c implements Object
+end
+var x
+def f()
+end
+[out]
+main, line 1: Invalid supertype
+main, line 3: Invalid supertype
+main, line 5: "implements" cannot be used to extend a class
+
+[case testKeywordInterfaceName]
+class a implements if
+end
+interface if
+end
+[out]
+main: In class "a":
+main, line 1: Parse error before "if"
+main: At top level:
+main, line 3: Parse error before "if"
+
+[case testInterfaceIncompatibleWithSupertype]
+interface A is B
+  def a
+  def a = x
+  def b()
+end
+interface B
+  def a()
+  def b
+end
+[out]
+main: In interface "A":
+main, line 2: "a" incompatible with definition in "B"
+main, line 3: "a" incompatible with definition in "B"
+main, line 4: "b" incompatible with definition in "B"
+
+[case testMissingInterfaceMethodMember]
+class a implements b
+end
+interface b
+  def f()
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement "f" defined in "b"
+
+[case testMissingInterfaceAccessor]
+class a implements b
+  def b
+  end
+end
+interface b
+  def a
+  def b
+  def b = x
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement getter "a" defined in "b"
+main, line 1: "a" does not implement setter "b" defined in "b"
+
+[case testMissingInterfaceAccessorFromSuperinterface]
+class a implements b
+end
+interface b is c
+end
+interface c
+  def f()
+  def g
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement "f" defined in "c"
+main, line 1: "a" does not implement getter "g" defined in "c"
+
+[case testIncompatibleInterfaceDefinitionInClass]
+class a implements If
+  def a
+  end
+  def b()
+  end
+  var c
+end
+interface If
+  def a()
+  def b
+  def c()
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement "c" defined in "If"
+main, line 2: "a" incompatible with definition in "If"
+main, line 4: "b" incompatible with definition in "If"
+main, line 6: "c" incompatible with definition in "If"
+
+[case testIncompatibleWithMultipleInterfaces]
+class a implements b, c
+end
+interface b
+  def a()
+end
+interface c
+  def b()
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement "a" defined in "b"
+main, line 1: "a" does not implement "b" defined in "c"
+
+[case testPrivateInClassWhilePublicInInterface]
+class a implements If
+  private def a
+  end
+  private def b()
+  end
+end
+interface If
+  def a
+  def b()
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement "b" defined in "If"
+main, line 1: "a" does not implement getter "a" defined in "If"
+main, line 2: "a" incompatible with definition in "If"
+main, line 4: "b" incompatible with definition in "If"
+
+[case testInheritedMemberIncompatibleWithInterface]
+class a is b implements c
+end
+class b
+  def a
+  end
+  def b()
+  end
+end
+interface c
+  def a()
+  def b
+end
+[out]
+main: In class "a":
+main, line 1: "b" incompatible with definition in "c"
+main, line 1: "a" incompatible with definition in "c"
+
+[case testSetterImplementedAsConst]
+class a implements b
+  const x
+end
+interface b
+  def x
+  def x = y
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement setter "x" defined in "b"
+
+[case testSetterImplementedAsConstViaSuperclass]
+class a is b implements c
+end
+class b
+  const x
+end
+interface c
+  def x
+  def x = y
+end
+[out]
+main: In class "a":
+main, line 1: "a" does not implement setter "x" defined in "c"
+
+[case testInvalidBind]
+interface A
+  bind X
+  bind std::Y
+  bind x::Z
+  bind V
+  bind I
+end
+var V
+interface I
+end
+[out]
+main: In interface "A":
+main, line 2: "X" undefined
+main, line 3: "std::Y" undefined
+main, line 4: "x::Z" undefined
+main, line 5: Invalid bind target "V"
+main, line 6: Cannot bind an interface
+
+[case testMissingBoundInterfaceDefinition]
+class A
+end
+interface I
+  bind A
+  def f()
+  def v
+  def v = x
+end
+[out]
+main: In interface "I":
+main, line 4: "A" does not implement "f" defined in "I"
+main, line 4: "A" does not implement getter "v" defined in "I"
+main, line 4: "A" does not implement setter "v" defined in "I"
+
+[case testMissingBoundInterfaceDefinition2]
+interface I
+  bind A
+  def f()
+  def v
+  def v = x
+end
+class A
+  private def f()
+  end
+  private var v
+end
+[out]
+main: In interface "I":
+main, line 2: "A" does not implement "f" defined in "I"
+main, line 2: "A" does not implement getter "v" defined in "I"
+main, line 2: Definition of "f" in "A" incompatible with "I"
+
+[case testIncompatibleBoundInterfaceDefinition]
+interface I
+  bind A
+  def f()
+  def v
+end
+class A
+  var f
+  def v()
+  end
+end
+[out]
+main: In interface "I":
+main, line 2: "A" does not implement "f" defined in "I"
+main, line 2: Definition of "f" in "A" incompatible with "I"
+main, line 2: Definition of "v" in "A" incompatible with "I"
+
+[case testPrivateImplementationOfInterfaceAccessor]
+class A implements I
+  private var v
+end
+interface I
+  def v
+  def v = x
+end
+[out]
+main: In class "A":
+main, line 1: "A" does not implement getter "v" defined in "I"
+
+[case testBindWithSuperinterface]
+interface A is B
+  bind C
+end
+interface B
+end
+class C
+end
+[out]
+main: In interface "A":
+main, line 2: Bind used in an interface with a superinterface
+
+
+-- Special cases (regression tests)
+-- --------------------------------
+
+[case testInvalidSupertypeAndCreate]
+class A is I
+end
+interface I
+end
+A()
+[out]
+main, line 1: "I" is an interface; use "implements" instead of "is"
+

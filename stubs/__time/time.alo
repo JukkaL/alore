@@ -1,0 +1,4 @@
+module __time
+
+def Now() as Array<Int>
+end

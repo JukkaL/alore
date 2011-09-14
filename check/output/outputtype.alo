@@ -1,0 +1,123 @@
+module output
+
+import types
+
+
+-- Type visitor that outputs source code.
+class TypeOutputVisitor
+  private var result = [] -- Array<Str>
+
+  -- Return a string representation of the output.
+  def output()
+    return "".join(self.result)
+  end
+
+  def visitUnboundType(t)
+    tokens(t.repr.components)
+  end
+  
+  def visitDynamic(t)
+    if t.repr != nil
+      token(t.repr.dynamicTok)
+    end
+  end
+  
+  def visitVoid(t)
+    if t.repr != nil
+      token(t.repr.void)
+    end
+  end
+  
+  def visitInstance(t)
+    var r = t.repr
+    tokens(r.components)
+    token(r.langle); commaList(t.args, r.commas); token(r.rangle)
+  end
+  
+  def visitTypeVar(t)
+    token(t.repr.name)
+  end
+  
+  def visitCallable(t)
+    var r = t.repr
+    token(r.defTok); typeVars(t.variables); token(r.lparen)
+    
+    var n = t.argTypes.length()
+    for i in 0 to n
+      if t.isVarArg and i == n - 1
+        token(r.asterisk)
+      end
+      type(t.argTypes[i])
+      token(r.assigns[i])
+      if i < r.commas.length()
+        token(r.commas[i])
+      end
+    end
+    
+    token(r.rparen); token(r.asTok)
+    type(t.retType)
+  end
+  
+  def typeVars(v)
+    if v != nil and v.repr != nil
+      var r = v.repr
+      token(r.langle)
+      for i in 0 to v.items.length()
+        var d = v.items[i]
+        token(d.repr.name)
+        token(d.repr.isTok)
+        if d.bound != nil
+          type(d.bound)
+        end
+        if i < r.commas.length()
+          token(r.commas[i])
+        end
+      end
+      token(r.rangle)
+    end
+  end
+  
+  def visitTupleType(t)
+    var r = t.repr
+    token(r.lparen); commaList(t.items, r.commas); token(r.rparen)
+  end
+  
+  def visitIntersection(t)
+    -- Not implemented.
+  end
+  
+  -- Helpers
+
+  -- Output a string.
+  def str(s)
+    self.result.append(s)
+  end
+
+  -- Output a token.
+  def token(t)
+    self.result.append(t.rep)
+  end
+  
+  -- Output an array of tokens.
+  private def tokens(a)
+    for t in a
+      token(t)
+    end
+  end
+  
+  -- Output a type.
+  private def type(n)
+    if n != nil
+      n.accept(self)
+    end
+  end
+  
+  private def commaList(items, commas)
+    for i in 0 to items.length()
+      type(items[i])
+      if i < commas.length()
+        token(commas[i])
+      end
+    end
+  end
+end

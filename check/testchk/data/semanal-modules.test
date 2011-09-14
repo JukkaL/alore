@@ -1,0 +1,340 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Module test cases
+-- -----------------
+
+        
+[case testIgnoringModulePrivateNameAlias]
+import a
+import b
+X
+[file a/a-skip.alo]
+module a
+var X
+[file b/b-skip.alo]
+module b
+private var X
+[out]
+AloreFile:1(
+  Import(a)
+  Import(b)
+  ExpressionStmt:3(
+    NameExpr(X [a::X])))
+
+[case testModuleHeader]
+import a
+import b::c
+[file a/a.alo]
+module a
+[file b/c/b.alo]
+module b::c
+[out]
+AloreFile:1(
+  Import(a)
+  Import(b::c)
+)
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+)
+AloreFile:1(
+  tmp/b/c/b.alo
+  Header(b::c)
+)
+
+[case testSemanticAnalysisOfModuleFiles]
+import a
+x
+[file a/a.alo]
+module a
+var x
+x
+[file a/b.alo]
+module a
+x
+[out]
+AloreFile:1(
+  Import(a)
+  ExpressionStmt:2(
+    NameExpr(x [a::x])))
+AloreFile:1(
+  tmp/a/b.alo
+  Header(a)
+  ExpressionStmt:2(
+    NameExpr(x [a::x])))
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+  VarDef:2(
+    Var(x))
+  ExpressionStmt:3(
+    NameExpr(x [a::x])))
+
+[case testImportingModuleMultipleTimes]
+import a, a
+import b
+x
+[file a/a.alo]
+module a
+var x
+[file b/b.alo]
+module b
+import a
+[out]
+AloreFile:1(
+  Import(a)
+  Import(a)
+  Import(b)
+  ExpressionStmt:3(
+    NameExpr(x [a::x])))
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+  VarDef:2(
+    Var(x)))
+AloreFile:1(
+  tmp/b/b.alo
+  Header(b)
+  Import(a)
+)
+
+[case testIgnoringNonImportedNames]
+import a
+x
+[file a/a-skip.alo]
+module a
+import b
+var x
+[file b/b-skip.alo]
+module b
+var x
+[out]
+AloreFile:1(
+  Import(a)
+  ExpressionStmt:2(
+    NameExpr(x [a::x])))
+
+[case testModulePrivateDefinitions]
+import a
+private var x
+x
+::x
+[file a/a.alo]
+module a
+private var x
+x
+::x
+[out]
+AloreFile:1(
+  Import(a)
+  VarDef:2(
+    Var(x)
+    Private)
+  ExpressionStmt:3(
+    NameExpr(x [x]))
+  ExpressionStmt:4(
+    NameExpr(::x [x])))
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+  VarDef:2(
+    Var(x)
+    Private)
+  ExpressionStmt:3(
+    NameExpr(x [a::x]))
+  ExpressionStmt:4(
+    NameExpr(::x [a::x])))
+
+[case testAccessingModuleContents]
+import a::b, c
+a::b::y
+b::y
+x
+[file a/b/a-skip.alo]
+module a::b
+var x, y
+[file c/c-skip.alo]
+module c
+var y
+[out]
+AloreFile:1(
+  Import(a::b)
+  Import(c)
+  ExpressionStmt:2(
+    NameExpr(a::b::y [a::b::y]))
+  ExpressionStmt:3(
+    NameExpr(b::y [a::b::y]))
+  ExpressionStmt:4(
+    NameExpr(x [a::b::x])))
+
+[case testGlobalRefPrecedence1]
+import a
+var x
+x
+a::x
+[file a/a.alo]
+module a
+import b
+var x
+x
+b::x
+[file b/b-skip.alo]
+module b
+var x
+[out]
+AloreFile:1(
+  Import(a)
+  VarDef:2(
+    Var(x))
+  ExpressionStmt:3(
+    NameExpr(x [x]))
+  ExpressionStmt:4(
+    NameExpr(a::x [a::x])))
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+  Import(b)
+  VarDef:3(
+    Var(x))
+  ExpressionStmt:4(
+    NameExpr(x [a::x]))
+  ExpressionStmt:5(
+    NameExpr(b::x [b::x])))
+
+[case testGlobalRefPrecedence2]
+import a::b
+import b
+b::x
+[file a/b/a-skip.alo]
+module a::b
+var x
+[file b/b-skip.alo]
+module b
+var x
+[out]
+AloreFile:1(
+  Import(a::b)
+  Import(b)
+  ExpressionStmt:3(
+    NameExpr(b::x [b::x])))
+
+[case testSuperClassInImportedModule]
+import a
+class a is b
+  def g()
+    super.f()
+  end
+end
+[file a/a-skip.alo]
+module a
+import b
+class b
+  def f()
+  end
+end
+[file b/b-skip.alo]
+module b
+class b
+end
+[out]
+AloreFile:1(
+  Import(a)
+  TypeDef:2(
+    a
+    NameExpr(b [a::b])
+    FuncDef:3(
+      g
+      Body(
+        ExpressionStmt:4(
+          CallExpr:4(
+            SuperExpr:4(
+              f)
+            Args()))))))
+
+[case testCyclicModuleDependencies]
+import a
+[file a/a.alo]
+module a
+import b
+class b is a
+end
+[file b/b.alo]
+module b
+import a
+class a
+end
+class c is b
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+AloreFile:1(
+  tmp/a/a.alo
+  Header(a)
+  Import(b)
+  TypeDef:3(
+    b
+    NameExpr(a [b::a])
+  ))
+AloreFile:1(
+  tmp/b/b.alo
+  Header(b)
+  Import(a)
+  TypeDef:3(
+    a
+  )
+  TypeDef:5(
+    c
+    NameExpr(b [a::b])
+  ))
+
+
+-- Special cases
+-- -------------
+
+
+[case testAccessingMemberInheritedFromAnotherModule]
+class A is B
+  def f() as void
+    g()
+    x
+    p
+  end
+end
+[file std/std.alo]
+module std
+class Object
+end
+class B
+  def g() as void
+  end
+  var x
+  def p
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    NameExpr(B [std::B])
+    FuncDef:2(
+      f
+      Type:2(def ())
+      Body(
+        ExpressionStmt:3(
+          CallExpr:3(
+            NameExpr(g [m])
+            Args()))
+        ExpressionStmt:4(
+          NameExpr(x [m]))
+        ExpressionStmt:5(
+          NameExpr(p [m]))))))

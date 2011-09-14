@@ -1,0 +1,174 @@
+module analyse
+
+-- High-level source code analysis logic. Decides which analyses are performed
+-- to which files and in which order, and collects the results.
+
+import parser
+import nodes
+import semanal
+import checker
+import errors
+import types
+import os
+import sys
+import set
+
+
+-- Standard library paths.
+const LibPath = [ModulePath("../stubs"), ModulePath("../lib"), 
+                 "/usr/local/lib/alore"] as Array<Str>
+
+
+-- Analyse a program represented as a string semantically and optionally type
+-- check the program. Return the annotated parse trees (one per file), the 
+-- symbol table and the type map.
+def Analyse(programText          as Str, 
+            programFnam = "main" as Str, 
+            useFullStd = True    as Boolean, 
+            altLibPath = nil     as Str, 
+            isTypeCheck = False  as Boolean) as
+                (Array<AloreFile>, SymbolTable, TypeInfoMap, Map<Node, Typ>)
+  var path = LibPath.copy()
+  
+  if programFnam != "main"
+    path.insertAt(0, FixPath(DirName(programFnam)))
+  end
+  
+  if not useFullStd
+    -- Use stub std module.
+    path.insertAt(0, ModulePath("testchk/data/lib-stub"))
+  end
+  
+  if altLibPath != nil
+    path.insertAt(0, altLibPath)
+  end
+  
+  -- InitializeNormalize()
+  
+  var analysis = Analysis(path, isTypeCheck)
+  
+  -- Ignore current directory prefix in error messages.
+  analysis.errors.setIgnorePrefix(CurrentDir())
+  
+  return analysis.process(WaitingFile((programFnam, nil, [], analysis), 
+                                      programText))
+end
+
+
+-- Class for performing semantic analysis and type checking of an Alore 
+-- program.
+class Analysis
+  const isTypeCheck as Boolean      -- Do we perform a type check?
+  var libPath       as Array<Str>   -- Library path for looking up modules
+  var semAnal       as SemanticAnal -- Semantic analyser
+  var checker       as TypeChecker  -- Type checker
+  var errors = Errors() as Errors   -- For reporting all errors
+
+  -- States of all individual files that are being processed.
+  const states = []         as Array<State>
+  -- Map from module name to source files in the module.
+  const moduleFiles = Map() as Map<Str, Array<Str>>
+
+  def create(libPath as Array<Str>, isTypeCheck as Boolean)
+    self.libPath = libPath
+    self.isTypeCheck = isTypeCheck
+    self.semAnal = SemanticAnal(libPath, self.errors)
+    self.checker = TypeChecker(self.errors, self.semAnal.symtable)
+  end
+  
+  def process(initialState as State) as (Array<AloreFile>, SymbolTable,
+                                         TypeInfoMap, Map<Node, Typ>)
+    self.states.append(initialState)
+    
+    while True
+      var next = nextAvailableState()
+      if next == nil
+        break
+      end
+      
+      self.errors.setImportContext(next.importContext)      
+      next.process()
+    end
+    
+    self.semAnal.symtable.cleanup()
+    
+    if self.errors.isErrors()
+      self.errors.raiseError()
+    end
+    
+    var trees = [] as <AloreFile>
+    for state in self.states
+      trees.append((state as ParsedFile).tree)
+    end
+    
+    return trees, self.semAnal.symtable, self.semAnal.types, 
+           self.checker.typeMap
+  end
+  
+  def nextAvailableState() as State
+    var i = self.states.length() - 1
+    while i >= 0
+      if self.states[i].isReady()
+        return self.states[i]
+      end
+      i -= 1
+    end
+    return nil
+  end
+  
+  def hasModule(name as Str) as Boolean
+    return self.moduleFiles.hasKey(name)
+  end
+  
+  def fileState(path as Str) as Constant
+    for s in self.states
+      if s.path == path
+        return s.state
+      end
+    end
+    return UnseenState
+  end
+  
+  def moduleState(name as Str) as Constant
+    if not hasModule(name)
+      return UnseenState
+    end
+    var state = CheckedState
+    for f in self.moduleFiles[name]
+      var fs = fileState(f)
+      if IsSmallerState(fs, state)
+        state = fs
+      end
+    end
+    return state
+  end
+end
+
+
+-- Convert a path that is relative to check/ to an absolute path.
+private def ModulePath(dir as Str) as Str
+  -- IDEA: Detect the base path more reliably.
+
+  -- Assume program is in the check/ directory (e.g. check.alo).
+  var basePath = DirName(ProgramPath)
+  
+  if BaseName(ProgramPath) == "test.alo"
+    -- When called by the test runner, the basePath will point to test/.
+    -- Convert it to point to check/ instead.
+    basePath = Join(DirName(basePath), "check")
+  end
+  
+  return FixPath(Join(basePath, dir))
+end
+
+
+private def FixPath(p as Str) as Str
+  var cur = CurrentDir()
+  if p.startsWith(cur)
+    p = p[cur.length() + 1:]
+  end
+  if p == ""
+    p = "."
+  end
+  return p
+end

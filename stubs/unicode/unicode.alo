@@ -1,0 +1,7 @@
+module unicode
+
+def UnicodeName(s as Str) as Str
+end
+
+def LookupChr(s as Str) as Str
+end

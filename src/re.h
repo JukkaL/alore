@@ -11,6 +11,7 @@
 
 #include "value.h"
 #include "thread.h"
+#include "debug_params.h"
 
 
 /* Compile-time flags */

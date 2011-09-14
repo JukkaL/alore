@@ -1,0 +1,26 @@
+module types
+
+import lex
+
+
+-- Replace type variable references in a type with the dynamic type.
+def ReplaceTypeVars(type as Typ) as Typ
+  return type.accept(ReplaceTypeVarsVisitor())
+end
+
+
+class ReplaceTypeVarsVisitor is TypeTranslator
+  -- Only override type variable handling; otherwise perform an indentity
+  -- transformation.
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    if t.repr != nil
+      -- Give a representation for the dynamic type.
+      var tok = Token('dynamic')
+      tok.pre = t.repr.name.pre
+      return Dynamic(t.line, DynamicRepr(tok))
+    else
+      return Dynamic()
+    end
+  end
+end

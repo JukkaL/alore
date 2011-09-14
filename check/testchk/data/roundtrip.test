@@ -1,0 +1,968 @@
+[case testSimpleVarDefinition]
+var x
+
+[case testVarDefinitionWithInitialization]
+var x = 1
+
+[case testPrivateConstDefinition]
+private const z
+
+[case testMultipleVarDefinition]
+var x, y, z
+const Fo, Bar
+
+[case testPreservingWhitespaceAndComments]
+---- comment
+
+ -- another
+
+   var    x   ,   -- yet
+     y    =     1     -- more
+
+---- hmm
+
+ -- final
+
+[out]
+
+[case testEmptyFile]
+[out]
+
+[case testCommentOnlyFile]
+---- comment
+
+[case testHashBangComment1]
+#!/usr/bin/alore
+
+[case testHashBangComment2]
+#!
+var x
+
+[case testExpressionStatement]
+1
+
+[case testNameExpressions]
+Object
+var x = std ::  Object
+  x  --hello
+
+[case testThisModuleNameExpressions]
+var x 
+  :: x  --hello
+
+[case testSimpleLiterals]
+ 1.1000e2
+ nil
+ 00012345
+
+[case testStrLiterals]
+ "x"
+ ""
+ """"
+ "\u12ab"
+
+[case testWhileStmt]
+ while   1   -- 1
+   2
+ end  -- 2
+
+[case testBinaryOps]
+1 +    2 div 5== 2.2
+
+[case testParenthesisedExprsession]
+1  *   ( 2   +   5   )
+
+[case testAssignment]
+var x
+x  = 1 -- comment
+
+[case testOperatorAssignment]
+var x
+  x   *=   5
+
+[case testArrayExpr1]
+ [ ]
+
+[case testArrayExpr2]
+ [ 1 ]
+
+[case testArrayExpr3]
+ [ 1  , 2 ]
+
+[case testArrayExpr4]
+ [ 1  ,  ]
+
+[case testEmptyTupleExpr]
+ (  )
+
+[case testTupleExpr1]
+ ( 1 , )
+
+[case testTupleExpr2]
+ 1 , 2 -- hello
+
+[case testTupleExpr3]
+ ( 1 , 2, )
+
+[case testMultipleAssignment1]
+var x, y
+ x , y = 1
+
+[case testMultipleAssignment2]
+var x, y
+ [ x , y ] = 1
+
+[case testMultipleAssignment3]
+var x, y
+ [ x , y, ] = 1
+
+[case testMultipleAssignment4]
+var x, y
+ ( x , y ) = 1
+
+[case testMultipleAssignment5]
+var x, y
+ ( x , y, ) = 1
+
+[case testMultipleAssignmentWithNestedParens]
+var x, y
+ (
+   (
+     [ x, y ]  )     ) = 1
+
+[case testPreservingLvalueParens1]
+var x
+ ( x  ) = 1
+
+[case testPreservingLvalueParens2]
+var x
+ (  (x )  ) = 1
+
+[case testPreservingLvalueParens3]
+var x
+ (  ( x )  ), (x) = 1
+
+[case testPreservingLvalueParensInOperatorAssignment]
+var x
+ (  ( x )  ) += 1
+
+[case testSimpleCallExpr]
+1 (  )
+
+[case testCallExpr1]
+1 ( 2  )
+
+[case testCallExpr2]
+1 ( 2 ,  3  )
+
+[case testCallExpr3]
+1 ( * 2  )
+
+[case testCallExpr4]
+1 (2 ,  * 3  )
+
+[case testCallExpr5]
+1 ( 2 , )
+
+[case testSimpleFunction]
+def f()
+end
+
+[case testPrivateFunction]
+  private  def Foo (  )  --foo
+    var y
+ end  -- hello
+
+[case testFunctionWithArg]
+def f( x )
+end
+
+[case testFunctionWithArgs]
+def f( x ,  y )
+end
+
+[case testFunctionWithVarArgs1]
+def f( *x)
+end
+
+[case testFunctionWithVarArgs2]
+def f(x ,  * y)
+end
+
+[case testFunctionWithDefaultArgs1]
+def f(x = 1)
+end
+
+[case testFunctionWithDefaultArgs2]
+def f( x ,  y = 1  ,   z  =  2 )
+end
+
+[case testFunctionWithDefaultArgs3]
+def f(x, y=1, z  =  2, *w)
+end
+
+[case testSimpleFunctionExpression]
+var x = def ( )  ; 1; end + 1
+
+[case testFunctionExpression1]
+var x = def ( x )
+    end
+
+[case testFunctionExpression2]
+var x = def ( x  ,   y  )
+    end
+
+[case testFunctionExpression3]
+var x = def ( x  =  1  )
+    end
+
+[case testFunctionExpression4]
+var x = def ( x,  y  =  1  ,  z = 5 + 3  )
+    end
+
+[case testVarArgsFunctionExpression1]
+var x = def (  * x  )
+    end
+
+[case testVarArgsFunctionExpression2]
+var x = def ( x ,  * y  )
+    end
+
+[case testVarArgsFunctionExpression3]
+def(x,y=1,*z);end
+
+[case testMemberAccessExpression]
+  (1  + 2 )  .   y
+  
+[case testMemberAccessLvalue]
+  (1  + 2 )  .   y  = 3
+  
+[case testMemberAccessLvalueInParens]
+ (  ( 1  .   y )  )  = 3
+
+[case testEmptyClass]
+  class   Foo   -- a
+  end   -- b
+
+[case testPrivateClass]
+ private  class X; end
+
+[case testClassWithSuperclass]
+class X is     Y
+end
+class Y
+end
+
+[case testClassWithMembers]
+class X
+  def f ( )
+  end
+  var x = nil
+end
+
+[case testPrivateMembers]
+class X
+  private var x = 3
+   private def f ( x, y )
+    x = y
+  end
+end
+
+[case testConstMember]
+class X
+  const p = 4
+end
+
+[case testSelf]
+class X
+  var x = 1
+  def f()
+    self . f ( )
+    self . x  =  5
+  end
+end
+
+[case testImplicitCreate]
+class X
+  var x
+end
+
+[case testGetterAndSetter]
+class X
+  def x -- hello
+    1
+  end
+
+  def x = y -- hello
+    2
+  end  
+end
+
+[case testPrivateGetterAndSetter]
+class X
+  private def x ; end
+  private def x = y ; end
+end
+
+[case testClassWithImplements]
+class C implements A -- hello
+end
+
+interface A
+end
+
+[case testClassWithTwoImplements]
+class C implements A -- hello
+end
+
+interface A
+end
+
+[case testClassWithManyImplements]
+class C implements A , AA  ,   :: AAA -- hello
+end
+
+interface A; end
+interface AA; end
+interface AAA; end
+
+[case testClassWithIsAndImplements]
+class C is std :: Object  implements   A
+end
+interface A
+end
+
+[case testSuperExpression]
+class A is B
+  def f()
+    super . x
+    super.f()
+  end
+end
+class B
+  var x
+  def f()
+  end
+end
+
+[case testSuperLvalue]
+class A is B
+  def f()
+    super . x  = 1
+  end
+end
+class B
+  var x
+end
+
+[case testSuperLvalueInParens]
+class A is B
+  def f()
+    (  ( super . x )  )  = 1
+  end
+end
+class B
+  var x
+end
+
+[case testIndexExpression]
+1 [  2  ]
+
+[case testIndexLvalue]
+1 [ 2  ] = 3
+
+[case testIndexLvalueInParens]
+ (  ( 1 [ 2  ] )  ) = 3
+
+[case testSliceExpression1]
+var x
+x [ 1 :  ]
+
+[case testSliceExpression2]
+var x
+x [  :  2 ]
+
+[case testSliceExpression3]
+var x
+x [ :  ]
+
+[case testUnaryOperations]
+  not  - 6 <  5
+
+[case testAsCast1]
+  1  as   Object
+
+[case testAsCast2]
+  1.foo()   as  std  ::  Object
+
+[case testAsDynamicCast]
+  1  as  dynamic --- foo
+
+[case testEmptyInterface]
+  interface  A
+
+  end
+
+[case testInterfaceInheritance]
+interface A -- hello
+end -- hello
+
+interface B is A
+end
+
+[case testInterfaceMethod1]
+interface A
+  def f ( ) -- hello
+end
+
+[case testInterfaceMethod2]
+interface A
+  def f ( x )
+end
+
+[case testInterfaceMethod3]
+interface A
+  def f ( x , y )
+end
+
+[case testInterfaceMethod4]
+interface A
+  def f ( x = , y  = )
+end
+
+[case testInterfaceVarArgsMethod1]
+interface A
+  def f ( * x )
+end
+
+[case testInterfaceVarArgsMethod2]
+interface A
+  def f ( x, y = , * z )
+end
+
+[case testInterfaceAccessors]
+interface A
+  def f -- hello
+  def f = x -- hello
+end
+
+[case testBindDeclaration]
+interface A
+  bind  B  -- hello
+end
+class B
+end
+
+[case testBindDeclarations]
+interface A
+  bind   ::   B  -- hello
+  bind C
+
+  def f()
+end
+class B
+  def f(); end
+end
+class C
+  def f(); end
+end
+
+[case testRepeatStmt]
+  repeat -- hello
+    var a = 1
+  until 2 < 5 -- bar
+
+[case testEmptyReturn]
+def f()
+  return -- hello
+end
+
+[case testReturnWithValue]
+def f()
+  return  1 + 4   -- hello
+end
+
+[case testBreak]
+while 1 < 2
+  break  -- hello
+end
+
+[case testRaise]
+  raise 1  -- hello
+
+[case testFor1]
+  for x  in  1 ,  2  -- hello
+    var y = x
+  end
+
+[case testFor2]
+  for x  ,  y in  1 ,  2  -- hello
+    var z = x + y
+  end
+
+[case testIf1]
+  if  1 -- bar
+    1  + 2
+  end -- foo
+
+[case testIf2]
+  if  1 -- bar
+    1  + 2
+  else -- zar
+    3 + 4
+  end -- foo
+
+[case testIf3]
+  if  1 -- bar
+    1  + 2
+  elif 3 -- 3
+    5 + 7
+  else -- zar
+    3 + 4
+  end -- foo
+
+[case testIf4]
+  if  1 -- bar
+    1  + 2
+ elif 3 -- 3
+    5 + 7
+   elif 8 + 3 -- zar
+     3 + 4
+    end -- foo
+
+[case testSwitch1]
+ switch 1 -- a
+  case 2 -- b
+    3 + 4
+ end
+
+[case testSwitch2]
+ switch 1 -- a
+  case 2 -- b
+    3 + 4
+   case 3 + 5 -- c
+     5  + 6
+  end
+
+[case testSwitch3]
+ switch 1 -- a
+  case 2 -- b
+    3 + 4
+   else  -- c
+      6 + 7
+  end
+
+[case testSwitch4]
+ switch 1 -- a
+  case 2 ,  6 + 7 -- b
+    3 + 4
+   case 3 + 5     , nil ,  -1 -- c
+     5  + 6
+  end
+
+[case testTryFinallyStmt]
+  try -- a
+    1 + 2
+   finally -- b
+     3 + 4
+    end
+
+[case testTryExceptStmt1]
+  try -- a
+   1 + 2
+  except   Exception   -- b
+    3 +  5
+   end -- c
+[usestd fixtures/std-exception.alo]
+
+[case testTryExceptStmt2]
+  try -- a
+   1 + 2
+  except   std ::  Exception   -- b
+    3 +  5
+   except   Exception   -- c
+     3 +  6
+    end -- d
+[usestd fixtures/std-exception.alo]
+
+[case testTryExceptStmt3]
+  try -- a
+    1 + 2
+  except   e  is  std ::  Exception   -- b
+    3 +  5
+  except   Exception   -- c
+    3 +  6
+  except   ff  is Exception   -- d
+    3 +  6
+  end -- e
+[usestd fixtures/std-exception.alo]
+
+[case testEncodingDeclaration]
+ ---- hello
+  encoding   latin1   --a
+ var x
+
+[case testBreakAfterGreaterThan]
+1 > -- hello
+   2
+
+
+  
+-- Type annotations
+-- ----------------
+
+
+
+[case testTrivialTypeAnnotation]
+var x as dynamic
+
+[case testSimpleNamedType]
+var x as Object
+
+[case testQualifiedNamedType]
+var x as std  ::   Object
+
+[case testQualifiedTypeInThisModule]
+var x as  ::   A
+class A
+end
+
+[case testSimpleFunctionAnnotation]
+def f ( )  as void
+end
+
+[case testFunctionAnnotationWithReturnValue]
+def f( )   as   dynamic  -- hello
+end
+
+[case testFunctionAnnotationWithArgs1]
+def f( x  as dynamic)  as    dynamic  -- hello
+end
+
+[case testFunctionAnnotationWithArgs2]
+def f(x   as  dynamic  , y  as  dynamic  )  as dynamic  -- hello
+end
+
+[case testFunctionAnnotationWithArgs3]
+def f(x as dynamic , y as dynamic , z as dynamic  )    -- hello
+end
+
+[case testIntersectionTypeAnnotation1]
+ def f (  )   as  void  or  -- bar
+       ( ) -- hello
+ end
+
+[case testIntersectionTypeAnnotation2]
+ def f( x as Object )  or  -- bar
+       ( x  as  dynamic    )    as  std :: Object  -- hello
+ end
+
+[case testIntersectionTypeAnnotation3]
+ def f( x as Object )  or  -- bar
+       (  x  as  dynamic    )    as  std :: Object   or -- hello
+    (   x     as     dynamic  ) -- zar
+ end
+
+[case testIntersectionTypeAnnotationWithVarArgs]
+ def f ( * x  as  dynamic  ) or
+       (   *  x  as dynamic )
+ end
+
+[case testIntersectionTypeAnnotationWithDefaultArgs]
+ def f (  x  = 1 as  dynamic ,  y = 2  as Object ) or
+       (x=as dynamic   ,    y  =    as Object  )
+ end
+
+[case testPartialFunctionAnnotation]
+def f ( x ,  y  as  dynamic  , z )  -- foo
+end
+
+[case testPartialFunctionIntersectionAnnotation]
+def f ( x ,  y  as  dynamic  , z )   or   -- foo
+  ( x as Object , y   , z  )   as void
+end
+
+[case testDefaultArgsInFunctionType1]
+def f(x=1  as  Object  )
+end
+
+[case testDefaultArgsInFunctionType2]
+def f(x=1  as Object  , y=1  as dynamic  )
+end
+
+[case testDefaultArgsInFunctionType3]
+def f(x  as  std :: Object , y=1   as Object  , z=1 as dynamic )
+end
+
+[case testDefaultArgsInFunctionType4]
+def f(x as std :: Object , y as A , z=1 as Object, zz=2 as dynamic)
+end
+class A
+end
+
+[case testVarArgsInFunctionType1]
+def f(*a  as  Object )
+end
+
+[case testVarArgsInFunctionType2]
+def f(a as dynamic , * b as Object )
+end
+
+[case testVarArgsInFunctionType3]
+def f(a=1 as dynamic , *b  as Object )
+end
+
+[case testNonSignatureFunctionType1]
+var x as def ( )
+
+[case testNonSignatureFunctionType2]
+var x as def ( A , :: A = , * Object  ) as Object
+class A; end
+
+[case testFunctionTypeWithMultipleDefaultArgs]
+var x as def (A   = , :: A =   ) as Object
+class A; end
+
+[case testTupleType1]
+var x as ( )
+
+[case testTupleType2]
+var x as ( Object , dynamic )
+
+[case testTupleType3]
+var x as ( Object , )
+
+
+
+-- Generics
+-- --------
+
+
+
+[case testSimpleGenericType]
+class A  < T >
+end
+var a as A < std :: Object > -- hello
+
+[case testGenericTypeWithTwoArgs]
+class A  < S , T >
+end
+var a as A < std :: Object , A < dynamic , def ( ) > > -- hello
+
+[case testTypeVariable]
+class A  <T>
+  var x as T
+end
+
+[case testGenericFunctionSignature1]
+def f < T > (x as T ) as T
+end
+
+[case testGenericFunctionSignature2]
+def f< S , T >(x as T , y as S ) as T
+end
+
+[case testTypeBounds1]
+class A  < T is std :: Object >
+end
+
+[case testTypeBounds2]
+class A < T is std :: Object , S , K is B >
+end
+class B
+end
+
+[case testFunctionBounds1]
+def f< T is Object >(x as T) as T
+end
+
+[case testFunctionBounds2]
+def f< S , G is B , T is Object >(x as T) as T
+end
+interface B
+end
+
+[case testGenericIntersectionType]
+def f < S > ( x as S ) as S or   -- foo
+    <  T  >  (  x  as  T  )   as  T   -- bar
+  var z = x
+end
+
+[case testInheritingFromGenericType1]
+class A is B < Object >
+end
+class B<T>
+end
+
+[case testInheritingFromGenericType1]
+class A implements B < Object > , :: B < A >
+end
+interface B <T>
+end
+
+[case testInterfaceAnnotations]
+interface A < T > is B < Object > -- hello
+  def f ( ) as void -- hello
+  def g ( x as B < Object > ) as dynamic
+end
+interface B < S >
+end
+
+[case testGetterAndSetterSuffixAnnotations]
+class A
+  def f as Object
+  end
+  def f = y as Object
+  end
+end
+
+[case testForAnnotation]
+ for x as Object in 1
+ end
+
+[case testForAnnotation2]
+ for x as Object , y  as dynamic in 1
+ end
+
+[case testSimpleTypeApp]
+ [] as < Object >
+
+[case testTypeApp1]
+ [] as < Object , dynamic >
+
+[case testTypeApp2]
+ [] as < Object , dynamic , def ( ) > . append ( 1 )
+
+
+
+-- Modules
+-- -------
+
+
+
+[case testSimpleImportedModule]
+  import   a  -- foo
+[file a/a.alo]
+ module  a   -- b
+[out]
+  import   a  -- foo
+a/a.alo:
+ module  a   -- b
+
+[case testSimpleImportedModule]
+  import   a  ::  b  -- foo
+
+  var x
+[file a/b/a.alo]
+ module  a :: b   -- b
+
+ var y
+[out]
+  import   a  ::  b  -- foo
+
+  var x
+a/b/a.alo:
+ module  a :: b   -- b
+
+ var y
+
+[case testMultipleImports]
+  import  a   -- a
+    import    b   -- b
+
+1
+[file a/a.alo]
+ module a
+[file b/b.alo]
+ module   b
+[out]
+  import  a   -- a
+    import    b   -- b
+
+1
+a/a.alo:
+ module a
+b/b.alo:
+ module   b
+
+[case testMultipleModulesInImport1]
+  import  a  ,   b   -- ab
+
+1
+[file a/a.alo]
+ module a
+[file b/b.alo]
+ module   b
+[out]
+  import  a  ,   b   -- ab
+
+1
+a/a.alo:
+ module a
+b/b.alo:
+ module   b
+
+[case testMultipleModulesInImport2]
+  import  a  ,   b  ,   -- ab
+     a :: b  -- yes
+
+1
+[file a/a.alo]
+ module a
+[file b/b.alo]
+ module   b
+[file a/b/ab.alo]
+module a::b
+[out]
+  import  a  ,   b  ,   -- ab
+     a :: b  -- yes
+
+1
+a/a.alo:
+ module a
+b/b.alo:
+ module   b
+a/b/ab.alo:
+module a::b
+
+[case testImportModuleWithTwoFiles]
+import a
+[file a/a.alo]
+ module a
+[file a/b.alo]
+   module   a   -- x
+[out]
+import a
+a/b.alo:
+   module   a   -- x
+a/a.alo:
+ module a
+
+[case testAllDeclarationsAtOnce]
+import a
+[file a/a.alo]
+#!/usr/bin/alore
+-- hello
+ encoding utf8 -- a
+
+ module a -- b
+
+ import b  -- c
+
+ class A; end
+[file b/b.alo]
+module b
+[out]
+import a
+a/a.alo:
+#!/usr/bin/alore
+-- hello
+ encoding utf8 -- a
+
+ module a -- b
+
+ import b  -- c
+
+ class A; end
+b/b.alo:
+module b

@@ -1,0 +1,290 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Miscellaneous basic test cases
+-- ------------------------------
+
+[case testTrivialSemanticAnalysis]
+var x
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)))
+
+[case testGlobalVariableReference]
+var x
+x
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x))
+  ExpressionStmt:2(
+    NameExpr(x [x])))
+
+[case testGlobalConstantReference]
+const x
+x
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(x)
+    Const)
+  ExpressionStmt:2(
+    NameExpr(x [x])))
+
+[case testGlobalFunctionReference]
+def f()
+end
+f()
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f)
+  ExpressionStmt:3(
+    CallExpr:3(
+      NameExpr(f [f])
+      Args())))
+
+[case testGlobalClassReference]
+class a
+end
+a
+[out]
+AloreFile:1(
+  TypeDef:1(
+    a
+  )
+  ExpressionStmt:3(
+    NameExpr(a [a])))
+
+[case testLocalVarReference]
+def f()
+  var x
+  x
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Body(
+      VarDef:2(
+        Var(x))
+      ExpressionStmt:3(
+        NameExpr(x [l])))))
+
+[case testMemberVarReference]
+class A
+  var a
+  def create()
+    a
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:3(
+      create
+      Body(
+        ExpressionStmt:4(
+          NameExpr(a [m]))))))
+
+[case testMethodReference]
+class A
+  def f()
+  end
+  def create()
+    f()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f)
+    FuncDef:4(
+      create
+      Body(
+        ExpressionStmt:5(
+          CallExpr:5(
+            NameExpr(f [m])
+            Args()))))))
+
+[case testGetterReference]
+class A
+  def f
+  end
+  def create()
+    f
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Getter)
+    FuncDef:4(
+      create
+      Body(
+        ExpressionStmt:5(
+          NameExpr(f [m]))))))
+
+[case testSetterReference]
+class A
+  def f
+  end
+  def f = x
+  end
+  def create()
+    f = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Getter)
+    FuncDef:4(
+      f
+      Setter
+      Args(
+        Var(x)))
+    FuncDef:6(
+      create
+      Body(
+        AssignmentStmt:7(
+          Lvalues(
+            NameLvalue(f [m]))
+          IntExpr(1))))))
+
+[case testMultipleDefinitionsWithTheSameName]
+var a
+class A
+  var a
+  var b = a
+  def create(a)
+    a
+    ::a
+  end
+end
+[out]
+AloreFile:1(
+  VarDef:1(
+    Var(a))
+  TypeDef:2(
+    A
+    VarDef:3(
+      Var(a))
+    VarDef:4(
+      Var(b)
+      NameExpr(a [m]))
+    FuncDef:5(
+      create
+      Args(
+        Var(a))
+      Body(
+        ExpressionStmt:6(
+          NameExpr(a [l]))
+        ExpressionStmt:7(
+          NameExpr(::a [a]))))))
+
+[case testDefaultArgumentValue]
+def f(a, b = a + 1, c = a + b)
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(a)
+      Var(b)
+      Var(c))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(b [l]))
+        OpExpr:1(
+          +
+          NameExpr(a [l])
+          IntExpr(1)))
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(c [l]))
+        OpExpr:1(
+          +
+          NameExpr(a [l])
+          NameExpr(b [l]))))))
+
+          
+-- Encoding test cases
+-- -------------------
+
+[case testEncodingUtf8]
+encoding utf8
+[out]
+AloreFile:1(
+  Encoding(utf8)
+)
+
+[case testEncodingAscii]
+encoding ascii
+[out]
+AloreFile:1(
+  Encoding(ascii)
+)
+
+[case testEncodingLatin1]
+encoding latin1
+[out]
+AloreFile:1(
+  Encoding(latin1)
+)
+
+
+-- Function test cases
+-- -------------------
+                      
+[case testFunctionArguments]
+def f(a, b = a, c = b, *d)
+  [a, b, c, d]
+end
+[out]
+AloreFile:1(
+  FuncDef:1(
+    f
+    Args(
+      Var(a)
+      Var(b)
+      Var(c)
+      Var(d))
+    Init(
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(b [l]))
+        NameExpr(a [l]))
+      AssignmentStmt:1(
+        Lvalues(
+          NameLvalue(c [l]))
+        NameExpr(b [l])))
+    VarArg
+    Body(
+      ExpressionStmt:2(
+        ArrayExpr:2(
+          NameExpr(a [l])
+          NameExpr(b [l])
+          NameExpr(c [l])
+          NameExpr(d [l]))))))

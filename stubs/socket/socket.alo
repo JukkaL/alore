@@ -1,0 +1,39 @@
+module socket
+
+import io
+
+
+class Socket is Stream
+  def create(destination as Str, port as Int, buffering = Unbuffered as 
+             Constant)
+  end
+  
+  def localAddress() as Str
+  end
+  
+  def localPort() as Int
+  end
+  
+  def remoteAddress() as Str
+  end
+  
+  def remotePort() as Int
+  end
+  
+  def _read(x as Int) as Str
+  end
+end
+
+
+def GetHostByName(string as Str) as Str
+end
+
+def GetHostByAddress(string as Str) as Str
+end
+
+def GetHostName() as Str
+end
+
+
+class NameError is Exception
+end

@@ -1,0 +1,638 @@
+-- Test cases for the type checker related to interfaces.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Subtyping with interfaces
+-- -------------------------
+
+
+[case testInterfaceSubtypingViaImplementation]
+j = c  -- Fail
+a = i  -- Fail
+a = j  -- Fail
+b = i  -- Fail
+
+i = a
+i = b
+i = c
+j = a
+j = b
+a = b
+
+var i as I
+var j as J
+var a as A
+var b as B
+var c as C
+
+interface I
+end
+interface J
+end
+class A implements I, J
+end
+class B is A
+end
+class C implements I
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testInterfaceSubtypingViaExtension]
+j = i -- Fail
+a = i -- Fail
+a = j -- Fail
+i = o -- Fail
+j = o -- Fail
+
+i = a
+j = a
+i = j
+o = i
+o = j
+
+var i as I
+var j as J
+var a as A
+var o as Object
+
+interface I
+end
+interface J is I
+end
+class A implements J
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testImplementingInSubclass]
+i = a -- Fail
+b = a -- Fail
+
+a = b
+i = b
+
+var i as I
+var a as A
+var b as B
+
+interface I
+end
+class A
+end
+class B is A implements I
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Interfaces objects
+-- ------------------
+
+
+[case testInterfaceAsTypeObject]
+t = o is I -- Fail
+
+o = I
+t = I
+b = o is I
+
+var o as Object
+var b as Boolean
+var t as Type
+
+interface I
+end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testInterfacesInCasts]
+a = o as I -- Fail
+b = i as B -- Ok; a subclass of B might implement I 
+i = b as I -- Ok; a subclass of B might implement I
+
+i = o as I
+i = a as I
+
+var i as I
+var a as A
+var b as B
+var o as Object
+
+interface I
+end
+class A implements I
+end
+class B
+end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testConstructingInterface]
+I() -- Fail
+J() -- Fail
+
+interface I
+end
+interface J
+  def create()
+end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: "Type" not callable
+main, line 2: "Type" not callable
+
+
+-- Implementing interface methods
+-- ------------------------------
+
+
+[case testImplementingInterfaceMethod]
+class A implements I
+  def f(x as B) as A -- Fail
+  end
+  
+  def g(x as A) as A
+  end  
+end
+
+interface I
+  def f(x as A) as A
+  def g(x as A) as A
+end
+
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "I"
+
+[case testImplementingInterfaceMethodWithMultipleInterfaces]
+class A implements I, J
+  def f(x as B) as A -- Fail
+  end
+  def g(x as A) as B -- Fail
+  end  
+  def h() as B -- Not related to any interface
+  end
+end
+interface I
+  def f(x as A) as A
+end
+interface J
+  def g(x as A) as A
+end
+
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "I"
+main: In member "g" of class "A":
+main, line 4: Return type of "g" incompatible with supertype "J"
+
+[case testImplementingInterfaceMethodWithExtension]
+class A implements I
+  def f(x as B) as A -- Fail
+  end
+end
+interface I is J
+end
+interface J
+  def f(x as A) as A
+end
+class B; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "J"
+
+[case testInvalidSubinterfaceMethod]
+interface I is J
+  def f(x as I)
+end
+interface J
+  def f(x as J)
+end
+[out]
+main: In member "f" of interface "I":
+main, line 2: Argument 1 of "f" incompatible with supertype "J"
+
+[case testInterfaceCoAndContraVariance]
+class A implements I
+  def h(a as A) as I -- Fail
+  end
+  def f(a as I) as I
+  end
+  def g(a as A) as A
+  end
+end
+
+interface I
+  def f(a as A) as I
+  def g(a as A) as I
+  def h(a as I) as A
+end
+[out]
+main: In member "h" of class "A":
+main, line 2: Argument 1 of "h" incompatible with supertype "I"
+main, line 2: Return type of "h" incompatible with supertype "I"
+
+
+-- Implementing interface accessors
+-- --------------------------------
+
+
+[case testImplementingInterfaceAccessorsWithVariable]
+class A implements I
+  var x as B
+  var y as A
+end
+
+interface I
+  def x as A
+  def x = v as A
+  def y as A
+  def y = v as A  
+end
+
+class B; end
+[out]
+main: In class "A":
+main, line 2: Type of "x" incompatible with supertype "I"
+
+[case testImplementingInterfaceAccessorsWithConst]
+class A implements I
+  const x as B
+  const y as A
+end
+
+interface I
+  def x as A
+  def y as A
+end
+
+class B; end
+[out]
+main: In class "A":
+main, line 2: Type of "x" incompatible with supertype "I"
+
+[case testImplementingAccessorsInMultipleInterfacesWithVariable]
+class A implements I, J
+  var x as B
+  var y as B
+end
+
+interface I
+  def x as A
+  def x = v as A
+end
+interface J
+  def y as A
+  def y = v as A  
+end
+
+class B; end
+[out]
+main: In class "A":
+main, line 2: Type of "x" incompatible with supertype "I"
+main, line 3: Type of "y" incompatible with supertype "J"
+
+[case testImplementingInheritedInterfaceAccessorsWithVariable]
+class A implements I
+  var x as B
+end
+
+interface I is J
+end
+
+interface J
+  def x as A
+  def x = v as A
+end
+
+class B; end
+[out]
+main: In class "A":
+main, line 2: Type of "x" incompatible with supertype "J"
+
+[case testImplementingInterfacesAccessors]
+class A implements I
+  def x as B     -- Fail
+  end
+  def x = v as B -- Fail
+  end
+  def y as A
+  end
+  def y = v as A  
+  end
+end
+
+interface I
+  def x as A
+  def x = v as A
+  def y as A
+  def y = v as A  
+end
+
+class B; end
+[out]
+main: In member "x" of class "A":
+main, line 2: Type of "x" incompatible with supertype "I"
+main, line 4: Type of "x" incompatible with supertype "I"
+
+[case testImplementingAccessorsAcrossMultipleInterfaces]
+class A implements I, J
+  def x as B     -- Fail
+  end
+  def y as B     -- Fail
+  end
+end
+
+interface I
+  def x as A
+end
+interface J
+  def y as A
+end
+
+class B; end
+[out]
+main: In member "x" of class "A":
+main, line 2: Type of "x" incompatible with supertype "I"
+main: In member "y" of class "A":
+main, line 4: Type of "y" incompatible with supertype "J"
+
+
+-- Accessing interface members
+-- ---------------------------
+
+
+[case testAccessingInterfaceMethod]
+a = i.f(a) -- Fail
+b = i.f(b) -- Fail
+i.g()
+
+b = i.f(a)
+
+var i as I
+var a as A
+var b as B
+
+interface I
+  def f(a as A) as B
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Argument 1 to method "f" of "I" has incompatible type "B"
+main, line 3: "I" has no member "g"
+
+[case testAccessingInterfaceAccessors]
+b = i.x -- Fail
+i.x = b -- Fail
+a = i.y -- Fail
+i.y = a -- Fail
+
+a = i.x
+i.x = a
+
+var i as I
+var a as A
+var b as B
+
+interface I
+  def x as A
+  def x = y as A
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: "I" has no member "y"
+main, line 4: "I" has no member "y"
+
+[case testAccessingInheritedInterfaceMethod]
+a = i.f(a) -- Fail
+b = i.f(a)
+
+var i as I
+var a as A
+var b as B
+
+interface I is J
+end
+interface J
+  def f(a as A) as B
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+
+-- Intersection types
+-- ------------------
+
+
+[case testIntersectionTypeImplementationOfInterface]
+class A implements I, J
+  def f(a as A) or
+       (a as B) as B
+  end
+end
+
+interface I
+  def f(a as A)
+end
+interface J
+  def f(a as B) as B
+end
+
+class B; end
+[out]
+
+
+-- Dynamic types
+-- -------------
+
+
+[case testInterfacesWithAllDynamicTypes]
+class A implements I
+  const c
+
+  def f(x)
+  end
+end
+
+interface I
+  def c
+  def f(x)
+end
+[out]
+
+[case testUntypedInterfaceWithTypedImplementation]
+class A implements I
+  const c as A
+  var v as A
+
+  def f(x as A)
+  end
+end
+
+interface I
+  def c
+  def v
+  def v = x
+  def f(x)
+end
+[out]
+
+[case testTypedInterfaceWithUntypedImplementation]
+class A implements I
+  const c
+  var v
+
+  def f(x)
+  end
+end
+
+interface I
+  def c as A
+  def v as A
+  def v = x as A
+  def f(x as A)
+end
+[out]
+
+[case testDeepHierarchyWithInterfacesAndDynamic]
+class A is B
+  def c as C -- Fail
+  end  
+  def v as C -- Fail
+  end  
+  def v = x as C -- Fail
+  end
+  def f(x as C) -- Fail
+  end
+end
+
+class B implements I
+  def c
+  end
+  
+  var v
+  
+  def f(x)
+  end
+end
+
+interface I
+  def c as A
+  def v as A
+  def v = x as A
+  def f(x as A)
+end
+
+class C; end
+[out]
+main: In member "c" of class "A":
+main, line 2: Type of "c" incompatible with supertype "I"
+main: In member "v" of class "A":
+main, line 4: Type of "v" incompatible with supertype "I"
+main, line 6: Type of "v" incompatible with supertype "I"
+main: In member "f" of class "A":
+main, line 8: Argument 1 of "f" incompatible with supertype "I"
+
+[case testDeepHierarchyWithInterfacesAndDynamic]
+class A implements I
+  def c as C -- Fail
+  end  
+  var v as C -- Fail
+  def f(x as C) -- Fail
+  end
+end
+
+interface I is J
+  def c
+  def v
+  def v = x
+  def f(x)
+end
+
+interface J
+  def c as A
+  def v as A
+  def v = x as A
+  def f(x as A)
+end
+
+class C; end
+[out]
+main: In member "c" of class "A":
+main, line 2: Type of "c" incompatible with supertype "J"
+main: In class "A":
+main, line 4: Type of "v" incompatible with supertype "J"
+main: In member "f" of class "A":
+main, line 5: Argument 1 of "f" incompatible with supertype "J"
+
+
+-- Bind declarations
+-- -----------------
+
+
+[case testBasicBindDeclaration]
+class A
+  def c as A  -- Fail
+  end
+  var v as A  -- Fail
+  def f(x as A)  -- Fail
+  end
+end
+
+interface I
+  bind A
+
+  def c as B
+  def v as B
+  def v = x as B
+  def f(x as B)
+end
+
+class B; end
+[out]
+main: In member "c" of class "A":
+main, line 2: Type of "c" incompatible with supertype "I"
+main: In class "A":
+main, line 4: Type of "v" incompatible with supertype "I"
+main: In member "f" of class "A":
+main, line 5: Argument 1 of "f" incompatible with supertype "I"
+
+
+-- test interfaces
+--   bind to supertype -> subclass also has to conform to the interface
+--     but if we require specificity, then this always works
+
+-- test casts with interface binding
+
+-- FIX make sure the bound interfaces are not more specific than target classes
+-- FIX make error messages originate from the binding interface

@@ -1,0 +1,246 @@
+module testchk::helpers
+
+-- Helpers for parsing test case description files and running test cases.
+
+import string, re
+import io, os
+import unittest
+
+
+-- Parse a file with test case descriptions. Return an array of test cases.
+def ParseTestCases(path as Str, 
+                   perform as def (DataDrivenTestCase), 
+                   basePath = "." as Str, 
+                   optionalOut = False as Boolean,
+                   includePath = DirName(path) as Str) as 
+                                           Array<DataDrivenTestCase>
+  var l = File(path).readLines()
+  var p = ParseTestData(l, path)
+  var out = [] as <DataDrivenTestCase>
+  
+  -- Process the parsed items. Each item has a header of form [id args], 
+  -- optionally followed by lines of text.
+  var i = 0
+  while i < p.length()
+    var ok = False
+    var i0 = i
+    if p[i].id == "case"
+      i += 1
+      
+      var files = [] as <(Str, Str)> -- path and contents
+      while i < p.length() and not p[i].id in ("out", "case")
+        if p[i].id == "file"
+          -- Record an extra file needed for the test case.
+          files.append((Join(basePath, p[i].arg), Newline.join(p[i].data)))
+        elif p[i].id == "usestd"
+          -- Use a custom source file for the std module.
+          var stdPath = Join(DirName(path), p[i].arg)
+          var f = File(stdPath)
+          files.append((Join(basePath, "std/std.alo"), f.read()))
+          f.close()
+        else
+          raise ValueError("Invalid section header {} in {} at line {}".
+                             format(p[i].id, path, p[i].line))
+        end
+        i += 1
+      end
+      
+      var tcout = [] as <Str>
+      if i < p.length() and p[i].id == "out"
+        tcout = p[i].data
+        ok = True
+        i += 1
+      elif optionalOut
+        ok = True
+      end
+      
+      if ok
+        var input = ExpandIncludes(p[i0].data, includePath)
+        var tc = DataDrivenTestCase(p[i0].arg, input, tcout,
+                                    path, p[i0].line, perform, files)
+        out.append(tc)
+      end
+    end
+    if not ok
+      raise ValueError("{}, line {}: Error in test case description".format(
+        path, p[i0].line))
+    end
+  end
+  
+  return out
+end
+
+
+class DataDrivenTestCase is TestCase
+  const input as Array<Str>
+  const output as Array<Str>
+  const file as Str
+  const line as Int
+  private var perform as def (DataDrivenTestCase)
+  private var files as Array<(Str, Str)>
+  private var cleanUp as Array<(Boolean, Str)>
+
+  def create(name, input, output, file, line, perform, files)
+    super.create(name)
+    self.input = input
+    self.output = output
+    self.file = file
+    self.line = line
+    self.perform = perform
+    self.files = files
+  end
+  
+  def setUp() as void
+    super.setUp()
+    self.cleanUp = []
+    for path, content in self.files
+       var dir = DirName(path)
+       for d in addDirs(dir)
+         cleanUp.append((True, d))
+       end
+       var f = File(path, Output)
+       f.write(content)
+       f.close()
+       cleanUp.append((False, path))
+    end
+  end
+  
+  -- Add all subdirectories required to create dir. Return an array of the 
+  -- created directories in the order of creation.
+  private def addDirs(dir as Str) as Array<Str>
+    if dir == "" or IsDir(dir)
+      return []
+    else
+      var dirs = addDirs(DirName(dir)) + [dir]
+      MakeDir(dir)
+      return dirs
+    end      
+  end
+
+  def run()
+    if self.name.endsWith("-skip")
+      raise SkipTestCaseException()
+    else
+      self.perform(self)
+    end
+  end
+  
+  def tearDown() as void
+    for isDir, path in Reversed(self.cleanUp)
+      Remove(path)
+    end
+    super.tearDown()
+  end
+end
+
+
+-- Parsed item of the form
+--   [id arg]
+--   .. data ..
+class TestItem
+  const id as Str
+  const arg as Str
+  const data as Array<Str> -- Text data, array of 8-bit strings
+  const file as Str
+  const line as Int -- Line number in file
+end
+
+
+-- Parse a list of lines that represent a sequence of test items.
+def ParseTestData(l as Array<Str>, fnam as Str) as Array<TestItem>
+  var ret = [] as <TestItem>
+  
+  var id = nil as Str
+  var arg = nil as Str
+  var data = [] as <Str>
+  
+  var i = 0
+  var i0 = 0
+  while i < l.length()
+    var s = l[i].strip()
+  
+    if l[i].startsWith("[") and s.endsWith("]") and not s.startsWith("[[")
+      if id != nil
+        data = CollapseLineContinuation(data)
+        data = StripList(data)
+        ret.append(TestItem(id, arg, StripList(data), fnam, i0 + 1))
+      end
+    
+      i0 = i
+      id = s[1:-1]
+      arg = nil
+      if " " in id
+        arg = id[id.index(" ") + 1:]
+        id = id[:id.index(" ")]
+      end
+      data = []
+    elif l[i].startsWith("[[")
+      data.append(l[i][1:])      
+    elif not l[i].startsWith("--")
+      data.append(l[i])
+    elif l[i].startsWith("----")
+      data.append(l[i][2:])
+    end
+    i += 1
+  end
+  
+  -- Process the last item.
+  if id != nil
+    data = CollapseLineContinuation(data)
+    data = StripList(data)
+    ret.append(TestItem(id, arg, data, fnam, i + 1))
+  end
+  
+  return ret
+end
+
+
+-- Return a stripped copy of l. Strip whitespace at the end of all lines, and 
+-- strip all empty lines from the end of the array.
+private def StripList(l as Array<Str>) as Array<Str>
+  var r = [] as <Str>
+  for s in l
+    -- Strip spaces at end of line
+    r.append(Subst(s, '\s+$', ''))
+  end
+
+  while r.length() > 0 and r[-1] == ""
+    r.removeAt(-1)
+  end
+  
+  return r
+end
+
+
+private def CollapseLineContinuation(l as Array<Str>) as Array<Str>
+  var r = [] as <Str>
+  var cont = False
+  for s in l
+    var ss = Subst(s, '\\$', '')
+    if cont
+      r[-1] += Subst(ss, '^ +', '')
+    else
+      r.append(ss)
+    end
+    cont = s.endsWith('\')
+  end
+  return r
+end
+
+
+-- Replace all lies starting with @include with the contents of the file name
+-- following the prefix. Look for the files in basePath.
+private def ExpandIncludes(a as Array<Str>, basePath as Str) as Array<Str>
+  var res = [] as <Str>
+  for s in a
+    if s.startsWith("@include ")
+      var fn = s.split(' ', 1)[1].strip()
+      var f = File(Join(basePath, fn))
+      res.extend(f.readLines())
+      f.close()
+    else
+      res.append(s)
+    end
+  end
+  return res
+end

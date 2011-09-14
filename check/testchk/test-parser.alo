@@ -1,0 +1,33 @@
+module testchk
+
+-- Test cases for the Alore parser.
+
+import unittest
+import parser
+import errors
+import testchk::helpers
+import os
+import io
+
+
+class ParserSuite is Suite
+  def cases()
+    -- The test case descriptions are stored in an external file.
+    return ParseTestCases(Join(TestDataPrefix, "parse.test"), TestParser)
+  end
+end
+
+
+-- Perform a single parser test case. The argument contains the description
+-- of the test case.
+private def TestParser(testcase)
+  var a
+  try
+    var n = Parse(LF.join(testcase.input))
+    a = Str(n).split(LF)
+  except e is CompileError
+    a = e.messages
+  end
+  AssertStringArraysEqual(testcase.output, a, 
+    "Invalid parser output ({}, line {})".format(testcase.file, testcase.line))
+end

@@ -133,24 +133,6 @@ extern ASectionState ASection[A_MAX_ACTIVE_SECTIONS];
     AEmitArg(num)
 
 
-/* IDEA: Convert into a function. */
-#define AEmitAssignmentDestination(num) \
-    do {                                                    \
-        int prevIndex  = AGetPrevOpcodeIndex();             \
-        int prevOpcode = AGetPrevOpcode();                  \
-                                                            \
-        if (prevOpcode >= OP_ADD_L && prevOpcode <= OP_SUB_L  \
-            && AGetOpcode(prevIndex - 3) == OP_GET_LI         \
-            && AGetOpcode(prevIndex - 2) == (num)             \
-            && AGetOpcode(prevIndex - 1) == AIntToValue(1)) { \
-            AEmitBack(4);                                     \
-            AEmitOpcode(OP_INC_L + (prevOpcode - OP_ADD_L));  \
-        }                                                     \
-                                                              \
-        AEmitArg(num);                                        \
-    } while (0)
-
-
 #define AEmitGetIndex(baseType, base, index)  \
     AEmitOpcode2Args((baseType) == A_OT_LOCAL \
                     ? OP_AGET_LLL : OP_AGET_GLL, (base), (index))
@@ -167,6 +149,9 @@ extern ASectionState ASection[A_MAX_ACTIVE_SECTIONS];
 
 #define AEmitIfBoolean(src, dst) \
     AEmitOpcode2Args(OP_IF_TRUE_L, src, dst)
+
+
+void AEmitAssignmentDestination(int num);
 
 
 void AToggleInstruction(int index);

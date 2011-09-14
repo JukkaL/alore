@@ -1,0 +1,248 @@
+module analyse
+
+import parser
+import semanal
+import checker
+import errors
+import nodes
+
+
+-- State ids.
+const UnseenState, 
+      WaitingState, 
+      ParsedState, 
+      BoundState, 
+      AnalysedState, 
+      CheckedState
+      
+      
+const StateOrder = [UnseenState, WaitingState, ParsedState, BoundState,
+                    AnalysedState, CheckedState] as Array<Constant>
+                    
+                    
+def IsSmallerState(s as Constant, t as Constant) as Boolean
+  return StateOrder.index(s) < StateOrder.index(t)
+end
+
+
+-- Abstract base class for compilation states.
+class State
+  const path as Str
+  const id   as Str   -- Module id
+  const importContext as Array<(Str, Int)>
+  const analysis      as Analysis
+  
+  def create(info as (Str, Str, Array<(Str, Int)>, Analysis))
+    self.path, self.id, self.importContext, self.analysis = info
+  end
+  
+  def info() as (Str, Str, Array<(Str, Int)>, Analysis)
+    return self.path, self.id, self.importContext, self.analysis
+  end
+  
+  def process() as void
+    raise RuntimeError("Not implemented")
+  end
+  
+  def isReady() as Boolean
+    return True
+  end
+  
+  def state as Constant
+    raise RuntimeError("Not implemented")
+  end
+  
+  def switchState(stateObject as State)
+    for i in 0 to self.analysis.states.length()
+      if self.analysis.states[i].path == stateObject.path
+        self.analysis.states[i] = stateObject
+        return
+      end
+    end
+    raise RuntimeError("State for {} not found".format(stateObject.path))
+  end
+  
+  def errors as Errors
+    return self.analysis.errors
+  end
+  
+  def semAnal as SemanticAnal
+    return self.analysis.semAnal
+  end
+  
+  def checker as TypeChecker
+    return self.analysis.checker
+  end
+  
+  def fail(path as Str, line as Int, msg as Str)
+    self.errors.setFile(path)
+    self.errors.report(line, msg)
+  end
+end
+
+
+class WaitingFile is State
+  const programText as Str -- Program text (or nil to read from file)
+  
+  def create(info as (Str, Str, Array<(Str,  Int)>, Analysis), 
+             programText as Str)
+    self.programText = programText
+    super.create(info)
+  end  
+
+  def process() as void
+    var tree = parse(self.programText, self.path)
+
+    if self.id == nil
+      self.semAnal.analMainHeader(tree, self.path)
+    else
+      self.semAnal.analModuleHeader(tree, self.path, self.id)
+    end
+
+    if self.id != "std"
+      importModule("std")
+    end
+
+    for i in tree.imports
+      var res as Boolean
+      try
+        self.errors.pushImportContext(self.path, i.line)
+        res = importModule(i.id)
+      finally
+        self.errors.popImportContext()
+      end
+      if not res
+        fail(self.path, i.line, 
+             "Module ""{}"" could not be imported".format(i.id))
+      end
+    end
+
+    self.semAnal.analDefs(tree.defs, self.path, self.id)
+
+    switchState(ParsedFile(info(), tree))
+  end
+  
+  private def importModule(id as Str) as Boolean
+    -- Do nothing if already compiled.
+    if self.analysis.hasModule(id)
+      return True
+    end
+    
+    var src = ModuleSources(id, self.analysis.libPath)
+    if src != nil
+      var paths = [] as <Str>
+      for text, fnam in Reversed(src)
+        self.analysis.states.append(
+          WaitingFile((fnam, id, self.errors.importContext(), self.analysis),
+                      text))
+        paths.append(fnam)
+      end
+      self.analysis.moduleFiles[id] = paths
+      return True
+    else
+      return False
+    end
+  end
+  
+  private def parse(s as Str, fnam as Str) as AloreFile
+    var numErrs = self.errors.numMessages()
+    var tree = Parse(s, fnam, self.errors)
+    if self.errors.numMessages() != numErrs
+      self.errors.raiseError()
+    end
+    return tree
+  end
+  
+  def state as Constant
+    return WaitingState
+  end  
+end
+
+
+class ParsedFile is State
+  const tree as AloreFile
+  const dependencies as Array<Str>
+  
+  def create(info as (Str, Str, Array<(Str, Int)>, Analysis), 
+             tree as AloreFile)
+    self.tree = tree
+    
+    var imp = ["std"]
+    for i in tree.imports
+      imp.append(i.id)
+    end
+    
+    self.dependencies = imp
+    
+    super.create(info)
+  end
+  
+  def process() as void
+    self.semAnal.bindSupertypes(self.tree, self.tree.path)
+    switchState(BoundFile(info(), self.tree))
+  end
+  
+  -- Dependencies are met if all dependencies are at least in the same state
+  -- as this object.
+  def isReady() as Boolean
+    for moduleName in self.dependencies
+      if IsSmallerState(self.analysis.moduleState(moduleName), self.state)
+        return False
+      end
+    end
+    return True
+  end  
+
+  def state as Constant
+    return ParsedState
+  end
+end
+
+
+class BoundFile is ParsedFile
+  def process() as void
+    -- Semantically analyse file.
+    self.semAnal.visitFile(self.tree, self.tree.path)
+    
+    switchState(AnalysedFile(info(), self.tree))
+  end
+
+  def state as Constant
+    return BoundState
+  end
+end
+
+
+class AnalysedFile is BoundFile
+  def process() as void
+    if self.analysis.isTypeCheck
+      -- Type check file.
+      self.checker.visitFile(self.tree, self.tree.path)
+    end
+    
+    -- FIX remove from active state list to speed up processing
+    
+    switchState(CheckedFile(info(), self.tree))
+  end
+
+  def state as Constant
+    return AnalysedState
+  end
+end
+
+
+class CheckedFile is AnalysedFile
+  -- Finished, so cannot process.
+  def process() as void
+    raise RuntimeError("Cannot process CheckedFile")
+  end
+  
+  -- Finished, so cannot ever become ready.
+  def isReady() as Boolean
+    return False
+  end
+
+  def state as Constant
+    return CheckedState
+  end
+end

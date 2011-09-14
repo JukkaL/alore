@@ -10,13 +10,13 @@ module string
 import __string
 
 
-def ExpandTabs(s, tabSize = 8)
+def ExpandTabs(s as Str, tabSize = 8 as Int) as Str
   -- Handle non-positive tab size as a special case - remove tabs.
   if tabSize <= 0
     return s.replace(Tab, "")
   end
   
-  var a = []
+  var a = [] as Array<Str>
   var i = 0
   var column = 0
   
@@ -57,8 +57,12 @@ def ExpandTabs(s, tabSize = 8)
 end
 
 
-const IsLetter = __string::IsLetter
-const IsDigit = __string::IsDigit
-const IsWordChar = __string::IsWordChar
-const IsSpace = __string::IsSpace
-const IntToStr = __string::IntToStr
+const IsLetter = __string::IsLetter as def (Str) as Boolean
+
+const IsDigit = __string::IsDigit as def (Str) as Boolean
+
+const IsWordChar = __string::IsWordChar as def (Str) as Boolean
+
+const IsSpace = __string::IsSpace as def (Str) as Boolean
+
+const IntToStr = __string::IntToStr as def (Int, Int, Int=) as Str

@@ -1,0 +1,39 @@
+module testchk
+
+-- Test cases for parse errors.
+
+import unittest
+import parser
+import errors
+import testchk::helpers
+import io
+import os
+
+
+-- The file name shown in test case output. This is displayed in error 
+-- messages, and must match the file name in the test case descriptions.
+const InputFileName = "file.alo"
+
+
+class ParseErrorSuite is Suite
+  def cases()
+    -- Test case descriptions are in an external file.
+    return ParseTestCases(Join(TestDataPrefix, "parse-errors.test"), 
+                          TestParseError)
+  end
+end
+
+
+private def TestParseError(testcase)
+  try
+    -- Compile temporary file.
+    Parse(LF.join(testcase.input), InputFileName)
+    raise AssertionFailure("No errors reported")
+  except e is CompileError
+    -- Verify that there was a compile error and that the error messages 
+    -- are equivalent.
+    AssertStringArraysEqual(testcase.output, e.messages, 
+                            "Invalid compiler output ({}, line {})".format(
+                              testcase.file, testcase.line))
+  end
+end

@@ -1,0 +1,90 @@
+module io
+
+import encodings
+
+
+const StdIn = nil as TextStream
+const StdOut = nil as TextStream
+const StdErr = nil as TextStream
+
+const RawStdIn = nil as File
+const RawStdOut = nil as File
+const RawStdErr = nil as File
+
+
+const Input, Output, Append, Unbuffered, LineBuffered, Buffered, Narrow,
+      Protected
+
+const DefaultEncoding -- FIX initialize + type
+
+
+class Stream implements Iterable<Str>
+  def create(*args as Constant)
+  end
+  
+  def write(*args as Object)
+  end
+  
+  def writeLn(*args as Object)
+  end
+  
+  def read(size = -1 as Int) as Str
+  end
+  
+  def readLn() as Str
+  end
+  
+  def readLines() as Array<Str>
+  end
+  
+  def flush() as void
+  end
+  
+  def eof() as Boolean
+  end
+  
+  def close() as void
+  end
+  
+  def peek() as Str
+  end
+
+  def iterator() as Iterator<Str>
+  end
+end
+
+
+class File is Stream
+  def create(path as Str, *args as Constant)
+  end
+  
+  def seek(offset as Int)
+  end
+  
+  def pos() as Int
+  end
+  
+  def size() as Int
+  end
+  
+  def _write(*args as Object)
+  end
+  
+  def _read(size as Int) as  Str
+  end
+end
+
+
+class TextStream is Stream
+  def create(stream as Str, arg = nil as Constant, *args as Constant) or
+            (stream as Stream, arg as Encoding, *args as Constant)
+  end
+end
+
+
+class TextFile is TextStream
+  -- NOTE: Accepts (Str, *Constant).
+  def create(path as Str, arg = nil as Constant, *args as Constant) or
+            (path as Str, arg as Encoding, *args as Constant)
+  end
+end

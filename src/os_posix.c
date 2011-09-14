@@ -21,6 +21,7 @@
 #include <time.h>
 #include <utime.h>
 #include <pwd.h>
+#include <sys/wait.h>
 #include "alore.h"
 #include "os_module.h"
 #include "io_module.h"
@@ -173,12 +174,30 @@ AValue AOsSleep(AThread *t, AValue *frame)
 AValue AOsSystem(AThread *t, AValue *frame)
 {
     /* IDEA: Can we analyze the return code and raise an exception or
-       something -- but perhaps we'd better not. */
+             something -- but perhaps we'd better not. */
+    
     char cmd[1024]; /* IDEA: Use a constant for the size */
-    int error;
+    int status;
     AGetStr(t, frame[0], cmd, sizeof(cmd));
-    BLOCKING(error = system(cmd));
-    return AMakeInt(t, error);
+    BLOCKING(status = system(cmd));
+    
+    /* Translate the exit status. */
+    if (WIFEXITED(status)) {
+        /* Normal exit. The status is the exit status or return value from
+           main (we hope that it's non-negative). */
+        status = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        /* Terminated by a signal. Return negative value, which can be used
+           to deduce the signal number (but this behavior is undocumented). */
+        status = -10 - WTERMSIG(status);
+    } else {
+        /* Use the -1 status for any other error. */
+        /* IDEA: Maybe detect other conditions and produce more specific
+                 status values? */
+        status = -1;
+    }
+    
+    return AMakeInt(t, status);
 }
 
 

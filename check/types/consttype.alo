@@ -1,0 +1,22 @@
+module types
+
+
+-- Is type a constant type (i.e. a type with no type variable references)?
+def IsConstantType(type as Typ) as Boolean
+  return type.accept(IsConstantTypeVisitor())
+end
+
+
+private class IsConstantTypeVisitor is TypeQuery
+  def create() as void
+    -- By default, everything is constant. A composite is constant if all items
+    -- are constant.
+    super.create(True,
+                 AllTypesStrategy)
+  end
+  
+  -- A type variable is not a constant.
+  def visitTypeVar(t as TypeVar) as Boolean
+    return False
+  end
+end

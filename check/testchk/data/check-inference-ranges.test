@@ -1,0 +1,720 @@
+-- Test cases for the type checker related to type inference of generic type
+-- ranges of form A<X..Y>.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Basic test cases
+-- ----------------
+
+
+[case testBasicRangeInference]
+ao = f()
+ab = f()
+b = f() -- Fail
+
+def f<T>() as A<T>
+end
+
+var ab as A<B>
+var ao as A<Object>
+var b as B
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testBasicRangeInferenceFromConstructor]
+ao = A()
+ab = A()
+b = A() -- Fail
+
+var ab as A<B>
+var ao as A<Object>
+var b as B
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 3: Incompatible types in assignment
+
+[case testBoundedRangeInference]
+ac = f(b) -- Fail
+ab = f(c) -- Fail
+
+ao = f(b)
+ab = f(b)
+ao = f(c)
+ac = f(c)
+
+def f<T>(a as T) as A<T>
+end
+
+var b as B
+var c as C
+var ab as A<B>
+var ao as A<Object>
+var ac as A<C>
+
+class A<T>
+end
+
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Local variables
+-- ---------------
+
+
+[case testInferLocalVariableTypeWithRanges]
+def g() as void
+  var x = f(o)
+  ab = x -- Fail
+  ao = x
+  var y = f(b)
+  ao = y -- Fail
+  ab = y
+end
+
+var ao as A<Object>
+var ab as A<B>
+var o as Object
+var b as B
+
+def f<T>(a as T) as A<T>
+end
+
+class A<T>
+end
+
+class B; end
+[out]
+main: In function "g":
+main, line 3: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testInferLocalVariableTypeWithTooGeneralRange]
+def g() as void
+  var x = f() -- Fail
+end
+
+def f<T>() as A<T>
+end
+
+class A<T>
+end
+[out]
+main: In function "g":
+main, line 2: Need type annotation for local variable
+
+[case testInferMultipleLocalVariableTypesWithRangesAndTupleRvalue]
+def g() as void
+  var x, y = f(b), f(b)
+  ao = x -- Fail
+  ao = y -- Fail
+  ab = x
+  ab = y
+end
+
+var ao as A<Object>
+var ab as A<B>
+var b as B
+
+def f<T>(a as T) as A<T>
+end
+
+class A<T>
+end
+
+class B; end
+[out]
+main: In function "g":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testInferMultipleLocalVariableTypesWithRangesAndArrayRvalue]
+def h() as void
+  var x, y = g(f(b))
+  ao = x -- Fail
+  ao = y -- Fail
+  ab = x
+  ab = y
+end
+
+var ao as A<Object>
+var ab as A<B>
+var b as B
+
+def f<T>(a as T) as A<T>
+end
+
+def g<T>(a as T) as Array<T>
+end
+
+class A<T>
+end
+
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main: In function "h":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Pair expressions
+-- ----------------
+
+
+[case testInferPairExpression]
+paa = a : o -- Fail
+paa = o : a -- Fail
+pao = o : o -- Fail
+
+paa = a : a
+poo = o : o
+poo = a : a
+poo = a : o
+pao = a : o
+pao = a : a
+
+var paa as Pair<A, A>
+var pao as Pair<A, Object>
+var poo as Pair<Object, Object>
+
+var a as A
+var o as Object
+
+class A; end
+[file std/std.alo]
+module std
+class Object
+end
+class Type
+end
+class Pair<T, S>
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testPairOperator]
+var a, p as (A, Pair<A, B>)
+a = (a : a)         -- Fail
+p = (a(nil) : nil)  -- Fail
+p = (a : B())
+
+class A; end
+class B; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Type
+end
+class Pair<T, S>
+end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: "A" not callable
+
+
+-- Return types which do not support ranges
+-- ----------------------------------------
+
+
+[case testInferenceWithTypeVariableTwiceInReturnType]
+ab, ao = f(b) -- Fail
+ao, ab = f(b) -- Fail
+ao, ao = f(b) -- Fail
+
+ab, ab = f(b)
+ao, ao = f(o)
+
+def f<T>(a as T) as (A<T>, A<T>)
+end
+
+var b as B
+var o as Object
+
+var ab as A<B>
+var ao as A<Object>
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testInferenceWithTypeVariableTwiceInReturnTypeAndMultipleVariables]
+ao, ao, ab = f(b, b)     -- Fail
+ao, ab, ao = g(b, b)     -- Fail
+ao, ab, ab, ab = h(b, b) -- Fail
+ab, ab, ao, ab = h(b, b) -- Fail
+
+ao, ab, ab = f(b, b)
+ab, ab, ao = g(b, b)
+ab, ab, ab, ab = h(b, b)
+
+def f<S, T>(a as S, b as T) as (A<S>, A<T>, A<T>) -- T collapsed
+end
+
+def g<S, T>(a as S, b as T) as (A<S>, A<S>, A<T>) -- S collapsed
+end
+
+def h<S, T>(a as S, b as T) as (A<S>, A<S>, A<T>, A<T>) -- T and S collapsed
+end
+
+var b as B
+var o as Object
+
+var ab as A<B>
+var ao as A<Object>
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Multiple constraints for a range
+-- --------------------------------
+
+
+[case testMultipleConstraintsForRangeType]
+ab = f(b, o) -- Fail
+ab = f(o, b) -- Fail
+ac = f(b, c) -- Fail
+ac = f(c, b) -- Fail
+
+ao = f(b, c)
+ao = f(c, b)
+ab = f(c, b)
+
+def f<T>(a as T, b as T) as A<T>
+end
+
+var ac as A<C>
+var ab as A<B>
+var ao as A<Object>
+var b as B
+var c as C
+var o as Object
+
+class A<T>
+end
+
+class B; end
+class C is B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Preserving range in generic function call
+-- -----------------------------------------
+
+
+[case testPreservingRangeTypeInGenericFunctionCall1]
+aab = f(f(o)) -- Fail
+
+aab = f(f(b))
+aao = f(f(b))
+ao = f(f(b))
+
+def f<T>(a as T) as A<T>
+end
+
+var aab as A<A<B>>
+var aao as A<A<Object>>
+var ao as A<Object>
+var b as B
+var o as Object
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testPreservingRangeTypeInGenericFunctionCall2]
+ab = f(g(o)) -- Fail
+
+ab = f(g(b))
+ao = f(g(b))
+
+def f<T>(a as T) as T
+end
+
+def g<T>(a as T) as A<T>
+end
+
+var ab as A<B>
+var ao as A<Object>
+var b as B
+var o as Object
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testPreservingRangeTypeInGenericFunctionCall3]
+ab = f(g(o), g(b)) -- Fail
+ab = f(g(b), g(o)) -- Fail
+
+ab = f(g(b), g(b))
+ao = f(g(b), g(o))
+ao = f(g(o), g(b))
+
+def f<T>(a as T, b as T) as T -- Multiple constraints
+end
+
+def g<T>(a as T) as A<T>
+end
+
+var ab as A<B>
+var ao as A<Object>
+var b as B
+var o as Object
+
+class A<T>
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Method call with a range-valued base type
+-- -----------------------------------------
+
+
+[case testMethodCallWithRangeType]
+ab.g(f(o))        -- Fail
+ac = f(b).g(f(c)) -- Fail
+ac = f(c).g(f(b)) -- Fail
+
+ab = f(b).g(f(c))
+ao = f(b).g(f(c))
+ab = f(c).g(f(b))
+ao = f(c).g(f(b))
+
+ab.g(f(c))
+
+def f<T>(a as T) as A<T>
+end
+
+var o as Object
+var b as B
+var c as C
+var ao as A<Object>
+var ab as A<B>
+var ac as A<C>
+
+class A<T>
+  def g(a as A<T>) as A<T>
+  end
+end
+
+class B; end
+class C is B; end
+[out]
+main, line 1: Argument 1 to method "g" of "A" has incompatible type A<Object>
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testGenericMethodCallWithRangeType]
+ac, ab = f(b).g(f(c), f(b)) -- Fail
+ac, ac = f(c).g(f(c), f(b)) -- Fail
+ac, ab = f(c).g(f(b), f(b)) -- Fail
+
+ab, ab = f(b).g(f(c), f(c))
+ab, ab = f(c).g(f(b), f(c))
+
+def f<T>(a as T) as A<T>
+end
+
+var b as B
+var c as C
+var ab as A<B>
+var ac as A<C>
+
+class A<T>
+  def g<S>(a as A<T>, b as A<S>) as (A<T>, A<S>)
+  end
+end
+
+class B; end
+class C is B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testGenericMethodCallWithRangeTypeAndError]
+def h() as void
+  var x = f(nil).g(f(nil)) -- Fail
+  f(b).g(f(b), h)          -- Fail
+  f(b).gg(h)               -- Fail
+end
+
+f(nil).g(f(nil))
+
+def f<T>(a as T) as A<T>
+end
+
+var b as B
+
+class A<T>
+  def g<S>(a as A<S>, b = nil as def () as S) as A<S>
+  end
+  def gg(a as def () as T)
+  end
+end
+
+class B; end
+[out]
+main: In function "h":
+main, line 2: Need type annotation for local variable
+main, line 3: Cannot infer type argument 1 of method "g" of "A"
+main, line 4: Cannot infer function type argument
+
+[case testCollapsingBoundMethodWithRangeType]
+go = f(b).g   -- Fail
+go = f(nil).g -- Fail
+gb = f(b).g
+
+def f<T>(a as T) as A<T>
+end
+
+var gb as def (A<B>)
+var go as def (A<Object>)
+
+var b as B
+
+class A<T>
+  def g(a as A<T>)
+  end
+end
+
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testCollapsingBaseTypeDueToIncompatibleReturnType]
+ao, ab = f(b).g(f(c)) -- Fail
+ab, ao = f(c).g(f(b)) -- Fail
+
+ab, ab = f(b).g(f(c))
+ab, ab = f(c).g(f(b))
+ao, ab = f(c).h(f(b))
+ao, ab = f(b).h(f(c))
+
+def f<T>(a as T) as A<T>
+end
+
+var b as B
+var c as C
+var ao as A<Object>
+var ab as A<B>
+
+class A<T>
+  def g(a as A<T>) as (A<T>, A<T>) -- Two T's in the return type: collapse
+  end
+  
+  def h(a as A<T>) as (A<T>, A<B>)
+  end
+end
+
+class B; end
+class C is B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testInheritedMethodCallWithRangeType]
+-- IDEA: Fix the inheritance so that we don't get the final type errors.
+ab.g(f(o))        -- Fail
+ac = f(b).g(f(c)) -- Fail
+ac = f(c).g(f(b)) -- Fail
+
+ab = f(b).g(f(c))
+ao = f(b).g(f(c))
+ab = f(c).g(f(b))
+ao = f(c).g(f(b))
+
+ab.g(f(c))
+
+def f<T>(a as T) as A<X, T>
+end
+
+var o as Object
+var b as B
+var c as C
+var ao as A<X, Object>
+var ab as A<X, B>
+var ac as A<X, C>
+
+class Base<T>
+  def g(a as Base<T>) as A<X, T>
+  end
+end
+
+class A<T, S> is Base<S>
+end
+
+class B; end
+class C is B; end
+class X; end
+[out]
+main, line 1: Argument 1 to method "g" of "Base" has incompatible type A<X, Object>
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main: In class "A":
+main, line 27: Type variable "T" is not mapped to a type variable of "Base"
+main, line 27: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+
+-- Array expressions
+-- -----------------
+
+
+[case testEmptyArrayExpression]
+a = [] -- Fail
+
+aa = []
+ao = []
+
+var aa as Array<A>
+var ao as Array<Object>
+var a as A
+
+class A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testSingleItemArrayExpressions]
+aa = [b] -- Fail
+ab = [a] -- Fail
+
+aa = [a]
+ab = [b]
+ao = [a]
+aa = [nil]
+ao = [nil]
+
+var aa as Array<A>
+var ab as Array<B>
+var ao as Array<Object>
+var a as A
+var b as B
+
+class A; end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testMultiItemArrayExpressions]
+ab = [b, a] -- Fail
+ab = [a, b] -- Fail
+
+aa = [a, b, a]
+ao = [a, b]
+
+var aa as Array<A>
+var ab as Array<B>
+var ao as Array<Object>
+var a as A
+var b as B
+
+class A; end
+class B is A; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testLocalVariableInferenceFromEmptyArray]
+def f() as void
+  var a = []     -- Fail
+  var b = [nil]  -- Fail
+  var c = [B()]
+  c = [Object()] -- Fail
+  c = [B()]
+end
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main: In function "f":
+main, line 2: Need type annotation for local variable
+main, line 3: Need type annotation for local variable
+main, line 5: Incompatible types in assignment
+
+[case testNestedArrayExpressions]
+aao = [[o], ab] -- Fail
+aab = [[], [o]] -- Fail
+
+aao = [[nil], [b], [], [o]]
+aab = [[nil], [b], []]
+aab = [ab, []]
+
+var aao as Array<Array<Object>>
+var aab as Array<Array<B>>
+var ab as Array<B>
+var b as B
+var o as Object
+
+class B; end
+[usestd fixtures/std-array.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- type application and method with range type
+
+-- member access with range-valued type
+--   method call
+--     interface method
+--   getter (not supported)
+--   setter (not supported)
+
+-- nontrivial upper bounds
+-- dynamic types

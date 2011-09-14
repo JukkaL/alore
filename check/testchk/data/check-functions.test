@@ -1,0 +1,1121 @@
+-- Test cases for the type checker related to functions and function types.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- See also check-varargs.test.
+
+
+-- Function type basics
+-- --------------------
+
+
+[case testCallingVariableWithFunctionType]
+var f as def (A) as B
+var a, b as (A, B)
+a = f(a)    -- Fail
+b = f(b)    -- Fail
+b = f()     -- Fail
+b = f(a, a) -- Fail
+b = f(a)
+
+class A; end
+class B; end
+[out]
+main, line 3: Incompatible types in assignment
+main, line 4: Argument 1 has incompatible type "B"
+main, line 5: Too few arguments
+main, line 6: Too many arguments
+
+[case testSubtypingFunctionTypes]
+var f as def (B) as A
+var g as def (A) as A  -- subtype of f
+var h as def (B) as B  -- subtype of f
+g = f  -- Fail
+g = h  -- Fail
+h = f  -- Fail
+h = g  -- Fail
+f = g
+f = h
+f = f
+g = g
+h = h
+
+class A; end
+class B is A; end
+[out]
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+
+[case testFunctionTypeCompatibilityWithOtherTypes]
+var f as def ()
+var a, o as (A, Object)
+a = f   -- Fail
+f = a   -- Fail
+f = o   -- Fail
+f = f() -- Fail
+
+f = f
+f = nil
+o = f
+
+class A; end
+[out]
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Function does not return a value
+
+[case testFunctionSubtypingWithVoid]
+var f as def ()
+var g as def () as Object
+f = g  -- Fail
+g = f  -- Fail
+
+f = f
+g = g
+[out]
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testFunctionSubtypingWithMultipleArgs]
+var f as def (A, A)
+var g as def (A, B)
+var h as def (B, B)
+f = g  -- Fail
+f = h  -- Fail
+g = h  -- Fail
+
+g = f
+h = f
+h = g
+
+class A; end
+class B is A; end
+[out]
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testFunctionTypesWithIntersectionTypes]
+h = i  -- Fail
+
+f = j
+f = i
+g = i
+g = j
+
+var f as def (AA) as A
+var g as def (B) as B
+var h as def (A) as AA
+
+def i(x as AA) as A or
+     (x as B) as B
+end
+def j(x as B) as B or
+     (x as A) as AA
+end
+
+class A; end
+class AA is A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testFunctionTypesWithDifferentArgumentCounts]
+f = g   -- Fail
+f = h   -- Fail
+h = f   -- Fail
+h = g   -- Fail
+
+f = f
+g = g
+h = h
+
+var f as def ()
+var g as def (A)
+var h as def (A, A)
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testIntersectionTypeWithThreeItems]
+var a, b, c as (A, B, C)
+b = f(a)  -- Fail
+a = f(b)  -- Fail
+b = f(c)  -- Fail
+g4 = f    -- Fail
+
+g1 = f
+g2 = f
+g3 = f
+a = f(a)
+b = f(b)
+c = f(c)
+
+var g1 as def (A) as A
+var g2 as def (B) as B
+var g3 as def (C) as C
+var g4 as def (A) as B
+
+def f(x as A) as A or
+     (x as B) as B or
+     (x as C) as C
+end
+
+class A; end
+class B; end
+class C; end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testCompatibilityOfSimpleTypeObjectWithStdType]
+a = A -- Fail
+t = f -- Fail
+t = A
+
+var t as Type
+var a as A
+
+class A
+  def create(a as A)
+  end
+end
+
+def f() as void
+end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Intersection type basics
+-- ------------------------
+
+
+[case testCallingFunctionWithIntersectionType]
+var a, b as (A, B)
+a = f(a)  -- Fail
+b = f(b)  -- Fail
+f(Object()) -- Fail
+f()         -- Fail
+f(a, a)     -- Fail
+b = f(a)
+a = f(b)
+
+def f(x as A) as B or
+     (x as B) as A
+  return x.g()
+end
+
+class A
+  def g() as B
+  end
+end
+class B
+  def g() as A
+  end
+end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: No variant of "f" matches argument types
+main, line 5: Too few arguments for "f"
+main, line 5: No variant of "f" matches argument types
+main, line 6: Too many arguments for "f"
+main, line 6: No variant of "f" matches argument types
+
+[case testTypeCheckingBodyWithIntersectionType]
+def f(x as A) as B or
+     (x as B) as A
+  x.f() -- Fail
+  x.g() -- Fail
+  x.h() -- Fail
+  return x -- Fail
+end
+
+class A
+  def f() as void
+  end
+end
+class B
+  def g() as void
+  end
+end
+[out]
+main: In function "f":
+main, line 3: "B" has no member "f"
+main, line 4: "A" has no member "g"
+main, line 5: "A" has no member "h"
+main, line 5: "B" has no member "h"
+main, line 6: Incompatible return value type
+
+[case testIntersectionTypeCompatibility]
+a = f -- Fail
+
+o = f
+
+var o as Object
+var a as A
+
+def f(a as A) or
+     (a as def ())
+end
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testComparingIntersectionAndFunctionTypesForEquality]
+f == g -- No errors
+g == f
+f == f
+f == nil
+nil == f
+g == nil
+nil == g
+g == g
+
+def f(a as B) or
+     (a as A)
+end
+
+def g(a as B)
+end
+
+class A; end
+class B; end
+[usestd fixtures/std-boolean.alo]
+[out]
+
+[case testIntersectionTypeWithDifferentArgumentCounts]
+f(o)    -- Fail
+f(a, a) -- Fail
+
+f(b)
+f(a)
+f(a, b)
+
+def f(x as A, y = nil as B) or
+     (x as B)
+end
+
+var a as A
+var b as B
+var o as Object
+
+class A; end
+class B; end
+[out]
+main, line 1: No variant of "f" matches argument types
+main, line 2: No variant of "f" matches argument types
+
+[case testCreateWithIntersectionType]
+a = A(C()) -- Fail
+b = A(a)   -- Fail
+
+a = A(a)
+a = A(b)
+
+var a as A
+var b as B
+
+class A
+  def create(x as A) or
+            (x as B)
+  end
+end
+class B; end
+class C; end
+[out]
+main, line 1: No function variant matches argument types
+main, line 2: Incompatible types in assignment
+
+
+-- Intersection types + cast
+-- -------------------------
+
+
+[case testCastWithIntersectionType1]
+def f(x as A) or
+     (x as B)
+  x as C -- Fail
+  x as A
+  x as B
+end
+class A; end
+class B; end
+class C; end
+[out]
+main: In function "f":
+main, line 3: Cannot cast from "A" to "C"
+main, line 3: Cannot cast from "B" to "C"
+
+[case testCastWithIntersectionType2]
+def f(x as A, y as A) or
+     (x as A, y as B)
+  x as B -- Fail
+  y as C -- Fail
+  x as A
+  y as A
+  y as B
+end
+class A; end
+class B; end
+class C; end
+[out]
+main: In function "f":
+main, line 3: Cannot cast from "A" to "B"
+main, line 4: Cannot cast from "A" to "C"
+main, line 4: Cannot cast from "B" to "C"
+
+[case testCastWithIntersectionType3]
+def f(x as A, y = nil as A) or
+     (x as A, y as B) or
+     (x as C)
+  x as B -- Fail
+  y as C -- Fail
+  x as A
+  x as C
+  y as A
+  y as B
+end
+class A; end
+class B; end
+class C; end
+[out]
+main: In function "f":
+main, line 4: Cannot cast from "A" to "B"
+main, line 4: Cannot cast from "C" to "B"
+main, line 5: Cannot cast from "A" to "C"
+main, line 5: Cannot cast from "B" to "C"
+
+[case testCastWithIntersectionTypeAndAnonFunc]
+def f(x as A) or
+     (x as B)
+  def (y as B) or
+      (y as C)
+    x as C -- Fail (5)
+    x as A
+    x as B
+    y as A -- Fail (8)
+    y as B
+    y as C
+  end
+  x as C -- Fail (12)
+  x as A
+  x as B
+  var y as A
+  y as B -- Fail (16)
+  y as A
+end
+class A; end
+class B; end
+class C; end
+[out]
+main: In function "f":
+main, line 5: Cannot cast from "A" to "C"
+main, line 5: Cannot cast from "B" to "C"
+main, line 8: Cannot cast from "B" to "A"
+main, line 8: Cannot cast from "C" to "A"
+main, line 12: Cannot cast from "A" to "C"
+main, line 12: Cannot cast from "B" to "C"
+main, line 16: Cannot cast from "A" to "B"
+
+
+-- Subtyping + intersection types
+-- ------------------------------
+
+
+[case testCompatibilityOfIntersectionTypeObjectWithStdType]
+a = A -- Fail
+t = A
+
+var t as Type
+var a as A
+class A
+  def create(a as A) or
+            (a as B)
+  end
+end
+class B; end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testIsOperatorWithIntersectionType]
+a = nil is A -- Fail
+b = nil is A
+var a as A
+var b as Boolean
+class A
+  def create(x as A) or
+            (x as C)
+  end
+end
+class C; end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+
+-- Anonymous functions
+-- -------------------
+
+
+[case testAnonymousFunctionType]
+var f as def (A) as A
+f = def (x as B) as B; end   -- Fail
+
+f = def (x as A) as A; end
+
+class A; end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+
+[case testSimpleAnonFuncBody]
+def f() as void
+  var a as A
+  def (b as B)
+    b = a  -- Fail
+    b = B()
+  end
+  var b as A
+  a = b
+  a = B()
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 4: Incompatible types in assignment
+main, line 9: Incompatible types in assignment
+
+[case testReturnValueInAnonFunc]
+def f() as A
+  def () as B
+    return A() -- Fail
+    return B()
+  end
+  return B() -- Fail
+  return A()
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 3: Incompatible return value type
+main, line 6: Incompatible return value type
+
+[case testReturnInAnonFuncWithVoid]
+def () as void
+  return nil  -- Fail
+  return
+end
+[out]
+main, line 2: No return value expected
+
+[case testSelfWithinAnonFunction]
+class A
+  private var a as B
+  def f() as void
+    def () as void
+      a = C()      -- Fail
+      self.a = C() -- Fail
+      a = B()
+      self.a = B()
+    end
+  end
+end
+
+class B; end
+class C; end
+[out]
+main: In member "f" of class "A":
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testAnonFunctionWithIntersectionType]
+def f(a as A) as B or
+     (a as B) as A
+  return a.h() -- Fail
+  return a.i() -- Fail
+  return a.g()
+end
+
+class A
+  def g() as B
+  end
+  def h() as A
+  end
+  def i() as B
+  end
+end
+
+class B
+  def g() as A
+  end
+  def h() as A
+  end
+  def i() as B
+  end
+end
+[out]
+main: In function "f":
+main, line 3: Incompatible return value type
+main, line 4: Incompatible return value type
+
+
+-- Default argument values
+-- -----------------------
+
+
+[case testDefaultArgumentExpressions]
+def f(x = A() as A)
+  var b = x as B -- Fail
+  var a = x as A
+end
+
+def g(x = B() as A) -- Fail
+  var b = x as B -- Fail
+  var a = x as A
+end
+
+class B; end
+class A; end
+[out]
+main: In function "f":
+main, line 2: Incompatible types in assignment
+main: In function "g":
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+
+[case testDefaultArgumentsWithSubtypes]
+def f(x = A() as B) -- Fail
+end
+def g(x = B() as A)
+end
+
+class A; end
+class B is A; end
+[out]
+main: In function "f":
+main, line 1: Incompatible types in assignment
+
+[case testMultipleDefaultArgumentExpressions]
+def f(x = B() as A, y = B() as B) -- Fail
+end
+def g(x = A() as A, y = A() as B) -- Fail
+end
+def h(x = A() as A, y = B() as B)
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f":
+main, line 1: Incompatible types in assignment
+main: In function "g":
+main, line 3: Incompatible types in assignment
+
+[case testCallingFunctionsWithDefaultArgumentValues]
+var a, b as (A, B)
+a = f()     -- Fail
+b = f(b)    -- Fail
+b = f(a, a) -- Fail
+
+b = f()
+b = f(a)
+b = f(AA())
+
+def f(x = nil as A) as B
+end
+
+class A; end
+class AA is A; end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Argument 1 to "f" has incompatible type "B"
+main, line 4: Too many arguments for "f"
+
+[case testCallingFunctionsTypesWithDefaultArgumentValues]
+var a, b as (A, B)
+a = f()     -- Fail
+b = f(b)    -- Fail
+b = f(a, a) -- Fail
+
+b = f()
+b = f(a)
+b = f(AA())
+
+var f as def (A=) as B
+
+class A; end
+class AA is A; end
+class B; end
+[out]
+main, line 2: Incompatible types in assignment
+main, line 3: Argument 1 has incompatible type "B"
+main, line 4: Too many arguments
+
+[case testDefaultArgumentValuesAndSubtyping]
+g = h  -- Fail
+g = i  -- Fail
+f = h  -- Fail
+g = f  -- Fail
+
+f = g
+g = g
+i = g
+i = h
+
+var f as def (A)
+var g as def (A=)
+var h as def (B=)
+var i as def ()
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testDefaultArgumentValuesAndSubtyping2]
+f = g2  -- Fail
+f = g4  -- Fail
+f = g5  -- Fail
+g1 = f  -- Fail
+g1 = g3 -- Fail
+g1 = g5 -- Fail
+g1 = g6 -- Fail
+g2 = g1 -- Fail
+g2 = g3 -- Fail
+g3 = f  -- Fail
+g6 = g1 -- Fail
+
+-- Trivial cases
+g1 = g1
+g2 = g2
+g3 = g3
+g4 = g4
+-- Non-trivial cases
+f = g1
+f = g3
+g3 = g1
+g5 = g1
+g5 = g2
+
+var f  as def (A,  B )
+var g1 as def (A=, B=)
+var g2 as def (A=, A=)
+var g3 as def (A,  B=)
+var g4 as def (A,  A=)
+var g5 as def (A=)
+var g6 as def (B=)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+main, line 9: Incompatible types in assignment
+main, line 10: Incompatible types in assignment
+main, line 11: Incompatible types in assignment
+
+[case testContravarianceAndDefaultArgs]
+f = g -- Fail
+
+h = f
+g = f
+
+var f as def (A=)
+var g as def (B=)
+var h as def (B)
+
+class A; end
+class B is A; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testAnonymousFunctionsAndDefaultArgs]
+var f as def (A=)
+f = def (x as A); end  -- Fail
+
+f = def (x = nil as A); end
+
+class A; end
+[out]
+main, line 2: Incompatible types in assignment
+
+[case testIntersectionTypesWithDefaultArgumentValues]
+g4 = f -- Fail
+
+-- Ok
+g1 = f
+g2 = f
+g3 = f
+g5 = f
+
+var g1 as def (A)
+var g2 as def (A=)
+var g3 as def (C)
+var g4 as def (B=)
+var g5 as def ()
+
+
+def f(x = nil as A) or
+     (x as B) or
+     (x= as C)
+end
+
+class A; end
+class B; end
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+
+
+-- Method overriding
+-- -----------------
+
+
+[case testOverridingWithIntersectionType]
+class C is A
+  def f(x as X) or  -- Fail
+       (x as C)
+  end
+end
+
+class B is A
+  def f(x as X) or
+       (x as A)
+  end      
+end
+
+class A
+  def f(x as A)
+  end
+end
+
+class X; end
+class Y; end
+[out]
+main: In member "f" of class "C":
+main, line 2: Signature of "f" incompatible with supertype "A"
+
+[case testOverridingMethodWithIntersectionType2]
+class D is A
+  def f(x as A) -- Fail
+  end
+end
+
+class C is A
+  def f(x as A) or -- Fail
+       (x as X)
+  end
+end
+
+class B is A
+  def f(x as A) or
+       (x as Y)
+  end
+end
+
+class B2 is A
+  def f(x as X) or
+       (x as Y) or
+       (x as A)
+  end
+end
+
+class A
+  def f(x as A) or
+       (x as Y)
+  end
+end
+
+class X; end
+class Y; end
+[out]
+main: In member "f" of class "D":
+main, line 2: Signature of "f" incompatible with supertype "A"
+main: In member "f" of class "C":
+main, line 7: Signature of "f" incompatible with supertype "A"
+
+[case testOverridingWithAdditionalDefaultArgs]
+class B is A
+  def g(a as B, b = nil as B) -- Fail
+  end
+  def f(a as A, b = nil as B)
+  end
+end
+
+class A
+  def f(a as A)
+  end
+  def g(a as A)
+  end
+end
+[out]
+main: In member "g" of class "B":
+main, line 2: Signature of "g" incompatible with supertype "A"
+
+[case testOverridingDefaultArgWithNonDefault]
+class B is A
+  def f(a as A) -- Fail
+  end
+end
+class A
+  def f(a = nil as A)
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 2: Signature of "f" incompatible with supertype "A"
+
+[case testOverridingWithDefaultArgReplacements]
+class B is A
+  def f(a = nil as B) -- Fail
+  end
+  def g(a = nil as A)
+  end
+  def h(a = nil as A, b = nil as B)
+  end
+end
+
+class A
+  def f(a as A)
+  end
+  def g(a as A)
+  end
+  def h(a as A, b as B)
+  end
+end
+[out]
+main: In member "f" of class "B":
+main, line 2: Signature of "f" incompatible with supertype "A"
+
+
+-- Error messages
+-- --------------
+
+
+[case testErrorMessagesWithFunctionTypes]
+A() + f
+f + A()
+A() + g
+g + A()
+f(f)
+f(g)
+
+def f(a as A)
+end
+
+def g(a as A) or
+     (a as B)
+end
+
+class A
+  def _add(a as A) as A
+  end
+end
+class B; end
+[out]
+main, line 1: Unsupported operand types for + ("A" and function)
+main, line 2: Unsupported left operand type for + (function)
+main, line 3: Unsupported operand types for + ("A" and function)
+main, line 4: Unsupported left operand type for + (function)
+main, line 5: Argument 1 to "f" has incompatible type
+main, line 6: Argument 1 to "f" has incompatible type
+
+
+-- Intersection types + dynamic
+-- ----------------------------
+
+
+[case testCallingIntersectionTypeWithDynamicType]
+a = f(d)
+b = f(d)
+
+var d as dynamic
+var a as A
+var b as B
+
+def f(x as B) as A or
+     (x as A) as B or
+     (x as C) as C
+end
+
+class A; end
+class B; end
+class C; end
+[out]
+
+[case testCallingIntersectionTypeWithDynamicTypeAndWellDefinedReturnType1]
+-- Simplest case
+b = f(d) -- Fail
+a = f(d)
+
+var d as dynamic
+var a as A
+var b as B
+
+def f(x as B) as A or
+     (x as A) as A
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testCallingIntersectionTypeWithDynamicTypeAndWellDefinedReturnType2]
+-- Only some intersection items match
+b = f(a, d) -- Fail
+a = f(b, d) -- Fail
+a = f(a, d)
+b = f(b, d)
+
+var d as dynamic
+var a as A
+var b as B
+
+def f(x as A, y as B) as A or
+     (x as A, y as A) as A or
+     (x as B, y as A) as B
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Overlapping intersection types
+-- ------------------------------
+
+
+[case testSimpleOverlappingIntersectionTypes]
+def f1(a as A) or    -- Fail
+      (a as Object) as A
+end
+
+def f2(a as Object) or   -- Fail
+      (a as A) as A
+end
+
+def f3(a as B, b as B) or  -- Fail
+      (a as Object, b as A) as A or
+      (a as A, b as Object) as B
+end
+
+def f4(a as Object, b as A, c as A) as A or    -- Ok
+      (a as A,      b as B, c as Object) as B
+end
+
+class A; end
+class B; end
+[out]
+main: In function "f1":
+main, line 1: Function signature variants 1 and 2 overlap
+main: In function "f2":
+main, line 5: Function signature variants 1 and 2 overlap
+main: In function "f3":
+main, line 9: Function signature variants 2 and 3 overlap
+
+[case testIntersectionTypeOverlappingWithGenerics]
+def f1(a as Array<A>) as A or -- Fail
+      (a as Array<B>) as B
+end
+
+def f2(a as Array<def ()>) as A or -- Fail
+      (a as Array<(A, B)>) as B
+end
+
+def f3(a as Array<A>) as A or
+      (a as A) as B
+end
+
+class A; end
+class B; end
+
+[usestd fixtures/std-array.alo]
+[out]
+main: In function "f1":
+main, line 1: Function signature variants 1 and 2 overlap
+main: In function "f2":
+main, line 5: Function signature variants 1 and 2 overlap
+
+[case testIntersectionTypeWithOverlappingArgumentsAndIdenticalReturnTypes]
+def f1(a as A) as B<A> or -- Fail
+      (a as Object) as B<Object>
+end
+
+def f2(a as A) or  -- Ok: identical return types
+      (a as Object)
+end
+
+def f3(a as A) as A or  -- Ok: identical return types
+      (a as Object) as A
+end
+
+def f4(a as A) as B<A> or  -- Ok: identical return types
+      (a as Object) as B<A>
+end
+
+class A; end
+class B<T>; end
+[out]
+main: In function "f1":
+main, line 1: Function signature variants 1 and 2 overlap
+
+
+-- test invalid intersection types
+--   generic types overlapping
+--   more test cases for identical return types
+--     function
+--     tuple
+--     dynamic
+
+
+-- test Type object -> function type compatibility
+--   normal
+--   intersection
+-- test type objects in error messages
+
+
+-- test intersection type Function /\ def ...
+-- test missing return
+-- test intersection function types (first implement them)
+--   intersection type as rvalue
+
+-- test accessing function and intersection members (_eq etc.)

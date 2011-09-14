@@ -1,0 +1,16 @@
+module __string
+
+def IsLetter(s as Str) as Boolean
+end
+
+def IsDigit(s as Str) as Boolean
+end
+
+def IsWordChar(s as Str) as Boolean
+end
+
+def IsSpace(s as Str) as Boolean
+end
+
+def IntToStr(int as Int, base as Int, numFill = 0 as Int) as Str
+end

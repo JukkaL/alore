@@ -1,0 +1,331 @@
+module checker
+
+-- Computing lowest upper bounds or "joins" of types
+
+import types
+
+
+def JoinTypes(s as Typ, t as Typ, basic as BasicTypes) as Typ
+  if s is Dynamic
+    return s
+  end
+  
+  if s is NilType and not t is Void
+    return t
+  end
+  
+  return t.accept(TypeJoinVisitor(s, basic))
+end
+
+
+private class TypeJoinVisitor is TypeVisitor<Typ>
+  private const s     as Typ
+  private const basic as BasicTypes
+  
+  def create(s as Typ, basic as BasicTypes)
+    self.s = s
+    self.basic = basic
+  end
+
+  private def object as Instance
+    return self.basic.object
+  end
+  
+  def visitUnboundType(t as UnboundType) as Typ
+    if s is Void or s is ErrorType
+      return ErrorType()
+    else
+      return Dynamic()
+    end
+  end
+  
+  def visitErrorType(t as ErrorType) as Typ
+    return t
+  end
+  
+  def visitDynamic(t as Dynamic) as Typ
+    return t
+  end
+  
+  def visitVoid(t as Void) as Typ
+    if s is Void
+      return t
+    else
+      return ErrorType()
+    end
+  end
+  
+  def visitNilType(t as NilType) as Typ
+    if not s is Void
+      return s
+    else
+      return default(s)
+    end
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    if s is TypeVar and (s as TypeVar).id == t.id
+      return s
+    else
+      return default(s)
+    end
+  end
+  
+  def visitInstance(t as Instance) as Typ
+    if s is Instance
+      return JoinInstances(t, s as Instance, True, self.basic)
+    elif t.type == self.basic.stdType.type and IsSubtype(s, t)
+      return t
+    else
+      return default(s)
+    end
+  end
+  
+  def visitCallable(t as Callable) as Typ
+    if s is Callable and IsSimilarCallables(t, s as Callable)
+      return CombineSimilarCallables(t, s as Callable, self.basic)
+    elif t.isTypeObj and IsSubtype(s, self.basic.stdType)
+      return self.basic.stdType
+    elif s is Instance and (s as Instance).type == self.basic.stdType.type and
+         t.isTypeObj
+      return self.basic.stdType
+    else
+      return default(s)
+    end
+  end
+  
+  def visitTupleType(t as TupleType) as Typ
+    if s is TupleType and (s as TupleType).length() == t.length()
+      var items = [] as <Typ>
+      for i in 0 to t.length()
+        items.append(join(t.items[i], (s as TupleType).items[i]))
+      end
+      return TupleType(items)
+    else
+      return default(s)
+    end
+  end
+  
+  def visitIntersection(t as Intersection) as Typ
+    -- Only support very rudimentary joins between intersection types.
+    if IsSameType(s, t)
+      return s
+    elif t.isTypeObj and IsSubtype(s, self.basic.stdType)
+      return self.basic.stdType
+    else
+      return default(s)
+    end
+  end
+  
+  private def join(s as Typ, t as Typ) as Typ
+    return JoinTypes(s, t, self.basic)
+  end
+  
+  private def default(type as Typ) as Typ
+    if type is UnboundType
+      return Dynamic()
+    elif type is Void or type is ErrorType
+      return ErrorType()
+    else
+      return self.object
+    end
+  end
+end
+
+
+-- Calculate the join of two instance types. If allowInterfaces is True, also
+-- consider interface-type results for non-interface types.
+--
+-- Return ErrorType if the result is ambiguous.
+private def JoinInstances(t as Instance, s as Instance, 
+                          allowInterfaces as Boolean, 
+                          basic as BasicTypes) as Typ
+  if t.type == s.type
+    -- Simplest case: join two types with the same base type (but  potentially
+    -- different arguments).
+    if t.argTops != nil or s.argTops != nil
+      return CombineGenericInstances(t, s, basic.object, basic)
+    elif IsSubtype(t, s)
+      -- Compatible without ranges; combine type arguments.
+      var args = [] as <Typ>
+      for i in 0 to t.args.length()
+        args.append(JoinTypes(t.args[i], s.args[i], basic))
+      end
+      return Instance(t.type, args)
+    else
+      -- Incompatible; return trivial result std::Object.
+      return basic.object
+    end
+  elif t.type.isInterface != s.type.isInterface
+    return JoinInstancesAsInterface(t, s, basic)
+  elif t.type.base != nil and IsSubtype(t, s)
+    return JoinInstancesViaSupertype(t, s, allowInterfaces, basic)
+  elif s.type.base != nil
+    return JoinInstancesViaSupertype(s, t, allowInterfaces, basic)
+  elif allowInterfaces and not t.type.isInterface
+    return JoinInstancesAsInterface(t, s, basic)
+  else
+    return basic.object
+  end
+end
+
+
+private def JoinInstancesViaSupertype(t as Instance, s as Instance, 
+                                      allowInterfaces as Boolean, 
+                                      basic as BasicTypes) as Typ
+  var res = s
+  for mapped in MapInstanceToSupertypes(t, t.type.base)
+    var join = JoinInstances(mapped, res, False, basic)
+    -- If the join failed, fail. This is a defensive measure (this might
+    -- never happen).
+    if join is ErrorType
+      return join
+    end
+    -- Now the result must be an Instance, so the cast below cannot fail.
+    res = join as Instance
+  end
+  if res.type == basic.object.type and 
+     not t.type.isInterface and allowInterfaces
+    return JoinInstancesAsInterface(t, s, basic)
+  else
+    return res
+  end
+end
+
+
+-- Compute join of two instances with a preference to an interface type result.
+-- Return Object if no common interface type is found and ErrorType if the 
+-- result type is ambiguous.
+--
+-- Interface type result is expected in the following cases:
+--  * exactly one of t or s is an interface type
+--  * neither t nor s is an interface type, and neither is subtype of the other
+private def JoinInstancesAsInterface(t as Instance, s as Instance, 
+                                     basic as BasicTypes) as Typ
+  var tIfaces = ImplementedInterfaces(t)
+  var sIfaces = ImplementedInterfaces(s)
+  
+  var res = [] as <Instance>
+  
+  for ti in tIfaces
+    for si in sIfaces
+      -- Join of two interface types is always an Instance type (either 
+      -- another interface type or Object), so the cast below is safe.
+      var j = (JoinTypes(ti, si, basic) as Instance)
+      if j.type != basic.object.type
+        res.append(j)
+      end
+    end
+  end
+  
+  if res.length() == 1
+    -- Unambiguous, non-trivial result.
+    return res[0]
+  elif res.length() == 0
+    -- Return the trivial result (Object).
+    return basic.object
+  else
+    -- Two or more potential candidate results.
+    
+    -- Calculate the join of the results. If it is Object, the result is
+    -- ambigous (ErrorType).
+    var j = res[0]
+    for i in 1 to res.length()
+      -- As above, the join of two interface types is always an Instance type.
+      -- The cast below is thus safe.
+      j = JoinTypes(j, res[i], basic) as Instance
+    end
+    if j.type != basic.object.type
+      return j
+    else
+      return ErrorType()
+    end
+  end
+end
+
+
+-- If t is a class instance, return all the directly implemented interface
+-- types by t and its supertypes, including mapped type arguments.
+private def ImplementedInterfaces(t as Instance) as Array<Typ>
+  if t.type.isInterface
+    return [t]
+  else
+    var res = [] as <Typ>
+    
+    for iface in t.type.interfaces
+      for tt in MapInstanceToSupertypes(t, iface)
+        res.append(tt)
+      end
+    end
+    
+    if t.type.base != nil
+      -- The result is always unique for valid programs.
+      var tt = MapInstanceToSupertypes(t, t.type.base)[0]
+      res.extend(ImplementedInterfaces(tt))
+    end
+    
+    return res
+  end
+end
+
+
+private def CombineGenericInstances(
+              t as Instance, s as Instance, 
+              default as Instance, basic as BasicTypes) as Instance or
+              
+             (t as Instance, s as Instance,
+              default as NilType, basic as BasicTypes) as Typ
+  if t.type != s.type
+    -- FIX generic inheritance
+    return default
+  end
+  
+  -- Add upper bounds if they are missing.
+  if t.argTops == nil
+    t = Instance(t.type, t.args, t.args)
+  end
+  if s.argTops == nil
+    s = Instance(s.type, s.args, s.args)
+  end
+  
+  -- Combine type argument ranges.
+  var args = [] as <Typ>
+  var tops = [] as <Typ>
+  for i in 0 to t.args.length()
+    var arg = JoinTypes(t.args[i], s.args[i], basic)
+    var top = MeetTypes(t.argTops[i], s.argTops[i], basic)
+    if not IsSubtype(arg, top)
+      return default
+    end
+    args.append(arg)
+    tops.append(top)
+  end
+  
+  return Instance(t.type, args, tops)
+end
+
+
+-- Return True if t and s are equivalent and have identical numbers of 
+-- arguments, default arguments and varargs.
+private def IsSimilarCallables(t as Callable, s as Callable) as Boolean
+  return t.argTypes.length() == s.argTypes.length() and
+         t.minArgs == s.minArgs and t.isVarArg == s.isVarArg and
+         IsEquivalent(t, s)
+end
+
+
+private def CombineSimilarCallables(t as Callable, s as Callable, 
+                                    basic as BasicTypes) as Callable
+  var argTypes = [] as <Typ>
+  for i in 0 to t.argTypes.length()
+    argTypes.append(JoinTypes(t.argTypes[i], s.argTypes[i], basic))
+  end
+  return Callable(argTypes,
+                  t.minArgs,
+                  t.isVarArg,
+                  JoinTypes(t.retType, s.retType, basic),
+                  t.isTypeObj and s.isTypeObj,
+                  nil,
+                  t.variables)
+  return s
+end

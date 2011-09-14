@@ -605,6 +605,7 @@ MOD_LDFLAGS
 CC_SHARED_FLAGS
 LD_SHARED
 LD_EXPORT_FLAGS
+aloredatadir
 aloreincdir
 alorelibdir
 PLATFORM
@@ -3262,8 +3263,10 @@ _ACEOF
 
 
 
+
 alorelibdir="${libdir}/alore"
 aloreincdir="${includedir}/alore"
+aloredatadir="${datadir}/alore"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for install prefix" >&5
 $as_echo_n "checking for install prefix... " >&6; }

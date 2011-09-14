@@ -1,0 +1,68 @@
+-- Runner for test cases that verify the node types given by the type checker.
+-- Each test case type checks a piece of code and the checked output includes 
+-- the types of some parse tree nodes. 
+--
+-- For example, a test case could check that the type of the IntExpr node 5 is
+-- Int in a checked part of the program and dynamic elsewhere.
+
+module testchk
+
+import unittest
+import analyse
+import errors
+import testchk::helpers
+import reflect
+import nodes
+import util
+import re
+import os
+
+
+class TypeExportSuite is Suite
+  -- List of files that contain test case descriptions.
+  const files = ["typexport-basic.test"]
+
+  def cases()
+    var c = []
+    for f in files
+      c += ParseTestCases(Join(TestDataPrefix, f), runTest, TestTempDir)
+    end
+    return c
+  end
+
+  private def runTest(testcase)
+    var a = []
+    try
+      var line = testcase.input[0]
+      var mask = ""
+      if line.startsWith("--")
+        mask = "(" + line[2:].strip() + ")$"
+      end
+      
+      var src = LF.join(testcase.input)
+      var map = Analyse(src, "main", False, TestTempDir, True)[3]
+      var kk = map.keys()
+      var keys = []
+      for k in kk
+        if k.line != nil and k.line != -1 and map[k] != nil 
+          if Match(mask, TypeName(k)) != nil or
+             (k is NameExpr and Match(mask, k.name) != nil)
+            keys.append(k)
+          end
+        end
+      end
+      for key in Sort(keys, 
+                  def (n, m)
+                    return (n.line, TypeName(n), Str(n)) < 
+                           (m.line, TypeName(m), Str(m))
+                  end)
+        a.append("{}({}) : {}".format(TypeName(key), key.line, map[key]))
+      end
+    except e is CompileError
+      a = e.messages
+    end
+    AssertStringArraysEqual(testcase.output, a, 
+                            "Invalid type checker output ({}, line {})".format(
+                              testcase.file, testcase.line))
+  end
+end

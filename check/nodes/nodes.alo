@@ -1,0 +1,922 @@
+module nodes
+
+import types
+import lex
+import string
+
+
+-- Variable kind constants
+const Ldef, Gdef, Mdef
+
+
+class Node
+  var line = -1 as Int
+  var repr = nil as dynamic -- Textual representation
+
+  def _str() as Str
+    return accept(StrConv())
+  end
+  
+  def setLine(tokOrLine as Token) as Node or
+             (tokOrLine as Int) as Node
+    if tokOrLine is Int
+      self.line = tokOrLine as Int
+    else
+      self.line = (tokOrLine as Token).line
+    end
+    return self
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    raise RuntimeError("Not implemented")
+  end
+end
+
+
+class AloreFile is Node
+  var path    as Str           -- Path to the file (nil if not known)
+  var enc     as Encoding      -- Encoding object or nil
+  var header  as Header        -- Header object or nil
+  var imports as Array<Import> -- Imported modules
+  var defs    as Array<Node>   -- Global definitions and statements
+  var isBom   as Boolean       -- Is there a UTF-8 BOM at the start?
+  
+  def create(enc as Encoding, header as Header, imports as Array<Import>, 
+             defs as Array<Node>, isBom = False as Boolean)
+    self.enc = enc
+    self.header = header
+    self.imports = imports
+    self.defs = defs
+    self.line = 1  -- Dummy line number
+    self.isBom = isBom
+  end
+  
+  def modId() as Str
+    if self.header == nil
+      return nil
+    else
+      return self.header.id
+    end
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitAloreFile(self)
+  end
+end
+
+
+class Encoding is Node
+  var id as Str
+  
+  def create(id as Str)
+    self.id = id
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitEncoding(self)
+  end
+end
+
+
+class Header is Node
+  var id as Str      -- Module id
+  
+  def create(id as Str)
+    self.id = id
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitHeader(self)
+  end
+end
+
+
+class Import is Node
+  var id as Str     -- Module id
+  
+  def create(id as Str)
+    self.id = id
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitImport(self)
+  end
+end
+
+
+class FuncBase is Node
+  var args = [] as Array<Var>  -- Variable names
+  var init = [] as Array<AssignmentStmt> -- Initialization expessions
+  var minArgs as Int           -- Minimum number of arguments
+  var isVarArg as Boolean      -- If true, last variable is a var-arg variable
+  var body as Array<Node> 
+  var type as Annotation       -- Declared type (or nil if none)
+  
+  -- (Array<Var>, Array<Node>, Array<Node>, Boolean[, Array<Str>, Typ])
+  def create(args as Array<Var>, init as Array<Node>, body as Array<Node>, 
+             isVarArg as Boolean, type = nil as Annotation)
+    self.args = args
+    self.isVarArg = isVarArg
+    self.body = body
+    self.type = type
+    
+    var i2 = [] as <AssignmentStmt>
+    self.minArgs = 0
+    for i in 0 to init.length()
+      if init[i] != nil
+        var rvalue = init[i]
+        var lvalue = NameLvalue(args[i].name).setLine(rvalue.line)
+        var assign = (AssignmentStmt([lvalue], rvalue, False).
+                       setLine(rvalue.line) as AssignmentStmt)
+        i2.append(assign)
+      else
+        i2.append(nil)
+        if i < maxFixedArgc()
+          self.minArgs = i + 1
+        end
+      end
+    end
+    
+    self.init = i2
+  end
+  
+  def maxFixedArgc() as Int
+    if self.isVarArg
+      return self.args.length() - 1
+    else
+      return self.args.length()
+    end
+  end
+  
+  def setLine(tok as Token) as Node or
+             (tok as Int) as Node
+    super.setLine(tok)
+    for n in self.args
+      n.line = self.line
+    end
+    return self
+  end
+  
+  def initExpressions() as Array<Node>
+    var res = [] as <Node>
+    for i in self.init
+      if i != nil
+        res.append(i.rvalue)
+      else
+        res.append(nil)
+      end
+    end
+    return res
+  end
+  
+  def allReturns() as Array<Node>
+    -- FIX cache results
+    var coll = ReturnCollector()
+    accept(coll)
+    return coll.rets
+  end
+  
+  def isAccessor() as Boolean
+    return False
+  end
+end
+
+
+class FuncDef is FuncBase
+  var name as Str          -- Name without module prefix
+  var fullName as Str      -- Name with module prefix
+  var info as TypeInfo     -- If method, reference to TypeInfo
+  var isGetter as Boolean  -- True if getter. If true, args must be empty.
+  var isSetter as Boolean  -- True if setter. If true, there must be 1 arg and 
+                           -- no init.
+  var isPrivate as Boolean -- Boolean
+  
+  def create(name as Str, 
+             args as Array<Var>, 
+             init as Array<Node>, 
+             body as Array<Node>, 
+             isVarArg = False as Boolean, isGetter = False as Boolean, 
+             isSetter = False as Boolean, isPrivate = False as Boolean, 
+             type = nil as Annotation)
+    super.create(args, init, body, isVarArg, type)
+    self.name = name
+    self.isGetter = isGetter
+    self.isSetter = isSetter
+    self.isPrivate = isPrivate
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitFuncDef(self)
+  end
+  
+  def isAccessor() as Boolean
+    return self.isGetter or self.isSetter
+  end
+  
+  def isConstructor() as Boolean
+    return self.info != nil and self.name == "create"
+  end
+end
+
+
+class Var is Node
+  var name as Str          -- Name without module prefix
+  var fullName as Str      -- Name with module prefix
+  var isConst as Boolean   -- Is it a const?
+  var isInit as Boolean    -- Is is initialized?
+  var isPrivate as Boolean
+  var info as TypeInfo     -- Defining class (for member variables)
+  var type as Annotation   -- Declared type, or nil if none
+  
+  def create(name as Str)
+    self.name = name
+    self.isConst = False
+    self.isInit = False
+    self.isPrivate = False
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitVar(self)
+  end
+end
+
+
+class TypeDef is Node
+  var name as Str        -- Name of the class without module prefix
+  var fullName as Str    -- Fully qualified name of the class
+  var base as NameExpr   -- May be nil
+  var implement as Array<NameExpr>
+  var binds as Array<NameExpr>    
+  var defs = [] as Array<Node>  -- VarDef or FuncDef
+  var isInterface as Boolean
+  var isPrivate as Boolean
+  var typeVars as TypeVars
+  -- Inherited generic types (Instance or UnboundType or nil). The first base
+  -- is the superclass, and the rest are interfaces.
+  var baseTypes as Array<Typ>
+  var info as TypeInfo    -- Related TypeInfo
+  
+  def create(name as Str, 
+             defs as Array<Node>, 
+             base = nil as NameExpr, 
+             implement = [] as Array<NameExpr>, 
+             isInterface = False as Boolean, 
+             binds = [] as Array<NameExpr>, 
+             isPrivate = False as Boolean, 
+             typeVars = nil as TypeVars, 
+             baseTypes = [] as Array<Typ>)
+    self.name = name
+    self.defs = defs
+    self.base = base
+    self.implement = implement
+    self.isInterface = isInterface
+    self.binds = binds
+    self.isPrivate = isPrivate
+    self.typeVars = typeVars
+    self.baseTypes = baseTypes
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitTypeDef(self)
+  end
+end
+
+
+class VarDef is Node
+  var names as Array<Var>
+  var kind as Constant     -- Ldef/Gdef/Mdef
+  var init as Node         -- Expression or nil
+  var isConst as Boolean   -- Boolean
+  var isPrivate as Boolean -- Boolean
+  var isInit as Boolean    -- Boolean
+  var type as Annotation   -- May be nil
+  
+  def create(names as Array<Var>, 
+             kind as Constant, 
+             isConst as Boolean, 
+             init = nil as Node, 
+             isPrivate = False as Boolean, 
+             type = nil as Annotation)
+    self.names = names
+    self.kind = kind
+    self.isConst = isConst
+    self.init = init
+    self.isPrivate = isPrivate
+    self.isInit = init != nil
+    self.type = type
+  end
+  
+  def info() as TypeInfo
+    return self.names[0].info
+  end
+  
+  def setLine(tok as Token) as Node or
+             (tok as Int) as Node
+    super.setLine(tok)
+    for n in self.names
+      n.line = self.line
+    end
+    return self
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitVarDef(self)
+  end
+end
+
+
+-- Statements
+
+
+class ExpressionStmt is Node
+  var expr as Node
+  
+  def create(expr as Node)
+    self.expr = expr
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitExpressionStmt(self)
+  end
+end
+
+
+class AssignmentStmt is Node
+  var lvalues = [] as Array<Node>
+  var rvalue as Node
+  var isExpand as Boolean -- Is this an expanding assignment?
+  var isInit as Boolean   -- Is this a init assignment (can assign to consts)
+  
+  def create(lvalues as Array<Node>, rvalue as Node, isExpand as Boolean, 
+             isInit = False as Boolean)
+    self.lvalues = lvalues
+    self.rvalue = rvalue
+    self.isExpand = isExpand
+    self.isInit = isInit
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitAssignmentStmt(self)
+  end
+end
+
+
+class OperatorAssignmentStmt is Node
+  var op as Str
+  var lvalue as Node
+  var rvalue as Node
+  
+  def create(op as Str, lvalue as Node, rvalue as Node)
+    self.op = op
+    self.lvalue = lvalue
+    self.rvalue = rvalue
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitOperatorAssignmentStmt(self)
+  end    
+end
+
+
+class WhileStmt is Node
+  var expr as Node
+  var body as Array<Node>
+  
+  def create(expr as Node, body as Array<Node>)
+    self.expr = expr
+    self.body = body
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitWhileStmt(self)
+  end
+end
+
+
+class RepeatStmt is Node
+  var expr as Node
+  var body as Array<Node>
+  
+  def create(expr as Node, body as Array<Node>)
+    self.expr = expr
+    self.body = body
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitRepeatStmt(self)
+  end
+end
+
+
+class ForStmt is Node
+  var index = [] as Array<Var> -- Var nodes
+  var expr as Node             -- Iterated expression
+  var body as Array<Node>      -- Body
+  var types as Array<Annotation>
+  
+  def create(index as Array<Var>, 
+             expr as Node, 
+             body as Array<Node>, 
+             types = nil as Array<Annotation>)
+    self.index = index
+    self.expr = expr
+    self.body = body
+    self.types = types
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitForStmt(self)
+  end
+  
+  def isAnnotated() as Boolean
+    var ann = False
+    for t in types
+      if t != nil
+        ann = True
+      end
+    end
+    return ann
+  end
+end
+
+
+class ReturnStmt is Node
+  var expr as Node   -- Expression or nil
+  
+  def create(expr as Node)
+    self.expr = expr
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitReturnStmt(self)
+  end
+end
+
+
+class BreakStmt is Node
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitBreakStmt(self)
+  end
+end
+
+
+class IfStmt is Node
+  var expr as Array<Node>
+  var body as Array<Array<Node>>
+  var elseBody as Array<Node>
+  
+  def create(expr, body, elseBody)
+    self.expr = expr
+    self.body = body
+    self.elseBody = elseBody
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitIfStmt(self)
+  end
+end
+
+
+class RaiseStmt is Node
+  var expr as Node
+  
+  def create(expr as Node)
+    self.expr = expr
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitRaiseStmt(self)
+  end
+end
+
+
+class TryExceptStmt is Node
+  var body as Array<Node>           -- Try body
+  var types = [] as Array<NameExpr> -- Except types
+  var vars = [] as Array<Var>       -- Except variable names
+  var handlers = [] as Array<Array<Node>> -- Except bodies
+  
+  def create(body as Array<Node>, 
+             vars as Array<Var>, 
+             types as Array<NameExpr>, 
+             handlers as Array<Array<Node>>)
+    self.body = body
+    self.vars = vars
+    self.types = types
+    self.handlers = handlers
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitTryExceptStmt(self)
+  end
+end
+
+
+class TryFinallyStmt is Node
+  var body as Array<Node>
+  var finallyBody as Array<Node>
+  
+  def create(body as Array<Node>, finallyBody as Array<Node>)
+    self.body = body
+    self.finallyBody = finallyBody
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitTryFinallyStmt(self)
+  end
+end
+
+
+class SwitchStmt is Node
+  var expr as Node
+  var cases as Array<Array<Node>>  -- Case expressions
+  var bodies as Array<Array<Node>> -- Case bodies. If longer than cases, the 
+                                   -- last one is the else part.
+  
+  def create(expr as Node, 
+             cases as Array<Array<Node>>, 
+             bodies as Array<Array<Node>>)
+    self.expr = expr
+    self.cases = cases
+    self.bodies = bodies
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitSwitchStmt(self)
+  end
+end
+
+
+-- Expressions
+
+
+-- Integer literal
+class IntExpr is Node
+  var value as Int
+  
+  def create(value as Int)
+    self.value = value
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitIntExpr(self)
+  end
+end
+
+
+-- String literal
+class StrExpr is Node
+  var value as Str
+  
+  def create(value as Str)
+    self.value = value
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitStrExpr(self)
+  end
+end
+
+
+-- Float literal
+class FloatExpr is Node
+  var value as Float
+  
+  def create(value as Float)
+    self.value = value
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitFloatExpr(self)
+  end
+end
+
+
+-- nil expression
+class NilExpr is Node
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitNilExpr(self)
+  end
+end
+
+
+-- self expression
+class SelfExpr is Node
+  var type as TypeInfo   -- TypeInfo containing this self
+  
+  def create(type = nil as TypeInfo)
+    self.type = type
+  end
+
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitSelfExpr(self)
+  end
+end
+
+
+-- Parenthesised expression
+class ParenExpr is Node
+  var expr as Node
+  
+  def create(expr as Node)
+    self.expr = expr
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitParenExpr(self)
+  end
+end
+
+
+-- Name expression optionally with a ::-based qualifier (may refer to a local,
+-- member or global definition)
+class NameExpr is Node
+  var name as Str      -- Name referred to (may be qualified)
+  var fullName as Str  -- Fully qualified name (or name if not global)
+  var kind as Constant -- Ldef, Gdef or Mdef
+  var node as Node     -- Var, FuncDef or TypeInfo that describes this
+  var info as TypeInfo -- TypeInfo of class surrounding expression (may be nil)
+  
+  def create(name as Str)
+    self.name = name
+  end
+  
+  def typeNode()
+    return self.node as TypeInfo
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitNameExpr(self)
+  end
+end
+
+
+class NameLvalue is NameExpr
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitNameLvalue(self)
+  end
+end
+
+
+-- Member access expression x.y
+class MemberExpr is Node
+  var expr as Node
+  var name as Str
+  
+  def create(expr as Node, name as Str)
+    self.expr = expr
+    self.name = name
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitMemberExpr(self)
+  end
+end
+
+
+-- Member assignment expression x.y
+class MemberLvalue is MemberExpr
+  var isInit = False as Boolean
+
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self) -- FIX ok?
+    return visitor.visitMemberLvalue(self)
+  end
+end
+
+
+-- Super class member reference expression super.x
+class SuperExpr is Node
+  var name as Str
+  var info as TypeInfo -- TypeInfo containing this super expression
+  
+  def create(name as Str)
+    self.name = name
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitSuperExpr(self)
+  end
+end
+
+
+class SuperLvalue is SuperExpr
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self) -- FIX ok?
+    return visitor.visitSuperLvalue(self)
+  end
+end
+
+
+-- Call expression
+class CallExpr is Node
+  var callee as Node
+  var args = [] as Array<Node>
+  var isVarArg as Boolean
+  
+  def create(callee as Node, args as Array<Node>, isVarArg = False as Boolean)
+    self.callee = callee
+    self.args = args
+    self.isVarArg = isVarArg
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitCallExpr(self)
+  end
+end
+
+
+-- Index expression x[y]
+class IndexExpr is Node
+  var base as Node
+  var index as Node
+  
+  def create(base as Node, index as Node)
+    self.base = base
+    self.index = index
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitIndexExpr(self)
+  end
+end
+
+class IndexLvalue is IndexExpr
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitIndexLvalue(self)
+  end
+end
+
+
+-- Unary operation
+class UnaryExpr is Node
+  var op as Str
+  var expr as Node
+  
+  def create(op as Str, expr as Node)
+    self.op = op
+    self.expr = expr
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitUnaryExpr(self)
+  end
+end
+
+
+-- Binary operation (other than . or [], which have specific nodes)
+class OpExpr is Node
+  var op as Str
+  var left as Node
+  var right as Node
+  
+  def create(op as Str, left as Node, right as Node)
+    self.op = op
+    self.left = left
+    self.right = right
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitOpExpr(self)
+  end
+end
+
+
+class CastExpr is Node
+  var expr as Node
+  var typeName as NameExpr
+  
+  def create(expr as Node, typeName as NameExpr)
+    self.expr = expr
+    self.typeName = typeName
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitCastExpr(self)
+  end
+end
+
+
+-- Anonymous function expression
+class FuncExpr is FuncBase
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitFuncExpr(self)
+  end
+end
+
+
+-- Array construction expression [...]
+class ArrayExpr is Node
+  var items = [] as Array<Node>
+  
+  def create(items as Array<Node>)
+    self.items = items
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitArrayExpr(self)
+  end
+end
+
+
+-- Tuple construction expression (..., ...)
+class TupleExpr is Node
+  var items = [] as Array<Node>
+  
+  def create(items as Array<Node>)
+    self.items = items
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitTupleExpr(self)
+  end
+end
+
+
+class Annotation is Node
+  var type as Typ
+  
+  def create(type as Typ, line = -1 as Int)
+    self.type = type
+    self.line = line
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    return visitor.visitAnnotation(self)
+  end
+end
+
+
+class TypeApplication is Node
+  var expr   -- Node
+  var types  -- Array<Typ>
+  
+  def create(expr, types)
+    self.expr = expr
+    self.types = types
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitTypeApplication(self)
+  end
+end
+
+
+-- Implicit coercion expression (used only when compiling/transforming; 
+-- inserted after type checking).
+class CoerceExpr is Node
+  var expr as Node
+  var targetType as Typ
+  var sourceType as Typ
+  var isWrapperClass as Boolean
+  
+  def create(expr as Node, targetType as Typ, sourceType as Typ, 
+             isWrapperClass as Boolean)
+    self.expr = expr
+    self.targetType = targetType
+    self.sourceType = sourceType
+    self.isWrapperClass = isWrapperClass
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitCoerceExpr(self)
+  end
+end
+
+
+-- Expression that evaluates to a runtime representation of a sequence of 
+-- types. This is used only for runtime type checking. This node is always 
+-- generated only after type checking.
+class TypeExpr is Node
+  var types as Array<Typ>
+  
+  def create(types as Array<Typ>)
+    self.types = types
+  end
+  
+  def accept<T>(visitor as NodeVisitor<T>) as T
+    visitor.visitExpression(self)
+    return visitor.visitTypeExpr(self)
+  end
+end

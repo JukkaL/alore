@@ -1,0 +1,19 @@
+module __re
+
+import re
+
+
+const IgnoreCase
+
+
+def Match(re, str, index = 1)
+end
+
+def Search(re, str, index = 1)
+end
+
+
+class RegExp
+  def create(regexp as Str, flag = nil as Constant)
+  end
+end

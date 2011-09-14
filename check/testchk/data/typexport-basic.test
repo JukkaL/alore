@@ -1,0 +1,492 @@
+-- Test cases for exporting node types from the type checker.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the type
+-- checker.
+--
+-- The first line of input code should be a regexp in comment that describes 
+-- the information to dump (prefix with ----). The regexp is matched against 
+-- the following items:
+--
+--   * each name of an expression node
+--   * each type string of a node (e.g. OpExpr)
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Expressions
+-- -----------
+
+
+[case testConstructorCall]
+A()
+B()
+class A
+end
+class B
+end
+[out]
+CallExpr(1) : A
+NameExpr(1) : def () as A
+CallExpr(2) : B
+NameExpr(2) : def () as B
+
+[case testLiterals]
+5
+2.3
+'foo'
+nil
+[usestd fixtures/std-primitives.alo]
+[out]
+IntExpr(1) : std::Int
+FloatExpr(2) : std::Float
+StrExpr(3) : std::Str
+NilExpr(4) : Nil
+
+[case testNameExpression]
+a -- node
+def f(aa as A) as void
+  var b as B
+  aa -- node
+  b  -- node
+end
+class A
+  def g() as void
+    c -- node
+  end
+  var c as B
+end
+var a as A
+
+class B; end
+[out]
+NameExpr(1) : A
+NameExpr(4) : A
+NameExpr(5) : B
+NameExpr(9) : B
+
+[case testMemberAccess]
+---- MemberExpr|CallExpr
+a.m
+a.f
+a.f()
+var a as A
+class A
+  var m as A
+  def f() as (A, A)
+  end
+end
+[out]
+MemberExpr(2) : A
+MemberExpr(3) : def () as (A, A)
+CallExpr(4) : (A, A)
+MemberExpr(4) : def () as (A, A)
+
+[case testCastExpression]
+---- CastExpr|[a-z]
+d as A
+b as A
+b as B
+var d as dynamic
+var b as B
+class A
+end
+class B is A
+end
+[out]
+CastExpr(2) : A
+NameExpr(2) : dynamic
+CastExpr(3) : A
+NameExpr(3) : B
+CastExpr(4) : B
+NameExpr(4) : B
+
+[case testArithmeticOps]
+---- OpExpr
+var a = 1 + 2
+1.2 * 3
+2.2 - 3
+1 / 2
+[file std/std.alo]
+module std
+class Object
+end
+class Int
+  def _add(x as Int) as Int
+  end
+  def _div(x as Int) as Float
+  end
+end
+class Float
+  def _mul(x as Int) as Float
+  end
+  def _sub(x as Int) as Float
+  end
+end
+[out]
+OpExpr(2) : std::Int
+OpExpr(3) : std::Float
+OpExpr(4) : std::Float
+OpExpr(5) : std::Float
+
+[case testComparisonOps]
+---- OpExpr
+1 == Object()
+1 == 2
+2 < 3
+[file std/std.alo]
+module std
+class Object
+end
+class Int
+  def _eq(x as Object) as Boolean
+  end
+  def _lt(x as Int) as Boolean
+  end
+end
+class Boolean
+end
+[out]
+OpExpr(2) : std::Boolean
+OpExpr(3) : std::Boolean
+OpExpr(4) : std::Boolean
+
+[case testBooleanOps]
+---- OpExpr|UnaryExpr
+var a as Boolean
+a and a
+a or a
+not a
+[usestd fixtures/std-boolean.alo]
+[out]
+OpExpr(3) : std::Boolean
+OpExpr(4) : std::Boolean
+UnaryExpr(5) : std::Boolean
+
+[case testDirectMemberReferences]
+class A
+  def f() as A
+  end
+  var x as A
+end
+class B is A
+  def g() as void
+    f
+    x
+  end
+end
+[out]
+NameExpr(8) : def () as A
+NameExpr(9) : A
+
+[case testFunctionCall]
+---- CallExpr
+f(
+  A(), 
+  B())
+def f(a as A, b as B) as (A, B)
+end
+class A; end
+class B; end
+[out]
+CallExpr(2) : (A, B)
+CallExpr(3) : A
+CallExpr(4) : B
+
+
+-- Statements
+-- ----------
+
+
+[case testSimpleAssignment]
+var a as A
+var b = a
+b = a
+a = b
+
+class A
+end
+[out]
+NameExpr(2) : A
+NameExpr(3) : A
+NameLvalue(3) : dynamic
+NameExpr(4) : dynamic
+NameLvalue(4) : A
+
+[case testMemberAssignment]
+class A
+  var a as A
+  var b = a
+  def f() as void
+    self.b = a
+    a.a = b
+  end
+end
+[out]
+NameExpr(3) : A
+MemberLvalue(5) : dynamic
+NameExpr(5) : A
+SelfExpr(5) : A
+MemberLvalue(6) : A
+NameExpr(6) : A
+NameExpr(6) : dynamic
+
+[case testDirectMemberAssignment]
+class A
+  var a as A
+  var b = a
+  def f() as void
+    b = a
+    a = b
+  end
+end
+[out]
+NameExpr(3) : A
+NameExpr(5) : A
+NameLvalue(5) : dynamic
+NameExpr(6) : dynamic
+NameLvalue(6) : A
+
+[case testIf]
+var a as Boolean
+if a
+  nil
+elif not a
+  nil
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+NameExpr(2) : std::Boolean
+NilExpr(3) : Nil
+NameExpr(4) : std::Boolean
+UnaryExpr(4) : std::Boolean
+NilExpr(5) : Nil
+
+[case testWhile]
+var a as Boolean
+while a
+  nil
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+NameExpr(2) : std::Boolean
+NilExpr(3) : Nil
+
+
+-- Basic generics
+-- --------------
+
+
+[case testImplicitBoundTypeVarsForMethod]
+---- MemberExpr
+class A<T>
+  def f() as T
+  end
+end
+class B; end
+def g() as void
+  var a as A<B>
+  var f = a.f
+end
+[out]
+MemberExpr(9) : def [1:B] () as B
+
+[case testImplicitBoundTypeVarsForConstructor]
+---- CallExpr|TypeApplication|NameExpr
+A() as <B>
+A() as <dynamic>
+class A<T>
+  def create() as void
+  end
+end
+class B; end
+[out]
+CallExpr(2) : A<B>
+NameExpr(2) : def [1:B] () as A<B>
+TypeApplication(2) : A<B>
+CallExpr(3) : A<dynamic>
+NameExpr(3) : def [1:dynamic] () as A<dynamic>
+TypeApplication(3) : A<dynamic>
+
+[case testImplicitBoundTypeVarsForSelfMethodReference]
+class A<T>
+  def f() as T
+    f()
+    self.f()
+  end
+end
+[out]
+CallExpr(3) : T`1
+NameExpr(3) : def [1:T`1] () as T`1
+CallExpr(4) : T`1
+MemberExpr(4) : def [1:T`1] () as T`1
+SelfExpr(4) : A<T`1>
+
+[case testGenericFunctionCallWithTypeApp]
+---- CallExpr|TypeApplication|NameExpr
+f(A()) as <A>
+f(A()) as <dynamic>
+def f<T>(a as T) as (T, T)
+end
+class A; end
+[out]
+CallExpr(2) : A
+CallExpr(2) : (A, A)
+NameExpr(2) : def () as A
+NameExpr(2) : def [-1:A] (A) as (A, A)
+TypeApplication(2) : (A, A)
+CallExpr(3) : A
+CallExpr(3) : (dynamic, dynamic)
+NameExpr(3) : def () as A
+NameExpr(3) : def [-1:dynamic] (dynamic) as (dynamic, dynamic)
+TypeApplication(3) : (dynamic, dynamic)
+
+[case testGenericMethodCallWithTypeApp]
+---- CallExpr|MemberExpr|TypeApplication
+a.f(a) as <A>
+a.f(a) as <dynamic>
+class A
+  def f<T>(a as T) as (T, T)
+  end
+end
+var a as A
+[out]
+CallExpr(2) : (A, A)
+MemberExpr(2) : def [-1:A] (A) as (A, A)
+TypeApplication(2) : (A, A)
+CallExpr(3) : (dynamic, dynamic)
+MemberExpr(3) : def [-1:dynamic] (dynamic) as (dynamic, dynamic)
+TypeApplication(3) : (dynamic, dynamic)
+
+[case testGenericMethodCallInGenericTypeWithTypeApp]
+---- CallExpr|MemberExpr|TypeApplication
+a.f(b) as <B>
+a.f(b) as <dynamic>
+class A<T>
+  def f<S>(a as S) as (T, S)
+  end
+end
+class B; end
+class C; end
+var a as A<C>
+var b as B
+[out]
+CallExpr(2) : (C, B)
+MemberExpr(2) : def [1:C, -1:B] (B) as (C, B)
+TypeApplication(2) : (C, B)
+CallExpr(3) : (C, dynamic)
+MemberExpr(3) : def [1:C, -1:dynamic] (dynamic) as (C, dynamic)
+TypeApplication(3) : (C, dynamic)
+
+[case testGenericFunctionWithTwoArgsAndTypeApp]
+---- CallExpr|NameExpr
+f() as <A, dynamic>
+def f<S, T>() as (S, T)
+end
+class A; end
+[out]
+CallExpr(2) : (A, dynamic)
+NameExpr(2) : def [-1:A, -2:dynamic] () as (A, dynamic)
+
+
+-- Range types
+-- -----------
+
+
+[case testRangeTypes]
+A(A(B()))
+class A<T>
+  def create(a as T)
+  end
+end
+class B; end
+[out]
+CallExpr(1) : A<A<B..std::Object>..std::Object>
+CallExpr(1) : A<B..std::Object>
+CallExpr(1) : B
+NameExpr(1) : def <T> (T`1) as A<T`1>
+NameExpr(1) : def <T> (T`1) as A<T`1>
+NameExpr(1) : def () as B
+
+
+-- Generic inheritance
+-- -------------------
+
+
+[case testInheritedMethodReferenceWithGenericInheritance]
+class A<T>
+  def f(a as T)
+  end
+end
+class B is A<C>
+  def g(c as C)
+    f(c)
+  end
+end
+class C; end
+[out]
+CallExpr(7) : void
+NameExpr(7) : C
+NameExpr(7) : def [1:C] (C)
+
+[case testInheritedMethodReferenceWithGenericSubclass]
+class A<S, T>
+  def f(a as C)
+  end
+end
+class B<T> is A<C, T>
+  def g(c as C)
+    f(c)
+  end
+end
+class C; end
+[out]
+CallExpr(7) : void
+NameExpr(7) : C
+NameExpr(7) : def [1:C, 2:T`1] (C)
+
+[case testExternalReferenceWithGenericInheritance]
+class A<T>
+  def f(a as T)
+  end
+end
+class B is A<C>
+end
+class C; end
+var b as B
+var c as C
+b.f(c)
+[out]
+CallExpr(10) : void
+MemberExpr(10) : def [1:C] (C)
+NameExpr(10) : B
+NameExpr(10) : C
+
+
+-- test core stuff
+--   dynamically-typed function
+--   constructor body
+-- test expressions
+--   array create
+--   tuple create
+--   unary minus
+--   indexing
+--   super expression
+--   anonymous function
+--   type application 
+--     with array
+--     with pair
+--     with tuple
+-- intersection types
+-- other things
+--   type inference
+--   default argument value
+--   global var member initializer
+--   for loop variable
+--   exception variable
+-- generics
+--   explicit types
+--   range types

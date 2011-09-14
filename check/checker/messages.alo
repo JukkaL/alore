@@ -1,0 +1,534 @@
+module checker
+
+-- Facilities and constants for generating error messages during type checking.
+-- The type checker itself does not deal with message string literals to 
+-- improve code clarity and to allow localization (in future).
+
+import types
+import errors
+import nodes
+import re
+
+
+-- Constants that represent simple type checker error message, i.e. messages
+-- that do not have any parameters.
+
+const NoReturnValueExpected =
+  "No return value expected" as Str
+const IncompatibleReturnValueType =
+  "Incompatible return value type" as Str
+const ReturnValueExpected =
+  "Return value expected" as Str
+const BooleanValueExpected =
+  "Boolean value expected" as Str
+const BooleanExpectedForIf =
+  "Boolean value expected for if condition" as Str
+const BooleanExpectedForWhile =
+  "Boolean value expected for while condition" as Str
+const BooleanExpectedForUntil =
+  "Boolean value expected for until condition" as Str
+const BooleanExpectedForNot =
+  "Boolean value expected for not operand" as Str
+const InvalidExceptionType =
+  "Invalid exception type" as Str
+const IncompatibleTypes =
+  "Incompatible types" as Str
+const IncompatibleTypesInAssignment =
+  "Incompatible types in assignment" as Str
+const CreateMustNotHaveReturnType = 
+  "Cannot define return type for ""create""" as Str
+const GetterTypeIncompatibleWithSetter =
+  "Type of getter incompatible with setter" as Str
+const TupleIndexMustBeAnIntLiteral =
+  "Tuple index must an integer literal" as Str
+const TupleIndexOutOfRange =
+  "Tuple index out of range" as Str
+const TypeConstantExpected =
+  "Type ""Constant"" or initializer expected" as Str
+const IncompatiblePairItemType =
+  "Incompatible Pair item type" as Str
+const InvalidTypeApplicationTargetType =
+  "Invalid type application target type" as Str
+const IncompatibleTupleItemType = 
+  "Incompatible tuple item type" as Str
+const NeedAnnotationForLocalVar =
+  "Need type annotation for local variable" as Str
+const IterableExpected =
+  "Iterable expected" as Str
+const IncompatibleTypesInFor =
+  "Incompatible types in for statement" as Str
+const IncompatibleArrayVarArgs =
+  "Incompatible variable arguments in call" as Str
+
+
+-- Helper class for reporting type checker error messages with parameters.
+-- The methods of this class need to be provided with the context within a 
+-- file; the errors member manages the wider context.
+--
+-- IDEA: Support a "verbose mode" that includes full information about types
+--       in error messages and that may otherwise produce more detailed error
+--       messages.
+class MessageBuilder
+  -- Report errors using this instance. It knows about the current file and
+  -- import context.
+  private const errors as Errors
+  
+  def create(errors as Errors)
+    self.errors = errors
+  end
+
+  -- Helpers
+  ----------
+
+  -- Report an error message.
+  def fail(msg as Str, context as Context)
+    self.errors.report(context.line, msg.strip())
+  end
+
+  -- Convert a type to a relatively short string that is suitable for error
+  -- messages. Mostly behave like formatSimple below, but never return an 
+  -- empty string.  
+  def format(type as Typ) as Str
+    var s = formatSimple(type)
+    if s != ""
+      -- If formatSimple returns a non-trivial result, use that.
+      return s
+    elif type is Callable or type is Intersection
+      -- Use a simple representation for function types; proper function types
+      -- may result in long and difficult-to-parse error messages.
+      return "function"
+    else
+      -- Default case; we simply have to return something meaningful here.
+      return "object"
+    end
+  end
+  
+  -- Convert simple types to string that is suitable for error messages, 
+  -- otherwise return "". Try to keep the length of the result relatively 
+  -- short to avoid overly long error messages.
+  --
+  -- Examples:
+  --   std::Int -> "Int"
+  --   dynamic -> "dynamic"
+  --   void -> void
+  --   function type -> "" (empty string)
+  def formatSimple(type as Typ) as Str
+    if type is Instance
+      var itype = (type as Instance)
+      -- Get the short name of the type.
+      var baseStr = itype.type.name
+      if itype.args == []
+        -- No type arguments. Place the type name in quotes to avoid potential
+        -- for confusion: otherwise, the type name could be interpreted as a
+        -- normal word.
+        return """{}""".format(baseStr)
+      else
+        -- There are type arguments. Convert the arguments to strings (using
+        -- format() instead of formatSimple() to avoid empty strings). If the
+        -- result is too long, replace arguments with <...>.
+        var a = [] as <Str>
+        for arg in itype.args
+          a.append(StripQuotes(format(arg)))
+        end
+        var s = ", ".join(a)
+        if (baseStr + s).length() < 25
+          return "{}<{}>".format(baseStr, s)
+        else
+          return "{}<...>".format(baseStr)
+        end
+      end
+    elif type is TypeVar
+      -- This is similar to non-generic instance types.
+      return """{}""".format((type as TypeVar).name)
+    elif type is TupleType
+      var a = [] as <Str>
+      for t in (type as TupleType).items
+        a.append(StripQuotes(formatSimple(t)))
+      end
+      var s = """({})""".format(", ".join(a))
+      if s.length() < 20
+        return s
+      else
+        return "tuple"
+      end
+    elif type is Void
+      return "void"
+    elif type is NilType
+      return "nil"
+    elif type is Dynamic
+      return """dynamic"""
+    else
+      -- No simple representation for this type that would convey very useful
+      -- information. No need to mention the type explicitly in a message.
+      return ""
+    end
+  end  
+
+  -- Specific operations
+  ----------------------
+  
+  -- The following operations are for genering specific error messages. They
+  -- get some information as arguments, and they build an error message based
+  -- on them.
+  
+  -- Report a missing or non-accessible member. 
+  -- The type argument is the base type. If member corresponds to an operator,
+  -- use the corresponding operator name in the messages. Return type Dynamic.
+  --
+  -- If inversion == Inverted, use inverted operator names
+  -- (member _lt means ">=" and member _gt means "<=").
+  def hasNoMember(type as Typ, member as Str, context as Context, 
+                  inversion = nil as Constant) as Typ
+    if type is Instance and 
+       ((type as Instance).type.hasReadableMember(member) and
+        not (type as Instance).type.hasPublicReadableMember(member))
+      fail("""{}"" is private in {}".format(member, format(type)), context)
+    elif type is Instance and (type as Instance).type.hasReadableMember(member)
+      fail("Member ""{}"" is not assignable".format(member), context)
+    elif type is Void
+      checkVoid(type, context)
+    elif member == "_in"
+      fail("Unsupported right operand type for in ({})".format(
+             format(type)), context)
+    elif member in OpMethods.values()
+      -- Access to a binary operator member (e.g. _add). This case does not
+      -- handle indexing operations.
+      if inversion == Inverted and member == "_lt"
+        unsupportedLeftOperand(">=", type, context)
+      elif inversion == Inverted and member == "_gt"
+        unsupportedLeftOperand("<=", type, context)
+      else
+        for op, method in OpMethods
+          if method == member and op != "<=" and op != ">="
+            unsupportedLeftOperand(op, type, context)
+            break
+          end
+        end          
+      end
+    elif member == "_neg"
+      -- Unary negation.
+      fail("Unsupported operand type for unary - ({})".format(
+             format(type)), context)
+    elif member == "_get"
+      -- Indexed get.
+      fail("Value of type {} is not indexable".format(format(type)), context)
+    elif member == "_set"
+      -- Indexed set.
+      fail("Unsupported target for indexed assignment", context)
+    else
+      -- The non-special case: a missing ordinary member.
+      fail("{} has no member ""{}""".format(format(type), member), context)
+    end
+    return Dynamic()
+  end
+  
+  -- Report unsupported operand types for a binary operation.
+  -- Types can be Typ objects or strings.
+  def unsupportedOperandTypes(op as Str, leftType as dynamic, 
+                              rightType as dynamic, context as Context)
+    if leftType is Void or rightType is Void
+      checkVoid(leftType, context)
+      checkVoid(rightType, context)
+      return
+    end     
+    
+    var leftStr as Str
+    if leftType is Str
+      leftStr = leftType
+    else
+      leftStr = format(leftType)
+    end
+    
+    var rightStr as Str
+    if rightType is Str
+      rightStr = rightType
+    else
+      rightStr = format(rightType)
+    end
+    
+    var msg = "Unsupported operand types for {} ({} and {})".format(
+                op, leftStr, rightStr)
+    fail(msg, context)
+  end
+  
+  def unsupportedLeftOperand(op as Str, type as Typ, context as Context)
+    if not checkVoid(type, context)
+      fail("Unsupported left operand type for {} ({})".format(
+             op, format(type)), context)
+    end
+  end
+  
+  def typeExpectedAsRightOperandOfIs(context as Context)
+    fail("Type expected as right operand of ""is""", context)
+  end
+  
+  def notCallable(type as Typ, context as Context) as Typ
+    fail("{} not callable".format(format(type)), context)
+    return Dynamic()
+  end
+  
+  -- Report an error about an incompatible type argType for argument n when 
+  -- calling a value with type callee. If the callee represents a method that
+  -- corresponds to an operator, use the corresponding operator name in the
+  -- messages. 
+  --
+  -- If inversion == Inverted, use inverted operator names
+  -- (member _lt means ">=" and member _gt means "<=").
+  def incompatibleArgument(n as Int, callee as Callable, argType as Typ, 
+                           context as Context, inversion = nil as Constant)
+    var target = ""
+    if callee.name != nil
+      var name = callee.name
+      var base = ExtractType(name)
+      
+      if inversion == Inverted
+        if name.startsWith("method ""_lt"" of")
+          unsupportedOperandTypes(">=", base, argType, context)
+          return
+        elif name.startsWith("method ""_gt"" of")
+          unsupportedOperandTypes("<=", base, argType, context)
+          return
+        end
+      end
+      
+      for op, method in OpMethods
+        if name.startsWith("method ""{}"" of".format(method)) and
+           op != "<=" and op != ">="
+          if op == "in"
+            unsupportedOperandTypes(op, argType, base, context)
+          else
+            unsupportedOperandTypes(op, base, argType, context)
+          end
+          return
+        end
+      end
+      
+      if name.startsWith("method ""_get"" of")
+        invalidIndexType(argType, base, context)
+        return
+      end
+      
+      if name.startsWith("method ""_set"" of")
+        if n == 1
+          invalidIndexType(argType, base, context)
+        else
+          fail(IncompatibleTypesInAssignment, context)
+        end
+        return
+      end
+      
+      if name.startsWith("method ""create"" of ")
+        name = base
+      end
+      target = "to {} ".format(name)
+    end
+
+    var msg = "Argument {} {}has incompatible type {}".format(
+                n, target, formatSimple(argType))
+    fail(msg, context)
+  end
+  
+  def invalidIndexType(indexType as Typ, baseStr as Str, context as Context)
+    fail("Invalid index type {} for {}".format(format(indexType),
+                                               baseStr), context)
+  end
+
+  def invalidArgumentCount(callee as Callable, numArgs as Int, 
+                           context as Context)
+    if numArgs < callee.argTypes.length()
+      tooFewArguments(callee, context)
+    else
+      tooManyArguments(callee, context)
+    end
+  end
+  
+  def tooFewArguments(callee as Callable, context as Context)
+    var msg = "Too few arguments"
+    if callee.name != nil
+      msg += " for {}".format(callee.name)
+    end
+    fail(msg, context)
+  end
+  
+  def tooManyArguments(callee as Callable, context as Context)
+    var msg = "Too many arguments"
+    if callee.name != nil
+      msg += " for {}".format(callee.name)
+    end
+    fail(msg, context)
+  end
+  
+  -- Report an error about a void type in a non-void context. The first
+  -- argument must be a void type. If the void type has a source in it, report
+  -- it in the error message. This allows giving messages such as "Foo does not
+  -- return a value".
+  def doesNotReturnValue(voidType as Typ, context as Context)
+    if (voidType as Void).source == nil
+      fail("Function does not return a value", context)
+    else
+      fail("{} does not return a value".format(
+             Capitalize((voidType as Void).source)), context)
+    end
+  end
+  
+  def noVariantMatchesArguments(intersection as Intersection, 
+                                context as Context)
+    if intersection.name != nil
+      fail("No variant of {} matches argument types".format(
+             intersection.name), context)
+    else
+      fail("No function variant matches argument types", context)
+    end
+  end
+  
+  def functionVariantsOverlap(n1 as Int, n2 as Int, context as Context)
+    fail("Function signature variants {} and {} overlap".format(n1 + 1,
+                                                                n2 + 1),
+         context)
+  end
+  
+  def invalidCast(targetType as Typ, sourceType as Typ, context as Context)
+    if not checkVoid(sourceType, context)
+      fail("Cannot cast from {} to {}".format(
+             format(sourceType), format(targetType)), context)
+    end
+  end
+  
+  def incompatibleOperatorAssignment(op as Str, context as Context)
+    fail("Result type of {} incompatible in assignment".format(op), context)
+  end
+  
+  def incompatibleValueCountInAssignment(
+          lvalueCount as Int, rvalueCount as Int, context as Context)
+    if rvalueCount < lvalueCount
+      fail("Need {} values to assign".format(lvalueCount), context)
+    elif rvalueCount > lvalueCount
+      fail("Too many values to assign", context)
+    end
+  end
+  
+  def typeIncompatibleWithSupertype(name as Str, supertype as TypeInfo, 
+                                    context as Context)
+    fail("Type of ""{}"" incompatible with supertype ""{}""".format(
+         name, supertype.name), context)
+  end
+  
+  def signatureIncompatibleWithSupertype(name as Str, supertype as Str, 
+                                         context as Context)
+    fail("Signature of ""{}"" incompatible with supertype ""{}""".format(
+           name, supertype), context)
+  end
+  
+  def argumentIncompatibleWithSupertype(argNum as Int, name as Str, 
+                                        supertype as Str, context as Context)
+    fail("Argument {} of ""{}"" incompatible with supertype ""{}""".
+         format(argNum, name, supertype), context)
+  end
+  
+  def returnTypeIncompatibleWithSupertype(name as Str, supertype as Str, 
+                                          context as Context)
+    fail("Return type of ""{}"" incompatible with supertype ""{}""".
+         format(name, supertype), context)
+  end
+  
+  def methodExpectedAsOperatorImplementation(type as Typ, member as Str, 
+                                             context as Context)
+    fail("Expected operator method ""{}"" in {}".format(
+      member, format(type)), context)
+  end
+  
+  def booleanReturnValueExpected(method as Str, context as Context)
+    fail("Boolean return value expected for method ""{}""".format(method),
+         context)
+  end
+  
+  def incompatibleTypeApplication(expectedArgCount as Int, 
+                                  actualArgCount as Int, context as Context)
+    if expectedArgCount == 0
+      fail("Type application targets a non-generic function", context)
+    elif actualArgCount > expectedArgCount
+      fail("Type application has too many types ({} expected)".
+             format(expectedArgCount), context)
+    else
+      fail("Type application has too few types ({} expected)".
+             format(expectedArgCount), context)
+    end
+  end
+  
+  def incompatibleArrayItemType(type as Typ, index as Int, context as Context)
+    fail("Array item {} has incompatible type {}".format(index, format(type)),
+         context)
+  end
+  
+  def couldNotInferTypeArguments(calleeType as Callable, n as Int, 
+                                 context as Context)
+    if calleeType.name != nil and n > 0
+      fail("Cannot infer type argument {} of {}".format(
+             n, calleeType.name), context)
+    else
+      fail("Cannot infer function type argument", context)
+    end
+  end
+  
+  def invalidVarArg(type as Typ, context as Context)
+    fail("Array or tuple expected as variable arguments", context)
+  end
+  
+  def genericTypeInheritsNonGeneric(basetype as TypeInfo, context as Context)
+    fail("Generic type inherits non-generic type ""{}""".format(basetype.name),
+         context)
+  end
+  
+  def typeVariableIsNotMappedToSupertype(typevar as Str, basetype as TypeInfo,
+                                         context as Context)
+    fail("Type variable ""{}"" is not mapped to a type variable of ""{}""".
+           format(typevar, basetype.name), context)
+    fail("(Non-trivial subtypes cannot introduce new " +
+         "independent type variables.)", context)
+  end
+  
+  def incompleteTypeVarMatch(member as Str, context as Context)
+    fail("""{}"" has incomplete match to supertype type variable".format(
+           member), context)  
+  end
+  
+  -- If type is void, report an error such as ".. does not return a value"
+  -- and return True. Otherwise, return False.
+  private def checkVoid(type as Typ, context as Context) as Boolean
+    if type is Void
+      doesNotReturnValue(type, context)
+      return True
+    else
+      return False
+    end
+  end
+end
+
+
+-- Capitalize the first character of a string.
+private def Capitalize(s as Str) as Str
+  if s == ""
+    return ""
+  else
+    return s[0].upper() + s[1:]
+  end
+end
+
+
+-- If the argument is the name of a method (of form method "x" of "y"), return
+-- the type portion in quotes (e.g. "y"). If the argument is the name of a 
+-- function (of form function "x"), return the function name portion (e.g.
+-- "x"). Otherwise, return the string unmodified.
+private def ExtractType(name as Str) as Str
+  name = Subst(name, "^method ""[a-zA-Z0-9_]+"" of ", "")
+  name = Subst(name, "^function ", "")
+  return name
+end
+
+
+-- Strip a double quote at the beginning and end of the string, if any.
+private def StripQuotes(s as Str) as Str
+  s = Subst(s, "^""", "")
+  s = Subst(s, """$", "")
+  return s
+end

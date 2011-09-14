@@ -1,0 +1,12 @@
+module sys
+
+const Platform = nil as Str
+const __PlatformVariant = nil as Str
+const ProgramPath = nil as Str
+const IsStandalone = nil as Boolean
+
+const Args = nil as Array<Str>
+
+def __ConfigOpt(x as Str) as Boolean
+  return True
+end

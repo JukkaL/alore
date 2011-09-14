@@ -537,3 +537,20 @@ void AToggleMultipleAssignment(AExpressionType type, int num,
         }
     }
 }
+
+
+void AEmitAssignmentDestination(int num)
+{
+    int prevIndex  = AGetPrevOpcodeIndex();
+    int prevOpcode = AGetPrevOpcode();
+
+    if (prevOpcode >= OP_ADD_L && prevOpcode <= OP_SUB_L
+        && AGetOpcode(prevIndex - 3) == OP_GET_LI
+        && AGetOpcode(prevIndex - 2) == (num)
+        && AGetOpcode(prevIndex - 1) == AIntToValue(1)) {
+        AEmitBack(4);
+        AEmitOpcode(OP_INC_L + (prevOpcode - OP_ADD_L));
+    }
+
+    AEmitArg(num);
+}

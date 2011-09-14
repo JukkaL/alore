@@ -27,7 +27,7 @@ import os
 private const InitialState
 
 
-const HttpPort = 80
+const HttpPort = 80 as Int
 
 
 class HttpError is IoError
@@ -35,27 +35,29 @@ end
 
 
 class Http
-  private var socket
-  private var host
-  private var port
-  private var username
-  private var password
-  private var numPendingRequests = 0
-  private var numRequests = 0
-  private var open = True
+  private var socket as Socket
+  private var host as Str
+  private var port as Int
+  private var username as Str
+  private var password as Str
+  private var numPendingRequests = 0 as Int
+  private var numRequests = 0 as Int
+  private var open = True as Boolean
 
-  def create(host, port = HttpPort)
+  def create(host as Str, port = HttpPort as Int)
     socket = Socket(host, port, Buffered)
     self.host = host
     self.port = port
   end
   
-  def auth(username, password)
+  def auth(username as Str, password as Str)
     self.username = username
     self.password = password
   end
   
-  def request(method, url, headers = [], body = "")
+  def request(method as Str, url as Str, 
+              headers = [] as Array<Pair<Str, Str>>, 
+              body = "" as Str)
     -- Method and location must not be empty.
     if method == "" or method == nil
       raise HttpError("Empty or missing request method")
@@ -101,7 +103,7 @@ class Http
     numPendingRequests += 1
   end
   
-  def response()
+  def response() as HttpResponse
     if numPendingRequests == 0
       raise HttpError("No active requests")
     end
@@ -127,8 +129,8 @@ class Http
     return HttpResponse(version, status, reason, headers, socket)
   end
 
-  private def readHead()
-    var a, m
+  private def readHead() as (Str, Int, Str, HttpHeaders)
+    var a, m as (Array<Str>, MatchResult)
   
     repeat
       a = []
@@ -150,11 +152,11 @@ class Http
     return m.group(1), Int(m.group(2)), m.group(3).strip(), HttpHeaders(a)
   end  
   
-  def close()
+  def close() as void
     socket.close()
   end
   
-  def isOpen()
+  def isOpen() as Boolean
     if numRequests > 0 and numPendingRequests == numRequests
       raise HttpError("No responses read")
     end
@@ -165,16 +167,17 @@ end
 
 
 class HttpResponse is Stream
-  const version
-  const status
-  const reason
-  const headers
+  const version as Str
+  const status as Int
+  const reason as Str
+  const headers as HttpHeaders
   
-  private const socket
-  private var len
-  private var chunked = False
+  private const socket as Socket
+  private var len as Int
+  private var chunked = False as Boolean
   
-  def create(version, status, reason, headers, socket)
+  def create(version as Str, status as Int, reason as Str, 
+             headers as HttpHeaders, socket as Socket)
     super.create(Input, Narrow, Buffered)
     self.version = version
     self.status = status
@@ -194,7 +197,7 @@ class HttpResponse is Stream
     end
   end
   
-  def _read(n)
+  def _read(n as Int) as Str
     if len != nil
       n = Min(n, len)
       if len == 0
@@ -202,7 +205,7 @@ class HttpResponse is Stream
       end
     end
     
-    var result
+    var result as Str
     var p = socket.peek()
     if p != ""
       n = Min(p.length(), n)
@@ -222,16 +225,16 @@ class HttpResponse is Stream
     return result
   end
   
-  def close()
+  def close() as void
     if not eof()
       read()
     end
   end
   
-  private def readChunkLen()
+  private def readChunkLen() as Int
     var s = socket.readLn()
     s = s.split(";")[0]
-    var l
+    var l as Int
     try
       l = Int(s, 16)
     except ValueError
@@ -248,8 +251,8 @@ class HttpResponse is Stream
 end
 
 
-class HttpHeaders is Map
-  def create(a)
+class HttpHeaders is Map<Str, Str>
+  def create(a as Array<Str>)
     super.create()
     var i = 0
     while i < a.length()
@@ -282,7 +285,7 @@ class HttpHeaders is Map
     end
   end
   
-  def _get(name)
+  def _get(name as Str) as Str
     if name is Str
       var item = super._get(altMap[name.lower()])
       if item is Str
@@ -292,27 +295,27 @@ class HttpHeaders is Map
     raise TypeError("Str expected")
   end
   
-  def _set(name, value)
+  def _set(name as Str, value as Str)
     raise ValueError("Object immutable")
   end
   
-  def remove(name)
+  def remove(name as Str)
     raise ValueError("Object immutable")
   end
   
-  def hasKey(name)
+  def hasKey(name as Object) as Boolean
     if name is Str
-      return altMap.hasKey(name.lower())
+      return altMap.hasKey((name as Str).lower())
     else
       raise TypeError("Str expected")
     end
   end
   
-  private var altMap = Map()
+  private var altMap = Map() as Map<Str, Str>
 end
 
 
-def DefaultProxy()
+def DefaultProxy() as (Str, Int)
   var env = GetEnv("http_proxy")
   if env != nil
     if not ":" in env

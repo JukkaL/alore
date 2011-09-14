@@ -1,0 +1,289 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+          
+-- Test cases for "super"
+-- ----------------------
+          
+[case testSuperMethodRef]
+class A
+  def f()
+  end
+end
+class B is A
+  def g()
+    super.f()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+    FuncDef:6(
+      g
+      Body(
+        ExpressionStmt:7(
+          CallExpr:7(
+            SuperExpr:7(
+              f)
+            Args()))))))
+
+[case testSuperVarRef]
+class A
+  var a
+  def create()
+  end
+end
+class B is A
+  def f()
+    super.a
+    super.a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:3(
+      create))
+  TypeDef:6(
+    B
+    NameExpr(A [A])
+    FuncDef:7(
+      f
+      Body(
+        ExpressionStmt:8(
+          SuperExpr:8(
+            a))
+        AssignmentStmt:9(
+          Lvalues(
+            SuperLvalue:9(
+              a))
+          IntExpr(1))))))
+
+[case testSuperConstRef]
+class A
+  const a
+  def create()
+  end
+end
+class B is A
+  def f()
+    super.a
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Const)
+    FuncDef:3(
+      create))
+  TypeDef:6(
+    B
+    NameExpr(A [A])
+    FuncDef:7(
+      f
+      Body(
+        ExpressionStmt:8(
+          SuperExpr:8(
+            a))))))
+
+[case testSuperGetterRef]
+class A
+  def a
+  end
+end
+class B is A
+  def f()
+    super.a
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+    FuncDef:6(
+      f
+      Body(
+        ExpressionStmt:7(
+          SuperExpr:7(
+            a))))))
+
+[case testSuperSetterRef]
+class A
+  def a
+  end
+  def a = x
+  end
+end
+class B is A
+  def f()
+    super.a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      a
+      Getter)
+    FuncDef:4(
+      a
+      Setter
+      Args(
+        Var(x))))
+  TypeDef:7(
+    B
+    NameExpr(A [A])
+    FuncDef:8(
+      f
+      Body(
+        AssignmentStmt:9(
+          Lvalues(
+            SuperLvalue:9(
+              a))
+          IntExpr(1))))))
+
+[case testSuperExplicitCreateRef]
+class A
+  def create()
+  end
+end
+class B is A
+  def f()
+    super.create()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      create))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+    FuncDef:6(
+      f
+      Body(
+        ExpressionStmt:7(
+          CallExpr:7(
+            SuperExpr:7(
+              create)
+            Args()))))))
+
+[case testSuperEmptyCreateRef]
+class A
+  def f()
+    super.create()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Body(
+        ExpressionStmt:3(
+          CallExpr:3(
+            SuperExpr:3(
+              create)
+            Args()))))))
+
+[case testSuperImplicitCreateRef]
+class A
+  var a
+end
+class B is A
+  def f()
+    super.create(1)
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(a))
+      Type:-1(def (dynamic))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              a))
+          NameExpr(a [l])))))
+  TypeDef:4(
+    B
+    NameExpr(A [A])
+    FuncDef:5(
+      f
+      Body(
+        ExpressionStmt:6(
+          CallExpr:6(
+            SuperExpr:6(
+              create)
+            Args(
+              IntExpr(1))))))))
+
+[case testSuperAcrossHierarchy]
+class A
+  def f()
+  end
+end
+class B is A
+end
+class C is A
+  def g()
+    super.f()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f))
+  TypeDef:5(
+    B
+    NameExpr(A [A])
+  )
+  TypeDef:7(
+    C
+    NameExpr(A [A])
+    FuncDef:8(
+      g
+      Body(
+        ExpressionStmt:9(
+          CallExpr:9(
+            SuperExpr:9(
+              f)
+            Args()))))))

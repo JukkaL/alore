@@ -1,0 +1,346 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Interfaces
+-- ----------
+
+[case testSimpleInterface]
+interface A
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+  ))
+
+[case testInterfaceWithMethods]
+interface A
+  def f()
+  def g(x, y)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    FuncDef:2(
+      f)
+    FuncDef:3(
+      g
+      Args(
+        Var(x)
+        Var(y)))))
+
+[case testIncompatibleSignaturesInSubinterface]
+interface A is B
+  def f()
+  def g(x=)
+end
+interface B
+  def f(x)
+  def g(*z)
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    NameExpr(B [B])
+    FuncDef:2(
+      f)
+    FuncDef:3(
+      g
+      Args(
+        Var(x))
+      Init(
+        AssignmentStmt:-1(
+          Lvalues(
+            NameLvalue(x [l]))
+          NilExpr()))))
+  TypeDef:5(
+    B
+    Interface
+    FuncDef:6(
+      f
+      Args(
+        Var(x)))
+    FuncDef:7(
+      g
+      Args(
+        Var(z))
+      VarArg)))
+
+
+[case testRepeatingImplementTarget]
+import a
+class a implements x, x
+end
+class b implements x, a::x
+end
+[file a/a-skip.alo]
+module a
+interface x
+end
+[out]
+AloreFile:1(
+  Import(a)
+  TypeDef:2(
+    a
+    Implements(
+      NameExpr(x [a::x])
+      NameExpr(x [a::x]))
+  )
+  TypeDef:4(
+    b
+    Implements(
+      NameExpr(x [a::x])
+      NameExpr(a::x [a::x]))
+  ))
+
+[case testSimpleImplements]
+class a implements b
+  def f()
+  end
+end
+interface b
+  def f()
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    a
+    Implements(
+      NameExpr(b [b]))
+    FuncDef:2(
+      f))
+  TypeDef:5(
+    b
+    Interface
+    FuncDef:6(
+      f)))
+
+[case testSimpleAccessorsImplementation]
+import a
+[file a/a-skip.alo]
+module a
+class a implements b
+  def x
+  end
+  def x = y
+  end
+end
+interface b
+  def x
+  def x = y
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAccessorsImplementedAsConst]
+import a
+[file a/a-skip.alo]
+module a
+class a implements b
+  const x
+end
+interface b
+  def x
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAccessorsImplementedAsVar]
+import a
+[file a/a-skip.alo]
+module a
+class a implements b
+  var x
+end
+interface b
+  def x
+  def x = y
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testImplementingInterfaceUsingInheritedMembers]
+import a
+[file a/a-skip.alo]
+module a
+class a is b implements c
+end
+class b
+  var a
+  const b
+  def c()
+  end
+  def d
+  end
+end
+interface c
+  def a
+  def a = x
+  def b
+  def c()
+  def d
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testAddingSetterInSubClassWithInterface]
+import a
+[file a/a-skip.alo]
+module a
+class a is b implements c
+  def a = x
+  end
+end
+class b
+  const a
+end
+interface c
+  def a
+  def a = x
+end
+[out]
+AloreFile:1(
+  Import(a)
+)
+
+[case testPrivateInterface]
+class a implements b
+  def f()
+  end
+end
+private interface b
+  def f()
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    a
+    Implements(
+      NameExpr(b [b]))
+    FuncDef:2(
+      f))
+  TypeDef:5(
+    b
+    Interface
+    Private
+    FuncDef:6(
+      f)))
+
+
+-- Interface binding test cases
+-- ----------------------------
+
+[case testSemanticAnalysisOfBind]
+interface A
+  bind Object
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    Bind(
+      NameExpr(Object [std::Object]))
+  ))
+
+[case testInsertingBindingIntoTargetClass]
+interface I
+  bind C
+end
+class C
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    I
+    Interface
+    Bind(
+      NameExpr(C [C]))
+  )
+  TypeDef:4(
+    C
+  ))
+
+-- NOTE: Multiple binding is supported so that we can support multiple generic
+--       interface bindings, e.g. Comparable<Int> and Comparable<Float>
+
+[case testRepeatedBinding]
+interface A
+  bind Object
+  bind std::Object
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    Interface
+    Bind(
+      NameExpr(Object [std::Object])
+      NameExpr(std::Object [std::Object]))
+  ))
+
+[case testBindingAndImplementsClash]
+class C implements A
+end
+interface A
+  bind C
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    C
+    Implements(
+      NameExpr(A [A]))
+  )
+  TypeDef:3(
+    A
+    Interface
+    Bind(
+      NameExpr(C [C]))
+  ))
+
+[case testBindingAndInheritedImplementsClash]
+class B implements A
+end
+class C is B
+end
+interface A
+  bind C
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    B
+    Implements(
+      NameExpr(A [A]))
+  )
+  TypeDef:3(
+    C
+    NameExpr(B [B])
+  )
+  TypeDef:5(
+    A
+    Interface
+    Bind(
+      NameExpr(C [C]))
+  ))

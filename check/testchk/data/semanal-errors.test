@@ -1,0 +1,534 @@
+-- Test cases for semantic analyser errors. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- The input code will be stored as file "file.alo".
+--
+-- Comments starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+[case testPropagatingParseErrors]
+in 1
+def f()
+  1 1
+end
+[out]
+main, line 1: Parse error before in
+main: In function "f":
+main, line 3: Parse error before numeric literal
+
+[case testUndefinedVariableInGlobalStatement]
+x
+y
+[out]
+main, line 1: "x" undefined
+main, line 2: "y" undefined
+
+[case testUndefinedVariableWithinFunctionContext]
+def f()
+  x
+end
+y
+[out]
+main: In function "f":
+main, line 2: "x" undefined
+main: At top level:
+main, line 4: "y" undefined
+
+[case testUndefinedVariableWithinClassContext]
+class A
+  var a = b
+end
+b
+[out]
+main: In class "A":
+main, line 2: "b" undefined
+main: At top level:
+main, line 4: "b" undefined
+
+[case testEncoding]
+encoding latin2
+[out]
+main, line 1: Invalid encoding
+
+[case testVariableOutOfScope1]
+def f()
+  var a
+end
+a
+[out]
+main, line 4: "a" undefined
+
+[case testVariableOutOfScope2]
+class A
+  var a
+  def f()
+  end
+end
+a + f
+[out]
+main, line 6: "a" undefined
+main, line 6: "f" undefined
+
+[case testVariableOutOfScope3]
+def f()
+  if 1 < 2
+    var a
+  end
+  a
+end
+[out]
+main: In function "f":
+main, line 5: "a" undefined
+
+[case testVariableOutOfScope4]
+def f()
+  for i in 1 to 2
+  end
+  i
+end
+[out]
+main: In function "f":
+main, line 4: "i" undefined
+
+[case testMultipleGlobalDefinition]
+var a
+var b, a
+const a
+def a()
+end
+class a
+end
+private var a
+private def a()
+end
+private class a
+end
+[out]
+main, line 2: "a" multiply defined
+main, line 3: "a" multiply defined
+main, line 4: "a" multiply defined
+main, line 6: "a" multiply defined
+main, line 8: "a" multiply defined
+main, line 9: "a" multiply defined
+main, line 11: "a" multiply defined
+
+[case testMultipleLocalDefinition]
+def f(a, a)
+  var a
+  var b, a
+  for a in 1
+  end
+  var b, b
+end
+[out]
+main: In function "f":
+main, line 1: "a" already defined
+main, line 2: "a" already defined
+main, line 3: "a" already defined
+main, line 4: "a" already defined
+main, line 6: "b" already defined
+
+[case testMultipleLocalDefinitionInDifferentScopes]
+def f(a)
+  var a
+  if 1 < 2
+    for a in 1
+    end
+    try
+    except a is Exception
+    end
+  end
+end
+[usestd fixtures/std-exception.alo]
+[out]
+main: In function "f":
+main, line 2: "a" already defined
+main, line 4: "a" already defined
+main, line 7: "a" already defined
+
+[case testSelfOutsideClass]
+class A
+end
+self
+self.x = 1
+[out]
+main, line 3: "self" used outside class
+main, line 4: "self" used outside class
+
+[case testSuperOutsideClass]
+class A
+end
+super.x = 1
+super.y
+[out]
+main, line 3: "super" used outside class
+main, line 4: "super" used outside class
+
+[case testInvalidBreak]
+break
+while 1 < 2
+end
+def f()
+  if 1 < 2
+    break
+  end
+end
+[out]
+main, line 1: Break statement outside loop
+main: In function "f":
+main, line 6: Break statement outside loop
+
+[case testInvalidRreturn]
+return
+def f()
+end
+if 1 < 2
+  return 1
+end
+[out]
+main, line 1: Return statement outside function
+main, line 5: Return statement outside function
+
+[case testConstLvalue]
+const a
+a = 1
+def f()
+  for b in 1
+    b = 1
+  end
+end
+[out]
+main, line 2: Invalid lvalue in assignment
+main: In function "f":
+main, line 5: Invalid lvalue in assignment
+
+[case testFunctionLvalue]
+def f()
+end
+f = 1
+[out]
+main, line 3: Invalid lvalue in assignment
+
+[case testTypeLvalue]
+class a
+end
+a = 1
+[out]
+main, line 3: Invalid lvalue in assignment
+
+[case testInvalidExpressionLvalue]
+var a
+1 = 1
+a + 1 = 1
+[a, [a, a]] = 1
+[out]
+main, line 2: Invalid lvalue in assignment
+main, line 3: Invalid lvalue in assignment
+main, line 4: Invalid lvalue in assignment
+
+[case testInvalidMultipleAssignment]
+const a
+var b
+a, b = 1
+b, a = 1
+a, a = 1
+[out]
+main, line 3: Invalid lvalue in assignment
+main, line 4: Invalid lvalue in assignment
+main, line 5: Invalid lvalue in assignment
+
+[case testAccessingLocalsBeforeDefinition]
+def f(x = x)
+  var a = a
+  for b in b
+  end
+  var c = d
+  var d
+end
+[out]
+main: In function "f":
+main, line 1: "x" undefined
+main, line 2: "a" undefined
+main, line 3: "b" undefined
+main, line 5: "d" undefined
+
+[case testInvalidNumberOfArguments]
+f()            -- Fail
+f(1, 2, 3)     -- Fail
+f(1, 2, 3, *1) -- Fail
+
+f(1)
+f(1, 2)
+f(*1)
+f(1, 2, *1)
+def f(x, y = 1)
+end
+[out]
+main, line 1: Too few arguments for "f"
+main, line 2: Too many arguments for "f"
+main, line 3: Too many arguments for "f"
+
+[case testInvalidNumberOfArgumentsVarArgs]
+1 + f() -- Fail
+
+f(1)
+f(1, 2)
+f(1, 2, 3)
+f(*1)
+f(1, 2, 3, 4, *1)
+def f(x, y = 1, *z)
+end
+[out]
+main, line 1: Too few arguments for "f"
+
+[case testInvalidNumberOfCreateArguments]
+f() -- Fail
+f(1)
+f(1, 2)
+f(1, 2, 3) -- Fail
+class f
+  def create(x, y = 1)
+  end
+end
+[out]
+main, line 1: Too few arguments for "f"
+main, line 4: Too many arguments for "f"
+
+[case testInvalidNumberOfCreateArgumentsVarArgs]
+1 + f() -- Fail
+f(1)
+f(1, 2)
+f(1, 2, 3)
+class f
+  def create(x, y = 1, *z)
+  end
+end
+[out]
+main, line 1: Too few arguments for "f"
+
+[case testInvalidNumberOfInheritedCreateArguments]
+f() -- Fail
+f(1)
+f(1, 2)
+f(1, 2, 3) -- Fail
+class a
+  def create(x, y = 1)
+  end
+end
+class f is a
+end
+[out]
+main, line 1: Too few arguments for "f"
+main, line 4: Too many arguments for "f"
+
+[case testUndefinedVariableInAnonymousFunction]
+def (x, y = y)
+  var f = def (x, y)
+    var f
+    var x = g
+  end
+end
+[out]
+main, line 1: "y" undefined
+main, line 2: "x" already defined
+main, line 2: "y" already defined
+main, line 4: "g" undefined
+main, line 4: "x" already defined
+
+[case testRedefiningLocal]
+def f()
+  var x, x
+  for y, y in 1
+  end
+  try
+  except x is Exception
+  end
+end
+[usestd fixtures/std-exception.alo]
+[out]
+main: In function "f":
+main, line 2: "x" already defined
+main, line 3: "y" already defined
+main, line 6: "x" already defined
+
+[case testErrorInUnaryExpression]
+-a
+not a
+[out]
+main, line 1: "a" undefined
+main, line 2: "a" undefined
+
+[case testErrorInMemberExpression]
+a.x
+[out]
+main, line 1: "a" undefined
+
+[case testErrorInCallExpression]
+a(b, c)
+[out]
+main, line 1: "a" undefined
+main, line 1: "b" undefined
+main, line 1: "c" undefined
+
+[case testErrorInTupleExpression]
+(a, b, (c,))
+[out]
+main, line 1: "a" undefined
+main, line 1: "b" undefined
+main, line 1: "c" undefined
+
+[case testErrorInCastExpression]
+a as b
+[out]
+main, line 1: "a" undefined
+main, line 1: "b" undefined
+
+[case testErrorInDynamicCast]
+a as dynamic
+[out]
+main, line 1: "a" undefined
+
+[case testInvalidAsRightOperand1]
+1 as 1
+
+def f()
+end
+var x
+[out]
+main, line 1: Parse error before numeric literal
+
+[case testInvalidAsRightOperand2]
+1 as f
+1 as x
+
+def f()
+end
+var x
+[out]
+main, line 1: Type expected as the right operand of "as"
+main, line 2: Type expected as the right operand of "as"
+
+[case testErrorWithinWhile]
+while a
+  b
+end
+[out]
+main, line 1: "a" undefined
+main, line 2: "b" undefined
+
+[case testErrorWithinRepeat]
+repeat
+  a
+until b
+[out]
+main, line 2: "a" undefined
+main, line 3: "b" undefined
+
+[case testErrorWithinIf]
+if a
+  b
+elif c
+  d
+elif c2
+  d2
+else
+  e
+end
+[out]
+main, line 1: "a" undefined
+main, line 2: "b" undefined
+main, line 3: "c" undefined
+main, line 4: "d" undefined
+main, line 5: "c2" undefined
+main, line 6: "d2" undefined
+main, line 8: "e" undefined
+
+[case testErrorWithinSwitch]
+switch a
+  case b, c
+    d
+  else
+    e
+end
+[out]
+main, line 1: "a" undefined
+main, line 2: "b" undefined
+main, line 2: "c" undefined
+main, line 3: "d" undefined
+main, line 5: "e" undefined
+
+[case testErrorWithinTryExcept]
+try
+  a
+except Exception
+  b
+except e is Exception
+  c
+end
+[usestd fixtures/std-exception.alo]
+[out]
+main, line 2: "a" undefined
+main, line 4: "b" undefined
+main, line 6: "c" undefined
+
+[case testInvalidExceptionType]
+class A
+end
+try
+except A
+except e is Object
+except Object
+end
+[out]
+main, line 4: Invalid exception type
+main, line 5: Invalid exception type
+main, line 6: Invalid exception type
+
+[case testErrorWithinTryFinally]
+try
+  a
+finally
+  b
+end
+[out]
+main, line 2: "a" undefined
+main, line 4: "b" undefined
+
+[case testAssigningToForLoopVariable]
+for a, b in 1
+  a = 1
+  b = 1
+end
+[out]
+main, line 2: Invalid lvalue in assignment
+main, line 3: Invalid lvalue in assignment
+
+[case testAssignModifyErrors]
+var a
+b += 1
+a[b] *= 1
+b.x /= 1
+[out]
+main, line 2: "b" undefined
+main, line 2: Invalid lvalue in assignment
+main, line 3: "b" undefined
+main, line 4: "b" undefined
+
+[case testPartialForAnnotations]
+for x, y as std :: Object, z in 1
+end
+[out]
+main, line 1: Cannot mix unannotated and annotated loop variables
+
+[case testInvalidVarType]
+var a, b as Object
+var c, d as (Object,)
+var e, f as (Object, Exception, dynamic)
+[usestd fixtures/std-exception.alo]
+[out]
+main, line 1: Tuple type expected in annotation
+main, line 2: Incompatible type in annotation
+main, line 3: Incompatible type in annotation

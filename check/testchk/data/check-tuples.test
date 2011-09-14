@@ -1,0 +1,563 @@
+-- Test cases for the type checker related to tuples.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Normal assignment and subtyping
+-- -------------------------------
+
+
+[case testAssignmentWithTupleTypes]
+t1 = t2 -- Fail
+t1 = t4 -- Fail
+t2 = t1 -- Fail
+t2 = t3 -- Fail
+t2 = t4 -- Fail
+t4 = t2 -- Fail
+t4 = t5 -- Fail
+t4 = t6 -- Fail
+
+-- Ok
+t1 = t1
+t2 = t2
+t3 = t3
+t4 = t4
+t5 = t5
+t6 = t6
+
+var t1 as ()
+var t2 as (A,)
+var t3 as (B,)
+var t4 as (A, A)
+var t5 as (A, B)
+var t6 as (B, A)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+
+[case testTupleSubtyping]
+t2 = t1  -- Fail
+t2 = t3  -- Fail
+t3 = t1  -- Fail
+t3 = t2  -- Fail
+
+t1 = t2
+t1 = t3
+
+var t1 as (A, A)
+var t2 as (A, B)
+var t3 as (B, A)
+
+class A; end
+class B is A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testTupleCompatibilityWithOtherTypes]
+a = t -- Fail
+t = o -- Fail
+t = a -- Fail
+t = f -- Fail
+f = t -- Fail
+
+-- Ok
+o = t
+t = nil
+
+var a, o as (A, Object)
+var t as (A, A)
+var f as def ()
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+[case testNestedTupleTypes]
+t2 = t1 -- Fail
+t1 = t2
+
+var t1 as (A, (A, A))
+var t2 as (B, (B, B))
+
+class A; end
+class B is A; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testSubtypingWithNamedTupleType]
+t1 = t2 -- Fail
+t2 = t1
+
+var t1 as (A, A)
+var t2 as Tuple
+
+class A; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Tuple
+end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testTupleInitializationWithNil]
+var t = nil as (A, A)
+t = nil
+class A; end
+[out]
+
+
+-- Tuple expressions
+-- -----------------
+
+
+[case testTupleExpressions]
+t1 = (a,) -- Fail
+t2 = ()   -- Fail
+t2 = (a, a) -- Fail
+t3 = (a, a) -- Fail
+t3 = (b, b) -- Fail
+t3 = (a, b, a) -- Fail
+
+t1 = ()
+t2 = (a,)
+t3 = (a, b)
+t3 = (a, c)
+t3 = (nil, nil)
+
+var t1 as ()
+var t2 as (A,)
+var t3 as (A, B)
+
+var a, b, c as (A, B, C)
+
+class A; end
+class B; end
+class C is B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testVoidValueInTuple]
+(nil, f()) -- Fail
+(f(), nil) -- Fail
+
+def f() as void
+end
+[out]
+main, line 1: "f" does not return a value
+main, line 2: "f" does not return a value
+
+
+-- Indexing
+-- --------
+
+
+[case testIndexingTuples]
+a = t1[1] -- Fail
+b = t1[0] -- Fail
+t1[2]     -- Fail
+t1[-1]    -- Fail
+t2[0]     -- Fail
+t1[n]     -- Fail
+b = t1[(0)] -- Fail
+
+a = t1[0]
+b = t1[1]
+a = t1[(0)]
+
+var t1 as (A, B)
+var t2 as ()
+var a, b as (A, B)
+var n as Int
+
+class A; end
+class B; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Int
+  def _neg() as Int
+  end
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Tuple index out of range
+main, line 4: Tuple index must an integer literal
+main, line 5: Tuple index out of range
+main, line 6: Tuple index must an integer literal
+main, line 7: Incompatible types in assignment
+
+[case testAssigningToTupleItems]
+t[0] = A() -- Fail
+t[2] = A() -- Fail
+t[n] = A() -- Fail
+
+var t as (A, B)
+var n as Int
+
+class A; end
+class B; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Int
+end
+class Tuple
+end
+[out]
+main, line 1: Unsupported target for indexed assignment
+main, line 2: Unsupported target for indexed assignment
+main, line 3: Unsupported target for indexed assignment
+
+
+-- Multiple assignment
+-- -------------------
+
+
+[case testMultipleAssignmentWithTuples]
+a, a = t1 -- Fail
+b, b = t1 -- Fail
+a, b, b = t2 -- Fail
+
+a, b = t1
+a, b, a = t2
+
+var t1 as (A, B)
+var t2 as (A, B, A)
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testMultipleAssignmentWithInvalidNumberOfValues]
+a, a = t1       -- Fail
+a, a, a, a = t1 -- Fail
+
+a, a, a = t1
+
+
+var t1 as (A, A, A)
+var a as A
+
+class A; end
+[out]
+main, line 1: Too many values to assign
+main, line 2: Need 4 values to assign
+
+[case testMultipleAssignmentWithTupleExpressionRvalue]
+a, b = a, a -- Fail
+a, b = b, a -- Fail
+
+a, b = a, b
+a, a = a, a
+
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testSubtypingInMultipleAssignment]
+b, b = a, b -- Fail
+b, b = b, a -- Fail
+
+a, b = b, b
+b, a = b, b
+
+var a, b as (A, B)
+
+class A; end
+class B is A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testInitializationWithMultipleValues]
+var a1, b1 = a, a as (A, B) -- Fail
+var a2, b2 = b, b as (A, B) -- Fail
+var a3, b3 = a as (A, B)    -- Fail
+var a4, b4 = nil as (A, B)  -- Fail
+var a5, b5 = a, b, a as (A, B)  -- Fail
+
+var ax, bx = a, b as (A, B)
+
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Too many values to assign
+
+[case testMultipleAssignmentWithNonTupleRvalue]
+a, b = nil -- Fail
+a, b = a   -- Fail
+a, b = f   -- Fail
+
+var a, b as (A, B)
+var f as def ()
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testMultipleAssignmentWithIndexedLvalues]
+a[a], b[b] = a, bb   -- Fail
+a[a], b[b] = aa, b   -- Fail
+a[aa], b[b] = aa, bb -- Fail
+a[a], b[bb] = aa, bb -- Fail
+
+a[a], b[b] = aa, bb
+
+var a, b as (A, B)
+var aa, bb as (AA, BB)
+
+class A
+  def _set(x as A, y as AA)
+  end
+end
+class B
+  def _set(x as B, y as BB)
+  end
+end
+
+class AA; end
+class BB; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Invalid index type "AA" for "A"
+main, line 4: Invalid index type "BB" for "B"
+
+[case testMultipleAssignmentWithExtraParentheses]
+(a, b) = (a, a) -- Fail
+(a, b) = (b, b) -- Fail
+((a), (b)) = ((a), (a))  -- Fail
+((a), (b)) = ((b), (b))  -- Fail
+[a, b] = a, a  -- Fail
+[a, b] = b, b  -- Fail
+
+(a, b) = (a, b)
+((a), (b)) = ((a), (b))
+[a, b] = a, b
+
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testMultipleAssignmentWithSingleItem]
+a, = (b,)    -- Fail
+b, = t       -- Fail
+[a,] = (b,)  -- Fail
+(a,) = (b,)  -- Fail
+
+a, = (a,)
+(a,) = t
+[a,] = (a,)
+
+var a, b as (A, B)
+var t as (A,)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+
+-- Error messages
+-- --------------
+
+
+[case testTupleErrorMessages]
+(a, a) + a  -- Fail
+a + (a, a)  -- Fail
+f((a, a)) -- Fail
+(a, a).foo -- Fail
+
+var a as A
+
+def f(x as A)
+end
+
+class A
+  def _add(x as A) as A
+  end
+end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Tuple
+end
+[out]
+main, line 1: Unsupported left operand type for + ("Tuple")
+main, line 2: Unsupported operand types for + ("A" and "(A, A)")
+main, line 3: Argument 1 to "f" has incompatible type "(A, A)"
+main, line 4: "Tuple" has no member "foo"
+
+[case testLargeTuplesInErrorMessages]
+a + (a, a, a, a, a, a, a)
+
+var a as LongTypeName
+
+class LongTypeName
+  def _add(x as LongTypeName) as LongTypeName
+  end
+end
+[out]
+main, line 1: Unsupported operand types for + ("LongTypeName" and tuple)
+
+
+-- Variable definitions
+-- --------------------
+
+
+[case testVariableDefinitionWithTupleType]
+var a, b as A         -- Fail
+var c, d as (A,)      -- Fail
+var e, f as (A, B, A) -- Fail
+def fun() as void
+  var g, h as (A,)    -- Fail
+end
+class C
+  var i, j as (A,)    -- Fail
+end
+
+var x, y as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Tuple type expected in annotation
+main, line 2: Incompatible type in annotation
+main, line 3: Incompatible type in annotation
+main: In function "fun":
+main, line 5: Incompatible type in annotation
+main: In class "C":
+main, line 8: Incompatible type in annotation
+
+
+-- Tuple methods
+-- -------------
+
+
+[case testTupleMethods]
+s = t.length()  -- Fail
+i = t._str()    -- Fail
+s = t._hash()   -- Fail
+i = t._eq(t)    -- Fail
+i = t._in(s)    -- Fail
+t.foo           -- Fail
+
+i = t.length()
+s = t._str()
+i = t._hash()
+b = t._eq(t)
+b = t._in(s)
+
+var t as (Int, Str)
+var i as Int
+var s as Str
+var b as Boolean
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Tuple
+  def length() as Int
+  end
+  def _str() as Str
+  end
+  def _hash() as Int
+  end
+  def _eq(o as Object) as Boolean
+  end
+  def _in(o as Object) as Boolean
+  end
+end
+class Int
+end
+class Str
+end
+class Boolean
+end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: "Tuple" has no member "foo"
+
+
+-- test tuple indexing with arbitrary int values [=> join of all item types]
+
+-- test more advanced features (requires generics)
+--   iterator()
+--   _lt, _gt
+
+-- test using values with type std::Tuple (member access etc.)

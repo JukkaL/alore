@@ -1,0 +1,26 @@
+module std
+
+-- Std module stub used in for statement test cases.
+
+class Object
+end
+
+class Type
+end
+
+class Boolean
+end
+
+interface Iterable<T>
+  def iterator() as Iterator<T>
+end
+
+interface Iterator<T>
+  def next() as T
+  def hasNext() as Boolean
+end
+
+class Array<T> implements Iterable<T>
+  def iterator() as Iterator<T>
+  end
+end

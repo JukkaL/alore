@@ -1,0 +1,67 @@
+module math
+
+
+def Sqrt(x as Float) as Float or
+        (x as Int) as Float
+end
+
+def Sin(x as Float) as Float or
+       (x as Int) as Float
+end
+
+def Cos(x as Float) as Float or
+       (x as Int) as Float
+end
+
+def Tan(x as Float) as Float or
+       (x as Int) as Float
+end
+
+def ArcSin(x as Float) as Float or
+          (x as Int) as Float
+end
+
+def ArcCos(x as Float) as Float or
+          (x as Int) as Float
+end
+
+def ArcTan(y as Float, x = nil as Float) as Float or
+          (y as Float, x as Int) as Float or
+          (y as Int, x= as Float) as Float or
+          (y as Int, x as Int) as Float
+end
+
+def Ceil(x as Float) as Float or
+        (x as Int) as Float
+end
+
+def Floor(x as Float) as Float or
+         (x as Int) as Float
+end
+
+def Round(x as Float) as Float or
+         (x as Int) as Float
+end
+
+def Trunc(x as Float) as Float or
+         (x as Int) as Float
+end
+
+def Exp(x as Float) as Float or
+       (x as Int) as Float
+end
+
+def Log(x as Float) as Float or
+       (x as Int) as Float
+end
+
+def IsInf(x as Float) as Boolean or
+         (x as Int) as Boolean
+end
+
+def IsNaN(x as Float) as Boolean or
+         (x as Int) as Boolean
+end
+
+const Pi = nil as Float -- FIX value
+const E = nil as Float  -- FIX value

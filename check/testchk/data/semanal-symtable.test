@@ -1,0 +1,112 @@
+-- Test cases for semantic analyser that only test the symbol table.
+
+[case testEmptyfile]
+[out]
+SymbolTable()
+
+[case testVarDefs]
+var x
+var y, z
+[out]
+SymbolTable(
+  x : Gdef/Var
+  y : Gdef/Var
+  z : Gdef/Var)
+
+[case testConst]
+const x = 1
+const y, z
+[out]
+SymbolTable(
+  x : Gdef/Var
+  y : Gdef/Var
+  z : Gdef/Var)
+
+[case testFunction]
+def f(x, y)
+end
+[out]
+SymbolTable(
+  f : Gdef/FuncDef)
+
+[case testClass]
+class A
+end
+[out]
+SymbolTable(
+  A : Gdef/TypeInfo)
+
+[case testVarWithType]
+var x as Object
+[out]
+SymbolTable(
+  x : Gdef/Var : std::Object)
+
+[case testMultipleVars]
+var x, y as (Object, Exception)
+[usestd fixtures/std-exception.alo]
+[out]
+SymbolTable(
+  x : Gdef/Var : std::Object
+  y : Gdef/Var : std::Exception)
+
+[case testFunctionWithType]
+def f(x as Object) as dynamic
+end
+[out]
+SymbolTable(
+  f : Gdef/FuncDef : def (std::Object) as dynamic)
+
+[case testFunctionWithIntersectionType]
+def f(x as Exception) as Object or
+     (x as Object) as Exception
+end
+[usestd fixtures/std-exception.alo]
+[out]
+SymbolTable(
+  f : Gdef/FuncDef : def (std::Exception) as std::Object /\ def (std::Object) as std::Exception)
+
+[case testModules]
+import a
+var x as Object
+[file a/a.alo]
+module a
+var x as Exception
+def f()
+end
+[usestd fixtures/std-exception.alo]
+[out]
+SymbolTable(
+  f : Gdef/FuncDef (a)
+  x : Gdef/Var : std::Object; Gdef/Var (a) : std::Exception)
+
+[case testLocals]
+def f(x)
+  var y
+end
+[out]
+SymbolTable(
+  f : Gdef/FuncDef)
+
+[case testPrivate]
+private var x
+private def f()
+end
+[out]
+SymbolTable(
+  f : Gdef/FuncDef
+  x : Gdef/Var)
+
+[case testMembers]
+class A
+  var x
+  def f()
+  end
+  def g
+  end
+  def g = x
+  end
+end
+[out]
+SymbolTable(
+  A : Gdef/TypeInfo)

@@ -83,7 +83,7 @@ ABool ADefInitCompilation(const char *path, char *moduleSearchPath,
 
     /* Create new moduleSearchPath that contains the directory of the main
        source file, the moduleSearchPath variable given by the caller and the
-       value of the DefaultModuleSearchPath variable. */
+       value of the ADefaultModuleSearchPath variable. */
 
     dirLen = GetDirLen(path);
 

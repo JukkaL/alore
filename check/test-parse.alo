@@ -1,0 +1,28 @@
+-- test-parse.alo
+--
+-- Parse an Alore source file and dump the parse tree to stdout.
+--
+-- TODO
+--  - use argparse for parsing arguments
+
+import parser
+import errors
+import string
+import io
+
+def Main(args)
+  var ss
+  var fnam = nil
+  fnam = args[0]
+  ss = File(fnam).read()
+
+  try
+    var tree = Parse(ss, fnam)
+    WriteLn(tree)
+  except e is CompileError
+    -- There was a parse error. Display messages.
+    for s in e.messages
+      WriteLn(s)
+    end
+  end
+end

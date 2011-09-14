@@ -1,0 +1,51 @@
+-- test-semanal.alo
+--
+-- Perform semantic analysis for a program and dump the parse tree, symbol 
+-- table and type mapping.
+--
+-- TODO
+--  - use argparse for parsing arguments
+
+import analyse
+import errors
+import string
+import io
+
+
+def Main(args)
+  var ss
+  var fnam
+  var showMain = False
+  
+  -- The -t option causes the output to be compatible with type case
+  -- descriptions (use 'main' as the file name for the program).
+  if args[0] == "-t"
+    showMain = True
+    args = args[1:]
+  end
+  
+  fnam = args[0]
+  ss = File(fnam).read()
+  
+  var showFnam = fnam
+  if showMain
+    showFnam = "main"
+  end
+
+  try
+    var trees, symtable, types, typemap = Analyse(ss, showFnam) --, False)
+    for tree in trees
+      -- Display parse trees, but omit the std module.
+      if tree.header == nil or tree.header.id != "std"
+        WriteLn(tree)
+      end
+    end
+    WriteLn(symtable)
+    WriteLn(types)
+  except e is CompileError
+    -- Semantic analysis failed. Display error messages.
+    for m in e.messages
+      WriteLn(m)
+    end
+  end
+end

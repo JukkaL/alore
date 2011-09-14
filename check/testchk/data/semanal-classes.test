@@ -1,0 +1,406 @@
+-- Test cases for the semantic analyser. Each test case consists of two
+-- sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- This file contains test cases related to classes. Note that some related
+-- test cases are in other files:
+--
+--  * semanal-basic.txt
+--  * semanal-interfaces.txt
+--  * semanal-overriding.txt
+--  * semanal-super.txt
+
+      
+-- Setter
+-- ------
+      
+[case testSetterArgument]
+class A
+  def f
+  end
+  def f = x
+    x
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    FuncDef:2(
+      f
+      Getter)
+    FuncDef:4(
+      f
+      Setter
+      Args(
+        Var(x))
+      Body(
+        ExpressionStmt:5(
+          NameExpr(x [l]))))))
+
+
+-- Test private member test cases
+-- ------------------------------
+
+[case testPublicAndPrivateMembersWithSameName]
+class B is A
+  var a
+  def b()
+    [a, b, c]
+  end
+  var c
+end
+class A
+  private var a
+  private def b
+  end
+  private def b = x
+  end
+  private def c()
+  end
+  def create()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    B
+    NameExpr(A [A])
+    VarDef:2(
+      Var(a))
+    FuncDef:3(
+      b
+      Body(
+        ExpressionStmt:4(
+          ArrayExpr:4(
+            NameExpr(a [m])
+            NameExpr(b [m])
+            NameExpr(c [m])))))
+    VarDef:6(
+      Var(c)))
+  TypeDef:8(
+    A
+    VarDef:9(
+      Var(a)
+      Private)
+    FuncDef:10(
+      b
+      Getter
+      Private)
+    FuncDef:12(
+      b
+      Setter
+      Private
+      Args(
+        Var(x)))
+    FuncDef:14(
+      c
+      Private)
+    FuncDef:16(
+      create)))
+
+[case testMultiplePrivateMembersWithSameName]
+class A
+  private var a
+  private def b
+  end
+  private def c()
+  end
+  def create()
+  end
+end
+class B is A
+  private var a
+  private def b()
+  end
+  private def c
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Private)
+    FuncDef:3(
+      b
+      Getter
+      Private)
+    FuncDef:5(
+      c
+      Private)
+    FuncDef:7(
+      create))
+  TypeDef:10(
+    B
+    NameExpr(A [A])
+    VarDef:11(
+      Var(a)
+      Private)
+    FuncDef:12(
+      b
+      Private)
+    FuncDef:14(
+      c
+      Getter
+      Private)))
+
+      
+-- Member initialization
+-- ---------------------
+      
+[case testConstInitializationInCreate]
+class A
+  const a
+  def create()
+    a = 1
+    self.a = 1
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Const)
+    FuncDef:3(
+      create
+      Body(
+        AssignmentStmt:4(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))
+        AssignmentStmt:5(
+          Lvalues(
+            MemberLvalue:5(
+              SelfExpr()
+              a))
+          IntExpr(1))))))
+
+[case testInitializingInheritedConstInCreate]
+import a
+class A is B
+  def create()
+    a = 1
+  end
+end
+[file a/a-skip.alo]
+module a
+class B
+  const a
+  def create()
+  end
+end
+[out]
+AloreFile:1(
+  Import(a)
+  TypeDef:2(
+    A
+    NameExpr(B [a::B])
+    FuncDef:3(
+      create
+      Body(
+        AssignmentStmt:4(
+          Lvalues(
+            NameLvalue(a [m]))
+          IntExpr(1))))))
+
+[case testMemberInitializer]
+class A
+  var a = b
+  var b
+  def create()
+  end
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      NameExpr(b [m]))
+    VarDef:3(
+      Var(b))
+    FuncDef:4(
+      create)))
+
+
+-- Test cases for default constructors
+-- -----------------------------------
+
+[case testSimpleDefaultConstructor]
+class A
+  var a
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(a))
+      Type:-1(def (dynamic))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              a))
+          NameExpr(a [l]))))))
+
+[case testDefaultConstructorWithMultipleVars]
+class A
+  var a, b
+  const c
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Var(b))
+    VarDef:3(
+      Var(c)
+      Const)
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(a)
+        Var:nil(b)
+        Var:nil(c))
+      Type:-1(def (dynamic, dynamic, dynamic))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              a))
+          NameExpr(a [l]))
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              b))
+          NameExpr(b [l]))
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              c))
+          NameExpr(c [l]))))))
+
+[case testDefaultConstructorWithInitializers]
+class A
+  var a = 1
+  var b
+  var c, d = 1
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      IntExpr(1))
+    VarDef:3(
+      Var(b))
+    VarDef:4(
+      Var(c)
+      Var(d)
+      IntExpr(1))
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(b))
+      Type:-1(def (dynamic))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              b))
+          NameExpr(b [l]))))))
+
+[case testDefaultConstructorWithPrivate]
+class A
+  private var a
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a)
+      Private)))
+      
+[case testDefaultConstructorWithPrivate2]
+class A
+  var a
+  private var b
+  private const c = 1
+end
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+    VarDef:2(
+      Var(a))
+    VarDef:3(
+      Var(b)
+      Private)
+    VarDef:4(
+      Var(c)
+      IntExpr(1)
+      Const
+      Private)
+    FuncDef:-1(
+      create
+      Args(
+        Var:nil(a))
+      Type:-1(def (dynamic))
+      Body(
+        AssignmentStmt:-1(
+          Lvalues(
+            MemberLvalue:-1(
+              SelfExpr()
+              a))
+          NameExpr(a [l]))))))
+
+
+-- Special cases (regression tests etc.)
+-- -------------------------------------
+
+
+[case testInheritingMethodFromGrandparent]
+class A
+end
+
+class B is A
+end
+
+B()
+[out]
+AloreFile:1(
+  TypeDef:1(
+    A
+  )
+  TypeDef:4(
+    B
+    NameExpr(A [A])
+  )
+  ExpressionStmt:7(
+    CallExpr:7(
+      NameExpr(B [B])
+      Args())))

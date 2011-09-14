@@ -1,0 +1,1407 @@
+-- Test cases for the type checker related to subtyping (inheritance and 
+-- interfaces) with generics.
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- Subtyping + inheritance
+-- -----------------------
+
+
+[case testSubtypingAndInheritingNonGenericTypeFromGenericType]
+b = ad -- Fail
+ad = b -- Fail
+b = ac -- Fail
+
+b = b
+ac = b
+
+var ac as A<C>
+var ad as A<D>
+var b as B
+
+class A<T>
+end
+
+class B is A<C>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testSubtypingAndInheritingGenericTypeFromNonGenericType]
+-- Test this case, even though we disallow this due to limitations of runtime
+-- type checking.
+bc = bd -- Fail
+bd = bc -- Fail
+bc = a  -- Fail
+bd = a  -- Fail
+
+a = bc
+a = bd
+
+var a as A
+var bc as B<C>
+var bd as B<D>
+
+class A
+end
+
+class B<T> is A
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main: In class "B":
+main, line 16: Generic type inherits non-generic type "A"
+
+
+[case testSubtypingAndInheritingGenericTypeFromGenericType]
+-- Even though we disallow the kind of inheritance shown in this test case,
+-- test that it results in meaningful error messages anyway; we might relax
+-- the restriction in the future.
+ad = bcc -- Fail
+ad = bdc -- Fail
+bcc = ac -- Fail
+bdc = ac -- Fail
+
+bcc = bcc
+bdc = bdc
+ac = bcc
+ac = bdc
+
+var ac as A<C>
+var ad as A<D>
+
+var bcc as B<C, C>
+var bdc as B<D, C>
+
+class A<T>
+end
+
+class B<T, S> is A<S>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main: In class "B":
+main, line 20: Type variable "T" is not mapped to a type variable of "A"
+main, line 20: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+
+[case testSubtypingAndInheritingGenericTypeFromGenericTypeAcrossHierarchy]
+ae = cef -- Fail
+af = cfe -- Fail
+
+ae = cfe
+af = cef
+af = cff
+
+var ae as A<A<E>>
+var af as A<A<F>>
+
+var cef as C<E, F>
+var cff as C<F, F>
+var cfe as C<F, E>
+
+class A<T>
+end
+
+class B<T, S> is A<S>
+end
+
+class C<X, Y> is B<A<X>, A<Y>>
+end
+
+class E; end
+class F; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main: In class "B":
+main, line 18: Type variable "T" is not mapped to a type variable of "A"
+main, line 18: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+
+-- Accessing inherited generic members
+-- -----------------------------------
+
+
+[case testAccessingMethodInheritedFromGenericType]
+b.f(c) -- Fail
+b.f(d)
+
+var b as B<C, D>
+var c as C
+var d as D
+
+class A<T>
+  def f(a as T)
+  end
+end
+
+class B<T, S> is A<S>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Argument 1 to method "f" of "A" has incompatible type "C"
+main: In class "B":
+main, line 13: Type variable "T" is not mapped to a type variable of "A"
+main, line 13: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+[case testAccessingMethodInheritedFromGenericTypeInNonGenericType]
+b.f(c) -- Fail
+b.f(d)
+
+var b as B
+var c as C
+var d as D
+
+class A<T>
+  def f(a as T)
+  end
+end
+
+class B is A<D>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Argument 1 to method "f" of "A" has incompatible type "C"
+
+[case testAccessingMemberVarInheritedFromGenericType]
+b.a = c -- Fail
+b.a = d
+
+var b as B<C, D>
+var c as C
+var d as D
+
+class A<T>
+  var a as T
+end
+
+class B<T, S> is A<S>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main: In class "B":
+main, line 12: Type variable "T" is not mapped to a type variable of "A"
+main, line 12: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+
+[case testAccessingAccessorInheritedFromGenericType]
+b.a = c -- Fail
+c = b.a -- fail
+b.a = d
+d = b.a
+
+var b as B<C, D>
+var c as C
+var d as D
+
+class A<T>
+  def a as T
+  end
+  def a = x as T
+  end
+end
+
+class B<T, S> is A<S>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main: In class "B":
+main, line 17: Type variable "T" is not mapped to a type variable of "A"
+main, line 17: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+
+[case testDirectlyAccessingMembersInheritedFromGenericType]
+class B<T, S> is A<S>
+  def g(t as T, s as S)
+    f(t)  -- Fail
+    v = t -- Fail
+    p = t -- fail
+    f(s)
+    v = s
+    p = s
+  end
+end
+
+class A<T>
+  var v = nil as T
+  
+  def p as T
+  end
+  def p = x as T
+  end  
+ 
+  def f(a as T)
+  end
+end
+[out]
+main: In class "B":
+main, line 1: Type variable "T" is not mapped to a type variable of "A"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "g" of class "B":
+main, line 3: Argument 1 to method "f" of "A" has incompatible type "T"
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+
+
+-- Overriding with generic types
+-- -----------------------------
+
+
+[case testOverridingMethodInSimpleTypeInheritingGenericType]
+class A is B<C>
+  def f(a as D) -- Fail
+  end
+  
+  def g(a as C)
+  end
+end
+
+class B<T>
+  def f(a as T)
+  end
+  
+  def g(a as T)
+  end
+end
+
+class C; end
+class D; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "B"
+
+[case testOverridingMethodInGenericTypeInheritingSimpleType]
+class A<T> is B
+  def f(a as T) -- Fail
+  end
+  
+  def g(a as C)
+  end
+end
+
+class B
+  def f(a as C)
+  end
+  
+  def g(a as C)
+  end
+end
+
+class C; end
+[out]
+main: In class "A":
+main, line 1: Generic type inherits non-generic type "B"
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "B"
+
+[case testOverridingMethodInGenericTypeInheritingGenericType]
+class A<T, S> is B<S>
+  def f(a as T) -- Fail
+  end
+  
+  def g(a as S)
+  end
+end
+
+class B<T>
+  def f(a as T)
+  end
+  
+  def g(a as T)
+  end
+end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" is not mapped to a type variable of "B"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "B"
+
+[case testOverridingMemberVarInGenericTypeInheritingGenericType]
+class A<T, S> is B<S>
+  def a as T -- Fail
+  end  
+  def b = x as T -- Fail
+  end  
+  def c as S
+  end
+  def d = x as S
+  end
+end
+
+class B<T>
+  var a as T
+  var b as T
+  var c as T
+  var d as T
+end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" is not mapped to a type variable of "B"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "a" of class "A":
+main, line 2: Type of "a" incompatible with supertype "B"
+main: In member "b" of class "A":
+main, line 4: Type of "b" incompatible with supertype "B"
+
+[case testOverridingAccessorsInGenericTypeInheritingGenericType]
+class A<T, S> is B<S>
+  def a as T -- Fail
+  end  
+  def b = x as T -- Fail
+  end  
+  def c as S
+  end
+  def d = x as S
+  end
+end
+
+class B<T>
+  def a as T
+  end
+  def b as T
+  end
+  def b = x as T
+  end
+  def c as T
+  end
+  def d as T
+  end
+  def d = x as T
+  end
+end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" is not mapped to a type variable of "B"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "a" of class "A":
+main, line 2: Type of "a" incompatible with supertype "B"
+main: In member "b" of class "A":
+main, line 4: Type of "b" incompatible with supertype "B"
+
+[case testOverridingMethodInMultilevelHierarchyOfGenericTypes]
+class A<T, S> is B<S>
+  def f(a as T) -- Fail
+  end
+  
+  def g(a as S)
+  end
+end
+
+class B<T> is C<D, D, T>
+end
+
+class C<T, U, V>
+  def f(a as V)
+  end
+  
+  def g(a as V)
+  end
+end
+
+class D; end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" is not mapped to a type variable of "B"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "C"
+
+
+-- Inheritance from generic types with implicit dynamic supertype
+-- --------------------------------------------------------------
+
+
+[case testInheritanceFromGenericWithImplicitDynamicAndSubtyping]
+a = bc -- Fail
+
+bc = a
+bd = a
+
+var a as A
+var bc as B<C>
+var bd as B<D>
+
+class A is B
+end
+
+class B<T>
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testInheritanceFromGenericWithImplicitDynamicAndExternalAccess]
+a.x = c -- Fail
+a.f(c)  -- Fail
+
+a.x = bc
+a.f(bc)
+
+var a as A
+var c as C
+var bc as B<C>
+
+class A is B
+end
+class B<T>
+  var x as B<T>
+  def f(a as B<T>)
+  end
+end
+
+class C; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Argument 1 to method "f" of "B" has incompatible type "C"
+
+[case testInheritanceFromGenericWithImplicitDynamicAndDirectAccess]
+class A is B
+  def g() as void
+    x = c -- Fail
+    f(c)  -- Fail
+    x = bc
+    f(bc)
+  end
+end
+
+var a as A
+var c as C
+var bc as B<C>
+
+class B<T>
+  var x as B<T>
+  def f(a as B<T>)
+  end
+end
+
+class C; end
+[out]
+main: In member "g" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Argument 1 to method "f" of "B" has incompatible type "C"
+
+[case testInheritanceFromGenericWithImplicitDynamicAndOverriding]
+class A is B
+  def f(a, b)
+  end
+end
+
+class B<T>
+  def f(a as T, b as (T, B<T>))
+  end
+end
+[out]
+
+
+-- Inheritance from generic types and super expressions
+-- ----------------------------------------------------
+
+
+[case testSuperExpressionsWhenInheritingFromGenericType]
+class A<T, S> is B<S>
+  def g(t as T, s as S)
+    super.a = t  -- Fail
+    t = super.b  -- Fail
+    super.f(t)   -- Fail
+    
+    super.a = s
+    s = super.b
+    super.f(s)
+  end
+end
+
+class B<T>
+  var a as T
+  
+  def b as T
+  end
+  
+  def f(a as T)
+  end
+end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" is not mapped to a type variable of "B"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "g" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Argument 1 to method "f" of "B" has incompatible type "T"
+
+[case testSuperExpressionsWhenInheritingFromGenericTypeAndDeepHierarchy]
+class A<T, S> is B<S>
+  def g(t as T, s as S)
+    super.a = t  -- Fail
+    t = super.b  -- Fail
+    super.f(t)   -- Fail
+    
+    super.a = s
+    s = super.b
+    super.f(s)
+  end
+end
+
+class B<T> is C<D, D, T>
+end
+
+class C<T, U, V>
+  var a as V
+  
+  def b as V
+  end
+  
+  def f(a as V)
+  end
+end
+
+class D; end
+[out]
+main: In class "A":
+main, line 1: Type variable "T" is not mapped to a type variable of "B"
+main, line 1: (Non-trivial subtypes cannot introduce new independent type variables.)
+main: In member "g" of class "A":
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+main, line 5: Argument 1 to method "f" of "C" has incompatible type "T"
+
+
+-- Subtyping with a generic interface
+-- ----------------------------------
+
+
+[case testSubtypingWithGenericTypeImplementingGenericInterface]
+ic = acd -- Fail
+id = adc -- Fail
+adc = ic -- Fail
+
+ic = adc
+id = acd
+
+var acd as A<C, D>
+var adc as A<D, C>
+var ic as I<C>
+var id as I<D>
+
+class A<T, S> implements I<S>
+end
+interface I<S>
+end
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testSubtypingWithTypeImplementingGenericInterfaceTwice]
+ie = a -- Fail
+a = ic -- Fail
+a = id -- Fail
+
+ic = a
+id = a
+
+var a as A
+var ic as I<C>
+var id as I<D>
+var ie as I<E>
+
+class A implements I<C>, I<D>
+end
+interface I<S>
+end
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testSubtypingWithTypeImplementingGenericInterfaceViaInheritance]
+ie = a -- Fail
+a = ic -- Fail
+a = id -- Fail
+a = b  -- Fail
+
+ic = a
+id = a
+b = a
+
+var a as A
+var b as B
+var ic as I<C>
+var id as I<D>
+var ie as I<E>
+
+class A is B
+end
+class B implements I<C>, I<D>
+end
+interface I<S>
+end
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testSubtypingWithTypeImplementingGenericInterfaceViaInheritance2]
+ie = a1 -- Fail
+ic = a2 -- Fail
+
+ic = a1
+id = a1
+ie = a2
+id = a2
+
+var a1 as A<E, C>
+var a2 as A<C, E>
+var ic as I<C>
+var id as I<D>
+var ie as I<E>
+
+class A<T, S> is B<S>
+end
+class B<T> implements I<T>, I<D>
+end
+interface I<S>
+end
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main: In class "A":
+main, line 15: Type variable "T" is not mapped to a type variable of "B"
+main, line 15: (Non-trivial subtypes cannot introduce new independent type variables.)
+
+[case testSubtypingWithTypeImplementingGenericInterfaceViaInheritance3]
+je = a -- Fail
+ie = a -- Fail
+
+ic = a
+id = a
+jc = a
+jd = a
+
+var a as A
+var ic as I<C>
+var id as I<D>
+var ie as I<E>
+var jc as J<E, C>
+var jd as J<E, D>
+var je as J<E, E>
+
+class A implements I<C>, I<D>
+end
+interface I<T> is J<E, T>
+end
+interface J<U, V>
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Implementing a generic interface
+-- --------------------------------
+
+
+[case testImplementingGenericInterface1]
+class A implements I<C>
+  def f(a as D) -- Fail
+  end
+  def g(a as C)
+  end  
+end
+
+interface I<T>
+  def f(a as T)
+  def g(a as T)
+end
+
+class C; end
+class D; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "I"
+
+[case testImplementingGenericInterface2]
+class A implements I<C>
+  var a as D -- Fail
+  def b as D -- Fail
+  end
+  def b = x as D -- Fail
+  end
+  
+  var c as C
+  def d as C
+  end
+  def d = x as C
+  end
+end
+
+interface I<T>
+  def a as T
+  def a = x as T
+  def b as T
+  def b = x as T
+  def c as T
+  def c = x as T
+  def d as T
+  def d = x as T
+end
+
+class C; end
+class D; end
+[out]
+main: In class "A":
+main, line 2: Type of "a" incompatible with supertype "I"
+main: In member "b" of class "A":
+main, line 3: Type of "b" incompatible with supertype "I"
+main, line 5: Type of "b" incompatible with supertype "I"
+
+[case testImplementingMethodWithMultipleInterfaceInstances]
+class A implements I<C>, I<D>
+  def f(a as C) -- Fail
+  end  
+  def g(a as D) -- Fail
+  end
+  def h(a as C) or -- Fail
+       (a as E)
+  end
+
+  def i(a as C) or
+       (a as D)
+  end
+end
+
+interface I<T>
+  def f(a as T)
+  def g(a as T)
+  def h(a as T)
+  def i(a as T)
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "I"
+main: In member "g" of class "A":
+main, line 4: Argument 1 of "g" incompatible with supertype "I"
+main: In member "h" of class "A":
+main, line 6: Signature of "h" incompatible with supertype "I"
+
+[case testImplementingVarWithMultipleInterfaceInstances]
+class A implements I<C>, I<D>
+  const a as C -- Fail
+  const b as D -- Fail
+  const c as dynamic
+end
+
+interface I<T>
+  def a as T
+  def b as T
+  def c as T
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main: In class "A":
+main, line 2: Type of "a" incompatible with supertype "I"
+main, line 3: Type of "b" incompatible with supertype "I"
+
+[case testImplementingAccessorWithMultipleInterfaceInstances]
+class A implements I<C>, I<D>
+  def a as C -- Fail
+  end
+  def b as D -- Fail
+  end
+  def c as dynamic
+  end
+end
+
+interface I<T>
+  def a as T
+  def b as T
+  def c as T
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of "a" incompatible with supertype "I"
+main: In member "b" of class "A":
+main, line 4: Type of "b" incompatible with supertype "I"
+
+
+-- Multiple possible paths for generic interface subtyping
+-- -------------------------------------------------------
+
+
+[case testMultiplePathsWithGenericInterfaces1]
+ie = a -- Fail
+
+ic = a
+id = a
+
+var a as A
+var ic as I<C>
+var id as I<D>
+var ie as I<E>
+
+class A is B implements I<C>
+end
+
+class B implements I<D>
+end
+
+interface I<T>
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testMultiplePathsWithGenericInterfaces2]
+je = a -- Fail
+
+jc = a
+jd = a
+
+var a as A
+var jc as J<C>
+var jd as J<D>
+var je as J<E>
+
+class A is B implements I<C>
+end
+
+class B implements J<D>
+end
+
+interface I<T> is J<T>
+end
+
+interface J<T>
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testMultiplePathsWithGenericInterfaces3]
+ke = a -- Fail
+
+kc = a
+kd = a
+
+var a as A
+var kc as K<C>
+var kd as K<D>
+var ke as K<E>
+
+class A is B implements I<C>, J<D>
+end
+
+class B implements J<D>
+end
+
+interface I<T> is K<T>
+end
+
+interface J<T> is K<T>
+end
+
+interface K<T>
+end
+
+class C; end
+class D; end
+class E; end
+[out]
+main, line 1: Incompatible types in assignment
+
+
+-- Implementing a generic interface with deep type hierarchy
+-- ---------------------------------------------------------
+
+
+[case testImplementingGenenericInterfaceWithDeepHierarchy]
+id = a -- Fail
+ic = a
+
+class A is B
+  def g(a as C, b as C) -- Fail
+  end
+  def f(a as C, b as C)
+  end
+end
+
+var a as A
+var ic as I<C>
+var id as I<D>
+
+class B implements I<C>
+  def f(a as C, b as C)
+  end
+  def g(a as C, b as dynamic)
+  end
+end
+
+interface I<T>
+  def f(a as T, b as T)
+  def g(a as T, b as D)
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: Incompatible types in assignment
+main: In member "g" of class "A":
+main, line 5: Argument 2 of "g" incompatible with supertype "I"
+
+[case testImplementingGenenericInterfaceWithDeepHierarchy2]
+class A is B
+  def f(a as C, b as D) -- Fail
+  end
+end
+
+class B implements I<C>
+  def f(a as C, b as dynamic)
+  end
+end
+
+interface I<T>
+  def f(a as T, b as T)
+end
+
+class C; end
+class D; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 2 of "f" incompatible with supertype "I"
+
+
+-- Implicit dynamic types and implementing generic interfaces
+-- ----------------------------------------------------------
+
+
+[case testImplementingGenericInterfaceWithImplicitDynamic]
+ic = a
+id = a
+
+var a
+var ic as I<C>
+var id as I<D>
+
+class A implements I
+  def f(a)
+  end
+end
+
+interface I<T>
+  def f(a as T)
+end
+
+class C; end
+class D; end
+[out]
+
+[case testImplementingGenericInterfaceWithImplicitDynamicAndDeepHierarchy]
+ic = a
+id = a
+
+var a
+var ic as I<C>
+var id as I<D>
+
+class A is B
+  def f(a as C, b as D)
+  end
+end
+
+class B implements I
+  def f(a, b)
+  end
+end
+
+interface I<T>
+  def f(a as T, b as T)
+end
+
+class C; end
+class D; end
+[out]
+
+[case testImplementingGenericInterfaceWithImplicitDynamicAndDeepHierarchy2]
+jc = a
+jd = a
+
+var a
+var jc as J<C>
+var jd as J<D>
+
+class A implements I
+  def f(a as C, b as D)
+  end
+end
+
+interface I is J
+  def f(a, b)
+end
+
+interface J<T>
+  def f(a as T, b as T)
+end
+
+class C; end
+class D; end
+[out]
+
+
+-- Accessing generic interface members
+-- -----------------------------------
+
+
+[case testAccessingGenericInterfaceMembers]
+ia.a = b -- Fail
+b = ia.b -- Fail
+ia.f(b)  -- Fail
+
+ia.a = a
+a = ia.b
+ia.f(a)
+
+var a as A
+var b as B
+var ia as I<A>
+
+interface I<T>
+  def a as T
+  def a = x as T
+  def b as T
+  def f(a as T)
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Argument 1 to method "f" of "I" has incompatible type "B"
+
+[case testAccessingInheritedInterfaceMembers]
+ia.a = b -- Fail
+b = ia.b -- Fail
+ia.f(b)  -- Fail
+
+ia.a = a
+a = ia.b
+ia.f(a)
+
+var a as A
+var b as B
+var ia as I<A>
+
+interface I<T> is J<T>
+end
+
+interface J<T>
+  def a as T
+  def a = x as T
+  def b as T
+  def f(a as T)
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Argument 1 to method "f" of "J" has incompatible type "B"
+
+
+-- Errors related to generic classes or interfaces
+-- -----------------------------------------------
+
+
+[case testAccessingInterfaceMemberWithoutImplementation]
+a.f(c)
+a.f(d)
+c = a.v
+d = a.v
+
+var a as A
+var c as C
+var d as D
+
+class A implements I<C>, I<D> 
+  -- Note: missing implementations
+end
+
+interface I<T>
+  def v as T
+  def f(a as T)
+end
+
+class C; end
+class D; end
+[out]
+main, line 1: "A" has no member "f"
+main, line 2: "A" has no member "f"
+main, line 3: "A" has no member "v"
+main, line 4: "A" has no member "v"
+main: In class "A":
+main, line 10: "A" does not implement "f" defined in "I"
+main, line 10: "A" does not implement getter "v" defined in "I"
+
+[case testOmittingGenericSupertypeArgsInInheritance]
+class A<T> is B
+  def f(a as C)
+  end
+end
+
+class B<T>
+  def f(a as T)
+  end
+end
+
+class C; end
+[out]
+main: In class "A":
+main, line 1: Type arguments for supertype "B" not specified
+
+[case testOmittingGenericSupertypeArgsInImplementation]
+class A<T> implements I
+  def f(a as C)
+  end
+end
+
+interface I<T>
+  def f(a as T)
+end
+
+class C; end
+[out]
+main: In class "A":
+main, line 1: Type arguments for supertype "I" not specified
+
+
+-- Intersection types
+-- ------------------
+
+
+[case testGenericInterfaceArgumentInIntersectionType]
+b = f(ca) -- Fail
+a = f(cb) -- Fail
+a = f(b)  -- Fail
+
+a = f(ca)
+b = f(b)
+
+def f(a as I<A>) as A or
+     (a as B) as B
+end
+
+var a as A
+var b as B
+
+var ca as C<A>
+var cb as C<B>
+
+interface I<T>
+end
+
+class C<S> implements I<S>
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: No variant of "f" matches argument types
+main, line 3: Incompatible types in assignment
+
+
+-- Invalid override due to non-matching type variables
+-- ---------------------------------------------------
+
+
+[case testInvalidOverrideWithNestedSupertypeArguments]
+class B<T> is A<X<T>>
+  def m(a as T) -- Fail: override with partial match
+  end
+  def g(a as T) -- Ok: not an override
+  end
+end
+class A<T>
+  def m(a as dynamic)
+  end
+end
+class X<T>; end
+[out]
+main: In member "m" of class "B":
+main, line 2: "m" has incomplete match to supertype type variable
+
+[case testInvalidOverrideWithNestedSupertypeArguments2]
+class B<T> is A<X<T, C>>
+  def f(a as X<T, dynamic>)  -- Fail: override partial match
+  end
+  def g(a as X<dynamic, C>) -- Ok: no type variable reference
+  end
+end
+class A<T>
+  def f(a as dynamic)
+  end
+  def g(a as dynamic)
+  end
+end
+class X<S, T>; end
+class C; end
+[out]
+main: In member "f" of class "B":
+main, line 2: "f" has incomplete match to supertype type variable
+
+[case testInvalidOverrideWithNestedSupertypeArguments3]
+class B<T, S> is A<S, X<T, C>>
+  def f(a as X<T, dynamic>)  -- Fail: override partial match
+  end
+  def g(a as X<S, C>) -- Ok: different type variable reference
+  end
+end
+class A<S, T>
+  def f(a as dynamic)
+  end
+  def g(a as dynamic)
+  end
+end
+class X<S, T>; end
+class C; end
+[out]
+main: In member "f" of class "B":
+main, line 2: "f" has incomplete match to supertype type variable
+
+[case testInvalidOverrideWithNestedSupertypeArgumentsAndAccessor]
+class B<T> is A<X<T>>
+  def a as T -- Fail
+  end
+  def b as T
+  end
+end
+class A<T>
+  var a as dynamic
+end
+class X<T>; end
+[out]
+main: In member "a" of class "B":
+main, line 2: "a" has incomplete match to supertype type variable
+
+[case testOverrideDefinitionInGrandparentWithPartialTypeVarMatch]
+class A<T> is B<X<T>>
+  def f(a as T)    -- Fail
+  end
+  def g(a as X<T>) -- Fail
+  end
+  def h(a as X<X<T>>) -- Ok
+  end
+end
+class B<T> is C<X<T>>
+end
+class C<T>
+  def f(a as dynamic)
+  end
+  def g(a as dynamic)
+  end
+  def h(a as dynamic)
+  end
+end
+class X<T>; end
+[out]
+main: In member "f" of class "A":
+main, line 2: "f" has incomplete match to supertype type variable
+main: In member "g" of class "A":
+main, line 4: "g" has incomplete match to supertype type variable
+
+[case testOverrideDefinitionInGrandparentWithPartialTypeVarMatch2]
+-- Both parent and grandparent implement the method.
+class A<T> is B<X<T>>
+  def f(a as X<T>) -- Fail
+  end
+  def g(a as X<X<T>>) -- Ok
+  end
+end
+class B<T> is C<X<T>>
+  def f(a as dynamic)
+  end
+  def g(a as dynamic)
+  end
+end
+class C<T>
+  def f(a as dynamic)
+  end
+  def g(a as dynamic)
+  end
+end
+class X<T>; end
+[out]
+main: In member "f" of class "A":
+main, line 2: "f" has incomplete match to supertype type variable

@@ -1,0 +1,131 @@
+module checker
+
+import types
+  
+  
+-- Expand any type variable references in a type with the actual values of
+-- type variables in an instance.
+def ExpandType(type as Typ, 
+               map as Map<Int, Typ>, 
+               upperBounds = nil as Map<Int, Typ>) as Typ
+  return type.accept(ExpandTypeVisitor(map, upperBounds))
+end
+
+
+-- Expand type variables in type using type variable values in an instance.
+def ExpandTypeByInstance(type as Typ, instance as Instance) as Typ
+  if instance.args == []
+    return type
+  else
+    var variables = Map() as <Int, Typ>
+    for i in 0 to instance.args.length()
+      variables[i + 1] = instance.args[i]
+    end
+    var typ = ExpandType(type, variables)
+    -- FIX intersection type
+    if type is Callable
+      var bounds = [] as <(Int, Typ)>
+      for i in 0 to instance.args.length()
+        bounds.append((i + 1, instance.args[i]))
+      end
+      typ = UpdateCallableImplicitBounds(typ as Callable, bounds)
+    end
+    return typ
+  end
+end
+
+
+private class ExpandTypeVisitor is TypeVisitor<Typ>
+  const variables   as Map<Int, Typ>  -- Lower bounds
+  const upperBounds as Map<Int, Typ>  -- Upper bounds (may be nil)
+  
+  def create(variables as Map<Int, Typ>, upperBounds as Map<Int, Typ>)
+    self.variables = variables
+    self.upperBounds = upperBounds
+  end
+  
+  def visitUnboundType(t as UnboundType) as Typ
+    return t
+  end
+  
+  def visitErrorType(t as ErrorType) as Typ
+    return t
+  end
+  
+  def visitDynamic(t as Dynamic) as Typ
+    return t
+  end
+  
+  def visitVoid(t as Void) as Typ
+    return t
+  end
+  
+  def visitNilType(t as NilType) as Typ
+    return t
+  end
+  
+  def visitInstance(t as Instance) as Typ
+    -- Assume that no upper bounds are defined for the source type; otherwise
+    -- expansion would not make sense.
+    
+    var args = expandTypes(t.args)
+    var argTops = nil as Array<Typ>
+    if self.upperBounds != nil
+      -- Need to create upper bounds as well, but only for type variable
+      -- references with defined upper bounds.
+      var isTrivial = True
+      argTops = []
+      for i in 0 to args.length()
+        var arg = t.args[i]
+        if arg is TypeVar and self.upperBounds.hasKey((arg as TypeVar).id)
+          argTops.append(self.upperBounds[(arg as TypeVar).id])
+          isTrivial = False
+        else
+          -- Trivial upper bound.
+          argTops.append(args[i])
+        end
+      end
+      if isTrivial
+        argTops = nil
+      end
+    end
+
+    return Instance(t.type, args, argTops, nil, t.line, t.repr)
+  end
+  
+  def visitTypeVar(t as TypeVar) as Typ
+    return self.variables.get(t.id, t)
+  end
+  
+  def visitCallable(t as Callable) as Typ
+    return Callable(expandTypes(t.argTypes), t.minArgs, t.isVarArg,
+                    t.retType.accept(self), t.isTypeObj, t.name, t.variables,
+                    expandBoundVars(t.boundVars), t.line, t.repr)
+  end
+  
+  def visitTupleType(t as TupleType) as Typ
+    return TupleType(expandTypes(t.items), t.line, t.repr)
+  end
+  
+  def visitIntersection(t as Intersection) as Typ
+    return Intersection(t.item1.accept(self) as FunctionLike, 
+                        t.item2.accept(self) as FunctionLike,
+                        t.name, t.line, t.repr)
+  end
+  
+  private def expandTypes(types as Array<Typ>) as Array<Typ>
+    var a = [] as <Typ>
+    for t in types
+      a.append(t.accept(self))
+    end
+    return a
+  end
+  
+  private def expandBoundVars(types as Array<(Int, Typ)>) as Array<(Int, Typ)>
+    var a = [] as <(Int, Typ)>
+    for id, t in types
+      a.append((id, t.accept(self)))
+    end
+    return a
+  end
+end

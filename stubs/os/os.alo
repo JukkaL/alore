@@ -1,0 +1,115 @@
+module os
+
+def Remove(path as Str)
+end
+
+def Rename(sourcepath as Str, targetpath as Str)
+end
+
+def MakeDir(path as Str)
+end
+
+def MakeDirs(path as Str)
+end
+
+def ChangeDir(path as Str)
+end
+
+def CurrentDir() as Str
+end
+
+def Exists(path as Str) as Boolean
+end
+
+def IsDir(path as Str) as Boolean
+end
+
+def IsFile(path as Str) as Boolean
+end
+
+def IsLink(path as Str) as Boolean
+end
+
+def ListDir(path as Str, mask = "*" as Str) as Array<Str>
+end
+
+def WalkDir(path as Str, mask = "*" as Str) as Array<Str>
+end
+
+class Stat
+  def create(path as Str)
+  end
+
+  const size as Int
+  const isFile as Boolean
+  const isDir as Boolean
+  const isLink as Boolean
+  const isSpecial as Boolean
+  const modificationTime as Str
+  const accessTime as Str
+  const isReadable as Boolean
+  const isWritable as Boolean
+  const owner as Str
+  const ownerPerm as Str
+  const otherPerm as Str
+end
+
+def DirName(path as Str) as Str
+end
+
+def BaseName(path as Str) as Str
+end
+
+def FileExt(path as Str) as Str
+end
+
+def FileBase(path as Str) as Str
+end
+
+def IsAbs(path as Str) as Boolean
+end
+
+def Join(component as Str, *rest as Str) as Str
+end
+
+def NormPath(path as Str) as Str
+end
+
+const Separator = nil as Str
+const PathSeparator = nil as Str
+
+def SetPerm(path as Str, owner as Str, other = owner as Str, 
+            group = other as Str)
+end
+
+-- IDEA: DateTime-like interface? Probably not worth it.
+def SetModificationTime(path as Str, datetime as dynamic)
+end
+
+def SetAccessTime(path as Str, datetime as dynamic)
+end
+
+def MakeSymLink(sourcepath as Str, linkpath as Str)
+end
+
+def ReadSymLink(path as Str)
+end
+
+def GetEnv(variable as Str) as Str
+end
+
+def SetEnv(variable as Str, value as Str)
+end
+
+def ListEnv() as Array<Str>
+end
+
+def System(command as Str) as Int
+end
+
+def Sleep(seconds as Int) or
+         (seconds as Float)
+end
+
+def User() as Str
+end

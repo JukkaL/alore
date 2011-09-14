@@ -1,0 +1,1332 @@
+-- Test cases for the type checker related to type "dynamic".
+--
+-- Each test case consists of at least two sections.
+-- The first section contains [case NAME] followed by the input code, while
+-- the second section contains [out] followed by the output from the parser.
+--
+-- Lines starting with "--" in this file will be ignored, except for lines
+-- starting with "----" that are not ignored. The first two dashes of these
+-- lines are interpreted as escapes and removed.
+
+
+-- See also:
+--   check-functions.test (test dynamic type + intersection types)
+--   check-interfaces.test (test dynamic type + interfaces)
+
+
+-- Assignment
+-- ----------
+
+
+[case testAssignmentWithDynamic]
+a = d -- Everything ok
+d = a
+d = d
+d.x = a
+d.x = d
+
+var d as dynamic
+var a as A
+
+class A; end
+[out]
+
+[case testMultipleAssignmentWithDynamic]
+d, a = b, b    -- Fail
+d, d = d, d, d -- Fail
+
+a, b = d, d
+d, d = a, b
+a, b = d
+var s, t = d
+
+var d as dynamic
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Too many values to assign
+
+
+-- Expressions
+-- -----------
+
+
+[case testCallingFunctionWithDynamicArgumentTypes]
+b = f(a) -- Fail
+
+a = f(a)
+a = f(b)
+a = f(nil)
+a = f(f)
+
+def f(x as dynamic) as A
+end
+
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testCallingWithDynamicReturnType]
+a = f(b) -- Fail
+
+a = f(a)
+b = f(a)
+
+def f(x as A) as dynamic
+end
+
+var a, b as (A, B)
+
+class A; end
+class B; end
+[out]
+main, line 1: Argument 1 to "f" has incompatible type "B"
+
+[case testBinaryOperationsWithDynamicLeftOperand]
+d in a  -- Fail
+d and a -- Fail
+d or a  -- Fail
+d to a  -- Fail
+c = d == a -- Fail
+c = d != a -- Fail
+c = d in c -- Fail
+c = d and b -- Fail
+c = d or b  -- Fail
+c = d to n  -- Fail
+c = d < a   -- Fail
+c = d <= a  -- Fail
+c = d > a   -- Fail
+c = d >= a  -- Fail
+
+c = d + a
+c = d - a
+c = d * a
+c = d / a
+c = d div a
+c = d mod a
+c = d ** a
+b = d == a
+b = d != a
+b = d < a
+b = d <= a
+b = d > a
+b = d >= a
+b = d in c
+b = d and b
+b = d or b
+r = d to n
+
+var d as dynamic
+var a as A
+var c as C
+var b as Boolean
+var n as Int
+var r as Range
+
+class A; end
+class C
+  def _in(a as A) as Boolean
+  end
+end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Boolean
+end
+class Int
+end
+class Range
+end
+[out]
+main, line 1: Unsupported right operand type for in ("A")
+main, line 2: Unsupported operand types for and ("dynamic" and "A")
+main, line 3: Unsupported operand types for or ("dynamic" and "A")
+main, line 4: Unsupported operand types for to ("dynamic" and "A")
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+main, line 9: Incompatible types in assignment
+main, line 10: Incompatible types in assignment
+main, line 11: Incompatible types in assignment
+main, line 12: Incompatible types in assignment
+main, line 13: Incompatible types in assignment
+main, line 14: Incompatible types in assignment
+
+[case testBinaryOperationsWithDynamicAsRightOperand]
+a and d -- Fail
+a or d  -- Fail
+a to d  -- Fail
+c = a == d -- Fail
+c = a != d -- Fail
+c = a in d -- Fail
+c = b and d -- Fail
+c = b or d  -- Fail
+c = n to d  -- Fail
+c = a < d   -- Fail
+c = a <= d  -- Fail
+c = a > d   -- Fail
+c = a >= d  -- Fail
+
+c = a + d
+c = a - d
+c = a * d
+c = a / d
+c = a div d
+c = a mod d
+c = a ** d
+b = a == d
+b = a != d
+b = a < d
+b = a <= d
+b = a > d
+b = a >= d
+b = a in d
+b = b and d
+b = b or d
+r = n to d
+
+var d as dynamic
+var a as A
+var c as C
+var b as Boolean
+var n as Int
+var r as Range
+
+class A
+  def _add(a as A) as C
+  end
+  def _sub(a as A) as C
+  end
+  def _mul(a as A) as C
+  end
+  def _div(a as A) as C
+  end
+  def _idiv(a as A) as C
+  end
+  def _mod(a as A) as C
+  end
+  def _pow(a as A) as C
+  end
+  def _lt(a as A) as Boolean
+  end
+  def _gt(a as A) as Boolean
+  end
+end
+
+class C; end
+[file std/std.alo]
+module std
+class Object
+  def create()
+  end
+end
+class Boolean
+end
+class Int
+end
+class Range
+end
+[out]
+main, line 1: Unsupported left operand type for and ("A")
+main, line 2: Unsupported left operand type for or ("A")
+main, line 3: Unsupported operand types for to ("A" and "dynamic")
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+main, line 7: Incompatible types in assignment
+main, line 8: Incompatible types in assignment
+main, line 9: Incompatible types in assignment
+main, line 10: Incompatible types in assignment
+main, line 11: Incompatible types in assignment
+main, line 12: Incompatible types in assignment
+main, line 13: Incompatible types in assignment
+
+[case testDynamicWithIsOperator]
+a = d is A -- Fail
+a = a is d -- Fail
+
+b = d is A
+b = a is d
+
+var b as Boolean
+var d as dynamic
+var a as A
+class A; end
+[usestd fixtures/std-type.alo]
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testDynamicWithUnaryExpressions]
+a = not d -- Fail
+
+b = not d
+a = -d
+
+var d as dynamic
+var a as A
+var b as Boolean
+
+class A; end
+[usestd fixtures/std-boolean.alo]
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testDynamicWithMemberAccess]
+a = d.foo(a()) -- Fail
+
+a = d.x
+a = d.foo(a, a)
+d.x = a
+d.x.y.z
+
+var d as dynamic
+var a as A
+
+class A; end
+[out]
+main, line 1: "A" not callable
+
+[case testIndexingWithDynamic]
+a = d[a()] -- Fail
+d[a()] = a -- Fail
+
+a = d[a]
+d[a] = a
+d[a], d[a] = a, a
+
+var d as dynamic
+var a as A
+
+class A; end
+[out]
+main, line 1: "A" not callable
+main, line 2: "A" not callable
+
+[case testTupleExpressionsWithDynamci]
+t2 = (d, d, d)  -- Fail
+t2 = (d, d)
+
+var t2 as (A, A)
+var d as dynamic
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testCastsWithDynamicType]
+b = d as A -- Fail
+
+a = d as A
+b = d as dynamic
+a = f() as dynamic
+
+var d as dynamic
+var a as A
+var b as B
+
+def f() as void
+end
+
+class A; end
+class B; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testCompatibilityOfDynamicWithOtherTypes]
+d = nil -- All ok
+d = t
+d = f
+d = g
+d = A
+t = d
+f = d
+
+var d as dynamic
+var t as (A, A)
+var f as def (A) as A
+def g(a as A) or
+     (a as B)
+end
+
+class A; end
+class B; end
+[out]
+
+[case testAnonymousFunctionWithImplicitType]
+f1 = def (x, y); end -- Fail
+f2 = def (x, y); end -- Fail
+
+f1 = def (x)
+       A.foo
+     end
+f2 = def (x); end
+
+var f1 as def (A) as A
+var f2 as def (dynamic)
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+
+-- Statements
+-- ----------
+
+
+[case testDynamicCondition]
+while d
+end
+repeat
+until d
+if d
+elif d
+end
+
+var d as dynamic
+[usestd fixtures/std-boolean.alo]
+[out]
+
+[case testRaiseWithDynamic]
+raise d
+var d as dynamic
+[usestd fixtures/std-exception.alo]
+[out]
+
+[case testSwitchWithDynamic]
+switch d
+  case d
+  case d, d
+end
+
+var d as dynamic
+[out]
+
+[case testReturnWithDynamic]
+def f() as void
+  return d -- Ok (could be useful in functions with an intersection type)
+end
+
+def g() as A
+  return d -- Ok
+end
+
+var d as dynamic
+
+class A; end
+[out]
+
+
+-- Implicit dynamic types for variables
+-- ------------------------------------
+
+
+[case testImplicitGlobalVarType]
+x = a
+a = x
+
+var x
+var a as A
+class A; end
+[out]
+
+[case testImplicitGlobalVarType2]
+x = a
+a = x
+y = a
+a = y
+
+var x, y
+var a as A
+class A; end
+[out]
+
+[case testImplicitMemberVarTypeViaDirectAccess]
+class A
+  def f() as void
+    x = a
+    a = x
+  end
+  
+  var x
+  var a as A
+end
+[out]
+
+[case testImplicitMemberVarTypeViaDirectAccess2]
+class A
+  def f() as void
+    x = a
+    a = x
+    y = a
+    a = y
+  end
+  
+  var x, y
+  var a as A
+end
+[out]
+
+[case testImplicitMemberVarTypeViaDotOperator]
+class A
+  def f() as void
+    self.x = self.a
+    self.a = self.x
+    a.x = a
+    a = a.x
+  end
+  
+  var x
+  var a as A
+end
+[out]
+
+[case testImplicitMemberConst]
+class A
+  def create() as void
+    x = a
+    a = x
+    self.x = self.a
+    self.a = self.x
+  end
+  
+  const x
+  const a as A
+end
+[out]
+
+[case testInheritedImplicitMemberVar]
+class A is B
+  def f() as void
+    x = a
+    a = x
+    self.x = self.a
+    self.a = self.x
+  end
+end
+
+class B
+  var x
+  var a as A
+end
+[out]
+
+[case testImplicitVarWithInitialiser]
+var b = a()    -- Fail
+var c, d = a() -- Fail
+var a as A
+
+class A; end
+[out]
+main, line 1: "A" not callable
+main, line 2: "A" not callable
+
+[case testImplicitMemberVarWithInitialiser]
+class A
+  var b = a()
+  var c, d = a()
+  var a as A
+end
+[out]
+main: In class "A":
+main, line 2: "A" not callable
+main, line 3: "A" not callable
+
+
+-- Implicit dynamic types for functions
+-- ------------------------------------
+
+
+[case testImplicitGlobalFunctionSignature]
+f()     -- Fail
+f(x, x) -- Fail
+g = f   -- Fail
+
+f(a)
+f(x)
+a = f(a)
+h = f
+
+var x
+var a as A
+var g as def ()
+var h as def (A)
+
+def f(x)
+end
+
+class A
+end
+[out]
+main, line 1: Too few arguments for "f"
+main, line 2: Too many arguments for "f"
+main, line 3: Incompatible types in assignment
+
+[case testImplicitGlobalFunctionSignatureWithDifferentArgCounts]
+g1 = f0 -- Fail
+g2 = f0 -- Fail
+g0 = f2 -- Fail
+g1 = f2 -- Fail
+
+g0 = g0
+g2 = f2
+f0()
+f2(a, a)
+
+var g0 as def ()
+var g1 as def (A)
+var g2 as def (A, A)
+
+def f0()
+end
+
+def f2(x, y)
+end
+
+var a as A
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+[case testImplicitGlobalFunctionSignatureWithDefaultArgs]
+f01(a, a)       -- Fail
+f13()           -- Fail
+f13(a, a, a, a) -- Fail
+g2 = f01 -- Fail
+g0 = f13 -- Fail
+g4 = f13 -- Fail
+
+f01()
+f01(a)
+f13(a)
+f13(a, a)
+f13(a, a, a)
+
+g0 = f01
+g1 = f01
+g1 = f13
+g2 = f13
+g3 = f13
+
+var g0 as def ()
+var g1 as def (A)
+var g2 as def (A, A)
+var g3 as def (A, A, A)
+var g4 as def (A, A, A, A)
+
+def f01(x = b)
+end
+
+def f13(x, y = b, z = b)
+end
+
+var a as A
+var b as B
+
+class A; end
+class B; end
+[out]
+main, line 1: Too many arguments for "f01"
+main, line 2: Too few arguments for "f13"
+main, line 3: Too many arguments for "f13"
+main, line 4: Incompatible types in assignment
+main, line 5: Incompatible types in assignment
+main, line 6: Incompatible types in assignment
+
+[case testSkipTypeCheckingWithImplicitSignature]
+def f()
+  a()
+end
+def g(x)
+  a()
+  if a()
+    a()
+  end
+end
+var a as A
+class A; end
+[out]
+
+[case testSkipTypeCheckingWithImplicitSignatureAndDefaultArgs]
+def f(x = a())
+  a()
+end
+def g(x, y = a, z = a())
+  a()
+  def ()
+    a()
+  end
+end
+var a as A
+class A; end
+[out]
+
+[case testImplicitMethodSignature]
+g0 = a.f -- Fail
+g2 = a.f -- Fail
+a = a.f  -- Fail
+
+class A
+  def g() as void
+    a = f(a)
+  end
+  
+  def f(x)
+  end  
+end
+
+g1 = a.f
+a = a.f(a)
+
+var g0 as def ()
+var g1 as def (A)
+var g2 as def (A, A)
+
+var a as A
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+main, line 3: Incompatible types in assignment
+
+[case testSkipTypeCheckingImplicitMethod]
+class A
+  def f()
+    a()
+  end
+  
+  def g(x, y = a())
+    a()
+  end
+end
+
+var a as A
+[out]
+
+[case testImplicitInheritedMethod]
+g0 = a.f -- Fail
+
+class A is B
+  def g() as void
+    a = f(a)
+  end
+end
+
+class B  
+  def f(x)
+  end  
+end
+
+g1 = a.f
+a = a.f(a)
+
+var g0 as def ()
+var g1 as def (A)
+
+var a as A
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testImplicitGetter]
+a = a.f
+
+class A
+  def f
+    a()
+  end
+  
+  def g() as void
+    a = f
+  end
+end
+
+var a as A
+[out]
+
+[case testImplicitSetter]
+a.f = a
+
+class A
+  def f
+  end
+  
+  def f = x
+    a()
+  end
+  
+  def g() as void
+    f = a
+  end
+end
+
+var a as A
+[out]
+
+
+-- Implicit types for constructors
+-- -------------------------------
+
+
+[case testDynamicImplicitCreateSignature1]
+g0 = A  -- Fail
+A()     -- Fail
+A(a, a) -- Fail
+h1 = A  -- Fail (invalid return type)
+
+g1 = A
+A(a)
+
+class A
+  var x
+end
+
+var g0 as def () as A
+var g1 as def (A) as A
+var h1 as def (A)
+
+var a as A
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Too few arguments for "A"
+main, line 3: Too many arguments for "A"
+main, line 4: Incompatible types in assignment
+
+[case testDynamicImplicitCreateSignature2]
+g1 = A  -- Fail
+A(a)    -- Fail
+
+g2 = A
+A(a, a)
+
+class A
+  var x, y
+end
+
+var g1 as def (A) as A
+var g2 as def (A, A) as A
+
+var a as A
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Too few arguments for "A"
+
+[case testImplicitCreateWithSomeExplicitTypes]
+A(b, b)     -- Fail
+b = A(b, a) -- Fail
+
+a = A(b, a)
+
+class A
+  var x
+  var y as A
+end
+
+var a as A
+var b as B
+
+class B; end
+[out]
+main, line 1: Argument 2 has incompatible type "B"
+main, line 2: Incompatible types in assignment
+
+[case testExplicitCreateWithImplicitSignature]
+A(a)   -- Fail
+f1 = A -- Fail
+
+A(a, a)
+f2 = A
+
+class A
+  def create(a, b)
+  end
+end
+
+var f1 as def (A) as A
+var f2 as def (A, A) as A
+
+var a as A
+[out]
+main, line 1: Too few arguments for "A"
+main, line 2: Incompatible types in assignment
+
+[case testUsingImplicitTypeObjectWithIs]
+a is A
+a is B
+
+class A
+  var x
+end
+
+class B
+  def create()
+  end
+end
+
+var a as A
+[usestd fixtures/std-type.alo]
+[out]
+
+
+-- Implicit dynamic types and "super"
+-- ----------------------------------
+
+
+[case testAccessingImplicitMethodWithSuper]
+class A is B
+  def g() as void
+    super.f(a) -- Fail
+    a = super.f(a, a)
+  end
+end
+
+class B
+  def f(x, y)
+  end
+end
+
+var a as A
+[out]
+main: In member "g" of class "A":
+main, line 3: Too few arguments
+
+[case testAccessingImplicitAccessorWithSuper]
+class A is B
+  def g() as void
+    a = super.f
+    super.f = a
+  end
+end
+
+class B
+  def f
+  end
+  
+  def f = x
+  end
+end
+
+var a as A
+[out]
+
+[case testAccessingImplicitMemberVarWithSuper]
+class A is B
+  def g() as void
+    a = super.x
+    super.x = a
+  end
+end
+
+class B
+  var x
+end
+
+var a as A
+[out]
+
+
+-- Type compatibility
+-- ------------------
+
+
+[case testTupleTypeCompatibility]
+t3 = t5 -- Fail
+t5 = t4 -- Fail
+
+t1 = t1
+t1 = t2
+t1 = t3
+t1 = t4
+t2 = t1
+t2 = t3
+t2 = t4
+t3 = t1
+t3 = t2
+t3 = t4
+t4 = t1
+t4 = t2
+t4 = t3
+
+var t1 as (dynamic, A)
+var t2 as (A, dynamic)
+var t3 as (dynamic, dynamic)
+var t4 as (A, A)
+var t5 as (dynamic, dynamic, dynamic)
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+main, line 2: Incompatible types in assignment
+
+[case testFunctionTypeCompatibilityAndReturnTypes]
+f2 = f3 -- Fail
+
+f1 = f2
+f1 = f3
+f2 = f1
+f3 = f1
+
+var f1 as def () as dynamic
+var f2 as def () as A
+var f3 as def ()
+
+class A; end
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testFunctionTypeCompatibilityAndArgumentTypes]
+f1 = f1
+f1 = f2
+f1 = f3
+
+f2 = f1
+f2 = f2
+f2 = f3
+
+f3 = f1
+f3 = f2
+f3 = f3
+
+var f1 as def (A, dynamic)
+var f2 as def (dynamic, A)
+var f3 as def (A, A)
+
+class A; end
+[out]
+
+[case testFunctionTypeCompatibilityAndArgumentCounts]
+f1 = f2 -- Fail
+
+var f1 as def (dynamic)
+var f2 as def (dynamic, dynamic)
+[out]
+main, line 1: Incompatible types in assignment
+
+[case testFunctionTypeCompatibilityAndADefaultArgs]
+f1 = f2
+f1 = f3
+f1 = f4
+
+f4 = f1
+f4 = f2
+f4 = f3
+
+var f1 as def (dynamic, A)
+var f2 as def (dynamic, dynamic=)
+var f3 as def (dynamic, A=)
+var f4 as def (dynamic, dynamic)
+
+class A; end
+[out]
+
+
+-- Overriding
+-- ----------
+
+
+[case testOverridingMethodWithDynamicTypes]
+b.f(b) -- Fail
+a = a.f(b)
+
+class A is B
+  def f(x as dynamic) as dynamic
+  end
+  
+  def g(x as dynamic)
+  end
+end
+class B
+  def f(x as A) as B
+  end
+  def g(x as B)
+  end
+end
+var a as A
+var b as B
+[out]
+main, line 1: Argument 1 to method "f" of "B" has incompatible type "B"
+
+[case testOverridingMethodWithImplicitDynamicTypes]
+b.f(b) -- Fail
+a = a.f(b)
+
+class A is B
+  def f(x)
+  end
+  
+  def g(x)
+  end
+end
+class B
+  def f(x as A) as B
+  end
+  def g(x as B)
+  end
+end
+var a as A
+var b as B
+[out]
+main, line 1: Argument 1 to method "f" of "B" has incompatible type "B"
+
+[case testOverridingMethodAcrossHierarchy]
+class A is B
+  def f(a as D) -- Fail
+  end
+end
+
+class B is C
+  def f(a)
+  end
+end
+
+class C
+  def f(a as A)
+  end
+end
+
+class D; end
+[out]
+main: In member "f" of class "A":
+main, line 2: Argument 1 of "f" incompatible with supertype "C"
+
+[case testInvalidOverrideArgumentCountWithImplicitSignature1]
+class A is B
+  def f(x, y) -- Ok; implicit signatures do not have to be compatible
+    x()
+  end
+end
+class B
+  def f(x as A)
+  end
+end
+[out]
+
+[case testInvalidOverrideArgumentCountWithImplicitSignature2]
+class A is B
+  def f(x as A) -- Fail
+  end
+end
+class B
+  def f(x, y)
+  end
+end
+[out]
+main: In member "f" of class "A":
+main, line 2: Signature of "f" incompatible with supertype "B"
+
+[case testOverridingAccessorsWithDynamic]
+class A is B
+  def a as A
+  end
+  def a = x as A
+  end
+  def b
+  end
+  def b = x
+    x()
+  end
+end
+class B
+  def a
+  end
+  def a = x
+  end
+  def b as A
+  end
+  def b = x as A
+  end
+end
+[out]
+
+[case testOverridingAccessorsAcrossHierarchy]
+class A is B
+  def a as D     -- Fail
+  end
+  def a = x as D -- Fail
+  end
+end
+class B is C
+  def a
+  end
+  def a = x
+  end
+end
+class C
+  def a as A
+  end
+  def a = x as A
+  end
+end
+class D; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of "a" incompatible with supertype "C"
+main, line 4: Type of "a" incompatible with supertype "C"
+
+[case testOverridingMemberVarsWithDynamic]
+class A is B
+  def a as A
+  end
+  def a = x as A
+  end
+  def b
+    d()
+  end
+  def b = x
+  end
+end
+class B
+  var a
+  var b as A
+end
+var d as A
+[out]
+
+[case testOverridingMemberVarsAcrossHierarchy]
+class A is B
+  def a as D     -- Fail
+  end
+  def a = x as D -- Fail
+  end
+end
+class B is C
+  def a
+  end
+  def a = x
+  end
+end
+class C
+  var a as A
+end
+class D; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of "a" incompatible with supertype "C"
+main, line 4: Type of "a" incompatible with supertype "C"
+
+
+-- Accessors with incompatible types
+-- ---------------------------------
+
+
+[case testIncompatibleAccessors]
+class A
+  def a as dynamic  -- Fail
+  end
+  def a = x as A
+  end
+  def b as A        -- Fail
+  end
+  def b = x as dynamic
+  end  
+end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+main: In member "b" of class "A":
+main, line 6: Type of getter incompatible with setter
+
+[case testIncompatibleAccessorsWithImplicitType]
+class A
+  def a             -- Fail
+  end
+  def a = x as A
+  end
+  def b as A        -- Fail
+  end
+  def b = x
+  end  
+end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+main: In member "b" of class "A":
+main, line 6: Type of getter incompatible with setter
+
+[case testIncompatibleAccessorWithCompoundType1]
+class A
+  def a as (A, dynamic)  -- Fail
+  end
+  def a = x as (A, B)
+  end
+  def b as (A, B)
+  end
+  def b = x as (A, B)
+  end  
+end
+class B; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+[case testIncompatibleAccessorWithCompoundType2]
+class A
+  def a as def () as A
+  end
+  def a = x as def () as dynamic
+  end
+  def b as def (A, B) as A
+  end
+  def b = x as def (A, B) as A
+  end  
+end
+class B; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+[case testIncompatibleAccessorWithCompoundType3]
+class A
+  def a as def (A) as A
+  end
+  def a = x as def (dynamic) as A
+  end
+end
+class B; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+[case testIncompatibleAccessorWithCompoundType4]
+class A
+  def a as def (A=) as A -- Fail
+  end
+  def a = x as def (A) as A
+  end
+end
+class B; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+[case testIncompatibleAccessorWithCompoundType5]
+class A
+  def a as def (A, A=) as A -- Fail
+  end
+  def a = x as def (A) as A
+  end
+end
+class B; end
+[out]
+main: In member "a" of class "A":
+main, line 2: Type of getter incompatible with setter
+
+
+-- test signature for getter but not for setter or vice versa
+--   across hierarchy (one accessor defined in a superclass)
+
+
+-- FIX for statement with dynamic

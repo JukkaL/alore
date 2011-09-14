@@ -10,28 +10,50 @@ module time
 import __time
 
 
-class DateTime
+private interface IDateTime
+  def year as Int
+  def month as Int
+  def weekday as Int
+  def day as Int
+  def hour as Int
+  def minute as Int
+  def second as Float
+end
+
+
+private interface X
+end
+
+
+class DateTime implements IDateTime, Comparable<DateTime>, 
+                          Addable<Time, DateTime>
   -- Supported calling conventions:
   --   create()
   --   create(year, month, day, hour, minute, second)
   --   create(str)
   --   create(str, format)
-  def create(arg1 = nil, arg2 = nil, arg3 = nil, arg4 = nil, arg5 = nil,
-             arg6 = nil)
+  -- IDEA replace the last two with (Date, Time)
+  def create(arg1 = nil as Str, arg2 = nil as Str, arg3 = nil as X, 
+             arg4 = nil as X, arg5 = nil as X, arg6 = nil as X) or
+             (arg1 as Int, arg2 as Int, arg3 as Int, arg4 as Int, arg5 as Int,
+              arg6 as Int) or
+             (arg1 as Int, arg2 as Int, arg3 as Int, arg4 as Int, arg5 as Int,
+              arg6 as Float)
     -- FIX proper argument count checks
     if arg1 is Int
       if arg2 is Int
-        date, time = NormalizeDateTime(Date(arg1, arg2, arg3),
-                                       Time(0, arg4, arg5, arg6))
+        date, time = NormalizeDateTime(
+                       Date(arg1 as Int, arg2 as Int, arg3 as Int),
+                       Time(0, arg4 as Int, arg5 as Int, arg6 as dynamic))
       else
         raise TypeError("Invalid argument type")
       end
     elif arg1 is Str
-      var tuple
+      var tuple as (Int, Int, Int, Int, Int, Int, Float)
       if arg2 == nil
-        tuple = ParseDateTime(DateTime, arg1, "YYYY-MM-DD hh:mm:ss.s")
+        tuple = ParseDateTime(DateTime, arg1 as Str, "YYYY-MM-DD hh:mm:ss.s")
       elif arg2 is Str
-        tuple = ParseDateTime(DateTime, arg1, arg2)
+        tuple = ParseDateTime(DateTime, arg1 as Str, arg2 as Str)
       else
         raise TypeError("Invalid argument type")
       end
@@ -46,67 +68,68 @@ class DateTime
     end
   end
   
-  def _str()
+  def _str() as Str
     return format("YYYY-MM-DD hh:mm:ss")
   end
   
-  def format(f)
+  def format(f as Str) as Str
     return FormatDateTime(DateTime, self, f)
   end
   
-  def year
+  def year as Int
     return date.year
   end
   
-  def month
+  def month as Int
     return date.month
   end
   
-  def day
+  def day as Int
     return date.day
   end
   
-  def hour
+  def hour as Int
     return time.hour
   end
   
-  def minute
+  def minute as Int
     return time.minute
   end
   
-  def second
+  def second as Float
     return time.second
   end
   
-  def weekday
+  def weekday as Int
     return date.weekday
   end
   
-  def week(rule = FirstFourDayWeek)
+  def week(rule = FirstFourDayWeek as Constant) as Int
     return date.week(rule)
   end
   
-  def _eq(x)
+  def _eq(x as Object) as Boolean
     if x is DateTime 
-      return x.year == year and x.month == month and 
-             x.day == day and x.hour == hour and x.minute == minute and 
-             x.second == second
+      var dt = (x as DateTime)
+      return dt.year == year and dt.month == month and 
+             dt.day == day and dt.hour == hour and dt.minute == minute and 
+             dt.second == second
     else
       return False
     end
   end
   
-  def _lt(x)
+  def _lt(x as DateTime) as Boolean
     return (year, month, day, hour, minute, second) < 
            (x.year, x.month, x.day, x.hour, x.minute, x.second)
   end
   
-  def _gt(x)
+  def _gt(x as DateTime) as Boolean
     return (year, month, day, hour, minute, second) > 
            (x.year, x.month, x.day, x.hour, x.minute, x.second)
   end
   
-  def _add(x)
+  def _add(x as Time) as DateTime
     if not x is DateTime
       return DateTime(year, month, day + x.day, hour + x.hour, 
                       minute + x.minute, second + x.second)
@@ -115,25 +138,27 @@ class DateTime
     end
   end
   
-  def _sub(x)
+  def _sub(x as DateTime) as Time or
+          (x as Time) as DateTime
     if x is DateTime
-      return Time(date - Date(x.year, x.month, x.day), hour - x.hour, 
-                  minute - x.minute, second - x.second)
+      var d = (x as DateTime)
+      return Time(date - Date(d.year, d.month, d.day), hour - d.hour, 
+                  minute - d.minute, second - d.second) as dynamic
     else
-      return self + -x
+      return self + -(x as Time) as dynamic
     end
   end
   
-  def _hash()
+  def _hash() as Int
     return Hash((date, time))
   end
   
-  private const date
-  private const time
+  private const date as Date
+  private const time as Time
 end
 
 
-private def NormalizeDateTime(d, t)
+private def NormalizeDateTime(d as Date, t as Time) as (Date, Time)
   if t.day >= 1
     d += t.day
     t = Time(0, t.hour, t.minute, t.second)

@@ -71,8 +71,10 @@ AC_DEFINE_UNQUOTED([ALORE_PLATFORM_VARIANT], ["$PLATFORM_VARIANT"],
 
 AC_SUBST(alorelibdir)
 AC_SUBST(aloreincdir)
+AC_SUBST(aloredatadir)
 alorelibdir="${libdir}/alore"
 aloreincdir="${includedir}/alore"
+aloredatadir="${datadir}/alore"
 
 AC_MSG_CHECKING([for install prefix])
 # The mingw default prefix is c:/Alore instead of /usr/local.

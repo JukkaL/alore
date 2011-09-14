@@ -1,0 +1,28 @@
+module loader
+
+
+const ModuleSearchPath = "" as Str
+
+
+def Load(path as Str, modulePath = ModuleSearchPath as Str) as Module
+end
+
+
+class Module
+  def contents() as Array<Str>
+  end
+  
+  def _get(x as Str) as dynamic
+  end
+  
+  def _set(x as Str, y as Object)
+  end
+end
+
+
+class CompileError is Exception
+  const errorMessages = [] as Array<Str>
+
+  def create(messages as Array<Str>)
+  end
+end

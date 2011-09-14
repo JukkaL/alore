@@ -1,0 +1,215 @@
+module testchk
+
+import types
+import nodes
+import checker
+
+
+private const Base, Vars, BaseDefs, IsInterface, Interfaces
+
+
+-- Helper class that is used as a fixture in type-related unit tests. The
+-- members are initialized to contain various type-related values.
+private class TypeFixture  
+  -- Type variables
+  
+  const t = TypeVar("T", 1)    -- T`1 (type variable)
+  const tf = TypeVar("T", -1)  -- T`-1 (type variable)
+  const tf2 = TypeVar("T", -2) -- T`-2 (type variable)
+  const s = TypeVar("S", 2)    -- S`2 (type variable)
+  const s1 = TypeVar("S", 1)   -- S`1 (type variable)
+  const sf = TypeVar("S", -2)  -- S`-2 (type variable)
+  const sf1 = TypeVar("S", -1) -- S`-1 (type variable)
+  
+  -- Simple types
+  
+  const dyn = Dynamic()    -- dynamic
+  const void = Void()      -- void
+  const err = ErrorType()  -- (error)
+  const nilt = NilType()   -- nil
+                            
+  -- Interface TypeInfos
+  
+  -- interface F
+  const fi = MakeTypeInfo("F", IsInterface: True)
+  
+  -- interface F2
+  const f2i = MakeTypeInfo("F2", IsInterface: True)
+  
+  -- interface F3 is F
+  const f3i = MakeTypeInfo("F3", IsInterface: True, Base: fi)
+  
+  -- Class TypeInfos
+
+  const oi = MakeTypeInfo("std::Object")       -- class Object
+  const stdTuplei = MakeTypeInfo("std::Tuple") -- class Tuple
+  const stdTypei = MakeTypeInfo("std::Type")   -- class Type
+  const stdFunctioni = MakeTypeInfo("std::Function") -- class Function
+  const ai = MakeTypeInfo("A", Base: oi)       -- class A
+  const bi = MakeTypeInfo("B", Base: ai)       -- class B is A
+  const ci = MakeTypeInfo("C", Base: ai)       -- class C is A
+  const di = MakeTypeInfo("D", Base: oi)       -- class D
+  
+  -- class E implements F
+  const ei = MakeTypeInfo("E", Interfaces: [fi], Base: oi)
+  
+  -- class E2 implements F2, F
+  const e2i = MakeTypeInfo("E2", Interfaces: [f2i, fi], Base: oi)
+  
+  -- class E3 implements F, F2
+  const e3i = MakeTypeInfo("E3", Interfaces: [fi, f2i], Base: oi)
+  
+  -- Generic class TypeInfos
+  
+  -- class G<T>
+  const gi = MakeTypeInfo("G", Base: oi, Vars: ["T"])
+  -- class G2<T>
+  const g2i = MakeTypeInfo("G2", Base: oi, Vars: ["T"])
+  -- class H<S, T>
+  const hi = MakeTypeInfo("H", Base: oi, Vars: ["S", "T"])
+  -- class GS<T, S> is G<S>
+  const gsi = MakeTypeInfo("GS", Base: gi, Vars: ["T", "S"], 
+                           BaseDefs: [Instance(gi, [s])])
+  -- class GS2<S> is G<S>
+  const gs2i = MakeTypeInfo("GS2", Base: gi, Vars: ["S"], 
+                            BaseDefs: [Instance(gi, [s1])])
+  -- class Array as <T>
+  const stdArrayi = MakeTypeInfo("std::Array", Base: oi, Vars: ["T"])
+  
+  -- Instance types
+  
+  const o = Instance(oi, [])          -- Object
+  const stdTuple = Instance(stdTuplei, [])       -- Tuple
+  const stdType = Instance(stdTypei, [])         -- Type
+  const stdFunction = Instance(stdFunctioni, []) -- Function
+  const a = Instance(ai, [])          -- A
+  const b = Instance(bi, [])          -- B
+  const c = Instance(ci, [])          -- C
+  const d = Instance(di, [])          -- D
+  
+  const e = Instance(ei, [])          -- E
+  const e2 = Instance(e2i, [])        -- E2
+  const e3 = Instance(e3i, [])        -- E3
+  
+  const f = Instance(fi, [])          -- F
+  const f2 = Instance(f2i, [])        -- F2
+  const f3 = Instance(f3i, [])        -- F3
+  
+  -- Generic instance types
+  
+  const ga = Instance(gi, [a])        -- G<A>
+  const gb = Instance(gi, [b])        -- G<B>
+  const go = Instance(gi, [o])        -- G<Object>
+  const gt = Instance(gi, [t])        -- G<T`1>
+  const gtf = Instance(gi, [tf])      -- G<T`-1>
+  const gtf2 = Instance(gi, [tf2])    -- G<T`-2>
+  const gs = Instance(gi, [s])        -- G<S>
+  const gdyn = Instance(gi, [dyn])    -- G<dynamic>
+  
+  const g2a = Instance(g2i, [a])      -- G2<A>
+  
+  const gsab = Instance(gsi, [a, b])  -- GS<A, B>
+  const gsba = Instance(gsi, [b, a])  -- GS<B, A>
+  
+  const gs2a = Instance(gs2i, [a])    -- GS2<A>
+  
+  const hab = Instance(hi, [a, b])    -- H<A, B>
+  const haa = Instance(hi, [a, a])    -- H<A, A>
+  const hbb = Instance(hi, [b, b])    -- H<B, B>
+  const hts = Instance(hi, [t, s])    -- H<T, S>
+  
+  const arra = Instance(stdArrayi, [a])  -- Array<A>
+  const arrb = Instance(stdArrayi, [b])  -- Array<B>
+  
+  -- Generic instance types with ranges
+  
+  const gaa = Instance(gi, [a], [a])  -- G<A..A>
+  const gba = Instance(gi, [b], [a])  -- G<B..A>
+  const gbb = Instance(gi, [b], [b])  -- G<B..B>
+  const gbo = Instance(gi, [b], [o])  -- G<B..Object>
+  const gao = Instance(gi, [a], [o])  -- G<A..Object>
+  const gdyndyn = Instance(gi, [dyn], [dyn]) -- G<dynamic..dynamic>
+  
+  -- Basic types
+  const basic = BasicTypes(o, stdType, stdTuple, stdFunction)
+  
+  -- Helper methods
+  
+  -- callable(a1, ..., an, r) constructs a callable with argument types 
+  -- a1, ... an and return type r.
+  def callable(*a)
+    return Callable(a[:-1], a.length() - 1, False, a[-1], False)
+  end
+  
+  -- typeCallable(a1, ..., an, r) constructs a callable with argument types 
+  -- a1, ... an and return type r, and which represents a type.
+  def callableType(*a)
+    return Callable(a[:-1], a.length() - 1, False, a[-1], True)
+  end
+  
+  -- callableDefault(minArgs, a1, ..., an, r) constructs a callable with 
+  -- argument types a1, ... an and return type r, with minArgs mandatory fixed 
+  -- arguments.
+  def callableDefault(minArgs, *a)
+    return Callable(a[:-1], minArgs, False, a[-1], False)
+  end
+  
+  -- callableVarArg(minArgs, a1, ..., an, r) constructs a callable with 
+  -- argument types a1, ... *an and return type r.
+  def callableVarArg(minArgs, *a)
+    return Callable(a[:-1], minArgs, True, a[-1], False)
+  end
+end
+
+
+-- Extensino of TypeFixture that contains additional generic interface types.
+private class InterfaceTypeFixture is TypeFixture
+  -- interface GF as <T>
+  const gfi = MakeTypeInfo("GF", Vars: ["T"], IsInterface: True)
+  
+  -- class M1 implements GF as GF<A>
+  const m1i = MakeTypeInfo("M1", Interfaces: [gfi], 
+                           BaseDefs: [Instance(gfi, [a])])
+  -- class M2 implements GF as GF<A>, GF<B>
+  const m2i = MakeTypeInfo("M2", Interfaces: [gfi], 
+                           BaseDefs: [Instance(gfi, [a]),
+                                      Instance(gfi, [b])])
+  -- class M3 implements GF as GF<A>, GF<B>, GF<C>
+  const m3i = MakeTypeInfo("M3", Interfaces: [gfi], 
+                           BaseDefs: [Instance(gfi, [a]),
+                                      Instance(gfi, [b]),
+                                      Instance(gfi, [c])])
+                                  
+  const gfa = Instance(gfi, [a]) -- GF<A>
+  const gfb = Instance(gfi, [b]) -- GF<B>
+  
+  const m1 = Instance(m1i, []) -- M1
+  const m2 = Instance(m2i, []) -- M2
+  const m3 = Instance(m3i, []) -- M3
+end
+
+
+-- Make a TypeInfo suitable for use in unit tests.
+private def MakeTypeInfo(name, *args)
+  var map = Map(*args)
+  
+  var typeDef = TypeDef(name, [], nil, [], map.get(IsInterface, False))
+  typeDef.fullName = name
+  
+  if map.hasKey(Vars)
+    var v = []
+    var id = 1
+    for n in map[Vars]
+      v.append(TypeVarDef(n, id))
+      id += 1
+    end
+    typeDef.typeVars = TypeVars(v)
+  end
+  
+  var info = TypeInfo(Map(), Map(), Map(), Map(), typeDef, False)
+  info.base = map.get(Base, nil)  
+  info.bases = map.get(BaseDefs, [])
+  info.interfaces = map.get(Interfaces, [])
+  
+  return info
+end

@@ -161,6 +161,7 @@ static AValue ReflectSetMember(AThread *t, AValue *frame)
 /* reflect::TypeOf(obj) */
 static AValue ReflectTypeOf(AThread *t, AValue *frame)
 {
+    /* IDEA: Combine with InternalType? */
     if (AIsInstance(frame[0])) {
         /* Anonymous functions need special processing. */
         if (AIsAnonFunc(frame[0]))

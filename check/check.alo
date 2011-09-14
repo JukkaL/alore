@@ -1,0 +1,62 @@
+-- check.alo
+--
+-- Usage: check.alo [-t] FILE
+--
+-- Type check an Alore program. This is run by the Alore interpreter "alore"
+-- if the user supplied options -c or -t.
+--
+-- TODO
+--  - use argparse to parse arguments
+
+import analyse
+import errors
+import string
+import io
+
+
+-- Main function of the type checker.
+def Main(args)
+  var showMain = False
+  
+  -- The -t options causes the output to be compatible with type test case 
+  -- descriptions: the file name of the main program is always "main".
+  if args != [] and args[0] == "-t"
+    showMain = True
+    args = args[1:]
+  end
+  
+  -- Display error message and exit if command line arguments are invalid.
+  if args.length() != 1 or args[0].startsWith("-")
+    if args != [] and args[0].startsWith("-")
+      StdErr.writeLn("Invalid option {}".format(args[0]))
+    end
+    StdErr.writeLn("Usage: check.alo [-t] FILE")
+    Exit(2)
+  end
+ 
+  try  
+    -- Read the contents of the main source file.
+    var fnam = args[0]
+    var text = File(fnam).read()
+
+    -- Determine the file name to show for the main program.
+    var showFnam = fnam
+    if showMain
+      showFnam = "main"
+    end
+
+    -- Perform type checking for the program. Ignore return value.
+    var trees, symtable, typeinfos, types = 
+        Analyse(text, showFnam, True, nil, True)
+  except e is IoError
+    -- IO error reading a source file or directory. Display error message.
+    StdErr.writeLn("alore: " + e.message)
+    Exit(2)
+  except e is CompileError
+    -- Type checking failed. Display error messages.
+    for m in e.messages
+      StdErr.writeLn(m)
+    end
+    Exit(1)
+  end
+end
