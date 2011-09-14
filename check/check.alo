@@ -1,6 +1,6 @@
 -- check.alo
 --
--- Usage: check.alo [-t] PROGRAM
+-- Usage: check.alo [-t] FILE
 --
 -- Type check an Alore program. This is run by the Alore interpreter "alore"
 -- if the user supplied options -c or -t.
@@ -20,9 +20,18 @@ def Main(args)
   
   -- The -t options causes the output to be compatible with type test case 
   -- descriptions: the file name of the main program is always "main".
-  if args[0] == "-t"
+  if args != [] and args[0] == "-t"
     showMain = True
     args = args[1:]
+  end
+  
+  -- Display error message and exit if command line arguments are invalid.
+  if args.length() != 1 or args[0].startsWith("-")
+    if args != [] and args[0].startsWith("-")
+      StdErr.writeLn("Invalid option {}".format(args[0]))
+    end
+    StdErr.writeLn("Usage: check.alo [-t] FILE")
+    Exit(2)
   end
   
   -- Read the contents of the main source file.
