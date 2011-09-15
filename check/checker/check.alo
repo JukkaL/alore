@@ -83,6 +83,7 @@ class TypeChecker is NodeVisitor<Typ>
   def visitVarDef(defn as VarDef) as Typ
     -- Type check initializer.
     if defn.init != nil
+      -- There is an initializer.
       var initType = accept(defn.init)
       if defn.type != nil
         var target = defn.type.type
@@ -95,18 +96,23 @@ class TypeChecker is NodeVisitor<Typ>
           checkMultiAssignment(ttarget.items, [nil] * ttarget.items.length(),
                                initType, defn.init)
         end
-      elif defn.kind == Ldef
+      elif defn.kind == Ldef and not defn.isTopLevel
+        -- Infer local variable type if there is an initializer except if the
+        -- definition is at the top level (outside a function).
         inferLocalVariableType(defn.names, initType, defn)
       end
-    elif defn.kind == Gdef and defn.type != nil and defn.isConst
-      for n in defn.names
-        if n.type != nil
-          checkTypeEquivalency(n.type.type, namedType("std::Constant"), n,
-                               TypeConstantExpected)
+    else
+      -- No initializer
+      if defn.kind == Gdef and defn.type != nil and defn.isConst
+        for n in defn.names
+          if n.type != nil
+            checkTypeEquivalency(n.type.type, namedType("std::Constant"), n,
+                                 TypeConstantExpected)
+          end
         end
+      elif defn.kind == Ldef and defn.type == nil and not defn.isTopLevel
+        fail(NeedAnnotationForLocalVar, defn)
       end
-    elif defn.kind == Ldef and defn.type == nil
-      fail(NeedAnnotationForLocalVar, defn)
     end
     
     if defn.kind == Mdef

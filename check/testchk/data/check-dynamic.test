@@ -452,6 +452,16 @@ var a as A
 class A; end
 [out]
 
+[case testImplicitLocalVarTypeInBlockAtTopLevel]
+if Object == Object
+  var a
+  a = Object()
+  var b = Object == Object
+  b = Object()
+end
+[usestd fixtures/std-boolean.alo]
+[out]
+
 [case testImplicitMemberVarTypeViaDirectAccess]
 class A
   def f() as void

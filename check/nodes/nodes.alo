@@ -287,6 +287,8 @@ class VarDef is Node
   var kind as Constant     -- Ldef/Gdef/Mdef
   var init as Node         -- Expression or nil
   var isConst as Boolean   -- Boolean
+  var isTopLevel as Boolean -- Is the definition at the top level (not within
+                            -- a function or a type)?
   var isPrivate as Boolean -- Boolean
   var isInit as Boolean    -- Boolean
   var type as Annotation   -- May be nil
@@ -294,12 +296,14 @@ class VarDef is Node
   def create(names as Array<Var>, 
              kind as Constant, 
              isConst as Boolean, 
+             isTopLevel as Boolean,
              init = nil as Node, 
              isPrivate = False as Boolean, 
              type = nil as Annotation)
     self.names = names
     self.kind = kind
     self.isConst = isConst
+    self.isTopLevel = isTopLevel
     self.init = init
     self.isPrivate = isPrivate
     self.isInit = init != nil

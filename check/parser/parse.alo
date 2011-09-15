@@ -47,6 +47,11 @@ private class Parser
   private var ind        as Int
   private const errors   as Errors
   private const raiseOnError as Boolean
+  
+  -- Are we currently parsing a function definition?
+  private var isFunction = False as Boolean
+  -- Are we currently parsing a type definition?
+  private var isType = False as Boolean
 
   def create(fnam as Str, errors as Errors)
     self.raiseOnError = errors == nil
@@ -228,6 +233,7 @@ private class Parser
   def parseFunction(isMethod = False as Boolean, 
                     isPrivate = False as Boolean, 
                     privToken = None as Token) as FuncDef
+    self.isFunction = True
     try
       var name, args, init, isVarArg, isGetter, isSetter, type, isError, toks =
           parseFunctionHeader(isPrivate, privToken, isMethod)
@@ -252,6 +258,7 @@ private class Parser
       return node
     finally
       self.errors.setFunction(nil)
+      self.isFunction = False
     end
   end
   
@@ -327,6 +334,8 @@ private class Parser
   end
   
   def parseTypeDef(isPrivateDef, privToken)
+    self.isType = True
+  
     var isInterface = currentTokenStr() == "interface"
     
     -- Skip "class" or "interface".
@@ -402,6 +411,7 @@ private class Parser
       return node
     finally
       self.errors.setType(nil, False)
+      self.isType = False
     end
   end
   
@@ -745,7 +755,7 @@ private class Parser
     var type = parseAnnotation()
     var breakToken = expectBreak()
     
-    var node = VarDef(n, kind, isConst, init, isPrivate, type)
+    var node = VarDef(n, kind, isConst, isAtTopLevel(), init, isPrivate, type)
     setRepr(node, VarDefRepr(privToken, tok, assignToken, breakToken))
     return node
   end
@@ -1731,6 +1741,12 @@ private class Parser
     else
       return [], []
     end
+  end
+  
+  -- Are we currently parsing at the top level of a file (i.e. not within a
+  -- class or a function)?
+  def isAtTopLevel() as Boolean
+    return not self.isFunction and not self.isType
   end
 end
 
