@@ -14,11 +14,6 @@ import sys
 import set
 
 
--- Standard library paths.
-const LibPath = [ModulePath("../stubs"), ModulePath("../lib"), 
-                 "/usr/local/lib/alore"] as Array<Str>
-
-
 -- Analyse a program represented as a string semantically and optionally type
 -- check the program. Return the annotated parse trees (one per file), the 
 -- symbol table and the type map.
@@ -28,13 +23,7 @@ def Analyse(programText          as Str,
             altLibPath = nil     as Str, 
             isTypeCheck = False  as Boolean) as
                 (Array<AloreFile>, SymbolTable, TypeInfoMap, Map<Node, Typ>)
-  var path = LibPath.copy()
-  
-  -- Add ALOREPATH environment variable to library path, if defined.
-  var pathEnv = GetEnv("ALOREPATH")
-  if pathEnv != nil
-    path.insertAt(0, pathEnv)
-  end
+  var path = DefaultLibPath()
   
   if programFnam != "main"
     path.insertAt(0, FixPath(DirName(programFnam)))
@@ -58,6 +47,53 @@ def Analyse(programText          as Str,
   
   return analysis.process(WaitingFile((programFnam, nil, [], analysis), 
                                       programText))
+end
+
+
+-- Return default standard library search paths.
+private def DefaultLibPath() as Array<Str>
+  -- IDEA: Make this more portable.
+  var path = [] as <Str>
+  
+  -- Add ALOREPATH environment variable to library path, if defined.
+  var pathEnv = GetEnv("ALOREPATH")
+  if pathEnv != nil
+    path.append(pathEnv)
+  end
+  
+  -- Add library stubs directory.
+  path.append(ModulePath("../stubs"))
+  
+  -- Determine the location of the lib directory and add it.
+  if IsInstalled()
+    -- This copy has been installed.
+    -- Translate .../share/alore/check -> .../lib/alore.
+    path.append(ModulePath("../../../lib/alore"))
+  else
+    -- Running in a build directory.
+    path.append(ModulePath("../lib"))
+  end
+  
+  -- Add fallback path that can be used if we have a broken installation.
+  path.append("/usr/local/lib/alore")
+
+  return path
+end
+
+
+-- Determine whether we are running an installed copy of the checker (as
+-- opposed to running in a build directory).
+private def IsInstalled() as Boolean
+  -- IDEA: Make this more portable.
+  
+  var pp = NormPath(DirName(sys::ProgramPath))
+  
+  -- If running in a build directory, the program directory looks like this:
+  --   .../check
+  -- When installed, it looks like this:
+  --   .../share/alore/check
+  
+  return pp.endsWith(Join("share", "alore", "check"))
 end
 
 
