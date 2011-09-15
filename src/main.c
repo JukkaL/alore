@@ -14,7 +14,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
+
+
+/* If WIFEXITED etc. are not defined (e.g. mingw), define them. */
+#ifndef WIFEXITED
+#define WIFEXITED(status) (((status) & 0xff) == 0)
+#endif
+#ifndef WEXITSTATUS
+#define WEXITSTATUS(status) (((status) & 0xff00) >> 8)
+#endif
 
 
 /* Usage string shown at the start of cmd line argument help message. */
