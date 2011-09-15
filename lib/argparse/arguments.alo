@@ -10,7 +10,7 @@ module argparse
 
 -- This class represents a parsed command line argument list.
 class Arguments
-  private const parser         as Parser
+  private const parser         as ArgumentParser
   -- List of (option name, value) pairs. The names are normalized.
   private const opts           as Array<(Str, Str)>
   -- Map from option name to normalized option name.
@@ -21,7 +21,7 @@ class Arguments
   const rest as Array<Str>     -- The positional arguments.
 
   -- Construct an instance.
-  def create(parser as Parser, opts as Array<(Str, Str)>, 
+  def create(parser as ArgumentParser, opts as Array<(Str, Str)>, 
              rest as Array<Str>, descriptions as Array<Str>)
     self.parser = parser
     self.rest = rest.copy()
