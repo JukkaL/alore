@@ -24,7 +24,7 @@ private def TestParser(testcase)
   var a
   try
     var n = Parse(LF.join(testcase.input))
-    a = Str(n).split(LF)
+    a = Str(n).split(Newline)
   except e is CompileError
     a = e.messages
   end

@@ -44,7 +44,7 @@ private def TestSemAnal(testcase)
     for t in trees
       -- Omit the std module and files with a special marker in the path.
       if not t.path.endsWith("/std.alo") and not "-skip." in t.path
-        a += Str(t).split(LF)
+        a += Str(t).split(Newline)
       end
     end
   except e is CompileError

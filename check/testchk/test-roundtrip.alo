@@ -56,7 +56,7 @@ private def TestRoundtrip(testcase)
         t.accept(v)
         var s = v.output()
         if s != ""
-          a += s.split(LF)
+          a += s.split(Newline)
         end
       end
       first = False
