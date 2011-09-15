@@ -548,10 +548,17 @@ class StdSuite is Suite
     Assert(Min(4, 3) == 3)
     Assert(Min(-1.0, -0.5) == -1.0)
     Assert(Min("c", "b") == "b")
-    
-    AssertEqual(Min([4, 2, 5, 7]), 2)
-    AssertRaises(ValueError, Min, [[]])
-    AssertEqual(Min(Set([4, 2, 5, 7])), 2)
+  end
+  
+  -- Test calling Min with an iterable argument. This is not supported by
+  -- the type system and is likely to removed in the future (or the 
+  -- functionality may be moved to another function).
+  def testMinWithIterable()
+    -- Create an alias so that the type checker does not produce an error.
+    var min = Min    
+    AssertEqual(min([4, 2, 5, 7]), 2)
+    AssertRaises(ValueError, min, [[]])
+    AssertEqual(min(Set([4, 2, 5, 7])), 2)
   end
   
   def testMax()
@@ -560,9 +567,14 @@ class StdSuite is Suite
     Assert(Max(4, 3) == 4)
     Assert(Max(-1.0, -0.5) == -0.5)
     Assert(Max("c", "b") == "c")
-    
-    AssertRaises(ValueError, Max, [[]])
-    AssertEqual(Max(Set([4, 2, 7, 5])), 7)
+  end
+  
+  -- Test calling Max with an iterable argument. The comments to Min, above,
+  -- apply to Max: this is likely to not work in the future.
+  def testMaxWithIterable()
+    var max = Max    
+    AssertRaises(ValueError, max, [[]])
+    AssertEqual(max(Set([4, 2, 7, 5])), 7)
   end
   
   def testSort()
