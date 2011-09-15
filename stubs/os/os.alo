@@ -52,6 +52,7 @@ class Stat
   const owner as Str
   const ownerPerm as Str
   const otherPerm as Str
+  const groupPerm as Str
 end
 
 def DirName(path as Str) as Str
@@ -75,7 +76,14 @@ end
 def NormPath(path as Str) as Str
 end
 
+def AbsPath(path as Str) as Str
+end
+
+def ExpandUser(path as Str) as Str
+end
+
 const Separator = nil as Str
+const AltSeparator = nil as Str
 const PathSeparator = nil as Str
 
 def SetPerm(path as Str, owner as Str, other = owner as Str, 
@@ -95,7 +103,7 @@ end
 def ReadSymLink(path as Str)
 end
 
-def GetEnv(variable as Str) as Str
+def GetEnv(variable as Str, default = nil as Str) as Str
 end
 
 def SetEnv(variable as Str, value as Str)
