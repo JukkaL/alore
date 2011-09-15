@@ -284,8 +284,8 @@ end
 class Pair<TL, TR>
   -- FIX: Should not allow calling the constructor.
   
-  const left as TL
-  const right as TR
+  const left = nil as TL
+  const right = nil as TR
   
   def _eq(x as Object) as Boolean
   end
@@ -300,8 +300,8 @@ end
 class Range implements Iterable<Int>
   -- FIX: Should not allow calling the constructor.
   
-  const start as Int
-  const stop as Int
+  const start = nil as Int
+  const stop = nil as Int
   
   def iterator() as Iterator<Int>
   end
@@ -541,6 +541,9 @@ class IndexError is ValueError
 end
 
 class KeyError is ValueError
+end
+
+class CastError is ValueError
 end
 
 class ResourceError is Exception
