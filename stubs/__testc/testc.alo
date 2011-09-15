@@ -37,10 +37,10 @@ def Members(x)
   return ["x"]
 end
 
-def RaiseDirectTypeError(x)
+def RaiseDirectTypeError()
 end
 
-def RaiseDirectMemoryError(x)
+def RaiseDirectMemoryError()
 end
 
 def ContextDepth()
@@ -117,7 +117,13 @@ end
 def AMakeArray(x)
 end
 
+def AMakeTuple(*args)
+end
+
 def ATemps()
+end
+
+def AIsValue(x, y)
 end
 
 def AIs(x, y)
@@ -142,6 +148,9 @@ def ARaiseByType(x, y)
 end
 
 def ARaiseValue(x)
+end
+
+def ARaiseErrnoIoError(errno)
 end
 
 def ATry(x)
@@ -183,6 +192,9 @@ def AGetPair(x)
 end
 
 def AGetRange(x)
+end
+
+def AMakeRange(start, stop)
 end
 
 def AIsEq(x, y)
@@ -276,6 +288,9 @@ def CheckSyntax(x, y = nil)
 end
 
 def AVersion()
+end
+
+def ARepr(x)
 end
 
 def GetCModuleImports(x)
