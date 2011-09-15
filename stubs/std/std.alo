@@ -553,6 +553,9 @@ class RuntimeError is Exception
 end
 
 class IoError is Exception
+  def create(message = nil as Str, error = nil as Constant) or
+            (message as Str, error as Int)
+  end
 end
 
 class InterruptException is Exception
