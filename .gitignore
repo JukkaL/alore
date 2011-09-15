@@ -1,6 +1,9 @@
 Makefile
 alore
 alorec
+alore.exe
+alorec.exe
+libalore.a
 build.h
 config.h
 config.status
@@ -12,4 +15,5 @@ test/TMPDIR/
 src/*.o
 lib/*.a
 lib/*.so
+lib/*.dll
 *~
