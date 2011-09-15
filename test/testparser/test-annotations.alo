@@ -1,13 +1,16 @@
 module testparser
 
--- This file contains test cases for parsing type annotations for a 
--- dynamically-typed implementation that simply ignores type annotations. The 
--- tested functionality is included directly within this file.
+-- This file contains test cases for parsing type annotations. The tested 
+-- functionality is included directly within this file.
 --
 -- All parse error test cases are included in CompileErrorSuite. 
 --
--- FIX: Load the tested code dynamically, since this file cannot be compiled 
---      by an implementation that does proper type checking.
+-- IDEA: Provide separate test cases for an implementation that simply ignores
+--       type annotations.
+--
+-- FIX: Maybe load (some of) the tested code dynamically and only when not
+--      doing runtime type checking. This file will produce runtime type 
+--      errors if the implementation does proper runtime type checking.
 
 import unittest
 
@@ -24,7 +27,7 @@ class AnnotationsSuite is Suite
   end
   
   def testAnonFunctionAnnotation()
-    var f = def (x as def ()) as foo; return x - 2; end
+    var f = def (x as def ()) as Int; return x - 2; end
     var g = def (x) as def (); return x - 2; end
     AssertEqual(f(5), 3)
   end
@@ -49,7 +52,7 @@ class AnnotationsSuite is Suite
     var a = 1 as def ()
     AssertEqual(a, 1)
     
-    var b, c = (1 as Int), [5 as Int] as def ()
+    var b, c = (1 as Int), [5 as Int] as (def (), ())
     AssertEqual(b, 1)
     AssertEqual(c, [5])
     
@@ -58,7 +61,7 @@ class AnnotationsSuite is Suite
     d = 4
     AssertEqual(d, 4)
     
-    var e, f as def ()
+    var e, f as ((), def ())
     AssertEqual((e, f), (nil, nil))
     e, f = 1, 2
     AssertEqual((e, f), (1, 2))
@@ -66,26 +69,26 @@ class AnnotationsSuite is Suite
   
   def testVarDefWithAnonFunction()
     var a = def (x)
-              var a2 as yy
-            end as zz
+              var a2 as Int
+            end as Str
     var b = def (x = def ()
-                       var b2 as xx
+                       var b2 as Int
                       end)
-              var b3 as yy
-            end as zz
+              var b3 as Int
+            end as Int
     var c = (def (x = def ()
-                       var b2 as xx
+                       var b2 as Int
                       end)
-              var b3 as yy
-             end as Function) as zz
+              var b3 as Str
+             end as Function) as Int
   end
   
   def testConstAnnotations()
     AssertType(Constant, C1)
-    AssertEqual(C2, 1)
+    AssertEqual(C2, 3)
     AssertType(Constant, C3)
     AssertType(Constant, C4)
-    AssertEqual((C5, C6), (2, 3))
+    AssertEqual((C5, C6), (nil, 3))
   end
   
   -- Initializer with various expression in it: and, or, array constructor
@@ -109,7 +112,7 @@ class AnnotationsSuite is Suite
   def testComplexFunctionSignature()
     var f = def (x, y = def () as Int; end as Int, *z) as Int
               return x, y
-            end as xxx
+            end as Int
     var a, b = f(1)
     AssertEqual(a, 1)
   end
@@ -124,7 +127,7 @@ class AnnotationsSuite is Suite
     var b = a.find(2) as <def ()>
     AssertEqual(b, 1)
     
-    AssertEqual(I, 2)
+    AssertEqual(I, [3, 3])
   end
   
   def testInlineAnnotationsInStatements()
@@ -133,7 +136,7 @@ class AnnotationsSuite is Suite
     -- Assignment
     a = 3 as <def()> * 4
     AssertEqual(a, 12)
-    AssertEqual(I2, 4)
+    AssertEqual(I2, [3, 1])
     
     -- Return
     AssertEqual(def ()
@@ -177,7 +180,7 @@ class AnnotationsSuite is Suite
   end
   
   def testComplexInlineAnnotation()
-    var a = [1, 2, 3] as <Array<Map<Int, Str>, (Int, Str)>> + [4]
+    var a = [1, 2, 3] as <Map<Map<Int, Str>, (Int, Str)>> + [4]
     AssertEqual(a, [1, 2, 3, 4])
     var b = [1, 2] as <(((A,),),)> + [3]
     AssertEqual(b, [1, 2, 3])
@@ -194,7 +197,7 @@ class AnnotationsSuite is Suite
     AssertEqual(Isect4(5), 10)
     AssertEqual(Isect5(3, 4), 8)
     AssertEqual(Isect6(6, 4), 2)
-    AssertEqual(Isect7(6), 12)
+    AssertEqual(Isect7(5), 30)
   end
   
   def testIntersectionTypeAnnotationWithVaryingArgCounts()
@@ -213,16 +216,16 @@ end
 
 
 private class Ann1<T>
-  def f(x as def ()) as y
-    return 5 + x
+  def f(x as def ()) as Int
+    return 5 + (x as dynamic)
   end
   
   def g() as def()
-    return 77
+    return 77 as dynamic
   end
   
-  def h(x = (1 + 2) as def ())
-    return 5 + x
+  def h(x = (1 + 2 as dynamic) as def ())
+    return 5 + (x as dynamic)
   end
   
   def j(x = 5 as <def()> + 2)
@@ -231,11 +234,11 @@ private class Ann1<T>
 end
 
 
-private class Ann2<T is def ()> is Ann1<def ()>
+private class Ann2<T is def ()> is Ann1<Map<T, def ()>>
   var x
 
   def p as def ()
-    return "x"
+    return "x" as dynamic
   end
   
   def p = n as def ()
@@ -245,19 +248,21 @@ end
 
 
 private def F(x as def ()) as def ()
-  return x + 1
+  return (x as dynamic) + 1 as dynamic
 end
 
 
-private const C1 as def ()
-private const C2 = 1 as def (a, b)
-private const C3, C4 as def ()
-private const C5, C6 = 2, 3 as def ()
+private const N = 3
+
+private const C1 as Constant
+private const C2 = N as def (Int, Str)
+private const C3, C4 as (Constant, Constant)
+private const C5, C6 = nil, 3 as (def (), Int)
 
 
-private var I = [1, 1].count(1) as <def ()>
+private var I = [N, N] as <def ()>
 private var I2
-I2 = 5 as <def ()> - 1
+I2 = [N] as <def ()> + [1]
 
 
 private def F3(x = (1, 3) as <def()>[1])
@@ -265,62 +270,66 @@ private def F3(x = (1, 3) as <def()>[1])
 end
 
 
-private def FG<T is A<X>, S is (((def (),),),)>(x as def ()) as def ()
-  return x + 7
+private def FG<T is Array<Int>, S is (((def (),),),)>(x as def ()) as def ()
+  return (x as dynamic) + 7 as dynamic
 end
 
 
-private def Isect1(x as X) or
-                  (x as Y)
-  return x + 3
+private def Isect1(x as Int) or
+                  (x as Float)
+  return x + 3 as dynamic
 end
 
 
-private def Isect2(x as X, y as (Array<Array<Int>>, Int)) or
+private def Isect2(x as Int, y as (Array<Array<Int>>, Int)) or
                   (x as def (), y as def ())
-  return x + y
+  return (x as dynamic) + y as dynamic
 end
 
 
-private def Isect3(x as X) as def (Array<Int>) or
-                  (x as Y) as def (Array<Int>)
-  return x + 4
+private def Isect3(x as Int) as def (Array<Int>) or
+                  (x as Float) as def (Array<Int>)
+  return x + 4 as dynamic
 end
 
-private def Isect4<T is def(), S is def(Array<Int>)>(x as X) or
-                  <T is def(), S is def(Array<Int>)>(x as Y)
-  return x + 5
+private def Isect4<T is def(), S is def(Array<Int>)>(x as Int) or
+                  <T is def(), S is def(Array<Int>)>(x as Float)
+  return x + 5 as dynamic
 end
 
-private def Isect5(a as X, b = 1 as Y) or
-                  (a as Y, b= as def (Array<Int>))
-  return a + b + 1
+private def Isect5(a as Int, b = nil as Int) or
+                  (a as Float, b= as def (Array<Int>))
+  return (a as dynamic) + b + 1 as dynamic
 end
 
-private def Isect6(a as X, *b as Y) or
-                  (a as Y, *b as Z)
-  return a - b[0]
+private def Isect6(a as Int, *b as Float) or
+                  (a as Float, *b as Int)
+  return a - b[0] as dynamic
 end
 
-private def Isect7(a as X) or
-                  (a as Y) or
-                  (a as Z)
-  return a + 6
+private def Isect7(a as Int) or
+                  (a as Float) or
+                  (a as Str)
+  return a * 6 as dynamic
 end
 
 
 -- Function with intersection type that has different number of accepted
 -- arguments in different intersection items. Checking calls to functions
 -- (and types) like this was broken initially.
-private def IsectWithVaryingCounts(a = 3 as X) or
-                                   (a as Y)
-  return a * 2
+private def IsectWithVaryingCounts(a = nil as Int) or
+                                  (a       as Str)
+  if a == nil
+    return 6 as dynamic
+  else
+    return a * 2 as dynamic
+  end
 end
 
 
 -- Line continuation after "as".
 private def Cont(a) as
-  X
+  Int
   return a
 end
 
