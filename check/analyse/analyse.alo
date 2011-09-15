@@ -200,7 +200,7 @@ private def ModulePath(dir as Str) as Str
     basePath = Join(DirName(basePath), "check")
   end
   
-  return FixPath(Join(basePath, dir))
+  return FixPath(NormPath(Join(basePath, dir)))
 end
 
 
