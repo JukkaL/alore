@@ -9,8 +9,8 @@ import unittest
 
 class ParseCastsSuite is Suite
   def testCastInInitialization()
-    var a = 1 as X
-    AssertRaises(CastError, def (); var b = (1 as Float) as X; end)
+    var a = 1 as ()
+    AssertRaises(CastError, def (); var b = (1 as Float) as (); end)
   end
   
   def testCastInRvalue()
@@ -25,7 +25,7 @@ class ParseCastsSuite is Suite
   end
   
   def testCastInMultipleInitialization()
-    var a, b = 1, 2 as X
+    var a, b = 1, 2 as (Str, Str)
     AssertEqual((a, b), (1, 2))
     var c, d = (1 as Int), [2.0 as Float]
     AssertEqual((c, d), (1, [2.0]))
@@ -73,10 +73,12 @@ class ParseCastsSuite is Suite
                             end)
   end
   
-  private def m1(x, y = x as Y)
+  -- "as" declaras the type of an argument.
+  private def m1(x, y = x as Int) as Int
     return y
   end
-  private def m2(x, y = (x as Int) as Y)
+  -- "as" is used both as a cast and as a declaration.
+  private def m2(x, y = (x as Int) as Int) as Int
     return y
   end
 end
