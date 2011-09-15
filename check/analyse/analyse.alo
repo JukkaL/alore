@@ -30,6 +30,12 @@ def Analyse(programText          as Str,
                 (Array<AloreFile>, SymbolTable, TypeInfoMap, Map<Node, Typ>)
   var path = LibPath.copy()
   
+  -- Add ALOREPATH environment variable to library path, if defined.
+  var pathEnv = GetEnv("ALOREPATH")
+  if pathEnv != nil
+    path.insertAt(0, pathEnv)
+  end
+  
   if programFnam != "main"
     path.insertAt(0, FixPath(DirName(programFnam)))
   end
