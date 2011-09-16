@@ -38,7 +38,7 @@ def HtmlEncodeQuotes(s as Str) as Str
 end
 
 
-class Request is Map
+class Request is Map<Str, Str>
   def create() as void
     super.create()
     
