@@ -32,6 +32,9 @@ specification</a> (RFC 3875) for a detailed description of CGI.
 
 <h2>Class <tt>Request</tt></h2>
 
+@inherits Map<Str, Str>
+@supertypes
+
 @class Request()
 @desc Construct an object that holds form parameter information, file
       uploads, HTTP headers and other miscellaneous data related to a HTTP
@@ -44,55 +47,55 @@ operations and methods.
 
 <h3><tt>Request</tt> operations</h3>
 
-@op request[name]
+@op request[name] @optype{Request[Str] -> Str}
 @desc Return the first value for the named form control.
       Raise @ref{IndexError} if no such control is defined.
 @end
 
 <h3><tt>Request</tt> methods</h3>
 
-@fun hasKey(name)
+@fun hasKey(name as Str) as Boolean
 @desc Return a boolean indicating whether there are any values for the named
       form control.
 @end
 
-@fun valueList(name)
+@fun valueList(name as Str) as Array<Str>
 @desc Return an array containing all the values for the named form control.
       The array may empty.
 @end
 
-@fun hasUpload(name)
+@fun hasUpload(name as Str) as Boolean
 @desc Return a boolean indicating whether there is at least a single uploaded
       file for the named control.
 @end
 
-@fun uploadList(name)
+@fun uploadList(name as Str) as Array<UploadInfo>
 @desc Return a list of @ref{UploadInfo} objects related to the named form
       control.
 @end
 
-@fun uploads()
+@fun uploads() as Array<Str>
 @desc Return an array of names of controls that have at least a single file
       upload associated with them.
 @end
 
 <h3><tt>Request</tt> constants</h3>
 
-@var method
+@var method as Str
 @desc The method of the HTTP request. Valid values include "GET", "POST" and
       "HEAD".
 @end
 
-@var contentType
+@var contentType as Str
 @desc The HTTP content type of a post request, or <tt>nil</tt> if undefined.
 @end
 
-@var contentLength
+@var contentLength as Int
 @desc The content length of a post request, in bytes, or <tt>nil</tt> if
       undefined.
 @end
 
-@var pathInfo
+@var pathInfo as Str
 @desc Additional path information provided after the base URL of the CGI
       script, or <tt>nil</tt> if exactly the base URL was used.
       <p>For example, if the base URL for the script is
@@ -101,16 +104,16 @@ operations and methods.
       <tt>"/path"</tt>.
 @end
 
-@var userAgent
+@var userAgent as Str
 @desc The value of the User-Agent request header.
 @end
 
-@var remoteAddr
+@var remoteAddr as Str
 @desc The IP address of the remote host as a string, or <tt>nil</tt> if it is
       undefined.
 @end
 
-@var remoteHost
+@var remoteHost as Str
 @desc The hostname of the remote host as a string, or <tt>nil</tt> if it is
       undefined.
 @end
@@ -119,18 +122,18 @@ operations and methods.
 
 <h2>Functions</h2>
 
-@fun HtmlEncode(str)
+@fun HtmlEncode(str as Str) as Str
 @desc Return the input string encoded as HTML. HTML special characters &lt;,
       &gt;, &amp; and &quot; are replaced with the corresponding
       character entities.
 @end
 
-@fun HtmlEncodeQuotes(str)
+@fun HtmlEncodeQuotes(str as Str) as Str
 @desc Return the input string encoded as HTML. Like <tt>HtmlEncode</tt>,
       but also replace the single quote ' with a character entity.
 @end
 
-@fun SetMaxPostSize(n)
+@fun SetMaxPostSize(n as Int)
 @desc Set the maximum post size (in bytes). Raise @ref{RuntimeError} when
       constructing a <tt>Request</tt> object if the value of the
       Content-Length header is larger than this limit. Set the limit to -1 
@@ -139,7 +142,7 @@ operations and methods.
       @end
 @end
 
-@fun ParseQuery(query)
+@fun ParseQuery(query as Str) as Array<Pair<Str, Str>>
 @desc Parse an URL encoded query string into an array of key/value pairs.
       Example:
       @example
@@ -159,16 +162,16 @@ operations and methods.
 <p>Instances of <tt>UploadInfo</tt> represent uploaded files and contain the
 the following constant members:
 
-@var fileName
+@var fileName as Str
 @desc The original file name of the uploaded file, provided by the client.
 @end
   
-@var contentType
+@var contentType as Str
 @desc The value of the Content-Type header for the uploaded file, or
       <tt>nil</tt> if undefined.
 @end
 
-@var data
+@var data as Str
 @desc A narrow binary string containing the contents of the uploaded file.
 @end
 
