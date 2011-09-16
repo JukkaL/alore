@@ -3,6 +3,10 @@
 @title Class <tt>time::Date</tt>
 @index Date
 
+@implements Comparable<Date>
+@implements Addable<Int, Date>
+@supertypes
+
 <p>The <tt>Date</tt> class represents a date or a day. <tt>Date</tt> instances
 are immutable.
 
@@ -11,7 +15,7 @@ are immutable.
       in local time.
 @end
 
-@class Date(year, month, day)
+@class Date(year as Int, month as Int, day as Int)
 @desc Construct a <tt>Date</tt> object representing a specific day. All
       arguments must
       be integers. Month and day values are not restricted to any specific
@@ -25,7 +29,7 @@ are immutable.
       @end
 @end
 
-@class Date(string[, format])
+@class Date(string as Str[, format as Str])
 @desc Construct a <tt>Date</tt> object from a string. The format argument
       specifies the format of the string.
       If the format is omitted, the default format is "YYYY-MM-DD".
@@ -73,23 +77,23 @@ are immutable.
 
 <h2>Members</h2>
 
-@var day
+@var day as Int
 @desc Day of month (the first day of the month is 1)
 @end
   
-@var month
+@var month as Int
 @desc Month number (1 = January, 2 = February, ...).
 @end
   
-@var year
+@var year as Int
 @desc Year number (e.g. 2010)
 @end
   
-@var weekday
+@var weekday as Int
 @desc Weekday of the date (1 = Monday, 2 = Tuesday, ..., 7 = Sunday).
 @end
   
-@fun week([rule])
+@fun week([rule as Constant]) as Int
 @desc Return the week number. The rule argument specifies how the week number
       is calculated. It can be one of
       @ref{FirstWeek}, @ref{FirstFourDayWeek} or
@@ -98,7 +102,7 @@ are immutable.
       last day of the week and Monday the first.
 @end
 
-@fun format(template)
+@fun format(template as Str) as Str
 @desc <p class="trim">Format the date as a string.
       The template string defines the format of
       the result. The following <i>formatting sequences</i> in the template
@@ -144,21 +148,22 @@ are immutable.
 
 <h2>Operations</h2>
 
-@op date + n
+@op date + n @optype{Date + Int -> Date}
 @desc Integers representing a number of days can added to and subtracted from
       dates. <tt>Date() + 1</tt>, for example, refers to tomorrow.
 @end
 
-@op Str(date)
+@op Str(date) @optype{Str(Date) -> Str}
 @desc Convert a date to a string of the form "YYYY-MM-DD".
 @end
 
-@op date1 == date2
-@op date1 &lt; date2
+@op date1 == date2 @optype{Date == Date -> Boolean}
+@op date1 &lt; date2 @optype{Date &lt; Date -> Boolean}
+@op date1 &gt; date2 @optype{Date &gt; Date -> Boolean}
 @desc Dates can be compared for equality and order. An earlier date is smaller
       than a later date.
 @end
 
-@op Hash(date)
+@op Hash(date) @optype{Hash(Date) -> Int}
 @desc Return the hash value of a <tt>Date</tt> object.
 @end

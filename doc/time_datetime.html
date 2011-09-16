@@ -11,7 +11,8 @@
       date in local time.
 @end
 
-@class DateTime(year, month, day, hour, minute, second)
+@class DateTime(year as Int, month as Int, day as Int, hour as Int, minute as Int, second as Int)
+@class DateTime(year as Int, month as Int, day as Int, hour as Int, minute as Int, second as Float)
 @desc Construct a <tt>DateTime</tt> object representing a specific point in
       time. Seconds
       must be a float or an integer and all other arguments must
@@ -22,7 +23,7 @@
       incremented by one, etc.
 @end
 
-@class DateTime(string[, format])
+@class DateTime(string as Str[, format as Str])
 @desc Construct a <tt>DateTime</tt> object from a string. The format argument 
       specifies the format of the string. If the format is omitted, the format
       will be "YYYY-MM-DD hh:mm:ss.s".
@@ -106,35 +107,35 @@
 
 <h2>Members</h2>
 
-@var year
+@var year as Int
 @desc Year of the date
 @end
 
-@var month
+@var month as Int
 @desc Month of the date (1 = January, 2 = February, ...)
 @end
 
-@var day
+@var day as Int
 @desc Day of month (the first day of the month is 1)
 @end
 
-@var hour
+@var hour as Int
 @desc Hour (range 0 to 23, inclusive)
 @end
 
-@var minute
+@var minute as Int
 @desc Minute (range 0 to 59, inclusive)
 @end
 
-@var second
+@var second as Float
 @desc Seconds (0 &lt;= second &lt; 60; float)
 @end
 
-@var weekday
+@var weekday as Int
 @desc Weekday of the date (1 = Monday, 2 = Tuesday, ..., 7 = Sunday).
 @end
 
-@fun week([rule])
+@fun week([rule as Constant]) as Int
 @desc Return the week number. The rule argument specifies how the week number
       is calculated. It can be one of @ref{FirstWeek}, @ref{FirstFourDayWeek}
       or @ref{FirstFullWeek}. If unspecified,
@@ -142,7 +143,7 @@
       last day of the week and Monday the first.
 @end
 
-@fun format(template)
+@fun format(template as Str) as Str
 @desc <p class="trim">Format the date and time as a string.
       The template string defines the format of
       the result. The following <i>formatting sequences</i> in the template
@@ -230,23 +231,23 @@
 <h2>Operations</h2>
 
 
-@op datetime + time
-@op datetime - time
+@op datetime + time @optype{DateTime + Time -> DateTime}
+@op datetime - time @optype{DateTime - Time -> DateTime}
 @desc @ref{Time} objects can be added to and subtracted from
       <tt>DateTime</tt> objects.
 @end
 
-@op Str(datetime)
+@op Str(datetime) @optype{Str(DateTime) -> Str}
 @desc Convert a <tt>DateTime</tt> object to a string of
       the form "YYYY-MM-DD hh:mm:ss".
 @end
 
-@op datetime1 == datetime2
-@op datetime1 &lt; datetime2
+@op datetime1 == datetime2 @optype{DateTime == DateTime -> Boolean}
+@op datetime1 &lt; datetime2 @optype{DateTime &lt; DateTime -> Boolean}
 @desc <tt>DateTime</tt> objects can be compared for equality and order. An
       earlier instant is smaller than a later instant.
 @end
 
-@op Hash(datetime)
+@op Hash(datetime) @optype{Hash(DateTime) -> Int}
 @desc Return the hash value of a <tt>DateTime</tt> object.
 @end

@@ -3,6 +3,13 @@
 @title Class <tt>time::Time</tt>
 @index Time
 
+@implements Comparable<Time>
+@implements Addable<Time, Time>
+@implements Addable<DateTime, DateTime>
+@implements Multipliable<Int, Time>
+@implements Multipliable<Float, Time>
+@supertypes
+
 <p>The <tt>Time</tt> class represents elapsed time or the time difference
 between two points in time. <tt>Time</tt> instances
 are immutable. <tt>Time</tt> values can be negative, zero or positive.
@@ -16,7 +23,8 @@ is independent of the magnitude of the value.
       (time passed since midnight).
 @end
 
-@class Time(days, hours, minutes, seconds)
+@class Time(days as Int, hours as Int, minutes as Int, seconds as Int)
+@class Time(days as Int, hours as Int, minutes as Int, seconds as Float)
 @desc Construct a <tt>Time</tt> object representing a specific duration.
       Seconds must be
       a float or an integer and all other arguments must
@@ -27,12 +35,13 @@ is independent of the magnitude of the value.
       incremented by one, etc.
 @end
 
-@class Time(seconds)
+@class Time(seconds as Int)
+@class Time(seconds as Float)
 @desc  Construct a <tt>Time</tt> instance from a number of seconds. This is
        a shorthand for <tt>Time(0, 0, 0, seconds)</tt>.
 @end
 
-@class Time(string[, format])
+@class Time(string as Str[, format as Str])
 @desc Construct a <tt>Time</tt> object from a string.
       The format argument specifies the
       format of the string. If the format is omitted, the accepted formats are
@@ -102,23 +111,23 @@ of <tt>Time</tt> are all constants. Either all these members are
 non-negative or all the members are non-positive, depending on the sign of
 the <tt>Time</tt> value.
 
-@var day
+@var day as Int
 @desc Number of days (integer)
 @end
   
-@var hour
+@var hour as Int
 @desc Number of hours (integer in the range from -23 to 23, inclusive)
 @end
   
-@var minute
+@var minute as Int
 @desc Number of minutes (integer in the range from -59 to 59, inclusive)
 @end
   
-@var second
+@var second as Float
 @desc Number of seconds (float, -60 &lt; seconds &lt; 60)
 @end
 
-@fun format(template)
+@fun format(template as Str) as Str
 @desc <p class="trim">Format the time as a string.
       The template string defines the format of
       the result. The following <i>formatting sequences</i> in the template
@@ -172,7 +181,7 @@ the <tt>Time</tt> value.
         replaced with <i>c</i>.
 @end
 
-@fun toSeconds()
+@fun toSeconds() as Float
 @desc Return the total number of seconds represented by a time object
       as a <tt>Float</tt>. The return value may be negative.
       @note The return value may be imprecise due to the properties of
@@ -181,41 +190,46 @@ the <tt>Time</tt> value.
       @end
 @end
 
-@fun toNanoSeconds()
+@fun toNanoSeconds() as Int
 @desc Return the total number of nanoseconds represented by a time object
       as an integer. The return value may be negative.
 @end
 
 <h2>Operations</h2>
 
-@op time1 + time2
-@op time1 - time2
+@op time1 + time2 @optype{Time + Time -> Time}
+@op time1 - time2 @optype{Time - Time -> Time}
 @desc Time objects can be added and subtracted.
 @end
 
-@op -time
+@op -time @optype{-Time -> Time}
 @desc Negate a time object. The sign of all components is reversed.
 @end
 
-@op time * 3.2
-@op time / 2
-@desc Time objects support multiplication with and division by a number.
+@op time * 3.2 @optype{Time * Float -> Time}
+@op time * 2   @optype{Time * Int -> Time}
+@desc Time objects support multiplication with a number.
 @end
 
-@op Str(time)
+@op time / 3.2   @optype{Time / Float -> Time}
+@op time / 2     @optype{Time / Int -> Time}
+@desc Time objects support division by a number.
+@end
+
+@op Str(time) @optype{Str(Time) -> Str}
 @desc Convert a time to a string of the
       form "01:02:03.4" or "5d 01:02:03.4" (if day != 0).
 @end
 
-@op Time("01:00:00") &lt; Time("01:00:01")
+@op Time("01:00:00") &lt; Time("01:00:01") @optype{Time &lt; Time -> Boolean}
 @desc Times can be compared for equality and order.
 @end
 
-@op Hash(time)
+@op Hash(time) @optype{Hash(Time) -> Int}
 @desc Return the hash value of a <tt>Time</tt> object.
 @end
 
-@op Float(time)
+@op Float(time) @optype{Float(Time) -> Float}
 @desc @deprecated
       This is equivalent to <tt>time.toSeconds()</tt>.
       
