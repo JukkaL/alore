@@ -13,9 +13,9 @@ thread ends. If any other threads are executing at program exit, they will be
 forcibly terminated. It is recommended that programs explicitly end threads
 by calling <tt>join</tt> to avoid data loss due to terminated threads.
 
-<h2>Class <tt>Thread</tt></h2>
+<h2>Class <tt>Thread&lt;T&gt;</tt></h2>
 
-@class Thread(function)
+@class Thread(function as def () as T)
 @desc Construct a new thread. The thread calls the
       function with no arguments. The 
       function may be any callable object, and it is the
@@ -24,7 +24,7 @@ by calling <tt>join</tt> to avoid data loss due to terminated threads.
 
 <h3><tt>Thread</tt> methods</h3>
 
-@fun join()
+@fun join() as T
 @desc Wait until the execution of the thread stops. Return the value returned
       by the thread function. If the function raised an exception that was not
       caught, this method will raise that exception. Join can be called only 
@@ -61,7 +61,7 @@ by calling <tt>join</tt> to avoid data loss due to terminated threads.
 
 <h3><tt>Condition</tt> methods</h3>
 
-@fun wait(mutex)
+@fun wait(mutex as Mutex)
 @desc Wait until another thread signals or broadcasts the condition variable. 
       The mutex
       must have been locked by the current thread before calling this method. 
