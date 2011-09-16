@@ -10,7 +10,7 @@ and accept incoming connections.
 
 <h2>Class <tt>ServerSocket</tt></h2> 
 
-@class ServerSocket(port[, address])
+@class ServerSocket(port as Int[, address as Str])
 @desc Construct a TCP/IP server socket listening on the specified port of the 
       local host. If the address argument is omitted or is <tt>nil</tt>,
       the server
@@ -21,7 +21,7 @@ and accept incoming connections.
 
 <h3><tt>ServerSocket</tt> methods</h3>
 
-@fun accept([buffering])
+@fun accept([buffering as Constant])
 @desc Wait for an incoming connection. Return a @ref{socket::Socket} object
       that represents the new connection.
       <p>The <i>buffering</i> parameter specifies
