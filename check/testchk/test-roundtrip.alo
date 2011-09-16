@@ -46,17 +46,17 @@ private def TestRoundtrip(testcase)
     -- formatting) of all the relevant source files.
     for t in trees
       -- Omit the std module and files marked for omission.
-      if not t.path.endsWith("/std.alo") and not "-skip." in t.path
+      if not t.path.endsWith(Separator + "std.alo") and not "-skip." in t.path
         -- Add file name + colon for files other than the first.
         if not first
-          a.append("{}:".format(RemovePrefix(t.path, TestTempDir)))
+          a.append("{}:".format(FixPath(RemovePrefix(t.path, TestTempDir))))
         end
       
         var v = OutputVisitor()
         t.accept(v)
         var s = v.output()
         if s != ""
-          a += s.split(Newline)
+          a += s.split(LF)
         end
       end
       first = False
@@ -71,9 +71,15 @@ end
 
 
 private def RemovePrefix(path, prefix)
-  var np = Subst(path, "^" + prefix, "")
+  var regexp = "^" + prefix.replace('\', '\\')
+  var np = Subst(path, regexp, "")
   if np.startsWith(Separator)
     np = np[1:]
   end
   return np
+end
+
+
+private def FixPath(path)
+  return path.replace('\', '/')
 end

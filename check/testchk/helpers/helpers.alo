@@ -4,6 +4,7 @@ import unittest
 import testchk -- For Prefix
 import io
 import os
+import re
 
 
 -- AssertStringArraysEqual displays special line alignment helper messages if 
@@ -166,11 +167,17 @@ end
 
 
 -- Remove common directory prefix from all strings in a (perform a naive 
--- string replace; it seems to work well enough).
+-- string replace; it seems to work well enough). Also remove trailing carriage
+-- returns.
 private def CleanUp(a)
   var res = []
   for s in a
-    res.append(s.replace(Prefix + Separator, ''))
+    var prefix = Prefix + Separator
+    var ss = s
+    for p in prefix, prefix.replace(Separator, '/')
+       ss = ss.replace(p, '')
+     end
+     res.append(Subst(ss, '\r$', ''))
   end
   return res
 end

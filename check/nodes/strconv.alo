@@ -1,6 +1,7 @@
 module nodes
 
 import util
+import os
 
 
 -- Visitor for converting a Node to a human-readable string.
@@ -69,7 +70,9 @@ private class StrConv is NodeVisitor<Str>
     -- test case descriptions; the file "main" is used by default in many test
     -- cases. 
     if o.path != nil and o.path != "main"
-      a.insertAt(0, o.path)
+      -- Insert path. Normalize directory separators to / to unify test case
+      -- output in all platforms.
+      a.insertAt(0, o.path.replace(Separator, '/'))
     end
     return dump(a, o)
   end

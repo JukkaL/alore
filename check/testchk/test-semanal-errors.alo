@@ -40,8 +40,19 @@ private def TestSemAnalError(testcase)
   except e is CompileError
     -- Verify that there was a compile error and that the error messages 
     -- are equivalent.
-    AssertStringArraysEqual(testcase.output, e.messages, 
+    AssertStringArraysEqual(testcase.output, 
+                            NormalizeErrorMessages(e.messages), 
                             "Invalid compiler output ({}, line {})".format(
                               testcase.file, testcase.line))
   end
+end
+
+
+-- Translate an array of error messages to use / as path separator.
+private def NormalizeErrorMessages(messages)
+  var a = []
+  for m in messages
+    a.append(m.replace(Separator, "/"))
+  end
+  return a
 end

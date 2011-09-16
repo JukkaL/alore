@@ -43,7 +43,7 @@ class TypeCheckSuite is Suite
       var src = LF.join(testcase.input)
       Analyse(src, "main", False, TestTempDir, True)
     except e is CompileError
-      a = e.messages
+      a = NormalizeErrorMessages(e.messages)
     end
     AssertStringArraysEqual(testcase.output, a, 
                             "Invalid type checker output ({}, line {})".format(

@@ -43,7 +43,7 @@ private def TestSemAnal(testcase)
     -- Include string representations of the source files in the actual output.
     for t in trees
       -- Omit the std module and files with a special marker in the path.
-      if not t.path.endsWith("/std.alo") and not "-skip." in t.path
+      if not t.path.endsWith(Separator + "std.alo") and not "-skip." in t.path
         a += Str(t).split(Newline)
       end
     end
