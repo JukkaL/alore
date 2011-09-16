@@ -59,6 +59,14 @@ static void SetDebugInstructionCounter(void);
 static ABool ParseSize(const char *s, Asize_t *size);
 
 
+#ifdef __MINGW32__
+/* Disable cmd line argument wildcard expansion by mingw CRT. Doing it 
+   automatically by the program is not idiomatic in Windows and would cause
+   confusion. */
+int _CRT_glob = 0;
+#endif
+
+
 /* The main function of the Alore interpreter. */
 int main(int argc, char **argv)
 {
