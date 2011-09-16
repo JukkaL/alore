@@ -23,7 +23,7 @@ specification</a> (RFC 2616) for a detailed description of the HTTP protocol.
 
 <h2>Class <tt>Http</tt></h2>
 
-@class Http(host[, port])
+@class Http(host as Str[, port as Int])
 @desc Construct a HTTP connection object that connects to the specified host.
       Port 80 is used by default. The optional port argument can be used to
       override this. If this call returns successfully, a TCP connection has
@@ -32,7 +32,7 @@ specification</a> (RFC 2616) for a detailed description of the HTTP protocol.
 
 <h3><tt>Http</tt> methods</h3>
 
-@fun request(method, url[, headers[, body]])
+@fun request(method as Str, url as Str[, headers as Array<Pair<Str, Str>>[, body as Str]])
 @desc Send a request to the HTTP connection. The <tt>method</tt> argument
       must be a
       valid HTTP method (e.g., "GET" or "POST"). The <tt>url</tt> argument
@@ -47,7 +47,7 @@ specification</a> (RFC 2616) for a detailed description of the HTTP protocol.
       the Content-Length header is automatically set.
 @end
 
-@fun response()
+@fun response() as HttpResponse
 @desc Return the response from the server to the oldest sent request as a
       @ref{HttpResponse} object.
       Note that you must either read any previous responses entirely or close
@@ -62,13 +62,13 @@ specification</a> (RFC 2616) for a detailed description of the HTTP protocol.
       connection will fail with @ref{IoError} when the connection is closed.
 @end
 
-@fun isOpen()
+@fun isOpen() as Boolean
 @desc Return a boolean indicating if additional requests can be passed to the
       server using this connection. You must have called <tt>response</tt>
       before calling <tt>isOpen</tt>.
 @end
 
-@fun auth(username, password)
+@fun auth(username as Str, password as Str)
 @desc Specify the username and password to be used with the following requests
       performed using this connection. Only HTTP basic authentication is
       supported.
@@ -92,26 +92,29 @@ operations. It is instantiated by the <tt>Http</tt> class.
 
 <p>In addition, it defines the following constant members:
 
-@var headers
+@var headers as HttpHeaders
 @desc HTTP headers associated with the response an an instance of the Map-like
       @ref{HttpHeaders} class.
 @end
 
-@var status
+@var status as Int
 @desc Integer status code of the response. The status codes are described
       in the HTTP specification.
 @end
 
-@var reason
+@var reason as Str
 @desc Reason phrase returned by the server.
 @end
 
-@var version
+@var version as Str
 @desc HTTP version used by the server for this response. It is typically
       "1.1" or "1.0".
 @end
 
 <h2>Class <tt>HttpHeaders</tt></h2>
+
+@inherits Map
+@supertypes
 
 @class-hidden HttpHeaders
 
@@ -131,7 +134,7 @@ matched ignoring case. It inherits from @ref{Map}. You should not construct
 
 <h2>Exceptions</h2>
 
-@class HttpError([message])
+@class HttpError([message as Str])
 @desc This exception is raised on HTTP-specific error conditions. It inherits
       from @ref{IoError}.
 @end
@@ -140,13 +143,13 @@ matched ignoring case. It inherits from @ref{Map}. You should not construct
 
 <h2>Constants</h2>
 
-@var HttpPort
+@var HttpPort as Int
 @desc The default HTTP port (80).
 @end
 
 <h2>Functions</h2>
 
-@fun DefaultProxy()
+@fun DefaultProxy() as (Str, Int)
 @desc Return a tuple (url, port) if a default HTTP proxy is defined using the
       <tt>http_proxy</tt> environment variable. The url is a string and
       the port is an integer. Return <tt>nil</tt> if no
