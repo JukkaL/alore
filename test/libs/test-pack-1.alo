@@ -298,6 +298,15 @@ class PackSuite is Suite
     f.close()
   end
   
+  def testHostByteOrderPacker()
+    Assert(HostByteOrderPacker in [Packer, LittleEndianPacker])
+  end
+  
+  
+  -- Helpers
+  -- -------
+  
+  
   private def assertPack(type, values)
     var p = GetMember(packer, "pack" + type)
     var up = GetMember(packer, "unpack" + type)

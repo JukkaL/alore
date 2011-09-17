@@ -12,7 +12,11 @@ import bitop
 import __pack
 
 
-private class PackerBase
+-- FIX: Initialize correctly based on the byte order of the system.
+const HostByteOrderPacker = LittleEndianPacker as def () as PackerBase
+
+
+class PackerBase
   def packByte(i as Int) as Str
     if i >= 0 and i < 256
       return Chr(i)
