@@ -91,18 +91,35 @@ name must be replaced by a valid integer):
 
 <h2>Packer classes</h2>
 
-<p>There are two packer classes, one for the big-endian (network) byte order
-and other for the little-endian byte order. They both support the same methods.
+<p>There are two concrete packer classes, one for the big-endian (network)
+byte order and other for the little-endian byte order. They both support the
+same methods; the common abstract superclass <tt>PackerBase</tt> defines these.
+
+<h3>Class <tt>Packer</tt></h3>
+
+@inherits PackerBase
+@supertypes
 
 @class Packer()
 @desc Construct a packer that packs and unpacks data in the big-endian
       (network) byte order.
 @end
 
+<h3>Class <tt>LittleEndianPacker</tt></h3>
+
+@inherits PackerBase
+@supertypes
+
 @class LittleEndianPacker()
 @desc Construct a packer that packs and unpacks data in the little-endian byte
       order.
 @end
+
+@class-hidden PackerBase
+
+<h3>Class <tt>PackerBase</tt></h3>
+
+<p>This is an abstract base class of the packer classes.
 
 <h3>Methods</h3>
 
@@ -113,43 +130,43 @@ and other for the little-endian byte order. They both support the same methods.
       <tt>packWord64</tt>.
 @end      
 
-@fun packByte(int)
-@fun packWordN(int)
-@fun packIntN(int)
-@fun packFloatN(float)
-@fun packStr(str, len)
+@fun packByte(int as Int) as Str
+@fun packWordN(int as Int) as Str
+@fun packIntN(int as Int) as Str
+@fun packFloatN(float as Float) as Str
+@fun packStr(str as Str, len as Int) as Str
 @desc Pack a value in a specific format. The argument must have a compatible
       Alore type for the format (integers are also valid when floats are
       expected). The result is a narrow string.
 @end
 
-@fun packBytes(array)
-@fun packWordsN(array)
-@fun packIntsN(array)
-@fun packFloatsN(array)
-@fun packStrs(array, len)
+@fun packBytes(array as Array<Int>) as Str
+@fun packWordsN(array as Array<Int>) as Str
+@fun packIntsN(array as Array<Int>) as Str
+@fun packFloatsN(array as Array<Float>) as Str
+@fun packStrs(array as Array<Str>, len as Int) as Str
 @desc Pack an array of values in a specific format. The argument must be an
       array, and each array item must have a compatible Alore type for the
       format. The result is a narrow string that is the concatenation of the
       packed items.
 @end
 
-@fun unpackByte(str)
-@fun unpackWordN(str)
-@fun unpackIntN(str)
-@fun unpackFloatN(str)
-@fun unpackStr(str)
+@fun unpackByte(str as Str) as Int
+@fun unpackWordN(str as Str) as Int
+@fun unpackIntN(str as Str) as Int
+@fun unpackFloatN(str as Str) as Float
+@fun unpackStr(str as Str) as Str
 @desc Unpack a narrow string encoded in the format specified by the method
       name. The
       argument must have the correct length for the format. The Alore type of
       the result value is specified by the format.
 @end
 
-@fun unpackBytes(array)
-@fun unpackWordsN(array)
-@fun unpackIntsN(array)
-@fun unpackFloatsN(array)
-@fun unpackStrs(array, len)
+@fun unpackBytes(str as Str) as Array<Int>
+@fun unpackWordsN(str as Str) as Array<Int>
+@fun unpackIntsN(str as Str) as Array<Int>
+@fun unpackFloatsN(str as Str) as Array<Float>
+@fun unpackStrs(str as Str, len as Int) as Array<Str>
 @desc Unpack a narrow string that contains any number of values encoded in the
       format specified by the method name. The argument must have a valid
       length for the format (any multiple of the single item length). The
@@ -173,7 +190,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 @inherits Stream
 @supertypes
 
-@class PackStream(stream[, packer][, bufMode])
+@class PackStream(stream as Stream[, packer as PackerBase][, bufMode as Constant])
 @desc Construct a <tt>PackStream</tt> instance that uses another stream for 
       input/output. The <i>packer</i> argument,
       if present, must be a packer object. If omitted, the big endian packer
@@ -191,45 +208,45 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
       and <tt>writeWord64</tt>.
 @end
 
-@fun writeByte(int)
-@fun writeWordN(int)
-@fun writeIntN(int)
-@fun writeFloatN(float)
-@fun writeStr(str, int)
+@fun writeByte(int as Int)
+@fun writeWordN(int as Int)
+@fun writeIntN(int as Int)
+@fun writeFloatN(float as Float)
+@fun writeStr(str as Str, int as Int)
 @desc Pack data and write to the stream. The arguments are similar to the
       corresponding <tt>pack*</tt> methods (see above).
 @end
 
-@fun writeBytes(array)
-@fun writeWordsN(array)
-@fun writeIntsN(array)
-@fun writeFloatsN(array)
-@fun writeStrs(array, int)
+@fun writeBytes(array as Array<Int>)
+@fun writeWordsN(array as Array<Int>)
+@fun writeIntsN(array as Array<Int>)
+@fun writeFloatsN(array as Array<Float>)
+@fun writeStrs(array as Array<Str>, int as Str)
 @desc Pack an array and write to the stream. The arguments are similar to the 
       corresponding <tt>pack*</tt> methods (see above).
 @end
 
-@fun readByte()
-@fun readWordN()
-@fun readIntN()
-@fun readFloatN()
+@fun readByte() as Int
+@fun readWordN() as Int
+@fun readIntN() as Int
+@fun readFloatN() as Int
 @desc Read and unpack data from the stream. The format specifies the number of
       characters (bytes) to read and the type of the return value. 
 @end
 
-@fun readBytes(n)
-@fun readWordsN(n)
-@fun readIntsN(n)
-@fun readFloatsN(n)
-@fun readStrs(n, len)
+@fun readBytes(n as Int) as Array<Int>
+@fun readWordsN(n as Int) as Array<Int>
+@fun readIntsN(n as Int) as Array<Int>
+@fun readFloatsN(n as Int) as Array<Float>
+@fun readStrs(n as Int, len as Int) as Array<Str>
 @desc Read and unpack multiple data items from the stream. The format and the
       length argument
       specify the number of characters (bytes) to read and the length of the
       @ref{Array} return value and the type of its items.
 @end
 
-@fun eof()
-@fun seek(n)
+@fun eof() as Boolean
+@fun seek(n as Int)
 @fun close()
 @desc Call the corresponding method of the underlying stream (if it is
       supported).
@@ -244,7 +261,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 @inherits PackStream
 @supertypes
 
-@class PackFile(path[, packer], ...)
+@class PackFile(path as Str[, packer as PackerBase], ... as Constant)
 @desc Open a binary file for reading and/or writing. The supported additional
       arguments are the same as for @ref{io::File}. The <i>packer</i>
       argument, if present, must be a packer object (see above). If omitted,
@@ -263,7 +280,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 
 <h2>Constants</h2>
 
-@var HostByteOrderPacker
+@var HostByteOrderPacker as def () as PackerBase
 @desc This constant refers to either @ref{Packer} or @ref{LittleEndianPacker}
       depending on the native byte order of the host system.
 @end
