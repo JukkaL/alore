@@ -17,7 +17,7 @@ the file and additional modules, potentially located in different directories.
 
 <h2>Functions</h2>
 
-@fun Load(path[, modulePath])
+@fun Load(path as Str[, modulePath as Str]) as Module
 @desc Load an Alore source file. Return a <tt>Module</tt> object that allows 
       accessing public variables, functions and classes defined in the file. 
       If compilation fails, a @ref{CompileError} exception will be raised.
@@ -30,7 +30,7 @@ the file and additional modules, potentially located in different directories.
 
 <h2>Constants</h2>
 
-@var ModuleSearchPath
+@var ModuleSearchPath as Str
 @desc The default module search path. It is a string that contains module
       search directories separated by @ref{os::PathSeparator}.
       The directories are searched from first to last to find imported modules.
@@ -40,19 +40,19 @@ the file and additional modules, potentially located in different directories.
       @end
 @end
 
-<h2>Class <tt>Module</tt></h2>
-
 @class-hidden Module
+
+<h2>Class <tt>Module</tt></h2>
 
 <p>The <tt>Module</tt> class provides these members and operations:
 
-@fun contents()
+@fun contents() as Array<Str>
 @desc Return an array of the names of public global definitions in the source
       file. This includes variable, constant, function and class definitions.
       The order of the result is unspecified.
 @end
 
-@op module[name]
+@op module[name] @optype{Module[Str] -> dynamic}
 @desc Return the value of public global definition. The <tt>name</tt> argument
       is the
       name of the definition as a string. Raise an <tt>KeyError</tt>
@@ -64,7 +64,7 @@ the file and additional modules, potentially located in different directories.
 
 <h2>Exception <tt>CompileError</tt></h2>
 
-@class CompileError(errorMessages)
+@class CompileError(errorMessages as Array<Str>)
 @desc Construct a <tt>CompileError</tt> instance. Messages should be an array
       of error message strings. <tt>CompileError</tt> inherits from
       @ref{std::Exception}.
@@ -72,7 +72,7 @@ the file and additional modules, potentially located in different directories.
 
 <h3><tt>CompileError</tt> members</h3>
 
-@var errorMessages
+@var errorMessages as Array<Str>
 @desc Constant member that contains compilation error messages as an array of
       strings.
 @end
