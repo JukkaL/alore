@@ -92,6 +92,7 @@ if test "$PLATFORM" == windows; then
   bindir="${prefix}"
   alorelibdir="${libdir}"
   aloreincdir="${includedir}"
+  aloredatadir="${datadir}"
 fi
 
 # Set compiler and linker options. These are heavily platform and compiler
