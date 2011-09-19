@@ -8,7 +8,8 @@
 
 #include "athread.h"
 
-#if defined(A_HAVE_THREADS) && defined(HAVE_PTHREADS)
+#if defined(A_HAVE_THREADS) && defined(HAVE_PTHREADS) && \
+    !defined(A_HAVE_WINDOWS)
 
 int athread_init(void)
 {

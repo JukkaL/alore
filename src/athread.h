@@ -12,7 +12,8 @@
 #include "aconfig.h"
 
 
-#if defined(HAVE_PTHREADS) && defined(A_HAVE_THREADS)
+#if defined(HAVE_PTHREADS) && defined(A_HAVE_THREADS) && \
+    !defined(A_HAVE_WINDOWS)
 
 /* pthread implementation of the API */
 
@@ -45,7 +46,6 @@ int athread_create(athread_t *ptr, void *(*func)(void *), void *param);
 
 /* We need EBUSY */
 #include <errno.h>
-
 
 typedef struct {
     void *id;
