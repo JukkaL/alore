@@ -204,7 +204,7 @@ AValue AFileCreate(AThread *t, AValue *frame)
 
         setbuf(file, NULL);
 
-        buf = ACreateString(t, (unsigned char *)&file, sizeof(FILE *));
+        buf = ACreateString(t, (char *)&file, sizeof(FILE *));
         if (AIsError(buf))
             return AError;
         ASetMemberDirect(t, frame[0], A_FILE_ID, buf);
@@ -974,7 +974,7 @@ static AValue CreateFileObject(AThread *t, AValue *frame, FILE *file)
     
     /* Allocate the block that holds the FILE * value. The block is implemented
        as a string (i.e. non-pointer) block. */
-    frame[0] = ACreateString(t, (unsigned char *)&file, sizeof(FILE *));
+    frame[0] = ACreateString(t, (char *)&file, sizeof(FILE *));
     if (AIsError(frame[0])) {
         frame[0] = AZero;
         return AError;
