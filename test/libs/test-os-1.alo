@@ -127,9 +127,13 @@ class OSSuite is Suite
   
   -- Test return value of System() when the process was terminated by a signal.
   def testSystemReturnValueWithSignal()
-    -- Execute a shell command that kills itself (the shell process). The 
-    -- return value must be negative.
-    Assert(System("kill $$") < 0)
+    if Platform != "windows"
+      -- Execute a shell command that kills itself (the shell process). The 
+      -- return value must be negative.
+      Assert(System("kill $$") < 0)
+    else
+      -- IDEA: Is there a similar test case for Windows?      
+    end
   end
   
   -- Test querying whether a name refers to a directory (or a symlink pointing
