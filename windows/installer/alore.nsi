@@ -17,7 +17,9 @@
   
   ; For ${If} etc.
   !include "LogicLib.nsh"
-  
+  ; For ${RefreshShellIcons}
+  !include "FileFunc.nsh"
+
 ; General
 
   ; Program name and installer file
@@ -78,6 +80,20 @@ Section "Core components" SecBasic
   
   ; Store installation folder
   WriteRegStr HKLM Software\Alore "" "$INSTDIR"
+  
+  ; Set file association
+  
+  ; Define extension .alo
+  WriteRegStr HKCR ".alo" "" "Alore.File"
+  ; Define user-visible name for Alore files
+  WriteRegStr HKCR "Alore.File" "" "Alore File"
+  ; Define icon for Alore files
+  WriteRegStr HKCR "Alore.File\DefaultIcon" "" "$INSTDIR\alore.exe,0"
+  ; Run alore interpreter when an Alore file is double cliecked
+  WriteRegStr HKCR "Alore.File\shell\open\command" "" \
+      '"$INSTDIR\alore.exe" "%1"'
+  ; Refresh icons and make the association active
+  ${RefreshShellIcons}
   
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "DisplayName" "Alore"
@@ -141,6 +157,14 @@ Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
   ; Delete private registry key
   DeleteRegKey /ifempty HKLM "Software\Alore"
+  
+  ; Remove file association-related registry keys
+  DeleteRegKey HKCR ".alo"
+  DeleteRegKey HKCR "Alore.File"
+  DeleteRegKey HKCR "Alore.File\DefaultIcon"
+  DeleteRegKey HKCR "Alore.File\shell\open\command"
+  ; Refresh icons and make the association removal active
+  ${RefreshShellIcons}
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\Alore\*.*"
