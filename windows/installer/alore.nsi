@@ -16,7 +16,7 @@
   OutFile "Alore-setup.exe"
 
   ; Default installation folder
-  InstallDir "$LOCALAPPDATA\Alore"
+  InstallDir "C:\Alore"
   
   ; Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\Alore" ""
