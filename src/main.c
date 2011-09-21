@@ -19,12 +19,13 @@
 #endif
 
 
-/* If WIFEXITED etc. are not defined (e.g. mingw), define them. */
+/* If WIFEXITED etc. are not defined (e.g. mingw), give trivial definitions of
+   them. */
 #ifndef WIFEXITED
-#define WIFEXITED(status) (((status) & 0xff) == 0)
+#define WIFEXITED(status) 1
 #endif
 #ifndef WEXITSTATUS
-#define WEXITSTATUS(status) (((status) & 0xff00) >> 8)
+#define WEXITSTATUS(status) (status)
 #endif
 
 
@@ -362,7 +363,7 @@ static void DisplayCode(void)
 static int PerformTypeCheck(void)
 {
     char checkerPath[A_MAX_PATH_LEN];
-    char cmd[A_MAX_PATH_LEN * 3 + 10];
+    char cmd[A_MAX_PATH_LEN * 3 + 12];
     int status;
 
     GetCheckerPath(checkerPath);
@@ -370,8 +371,18 @@ static int PerformTypeCheck(void)
     /* FIX: Support double quotes in path names properly. */
     
     /* Build the command line for running the checker. */
+#ifndef A_HAVE_WINDOWS
+    /* General version */
     sprintf(cmd, "\"%s\" \"%s\" \"%s\"", AInterpreterPath, checkerPath,
             AProgramPath);
+#else
+    /* Windows */
+    /* Add extra quotes to make this work.
+       IDEA: This restricts the length of the cmd line line. Do no use system()
+             in Windows. */
+    sprintf(cmd, "\"\"%s\" \"%s\" \"%s\"\"", AInterpreterPath, checkerPath,
+            AProgramPath);
+#endif
     
     status = system(cmd);
 
