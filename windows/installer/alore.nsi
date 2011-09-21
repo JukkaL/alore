@@ -47,7 +47,7 @@
 
 ; Installer Sections
 
-Section "Alore Interpreter" SecInterpreter
+Section "Core components" SecBasic
   ; This section is required
   SectionIn RO
   
@@ -63,7 +63,7 @@ Section "Alore Interpreter" SecInterpreter
 
 SectionEnd
 
-Section "Type Checker" SecChecker
+Section "Documentation" SecDocs
 
   SetOutPath "$INSTDIR"
   
@@ -74,15 +74,15 @@ SectionEnd
 ; Descriptions
 
   ; Language strings
-  LangString DESC_SecInterpreter ${LANG_ENGLISH} \
-    "Alore interpreter and standard library modules."
-  LangString DESC_SecChecker ${LANG_ENGLISH} \
-    "Alore type checker."
+  LangString DESC_SecBasic ${LANG_ENGLISH} \
+    "Alore interpreter, type checker and standard library modules."
+  LangString DESC_SecDocs ${LANG_ENGLISH} \
+    "Alore HTML documentation."
 
   ; Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecInterpreter} $(DESC_SecInterpreter)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecChecker} $(DESC_SecChecker)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecBasic} $(DESC_SecBasic)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDocs} $(DESC_SecDocs)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Uninstaller Section
