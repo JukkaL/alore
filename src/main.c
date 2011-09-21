@@ -354,7 +354,7 @@ static void DisplayCode(void)
 }
 
 
-/* Type checking the target program. Assume that the program has been
+/* Type check the target program. Assume that the program has been
    loaded already. Return 0 if successful and a positive value if there were
    errors or if failed to run the type checker.
 
