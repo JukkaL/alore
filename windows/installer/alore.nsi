@@ -23,6 +23,9 @@
 
   ; Request application privileges for Windows Vista
   RequestExecutionLevel user
+  
+  ; Do not show the "Nullsoft Install System v..." text.
+  BrandingText " "
 
 ; Interface Settings
 
