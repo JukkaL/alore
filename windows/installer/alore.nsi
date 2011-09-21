@@ -72,6 +72,12 @@ Section "Core components" SecBasic
   ; Store installation folder
   WriteRegStr HKLM Software\Alore "" "$INSTDIR"
   
+  ; Write the uninstall keys for Windows
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "DisplayName" "Alore"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "NoRepair" 1
+  
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
@@ -101,6 +107,10 @@ SectionEnd
 ; Uninstaller Section
 
 Section "Uninstall"
+  ; Delete registry keys
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
+  DeleteRegKey /ifempty HKLM "Software\Alore"
+  
   ; Delete core files
   
   RMDir /r "$INSTDIR\share"
@@ -125,6 +135,4 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
 
   RMDir "$INSTDIR"
-
-  DeleteRegKey /ifempty HKLM "Software\Alore"
 SectionEnd
