@@ -63,6 +63,11 @@ Section "Core components" SecBasic
   File /R "C:\Alore\lib"
   File /R "C:\Alore\include"
   File /R "C:\Alore\share"
+  ; Install text files
+  File "..\..\README.txt"
+  File "..\..\LICENSE.txt"
+  File "..\..\CHANGELOG.txt"
+  File "..\..\CREDITS.txt"
   
   ; Store installation folder
   WriteRegStr HKCU "Software\Alore" "" $INSTDIR
