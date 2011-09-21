@@ -35,8 +35,8 @@
   ; Request application privileges for Windows Vista and later
   RequestExecutionLevel admin
   
-  ; Do not show the "Nullsoft Install System v..." text.
-  BrandingText " "
+  ; Replace the "Nullsoft Install System v..." text in the installer
+  BrandingText "Alore (development version)"
 
 ; Interface Settings
 
