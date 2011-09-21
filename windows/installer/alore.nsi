@@ -13,13 +13,14 @@
 
   !include "MUI2.nsh"
 
-; Include Logic Lib
+; Include misc headers
   
+  ; For ${If} etc.
   !include "LogicLib.nsh"
   
 ; General
 
-  ; Name and file
+  ; Program name and installer file
   Name "Alore"
   OutFile "Alore-setup.exe"
 
@@ -55,6 +56,8 @@
 
 ; Installer Sections
 
+; Install interpreter, libraries, include files and type checker. Also set up
+; file associations and create uninstaller.
 Section "Core components" SecBasic
   ; This section is required
   SectionIn RO
@@ -133,7 +136,10 @@ SectionEnd
 
 Section "Uninstall"
   ; Delete registry keys
+  
+  ; Delete Add/remove programs uninstall key
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
+  ; Delete private registry key
   DeleteRegKey /ifempty HKLM "Software\Alore"
 
   ; Remove shortcuts, if any
@@ -157,13 +163,15 @@ Section "Uninstall"
   Delete "$INSTDIR\CHANGELOG.txt"
   Delete "$INSTDIR\CREDITS.txt"
   
-  ; Delete documentation
+  ; Delete documentation files
   
   Delete "$INSTDIR\doc\*.html"
   Delete "$INSTDIR\doc\*.css"
   RMDir "$INSTDIR\doc"
 
+  ; Delete uninstaller
   Delete "$INSTDIR\Uninstall.exe"
 
+  ; Delete install directory (it should be empty now)
   RMDir "$INSTDIR"
 SectionEnd
