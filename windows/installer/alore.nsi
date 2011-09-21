@@ -23,10 +23,10 @@
   InstallDir "C:\Alore"
   
   ; Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\Alore" ""
+  InstallDirRegKey HKLM Software\Alore ""
 
-  ; Request application privileges for Windows Vista
-  RequestExecutionLevel user
+  ; Request application privileges for Windows Vista and later
+  RequestExecutionLevel admin
   
   ; Do not show the "Nullsoft Install System v..." text.
   BrandingText " "
@@ -70,7 +70,7 @@ Section "Core components" SecBasic
   File "..\..\CREDITS.txt"
   
   ; Store installation folder
-  WriteRegStr HKCU "Software\Alore" "" $INSTDIR
+  WriteRegStr HKLM Software\Alore "" "$INSTDIR"
   
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -126,5 +126,5 @@ Section "Uninstall"
 
   RMDir "$INSTDIR"
 
-  DeleteRegKey /ifempty HKCU "Software\Alore"
+  DeleteRegKey /ifempty HKLM "Software\Alore"
 SectionEnd
