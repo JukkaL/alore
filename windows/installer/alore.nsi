@@ -1,8 +1,12 @@
 ; NSIS Alore Install Script
 ;
 ; Written by Jukka Lehtosalo
-;
 ; Originally based on an example written by Joost Verburg
+;
+; Things to do before building the installer:
+;  * Alore must have been built and installed to C:\Alore (./configure; make; 
+;    make install)
+;  * Documentation must have been built (make doc)
 
 
 ; Include Modern UI
@@ -53,22 +57,26 @@ Section "Core components" SecBasic
   
   SetOutPath "$INSTDIR"
   
-  ; ADD YOUR OWN FILES HERE...
+  ; Install core files (from C:\Alore).
+  File "C:\Alore\alore.exe"
+  File "C:\Alore\alorec.exe"
+  File /R "C:\Alore\lib"
+  File /R "C:\Alore\include"
+  File /R "C:\Alore\share"
   
   ; Store installation folder
   WriteRegStr HKCU "Software\Alore" "" $INSTDIR
   
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-
 SectionEnd
 
 Section "Documentation" SecDocs
+  SetOutPath "$INSTDIR\doc"
 
-  SetOutPath "$INSTDIR"
-  
-  ; ADD YOUR OWN FILES HERE...
-
+  ; Install documentation files.  
+  File "..\..\doc\html\*.html"
+  File "..\..\doc\html\*.css"
 SectionEnd
 
 ; Descriptions
@@ -88,13 +96,16 @@ SectionEnd
 ; Uninstaller Section
 
 Section "Uninstall"
+  ; FIX delete other files
 
-  ; ADD YOUR OWN FILES HERE...
+  ; Delete documentation
+  Delete "$INSTDIR\doc\*.html"
+  Delete "$INSTDIR\doc\*.css"
+  RMDir "$INSTDIR\doc"
 
   Delete "$INSTDIR\Uninstall.exe"
 
   RMDir "$INSTDIR"
 
   DeleteRegKey /ifempty HKCU "Software\Alore"
-
 SectionEnd
