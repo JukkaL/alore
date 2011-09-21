@@ -413,6 +413,9 @@ static void GetCheckerPath(char *path)
         ;
     path[i] = '\0';
 
+#ifndef A_HAVE_WINDOWS    
+    /* Unix-like operating systems */
+
     /* Are we running an installed copy? */
     if (AEndsWith(path, "/bin/")) {
         /* Yes. */
@@ -423,6 +426,23 @@ static void GetCheckerPath(char *path)
         /* No. Assume that we are running in a build directory. */
         AJoinPath(path, path, "check/check.alo");
     }
+#else
+    /* Windows */
+    
+    {
+        char path2[A_MAX_PATH_LEN];
+        /* First assume we are installed. */
+        AJoinPath(path2, path, "share\\check\\check.alo");
+        /* Was the assumption correct? */
+        if (!AIsFile(path2)) {
+            /* Assumption was wrong. We are probably running in the build
+               directory. */
+            AJoinPath(path2, path, "check\\check.alo");
+        }
+        /* Copy the path to caller. */
+        strcpy(path, path2);
+    }
+#endif
 }
 
 

@@ -67,15 +67,22 @@ private def DefaultLibPath() as Array<Str>
   -- Determine the location of the lib directory and add it.
   if IsInstalled()
     -- This copy has been installed.
-    -- Translate .../share/alore/check -> .../lib/alore.
-    path.append(ModulePath("../../../lib/alore"))
+    if Platform != "windows"
+      -- Translate .../share/alore/check -> .../lib/alore.
+      path.append(ModulePath("../../../lib/alore"))
+    else
+      -- Windows: Translate .../share/check -> .../lib.
+      path.append(ModulePath("../../lib"))
+    end
   else
     -- Running in a build directory.
     path.append(ModulePath("../lib"))
   end
   
   -- Add fallback path that can be used if we have a broken installation.
-  path.append("/usr/local/lib/alore")
+  if Platform != "windows"
+    path.append("/usr/local/lib/alore")
+  end
 
   return path
 end
@@ -92,8 +99,11 @@ private def IsInstalled() as Boolean
   --   .../check
   -- When installed, it looks like this:
   --   .../share/alore/check
+  -- or
+  --   .../share/check (Windows)
   
-  return pp.endsWith(Join("share", "alore", "check"))
+  return pp.endsWith(Join("share", "alore", "check")) or
+         pp.endsWith(Join("share", "check"))
 end
 
 
@@ -206,9 +216,15 @@ end
 
 private def FixPath(p as Str) as Str
   var cur = CurrentDir()
-  if p.startsWith(cur)
-    p = p[cur.length() + 1:]
+  -- Add separator to the end of the path, unless one is already present.
+  if BaseName(cur) != ''
+    cur += Separator
   end
+  -- Remove current directory prefix from the path, if present.
+  if p.startsWith(cur)
+    p = p[cur.length():]
+  end
+  -- Avoid returning an empty path; replace that with '.'.
   if p == ""
     p = "."
   end
