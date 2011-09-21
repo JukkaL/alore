@@ -44,8 +44,10 @@
 
 ; Installer Sections
 
-Section "Dummy Section" SecDummy
-
+Section "Alore Interpreter" SecInterpreter
+  ; This section is required
+  SectionIn RO
+  
   SetOutPath "$INSTDIR"
   
   ; ADD YOUR OWN FILES HERE...
@@ -58,14 +60,26 @@ Section "Dummy Section" SecDummy
 
 SectionEnd
 
+Section "Type Checker" SecChecker
+
+  SetOutPath "$INSTDIR"
+  
+  ; ADD YOUR OWN FILES HERE...
+
+SectionEnd
+
 ; Descriptions
 
   ; Language strings
-  LangString DESC_SecDummy ${LANG_ENGLISH} "A test section."
+  LangString DESC_SecInterpreter ${LANG_ENGLISH} \
+    "Alore interpreter and standard library modules."
+  LangString DESC_SecChecker ${LANG_ENGLISH} \
+    "Alore type checker."
 
   ; Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecDummy} $(DESC_SecDummy)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecInterpreter} $(DESC_SecInterpreter)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecChecker} $(DESC_SecChecker)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Uninstaller Section
