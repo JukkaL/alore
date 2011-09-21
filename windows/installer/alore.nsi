@@ -101,9 +101,23 @@ SectionEnd
 ; Uninstaller Section
 
 Section "Uninstall"
-  ; FIX delete other files
+  ; Delete core files
+  
+  RMDir /r "$INSTDIR\share"
+  RMDir /r "$INSTDIR\lib"
+  
+  Delete "$INSTDIR\include\*.h"
+  RMDir "$INSTDIR\include"
 
+  Delete "$INSTDIR\alore*.exe"
+  
+  Delete "$INSTDIR\README.txt"
+  Delete "$INSTDIR\LICENSE.txt"
+  Delete "$INSTDIR\CHANGELOG.txt"
+  Delete "$INSTDIR\CREDITS.txt"
+  
   ; Delete documentation
+  
   Delete "$INSTDIR\doc\*.html"
   Delete "$INSTDIR\doc\*.css"
   RMDir "$INSTDIR\doc"
