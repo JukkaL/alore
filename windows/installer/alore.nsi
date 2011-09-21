@@ -13,6 +13,10 @@
 
   !include "MUI2.nsh"
 
+; Include Logic Lib
+  
+  !include "LogicLib.nsh"
+  
 ; General
 
   ; Name and file
@@ -82,12 +86,30 @@ Section "Core components" SecBasic
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
+; Optionally copy documentation
 Section "Documentation" SecDocs
   SetOutPath "$INSTDIR\doc"
 
   ; Install documentation files.  
   File "..\..\doc\html\*.html"
   File "..\..\doc\html\*.css"
+SectionEnd
+
+; Optionally create Start menu folder
+Section "Start menu folder" SecStartMenu
+  CreateDirectory "$SMPROGRAMS\Alore"
+  
+  ; Create shortcut for uninstaller
+  CreateShortCut "$SMPROGRAMS\Alore\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+  
+  ; Check if documentation section was selected
+  SectionGetFlags ${SecDocs} $R0 
+  IntOp $R0 $R0 & ${SF_SELECTED} 
+  
+  ; Only add shortcut to documentation if documentation is installed
+  ${If} $R0 == ${SF_SELECTED}
+  CreateShortCut "$SMPROGRAMS\Alore\Documentation.lnk" "$INSTDIR\doc\index.html" ""
+  ${EndIf}
 SectionEnd
 
 ; Descriptions
@@ -97,11 +119,14 @@ SectionEnd
     "Alore interpreter, type checker and standard library modules."
   LangString DESC_SecDocs ${LANG_ENGLISH} \
     "Alore HTML documentation."
+  LangString DESC_SecStartMenu ${LANG_ENGLISH} \
+    "Create Start menu folder."
 
   ; Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecBasic} $(DESC_SecBasic)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDocs} $(DESC_SecDocs)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecStartMenu} $(DESC_SecStartMenu)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Uninstaller Section
@@ -110,6 +135,12 @@ Section "Uninstall"
   ; Delete registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
   DeleteRegKey /ifempty HKLM "Software\Alore"
+
+  ; Remove shortcuts, if any
+  Delete "$SMPROGRAMS\Alore\*.*"
+
+  ; Remove Start menu folder
+  RMDir "$SMPROGRAMS\Alore"
   
   ; Delete core files
   
