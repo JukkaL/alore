@@ -144,7 +144,14 @@ AValue AStdStr(AThread *t, AValue *frame)
     else if (AIsNonSpecialType(frame[0]))
         return SymbolStr(t, AValueToType(frame[0])->sym);
     else if (AIsConstant(frame[0])) {
-        return SymbolStr(t, AValueToConstant(frame[0])->sym);
+        /* Process special Constant values separately, since they may not have
+           symbols. */
+        if (AIsError(frame[0]))
+            return AMakeStr(t, "{AError}");
+        else if (AIsDefault(frame[0]))
+            return AMakeStr(t, "{ADefault}");
+        else
+            return SymbolStr(t, AValueToConstant(frame[0])->sym);
     } else
         return AStdRepr(t, frame); /* Fallback for other object types */
 }
