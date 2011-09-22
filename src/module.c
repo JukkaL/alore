@@ -18,6 +18,9 @@
 #include "std_module.h"
 #include "debug_runtime.h"
 #include "error.h"
+#include "util.h"
+
+#include <stdio.h>
 
 
 #define INITIAL_CMODULES_SIZE 32
@@ -52,6 +55,7 @@ static ABool AddMemberVar(ATypeInfo *type, const char *name, ABool isWritable,
                           ABool isPrivate);
 static ABool ImportModuleUsingName(const char *name);
 static ABool HasFinalizerMethod(AModuleDef *def);
+static void ReportModuleError(ASymbolInfo *module, const char *format, ...);
 
 
 #define ModDefName(def) (*(def)->str == '-' ? (def)->str + 1 : (def)->str)
@@ -264,8 +268,10 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
     for (; modDef->type != MD_END_MODULE; modDef++) {
         switch (modDef->type) {
         case MD_DEF:
-            if (!CreateCFunction(modDef, &num))
+            if (!CreateCFunction(modDef, &num)) {
+                ReportModuleError(module, "Could not create %s", modDef->str);
                 goto Fail;
+            }
             
             /* FIX: Handle error? */
             if (strcmp(modDef->str, "Main") == 0
@@ -304,10 +310,19 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
         }
             
         case MD_CLASS:
-        case MD_INTERFACE:
+        case MD_INTERFACE: {
+            AModuleDef *orig = modDef;
             modDef = CreateCType(modDef, imports);
-            if (modDef == NULL)
+            if (modDef == NULL) {
+                ReportModuleError(module, "Could not create %s", orig->str);
                 goto Fail;
+            }
+            break;
+        }
+
+        default:
+            ReportModuleError(module, "Invalid definition type %d",
+                              modDef->type);
             break;
         }
     }
@@ -461,8 +476,11 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
     
     if (!isInterface) {
         /* Find constructor. */
-        if (!ProcessConstructor(def, type))
+        if (!ProcessConstructor(def, type)) {
+            ReportModuleError(ACurModule, "Could not create constructor of %i",
+                              symInfo);
             return FALSE;
+        }
 
         /* Check if there is a #f method. If it is present, allocate member
            slot 0 for the finalize object list and setup some flags. */
@@ -618,7 +636,14 @@ static AModuleDef *AddCTypeDefs(AModuleDef *def, ASymbolInfo *symInfo,
                 return NULL;
             break;
 
+        case MD_IMPLEMENT:
+            ReportModuleError(ACurModule,
+                         "A_IMPLEMENT must appear before other declarations");
+            return NULL;
+
         default:
+            ReportModuleError(ACurModule, "Invalid definition type %d",
+                              def->type);
             return NULL;
         }
     }
@@ -916,4 +941,24 @@ static ABool HasFinalizerMethod(AModuleDef *def)
             return TRUE;
     }
     return FALSE;    
+}
+
+
+/* Report an error in a C module. These are all internal errors and are
+   reported to help debugging. The arguments are similar to
+   AFormatMessage(). */
+static void ReportModuleError(ASymbolInfo *module, const char *format, ...)
+{
+    char buf[1024], buf2[1024];    
+    va_list args;
+    
+    va_start(args, format);
+    AFormatMessageVa(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    AFormatMessage(buf2, sizeof(buf2),
+                   "Error initializing module \"%q\":\n    %s",
+                   module, buf);
+    
+    fprintf(stderr, "%s\n", buf2);
 }
