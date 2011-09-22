@@ -15,7 +15,7 @@ const RawStdErr = nil as File
 const Input, Output, Append, Unbuffered, LineBuffered, Buffered, Narrow,
       Protected
 
-const DefaultEncoding -- FIX initialize + type
+const DefaultEncoding = nil as Encoding
 
 
 class Stream implements Iterable<Str>

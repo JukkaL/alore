@@ -1,5 +1,7 @@
 module std
 
+import encodings
+
 
 -- Interfaces
 
@@ -151,6 +153,12 @@ class Str implements Comparable<Str>, Sequence<Str>, Iterable<Str>,
   end
   
   def join(seq as Sequence<Str>) as Str
+  end
+  
+  def encode(enc as Encoding, strictness = Strict as Constant)
+  end
+  
+  def decode(enc as Encoding, strictness = Strict as Constant)
   end
   
   def iterator() as Iterator<Str>

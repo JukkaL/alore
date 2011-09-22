@@ -6,126 +6,65 @@ const Bom = "" as Str -- FIX initialize
 
 
 interface Encoding
-  def create(strictness= as Constant)
-  def encode(s as Str) as Str
+  def decoder(strictness= as Constant) as Decoder
+  def encoder(strictness= as Constant) as Encoder
+end
+
+
+interface Decoder
   def decode(s as Str) as Str
   def unprocessed() as Str
 end
 
 
-private class BaseEncoding implements Encoding
-  def create(strictness = Strict as Constant)
-  end
-
+interface Encoder
   def encode(s as Str) as Str
-  end
-  
-  def decode(s as Str) as Str
-  end
-  
-  def unprocessed() as Str
-  end
 end
 
 
-class Ascii is BaseEncoding
+const Ascii = nil as Encoding
+const Utf8 = nil as Encoding
+const Utf16 = nil as Encoding
+const Utf16Le = nil as Encoding
+const Utf16Be = nil as Encoding
+const Iso8859_1 = nil as Encoding 
+const Latin1 = Iso8859_1 as Encoding
+const Iso8859_2 = nil as Encoding
+const Latin2 = Iso8859_2 as Encoding
+const Iso8859_3 = nil as Encoding
+const Latin3 = Iso8859_3 as Encoding
+const Iso8859_4 = nil as Encoding
+const Latin4 = Iso8859_4 as Encoding
+const Iso8859_5 = nil as Encoding
+const Iso8859_6 = nil as Encoding
+const Iso8859_7 = nil as Encoding
+const Iso8859_8 = nil as Encoding
+const Iso8859_9 = nil as Encoding
+const Latin5 = Iso8859_9 as Encoding
+const Iso8859_10 = nil as Encoding
+const Latin6 = Iso8859_10 as Encoding
+const Iso8859_11 = nil as Encoding
+const Iso8859_13 = nil as Encoding
+const Latin7 = Iso8859_13 as Encoding
+const Iso8859_14 = nil as Encoding
+const Latin8 = Iso8859_14 as Encoding
+const Iso8859_15 = nil as Encoding
+const Latin9 = Iso8859_15 as Encoding
+const Iso8859_16 = nil as Encoding
+const Latin10 = Iso8859_16 as Encoding
+const Windows1250 = nil as Encoding
+const Windows1251 = nil as Encoding
+const Windows1252 = nil as Encoding
+const Cp437 = nil as Encoding
+const Cp850 = nil as Encoding
+const Koi8R = nil as Encoding
+const Koi8U = nil as Encoding
+
+
+def Decode(string as Str, enc as Encoding, strictness = Strict as Constant)
 end
 
-class Utf8 is BaseEncoding
-end
-
-class Utf16 is BaseEncoding
-end
-
-class Utf16Le is BaseEncoding
-end
-
-class Utf16Be is BaseEncoding
-end
-
-class Iso8859_1 is BaseEncoding 
-end
-const Latin1 = Iso8859_1 as def (Constant=) as Encoding
-
-class Iso8859_2 is BaseEncoding
-end
-const Latin2 = Iso8859_2 as def (Constant=) as Encoding
-
-class Iso8859_3 is BaseEncoding
-end
-const Latin3 = Iso8859_3 as def (Constant=) as Encoding
-
-class Iso8859_4 is BaseEncoding
-end
-const Latin4 = Iso8859_4 as def (Constant=) as Encoding
-
-class Iso8859_5 is BaseEncoding
-end
-
-class Iso8859_6 is BaseEncoding
-end
-
-class Iso8859_7 is BaseEncoding
-end
-
-class Iso8859_8 is BaseEncoding
-end
-
-class Iso8859_9 is BaseEncoding
-end
-const Latin5 = Iso8859_9 as def (Constant=) as Encoding
-
-class Iso8859_10 is BaseEncoding
-end
-const Latin6 = Iso8859_10 as def (Constant=) as Encoding
-
-class Iso8859_11 is BaseEncoding
-end
-
-class Iso8859_13 is BaseEncoding
-end
-const Latin7 = Iso8859_13 as def (Constant=) as Encoding
-
-class Iso8859_14 is BaseEncoding
-end
-const Latin8 = Iso8859_14 as def (Constant=) as Encoding
-
-class Iso8859_15 is BaseEncoding
-end
-const Latin9 = Iso8859_15 as def (Constant=) as Encoding
-
-class Iso8859_16 is BaseEncoding
-end
-const Latin10 = Iso8859_16 as def (Constant=) as Encoding
-
-class Windows1250 is BaseEncoding
-end
-
-class Windows1251 is BaseEncoding
-end
-
-class Windows1252 is BaseEncoding
-end
-
-class Cp437 is BaseEncoding
-end
-
-class Cp850 is BaseEncoding
-end
-
-class Koi8R is BaseEncoding
-end
-
-class Koi8U is BaseEncoding
-end
-
-
-def Decode(string as Str, enc as def (Constant=) as Encoding, 
-           strictness = Strict as Constant)
-end
-
-def Encode(string as Str, enc as def (Constant=) as Encoding, 
-           strictness = Strict as Constant)
+def Encode(string as Str, enc as Encoding, strictness = Strict as Constant)
 end
 
 
