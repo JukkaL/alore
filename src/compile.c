@@ -201,7 +201,7 @@ int AEndAloreProgram(AThread *t, AValue val)
     }
 
     if (ATry(t)) {
-        ADefDisplay("Uncaught exception at program exit", NULL);
+        ADefDisplay("alore: Uncaught exception at program exit", NULL);
         return UNCAUGHT_EXCEPTION_STATUS;
     }
     
@@ -230,10 +230,12 @@ int AEndAloreProgram(AThread *t, AValue val)
         }
     }
     
-    if (!AExecuteExitHandlers(t))
-        ADefDisplay("Uncaught exception raised by an exit handler", NULL);
-    else if (AIsError(val))
+    if (AIsError(val))
         ADisplayStackTraceback(t, ADefDisplay, NULL);
+    
+    if (!AExecuteExitHandlers(t))
+        ADefDisplay("alore: Uncaught exception raised by an exit handler",
+                    NULL);
     
     AEndTry(t);
     
