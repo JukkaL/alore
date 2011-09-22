@@ -492,6 +492,10 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                     strcpy(type, "True");
                 else if (AIsFalse(val))
                     strcpy(type, "False");
+                else if (AIsError(val))
+                    strcpy(type, "{AError}");
+                else if (AIsDefault(val))
+                    strcpy(type, "{ADefault}");
                 else if (AIsConstant(val))
                     strcpy(type, "Constant");
                 else if (AIsNonSpecialType(val))
