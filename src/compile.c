@@ -113,7 +113,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
 
     if (!AInitializeCompiler(t, modulePath, interpreter, isStandalone,
                              maxHeap))
-        FailAndExit("Out of memory during initialization");
+        FailAndExit("Compiler initialization failed");
 
     /* Determine program path. */
     if (isStandalone)
@@ -136,7 +136,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
        statically-linked C modules. */
     for (i = 0; AAllModules[i] != NULL; i++) {
         if (!ACreateModule(AAllModules[i], FALSE)) {
-            FailAndExit("CompileError in module initialization");
+            FailAndExit("Error in module initialization");
             break;
         }
     }
@@ -147,7 +147,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
         FailAndExit("Could not disallow old gen gc");
 
     if (!ASetupCommandLineArgs(*t, argc, argv))
-        FailAndExit("CompileError setting up arguments");
+        FailAndExit("Error setting up arguments");
 
     if (!ACompileFile(*t, file, "", &num)) {
         ADisplayErrorMessages(ADefDisplay, NULL);
@@ -1048,8 +1048,8 @@ AValue ACreateConstant(ASymbolInfo *sym)
 /* FIX: Use a better error handling mechanism. */
 static void FailAndExit(const char *msg)
 {
-    fprintf(stderr, "%s\n", msg);
-    exit(1);
+    fprintf(stderr, "alore: %s\n", msg);
+    exit(3);
 }
 
 
