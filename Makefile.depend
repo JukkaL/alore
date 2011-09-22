@@ -85,7 +85,7 @@ src/module.o: src/module.c src/module.h src/value.h src/common.h \
  src/symtable.h src/token.h src/operator.h src/cutil.h src/globals.h \
  src/thread.h src/class.h src/ident.h src/memberid.h src/mem.h src/gc.h \
  src/heapalloc.h src/debug_params.h src/dynaload.h src/internal.h \
- src/std_module.h src/debug_runtime.h src/error.h
+ src/std_module.h src/debug_runtime.h src/error.h src/util.h
 src/dynaload.o: src/dynaload.c src/dynaload.h src/value.h src/common.h \
  src/aconfig.h config.h src/mem.h src/gc.h src/thread.h src/heapalloc.h \
  src/debug_params.h src/symtable.h src/compile.h src/lex.h src/token.h \
@@ -103,10 +103,10 @@ src/dynload.o: src/dynload.c src/alore.h src/value.h src/common.h \
  src/errmsg.h src/compile.h src/lex.h src/symtable.h src/token.h
 src/interp.o: src/interp.c src/alore.h src/value.h src/common.h src/aconfig.h \
  config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
- src/runtime.h src/operator.h src/interp.h src/debug_params.h src/class.h \
- src/symtable.h src/opcode.h src/memberid.h src/mem.h src/array.h \
- src/tuple.h src/int.h src/float.h src/str.h src/internal.h \
- src/debug_runtime.h src/gc.h src/heapalloc.h
+ src/runtime.h src/operator.h src/interp.h src/debug_params.h \
+ src/gccinterp.h src/class.h src/symtable.h src/opcode.h src/memberid.h \
+ src/mem.h src/array.h src/tuple.h src/int.h src/float.h src/str.h \
+ src/internal.h src/debug_runtime.h src/gc.h src/heapalloc.h
 src/runtime.o: src/runtime.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/runtime.h src/operator.h src/class.h src/symtable.h \
@@ -179,9 +179,7 @@ src/debug_runtime.o: src/debug_runtime.c src/aconfig.h config.h src/alore.h \
  src/heap.h src/mem.h src/str.h src/gc.h src/heapalloc.h \
  src/gc_internal.h src/gc_float.h
 src/displaycode.o: src/displaycode.c src/common.h src/aconfig.h config.h \
- src/debug_params.h src/debug_runtime.h src/opcode.h src/runtime.h \
- src/value.h src/thread.h src/operator.h src/globals.h src/class.h \
- src/symtable.h src/mem.h src/util.h
+ src/debug_params.h
 src/std_module.o: src/std_module.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/runtime.h src/operator.h src/memberid.h \
@@ -369,7 +367,7 @@ src/base64_module.o: src/base64_module.c src/alore.h src/value.h src/common.h \
 src/main.o: src/main.c src/alore.h src/value.h src/common.h src/aconfig.h \
  config.h src/module.h src/thread.h src/globals.h src/errmsg.h \
  src/compile.h src/lex.h src/symtable.h src/token.h src/debug_runtime.h \
- src/debug_params.h src/version.h
+ src/debug_params.h src/version.h src/util.h
 src/cmodules.o: src/cmodules.c src/cmodules.h src/module.h src/value.h \
  src/common.h src/aconfig.h config.h
 src/version.o: src/version.c src/version.h src/aconfig.h config.h build.h
