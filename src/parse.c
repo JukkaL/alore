@@ -2798,6 +2798,8 @@ static void SetSuperType(ATypeInfo *type, ATypeInfo *super, int lineNumber)
 }
 
 
+/* Resolve the direct supertype of a type and return it. Assume that the
+   supertypes of the argument type have not been resolved already. */
 ATypeInfo *AGetResolveSupertype(ATypeInfo *type)
 {
     AUnresolvedSupertype *unresolv;
@@ -2830,6 +2832,8 @@ ATypeInfo *AGetResolveSupertype(ATypeInfo *type)
 }
 
 
+/* Resolve the interfaces of a type, if they have not been resolved already.
+   This may also resolve the direct supertype. */
 void AResolveTypeInterfaces(ATypeInfo *type)
 {
     if (!type->isSuperValid)
@@ -2837,8 +2841,10 @@ void AResolveTypeInterfaces(ATypeInfo *type)
 }
 
 
-/* Resolve all supertypes. Only call this at the end of a compilation, as some
-   modules may otherwise not have been compiled yet. */
+/* Resolve all unresolved supertypes. Only call this after the first phase
+   of compilation has been finished for all modules, as some modules may
+   otherwise not have been processed yet and thus some of the supertype
+   references might not be valid. Also clear the unresolved supertype list. */
 void AFixSupertypes(void)
 {
     AUnresolvedSupertype *unresolv;
@@ -2855,6 +2861,9 @@ void AFixSupertypes(void)
 }
 
 
+/* Resolve the supertypes of a type. The type and supertypes are described by
+   the argument. Also free the argument. Assume that all the supertypes have
+   been through the first phase of compilation. */
 void AFixSupertype(AUnresolvedSupertype *unresolv)
 {
     AUnresolvedNameList *mod, *interfaces;
@@ -2862,22 +2871,32 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
     AList *modules;
     AToken nameTok[A_MODULE_NAME_MAX_PARTS * 2 + 4];
     ASymbolInfo *oldModule;
- 
+
+    /* The names of supertypes are stored in the unresolv argument, and these
+       do not have to be fully qualified. To resolve the names, we need to
+       establish some of the compilation context of the target type, in
+       particular the current module and imported modules.
+
+       Preserve the original state before switching the state, and restore the
+       state afterwards. */
+
+    /* Set current module to the module of the target type and remember the
+       original module. */
     oldModule = ACurModule;
     ACurModule = unresolv->type->sym->sym;
 
     /* Unimport all imported modules. */
     DeactivateModules(AImportedModules);
 
-    /* Import relevant modules to provide the right context for expanding
-       supertype references, which might not be fully qualified. */
+    /* Import relevant modules to provide the right context for resolving
+       supertype names, which might not be fully qualified. */
     modules = NULL;
     for (mod = unresolv->modules; mod != NULL; mod = mod->next) {
         AExpandUnresolvedName(mod, nameTok);
         ImportCompiledModule(nameTok, &modules);
     }
 
-    /* Bind the superclass, if present. */
+    /* Resolve the direct supertype, if present. */
     if (unresolv->super != NULL) {
         AExpandUnresolvedName(unresolv->super, nameTok);
         
@@ -2899,7 +2918,7 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
         unresolv->type->super = AValueToType(objectType);
     }
 
-    /* Bind the interfaces, if present. */
+    /* Resolve the implemented interfaces, if present. */
     interfaces = unresolv->interfaces;
     while (interfaces != NULL) {
         AExpandUnresolvedName(interfaces, nameTok);
@@ -2911,18 +2930,20 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
         interfaces = interfaces->next;
     }
 
+    /* Mark that the supertypes have been resolved. */
     unresolv->type->isSuperValid = TRUE;
-    
+
+    /* Mark modules as not imported and free module list. */
     DeactivateModules(modules);
     ADisposeList(modules);
-    
+
+    /* Free information about the unresolved module. */
     AFreeUnresolvedNameList(unresolv->modules);
     AFreeUnresolvedNameList(unresolv->super);
-    AFreeUnresolvedNameList(unresolv->interfaces);
-    
+    AFreeUnresolvedNameList(unresolv->interfaces);    
     AFreeStatic(unresolv);
 
-    /* Restore the previous compiler state. */
+    /* Restore the saved previous compiler state. */
     ACurModule = oldModule;
     ActivateModules(AImportedModules);
 }

@@ -825,6 +825,21 @@ static AToken *ParseAndStoreInheritanceInfo(ATypeInfo *type, AToken *tok,
 }
 
 
+/* Store information about the supertypes (direct supertype and implemented
+   interfaces) of a type so that references to these the types can later be
+   resolved to point to the correct ATypeInfo structures. Supertype name
+   resolution must be done later since the supertype Type objects may not have
+   been created when the types are processed initially.
+
+   To resolve the type names, we also need to store a list of imported
+   modules. The supertype names do not have to be fully qualified, and
+   partially qualified names can only be resolved in the correct import
+   context.
+
+   Functions AGetResolveSupertype and AFixSupertype are involved in the
+   resolution process. They can only be used after the first phase of
+   compilation has been completed for a compilation unit and its
+   dependencies. */
 void AStoreInheritanceInfo(ATypeInfo *type, AUnresolvedNameList *imports,
                            AUnresolvedNameList *super,
                            AUnresolvedNameList *interfaces)
@@ -841,6 +856,8 @@ void AStoreInheritanceInfo(ATypeInfo *type, AUnresolvedNameList *imports,
     resolv->next = AUnresolvedSupertypes;
     AUnresolvedSupertypes = resolv;
 
+    /* The information about supertypes is not yet valid. This will be changed
+       after they have been resolved. */
     type->isSuperValid = FALSE;
 }
 
