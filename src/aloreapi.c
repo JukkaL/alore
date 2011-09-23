@@ -1119,9 +1119,9 @@ int ANext(AThread *t, AValue e, AValue *next)
 
 
 /* Evaluate the operation "a in b". */
-int AIn(AThread *t, AValue a, AValue b)
+int AIn(AThread *t, AValue item, AValue collection)
 {
-    AValue res = AIsIn(t, a, b);
+    AValue res = AIsIn(t, item, collection);
     if (AIsError(res))
         return -1;
     else if (res == AZero)
