@@ -238,6 +238,9 @@ void ACheckSetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
                            struct AToken_ *tok);
 
 
+void AReportModuleError(ASymbolInfo *module, const char *format, ...);
+
+
 extern struct AList_ *AImportedModules;
 
 extern ASymbolInfo *ACurModule;

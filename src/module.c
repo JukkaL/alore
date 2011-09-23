@@ -55,7 +55,6 @@ static ABool AddMemberVar(ATypeInfo *type, const char *name, ABool isWritable,
                           ABool isPrivate);
 static ABool ImportModuleUsingName(const char *name);
 static ABool HasFinalizerMethod(AModuleDef *def);
-static void ReportModuleError(ASymbolInfo *module, const char *format, ...);
 
 
 #define ModDefName(def) (*(def)->str == '-' ? (def)->str + 1 : (def)->str)
@@ -269,7 +268,7 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
         switch (modDef->type) {
         case MD_DEF:
             if (!CreateCFunction(modDef, &num)) {
-                ReportModuleError(module, "Could not create %s", modDef->str);
+                AReportModuleError(module, "Could not create %s", modDef->str);
                 goto Fail;
             }
             
@@ -314,19 +313,21 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
             AModuleDef *orig = modDef;
             modDef = CreateCType(modDef, imports);
             if (modDef == NULL) {
-                ReportModuleError(module, "Could not create %s", orig->str);
+                AReportModuleError(module, "Could not create %s", orig->str);
                 goto Fail;
             }
             break;
         }
 
         default:
-            ReportModuleError(module, "Invalid definition type %d",
+            AReportModuleError(module, "Invalid definition type %d",
                               modDef->type);
             break;
         }
     }
 
+    /* Mark the C module as active. Note that it is fully initialized only
+       after all the realization passes have been finished. */
     module->info.module.cModule = A_CM_ACTIVE;
     
     AFreeUnresolvedNameList(imports);
@@ -477,8 +478,9 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
     if (!isInterface) {
         /* Find constructor. */
         if (!ProcessConstructor(def, type)) {
-            ReportModuleError(ACurModule, "Could not create constructor of %i",
-                              symInfo);
+            AReportModuleError(ACurModule,
+                               "Could not create constructor of %i",
+                               symInfo);
             return FALSE;
         }
 
@@ -637,13 +639,13 @@ static AModuleDef *AddCTypeDefs(AModuleDef *def, ASymbolInfo *symInfo,
             break;
 
         case MD_IMPLEMENT:
-            ReportModuleError(ACurModule,
+            AReportModuleError(ACurModule,
                          "A_IMPLEMENT must appear before other declarations");
             return NULL;
 
         default:
-            ReportModuleError(ACurModule, "Invalid definition type %d",
-                              def->type);
+            AReportModuleError(ACurModule, "Invalid definition type %d",
+                               def->type);
             return NULL;
         }
     }
@@ -944,10 +946,10 @@ static ABool HasFinalizerMethod(AModuleDef *def)
 }
 
 
-/* Report an error in a C module. These are all internal errors and are
-   reported to help debugging. The arguments are similar to
+/* Report an error in a C module. These are all considered internal errors and
+   are reported to help debugging. The arguments are similar to
    AFormatMessage(). */
-static void ReportModuleError(ASymbolInfo *module, const char *format, ...)
+void AReportModuleError(ASymbolInfo *module, const char *format, ...)
 {
     char buf[1024], buf2[1024];    
     va_list args;
