@@ -90,4 +90,9 @@ typedef ssize_t Assize_t;
 void ATrace(const char *format, ...);
 
 
+/* Report an unrecoverable error. Write an error message to stderr and halt the
+   process immediately. */
+A_APIFUNC AValue AEpicInternalFailure(const char *message);
+
+
 #endif

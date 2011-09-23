@@ -363,10 +363,6 @@ A_APIFUNC AValue AAddExitHandler(AThread *t, AValue *args);
 A_APIFUNC AValue ACallMethodByNum(AThread *t, int member, int numArgs,
                                   AValue *args);
 
-/* Report an unrecoverable error. Write an error message to stderr and halt the
-   process immediately. */
-A_APIFUNC AValue AEpicInternalFailure(const char *message);
-
 /* Return TRUE if the program currently being executed is standalone, i.e.
    compiled using alorec. */
 A_APIFUNC ABool AIsStandalone(void);
