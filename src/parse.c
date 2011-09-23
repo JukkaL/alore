@@ -2871,6 +2871,7 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
     AList *modules;
     AToken nameTok[A_MODULE_NAME_MAX_PARTS * 2 + 4];
     ASymbolInfo *oldModule;
+    ABool isCModule;
 
     /* The names of supertypes are stored in the unresolv argument, and these
        do not have to be fully qualified. To resolve the names, we need to
@@ -2896,6 +2897,12 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
         ImportCompiledModule(nameTok, &modules);
     }
 
+    /* Is the type defined in a C module? This affects error reporting. Some
+       C module errors have to be reported here, or otherwise they won't
+       be reported. Most errors in Alore modules will generally be detected
+       during parsing, C modules are not parsed. */
+    isCModule = unresolv->type->sym->sym->info.module.cModule != A_CM_NON_C;
+
     /* Resolve the direct supertype, if present. */
     if (unresolv->super != NULL) {
         AExpandUnresolvedName(unresolv->super, nameTok);
@@ -2909,6 +2916,16 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
                          -1);
         else {
             /* Superclass was undefined, probably due to programmer error. */
+            
+            if (isCModule) {
+                /* Unresolved supertype for a C class. Report it as an
+                   internal error. */
+                AReportModuleError(unresolv->type->sym->sym,
+                                   "Cannot resolve A_INHERIT for %q",
+                                   unresolv->type->sym);
+            }
+
+            /* Also produce a debugging message in debug builds. */
             ADebugCompilerMsg(("Unresolved supertype for %i\n",
                                unresolv->type->sym));
         }
@@ -2927,6 +2944,13 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
         if (super != &UndefinedVariable && super->type == ID_GLOBAL_INTERFACE)
             AAddInterface(unresolv->type,
                           AValueToType(AGlobalByNum(super->num)), FALSE);
+        else if (isCModule) {
+            /* Unresolved interface for a C class. Report it as an internal
+               error. */
+            AReportModuleError(unresolv->type->sym->sym,
+                               "Cannot resolve A_IMPLEMENT for %q",
+                               unresolv->type->sym);
+        }
         interfaces = interfaces->next;
     }
 
