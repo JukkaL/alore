@@ -46,7 +46,7 @@ Linux)    PLATFORM='linux';;
 FreeBSD)  PLATFORM='freebsd';;
 SunOS)    PLATFORM='solaris';;
 MINGW*)   PLATFORM='windows';;
-Darwin)   PLATFORM='osx';;
+Darwin)   PLATFORM='mac';;
 *)        PLATFORM='unknown';;
 esac
 AC_MSG_RESULT([$PLATFORM])
@@ -148,7 +148,7 @@ freebsd)        CC_SHARED_FLAGS="-fPIC";;
 solaris-sparc)  CC_SHARED_FLAGS="-xcode=pic32";;
 solaris-*)      CC_SHARED_FLAGS="-KPIC";;
 windows)        CC_SHARED_FLAGS="";;
-osx)            CC_SHARED_FLAGS="";;
+mac)            CC_SHARED_FLAGS="";;
 *)              CC_SHARED_FLAGS="-fPIC";;
 esac
 AC_MSG_RESULT([$CC_SHARED_FLAGS])
@@ -187,7 +187,7 @@ AC_SUBST(SOEXT)
 AC_MSG_CHECKING([for suffix of shared libraries])
 case $PLATFORM in
 windows)       SOEXT=".dll";;
-osx)           SOEXT=".so";;
+mac)           SOEXT=".so";;
 *)	       SOEXT=".so";;
 esac
 AC_MSG_RESULT([$SO])

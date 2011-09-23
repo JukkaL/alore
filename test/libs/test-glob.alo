@@ -10,7 +10,7 @@ import os, io
 class GlobSuite is Suite
   -- Constants used by test cases.
   private const tmpDir = "GLOBTMP"
-  private const caseInsensitive = Platform in ("windows", "osx")
+  private const caseInsensitive = Platform in ("windows", "mac")
 
 
   -- FnMatch test cases

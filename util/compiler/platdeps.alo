@@ -39,7 +39,7 @@ def GetLinkOpts(isDebug)
       linkOpts = ["-lalorec", "-lm", "-lwsock32", "-lmpr"]
     case "solaris"
       linkOpts = ["-lalorec", "-lm"]
-    case "osx"
+    case "mac"
       linkOpts = ["-lalorec", "-lm"]
     else
       -- These default linker options might work...
@@ -62,8 +62,8 @@ def GetLinkOpts(isDebug)
     linkOpts.append("-g")
   end
   
-  if Platform == "osx"
-    -- OS X: Create an export list and use it when linking.
+  if Platform == "mac"
+    -- Mac OS X: Create an export list and use it when linking.
     var p = MyMakeTempFile("tmp######.lst")
     var f = File(p, Output)
     for ex in Exports
@@ -226,7 +226,7 @@ end
 
 
 def GetStripOptions()
-  if Platform == "osx"
+  if Platform == "mac"
     -- Strip only local symbols (the  linker has already removed non-exported
     -- global symbols).
     return "-x"

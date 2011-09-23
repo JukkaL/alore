@@ -4,7 +4,7 @@ import os, io, sys
 
 
 -- Does our platform have case insensitive path name matching?
-private const CaseInsensitive = Platform in ["windows", "osx"]
+private const CaseInsensitive = Platform in ["windows", "mac"]
 
 
 -- Expand a pattern into an array of matching paths.
