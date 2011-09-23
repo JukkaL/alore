@@ -8,6 +8,7 @@ const Bom = "" as Str -- FIX initialize
 interface Encoding
   def decoder(strictness= as Constant) as Decoder
   def encoder(strictness= as Constant) as Encoder
+  def name as Str
 end
 
 
