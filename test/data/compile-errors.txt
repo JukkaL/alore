@@ -1408,7 +1408,7 @@ file.alo, line 3: "X" undefined
 
 [case testGarbageAfterBind]
 interface A
-  bind Object, Str
+  bind Int, Str
   def (y
 end
 [out]
