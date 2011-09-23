@@ -2822,8 +2822,10 @@ ATypeInfo *AGetResolveSupertype(ATypeInfo *type)
         }
     }
 
-    /* IDEA: We should never get here. Generate an internal error. */
-
+    /* We should never get here. Generate an internal error. */
+    AEpicInternalFailure("Attempt to resolve the supertype of a type not "
+                         "in the unresolved list");
+    
     return NULL;
 }
 
@@ -2888,7 +2890,7 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
                          -1);
         else {
             /* Superclass was undefined, probably due to programmer error. */
-            ADebugCompilerMsg(("Unresolved superclass for %i\n",
+            ADebugCompilerMsg(("Unresolved supertype for %i\n",
                                unresolv->type->sym));
         }
     } else if (!unresolv->type->isInterface) {
