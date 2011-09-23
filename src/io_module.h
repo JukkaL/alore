@@ -40,7 +40,8 @@ extern int AFileClassNum;
 extern int AUnstrictMemberNum;
 
 extern int AStreamMemberNum;
-extern int ACodecMemberNum;
+extern int ATextStreamDecoderNum;
+extern int ATextStreamEncoderNum;
 
 
 #define A_FILE_METHOD 0

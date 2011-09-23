@@ -753,12 +753,15 @@ AValue AStrDecode(AThread *t, AValue *frame)
     frame[2] = frame[1];
     frame[1] = A_UNWRAP(frame[0]);
     
-    if (AIsDefault(frame[3]))
-        frame[3] = ACallValue(t, frame[2], 0, frame + 3);
-    else {
+    /* Did caller provide a strictness argument? */ 
+    if (AIsDefault(frame[3])) {
+        /* No. Assume strict encoding. */
+        frame[3] = ACallMethod(t, "decoder", 0, frame + 2);
+    } else {
+        /* Explicit strictness. */
         if (frame[3] == AGlobalByNum(AUnstrictNum))
             isStrict = FALSE;
-        frame[3] = ACallValue(t, frame[2], 1, frame + 3);
+        frame[3] = ACallMethod(t, "decoder", 1, frame + 2);
     }
         
     if (AIsError(frame[3]))
@@ -791,11 +794,15 @@ AValue AStrDecode(AThread *t, AValue *frame)
 AValue AStrEncode(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0]);
-    
-    if (AIsDefault(frame[2]))
-        frame[2] = ACallValue(t, frame[1], 0, frame + 2);
-    else
-        frame[2] = ACallValue(t, frame[1], 1, frame + 2);
+
+    /* Did caller provide a strictness argument? */ 
+    if (AIsDefault(frame[2])) {
+        /* No. Assume strict encoding. */
+        frame[2] = ACallMethod(t, "encoder", 0, frame + 1);
+    } else {
+        /* Explicit strictness. */
+        frame[2] = ACallMethod(t, "encoder", 1, frame + 1);
+    }
     
     if (AIsError(frame[2]))
         return AError;

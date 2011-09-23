@@ -30,26 +30,38 @@ int ADefaultEncodingNum;
 int AUnstrictMemberNum;
 
 int AStreamMemberNum;
-int ACodecMemberNum;
+int ATextStreamDecoderNum;
+int ATextStreamEncoderNum;
 
 
 static const AWideChar ReplChar[2] = { 0xfffd, '\0' };
 
 
+/* io::TextStream create(stream[, encoding][, ...])
+   Construct a text stream that uses the stream parameter for actual
+   input/output of encoded data. */
 AValue ATextStreamCreate(AThread *t, AValue *frame)
 {
     int i;
     ABool isStrict = TRUE;
     AValue buffering = ADefault;
-    
-    if (!AIsType(frame[2])) {
+    int numArgs;
+
+    /* Check if the encoding argument was omitted. */
+    if (AIsConstant(frame[2])) {
+        /* No explicit encoding given. Insert an encoding in the frame so that
+           is always present. */
+        /* Shift option arguments up one position. */
         for (i = 4; i >= 3; i--)
             frame[i] = frame[i - 1];
+        /* Use the default encoding. */
         frame[2] = AGlobalByNum(ADefaultEncodingNum);
     }
 
+    /* Store the stream argument in the instance. */
     ASetMemberDirect(t, frame[0], AStreamMemberNum, frame[1]);
 
+    /* Parse options (symbolic constants). */
     for (i = 3; i <= 4; i++) {
         if (frame[i] == AGlobalByNum(AUnstrictNum))
             isStrict = FALSE;
@@ -58,21 +70,38 @@ AValue ATextStreamCreate(AThread *t, AValue *frame)
             buffering = frame[i];
     }
 
-    if (isStrict)
-        frame[2] = ACallValue(t, frame[2], 0, frame + 5);
-    else {
+    /* Store information about strictness in the TextStream instance. */
+    if (!isStrict)
         ASetMemberDirect(t, frame[0], AUnstrictMemberNum, ATrue);
-        frame[5] = AGlobalByNum(AUnstrictNum);
-        frame[2] = ACallValue(t, frame[2], 1, frame + 5);
-    }
     
-    ASetMemberDirect(t, frame[0], ACodecMemberNum, frame[2]);
+    /* Prepare for constructing decoder and encoder objects. */
+    frame[4] = frame[2];
+    if (isStrict) 
+        numArgs = 0;
+    else {
+        frame[5] = AGlobalByNum(AUnstrictNum);
+        numArgs = 1;
+    }
 
+    /* Construct decoder object. */
+    frame[3] = ACallMethod(t, "decoder", numArgs, frame + 4);
+    if (frame[3] == AError)
+        return AError;
+    ASetMemberDirect(t, frame[0], ATextStreamDecoderNum, frame[3]);
+
+    /* Construct encoder object. */
+    frame[3] = ACallMethod(t, "encoder", numArgs, frame + 4);
+    if (frame[3] == AError)
+        return AError;
+    ASetMemberDirect(t, frame[0], ATextStreamEncoderNum, frame[3]);
+
+    /* Call superclass constructor; allow both input and output for
+       simplicity (the wrapped stream will enforce correct input/output
+       behavior). */
     frame[1] = AGlobal(t, "io::Input");
     frame[2] = AGlobal(t, "io::Output");
     frame[3] = buffering;
-    frame[4] = ADefault;
-    
+    frame[4] = ADefault;    
     return AStreamCreate(t, frame);
 }
 
@@ -82,7 +111,7 @@ AValue ATextStream_Write(AThread *t, AValue *frame)
     int i;
 
     for (i = 0; i < AArrayLen(frame[1]); i++) {
-        frame[2] = AMemberDirect(frame[0], ACodecMemberNum);
+        frame[2] = AMemberDirect(frame[0], ATextStreamEncoderNum);
         frame[3] = AArrayItem(frame[1], i);
         frame[2] = ACallMethod(t, "encode", 1, frame + 2);
         if (AIsError(frame[2]))
@@ -98,7 +127,7 @@ AValue ATextStream_Write(AThread *t, AValue *frame)
 
 AValue AIsUnprocessed(AThread *t, AValue *self, AValue *frame)
 {
-    frame[0] = AMemberDirect(*self, ACodecMemberNum);
+    frame[0] = AMemberDirect(*self, ATextStreamDecoderNum);
     frame[0] = ACallMethod(t, "unprocessed", 0, frame);
     if (AIsError(frame[0]))
         return AError;
@@ -166,7 +195,7 @@ AValue ATextStream_Read(AThread *t, AValue *frame)
        and return the result. Note that this might result in return an empty
        string (if only a partial character has been read) even if not at the
        end of the file. */
-    frame[2] = AMemberDirect(frame[0], ACodecMemberNum);
+    frame[2] = AMemberDirect(frame[0], ATextStreamDecoderNum);
     return ACallMethod(t, "decode", 1, frame + 2);
 }
 
@@ -225,7 +254,7 @@ AValue ATextFileCreate(AThread *t, AValue *frame)
     ABool isStrict = TRUE;
     AValue buffering = ADefault;
 
-    if (!AIsType(frame[2])) {
+    if (AIsConstant(frame[2])) {
         for (i = 5; i >= 3; i--)
             frame[i] = frame[i - 1];
         frame[2] = AGlobalByNum(ADefaultEncodingNum);
@@ -272,8 +301,8 @@ AValue ATextFileCreate(AThread *t, AValue *frame)
 
 #ifndef A_HAVE_WINDOWS
 
-/* Map codeset name (e.g. "UTF-8") to a encoding type (e.g. textio::Utf8).
-   Return nil if not successful. */
+/* Map codeset name (e.g. "UTF-8") to an encoding object (e.g.
+   encodings::Utf8). Return nil if not successful. */
 static AValue MapCodesetToEncodingType(const char *codeset)
 {
     char normCodeset[128];

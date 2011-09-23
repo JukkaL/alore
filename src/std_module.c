@@ -279,9 +279,7 @@ static AValue StdMain(AThread *t, AValue *frame)
     }
 #endif
 
-    /* Also initialize the io module. Do it explicitly to ensure that the
-       built-in modules are initialized in the correct order. */
-    return AIoMain(t, frame);
+    return ANil;
 }
 
 

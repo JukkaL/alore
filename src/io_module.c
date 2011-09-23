@@ -1207,7 +1207,7 @@ AValue ARaiseErrnoIoError(AThread *t, const char *path)
 
 
 A_MODULE(io, "io")
-    /* IoMain is called by StdMain so it is not needed here. */
+    A_DEF("Main", 0, 5, AIoMain)
     
     A_DEF_P("__FlushOutputBuffers", 0, 1, AFlushOutputBuffers,
             &AFlushOutputBuffersNum)
@@ -1279,12 +1279,13 @@ A_MODULE(io, "io")
       A_METHOD_OPT("create", 1, 4, 2, ATextStreamCreate)
       A_METHOD_VARARG("_write", 0, 0, 2, ATextStream_Write)
       A_METHOD("_read", 1, 2, ATextStream_Read)
-      A_VAR_P(A_PRIVATE("unstrict"), &AUnstrictMemberNum)
       A_METHOD("close", 0, 3, ATextStreamClose) /* Compat: Stream flush */
       A_METHOD("flush", 0, 3, ATextStreamFlush) /* Compat: Stream flush */
 
+      A_VAR_P(A_PRIVATE("unstrict"), &AUnstrictMemberNum)
       A_VAR_P(A_PRIVATE("stream"), &AStreamMemberNum)
-      A_VAR_P(A_PRIVATE("codec"), &ACodecMemberNum)
+      A_VAR_P(A_PRIVATE("decoder"), &ATextStreamDecoderNum)
+      A_VAR_P(A_PRIVATE("encoder"), &ATextStreamEncoderNum)
     A_END_CLASS()
 
     A_CLASS("TextFile")
