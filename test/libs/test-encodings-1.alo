@@ -82,13 +82,13 @@ class CodecsSuite is Suite
   end
   
   def testUtf8PartialDecode()    
-    var c = Utf8()
+    var c = Utf8.decoder()
     AssertEqual(c.decode("\u00c2"), "")
     AssertEqual(c.unprocessed(), "\u00c2")
     AssertEqual(c.decode("\u0080"), "\u0080")
     AssertEqual(c.unprocessed(), "")
     
-    c = Utf8()
+    c = Utf8.decoder()
     AssertEqual(c.decode("\u00c2"), "")
     AssertEqual(c.unprocessed(), "\u00c2")
     AssertEqual(c.decode("\u0080\u00c2"), "\u0080")
@@ -108,10 +108,10 @@ class CodecsSuite is Suite
   end
   
   def testUtf8Strictness()
-    var c = Utf8(Strict)
+    var c = Utf8.decoder(Strict)
     AssertRaises(DecodeError, c.decode, ["\u0080"])
     
-    c = Utf8(Unstrict)
+    c = Utf8.decoder(Unstrict)
     AssertEqual(c.decode("\u0080"), "\ufffd")
     AssertEqual(c.unprocessed(), "")
     AssertEqual(c.decode("\u00c2a"), "\ufffd")
@@ -145,13 +145,15 @@ class CodecsSuite is Suite
   end
   
   def testLatin1Errors()
-    var c = Latin1(Strict)
-    AssertRaises(EncodeError, c.encode, ["..\u0100.."])
-    AssertRaises(DecodeError, c.decode, ["..\u0100.."])
+    var e = Latin1.encoder(Strict)
+    var d = Latin1.decoder(Strict)
+    AssertRaises(EncodeError, e.encode, ["..\u0100.."])
+    AssertRaises(DecodeError, d.decode, ["..\u0100.."])
     
-    c = Latin1(Unstrict)
-    AssertEqual(c.encode("..\u0100.."), "..?..")
-    AssertEqual(c.decode("..\u0100.."), "..\ufffd..")
+    e = Latin1.encoder(Unstrict)
+    d = Latin1.decoder(Unstrict)
+    AssertEqual(e.encode("..\u0100.."), "..?..")
+    AssertEqual(d.decode("..\u0100.."), "..\ufffd..")
   end
   
   def testUtf16Le()
@@ -177,9 +179,9 @@ class CodecsSuite is Suite
   end
   
   def testUtf16()
-    -- Only a simple test; the Utf16 class is equivalent to either Utf16Le or
-    -- Utf16Be.
-    var c = Utf16()
+    -- Only a simple test; the Utf16 encoding is equivalent to either Utf16Le 
+    -- or Utf16Be.
+    var c = Utf16.encoder()
     Assert(c.encode("x") in ["\u0000x", "x\u0000"])
   end
   
@@ -283,21 +285,55 @@ class CodecsSuite is Suite
     end
   end
   
+  -- Test converting encodings to strings using Str().
+  def testEncodingStr()
+    AssertEqual(Str(Utf8), '<Utf8 encoding>')
+    AssertEqual(Str(Utf16Le), '<Utf16Le encoding>')
+    AssertEqual(Str(Utf16Be), '<Utf16Be encoding>')
+    AssertEqual(Str(Iso8859_1), '<Iso8859_1 encoding>')
+    AssertEqual(Str(Iso8859_2), '<Iso8859_2 encoding>')
+    AssertEqual(Str(Ascii), '<Ascii encoding>')
+    AssertEqual(Str(Latin1), '<Iso8859_1 encoding>')
+    
+    Assert(Str(Utf16) in ['<Utf16Be encoding>', '<Utf16Le encoding>'])
+  end
+  
+  def testEncodingName()
+    AssertEqual(Utf8.name, 'Utf8')
+    AssertEqual(Utf16Le.name, 'Utf16Le')
+    AssertEqual(Utf16Be.name, 'Utf16Be')
+    AssertEqual(Iso8859_1.name, 'Iso8859_1')
+    AssertEqual(Iso8859_2.name, 'Iso8859_2')
+    AssertEqual(Ascii.name, 'Ascii')
+    AssertEqual(Latin1.name, 'Iso8859_1')
+    
+    Assert(Utf16.name in ['Utf16Le', 'Utf16Be'])
+  end
+  
+  def testImplementedInterfaces()
+    for enc in Utf8, Utf16Le, Utf16Be, Iso8859_1, Iso8859_1, Ascii, Latin1,
+               Utf16
+      Assert(enc is Encoding)
+      Assert(enc.encoder() is Encoder)
+      Assert(enc.decoder() is Decoder)
+    end
+  end
+  
   private def assertEncode(src, codec, dst)
-    var c = codec()
+    var c = codec.encoder()
     AssertEqual(c.encode(src), unhexify(dst))
   end
   
   private def assertDecode(src, codec, dst)
-    var c = codec()
+    var c = codec.decoder()
     AssertEqual(c.decode(unhexify(src)), dst)
     AssertEqual(c.unprocessed(), "")
   end
   
   private def assertPartialDecode(codec, fixed, *a)
     for s in [Strict, Unstrict]
-      var c = codec(s)
-      var c2 = codec(s)
+      var c = codec.decoder(s)
+      var c2 = codec.decoder(s)
       AssertEqual(c.decode(unhexify(fixed + a[0])), c2.decode(unhexify(fixed)))
       var unp = unhexify(a[0])
       AssertEqual(c.unprocessed(), unp)    

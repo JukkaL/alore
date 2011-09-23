@@ -429,7 +429,7 @@ int AGetGlobalNum(AThread *t, const char *name)
 
     if (sym->type == ID_ERR_PARSE || sym->num == 0) {
         AUnlockInterpreter();
-        ARaiseValueError(t, "Invalid global variable");
+        ARaiseValueError(t, "Invalid global variable \"%s\"", name);
         return -1;
     } else
         num = sym->num;
@@ -1119,9 +1119,9 @@ int ANext(AThread *t, AValue e, AValue *next)
 
 
 /* Evaluate the operation "a in b". */
-int AIn(AThread *t, AValue a, AValue b)
+int AIn(AThread *t, AValue item, AValue collection)
 {
-    AValue res = AIsIn(t, a, b);
+    AValue res = AIsIn(t, item, collection);
     if (AIsError(res))
         return -1;
     else if (res == AZero)

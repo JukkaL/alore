@@ -644,8 +644,8 @@ class IOSuite2 is Suite
   
   -- Test that DefaultEncoding really is an encoding.
   def testDefaultEncoding()
-    AssertType(Type, DefaultEncoding)
-    var e = DefaultEncoding()
+    Assert(DefaultEncoding is Encoding)
+    var e = DefaultEncoding.encoder()
     AssertType(Str, e.encode("foo"))
   end
   
@@ -804,7 +804,7 @@ class IOSuite2 is Suite
   def testBlackHoleCodec()
     for b in Buffered, Unbuffered
       writeFile("TMP", "foo bar")
-      var f = TextFile("TMP", BlackHoleCodec, b)
+      var f = TextFile("TMP", BlackHoleCodec(), b)
       -- This results in eof error, since it seems that the file is empty.
       AssertRaises(IoError, f.readLn, [])
       f.close()
@@ -815,7 +815,7 @@ class IOSuite2 is Suite
   def testCodecException()
     for b in Buffered, Unbuffered
       writeFile("TMP", "foo bar")
-      var f = TextFile("TMP", ExceptionCodec, b)
+      var f = TextFile("TMP", ExceptionCodec(), b)
       AssertRaises(TypeError, f.readLn, [])
       f.close()
     end
@@ -830,10 +830,10 @@ class IOSuite2 is Suite
       writeFile("TMP", "foo bar")
       
       -- Empty class as codec.
-      var f = TextFile("TMP", EmptyCodec, b)
+      var f = TextFile("TMP", EmptyCodec(), b)
       AssertRaises(MemberError, f.readLn, [])
       f.close()
-      f = TextFile("TMP", EmptyCodec, b, Output)
+      f = TextFile("TMP", EmptyCodec(), b, Output)
       AssertRaises(MemberError, def ()
                                  f.writeLn("foo")
                                  f.flush()
@@ -843,6 +843,9 @@ class IOSuite2 is Suite
       except MemberError
         -- Ignore
       end
+      
+      -- Bogus codec.
+      AssertRaises(MemberError, def (); TextFile("TMP", 1, b); end)
     end
   end
   
@@ -1060,6 +1063,14 @@ end
 
 
 private class BlackHoleCodec
+  def decoder()
+    return self
+  end
+  
+  def encoder()
+    return self
+  end
+
   def decode(s)
     return ""
   end
@@ -1071,6 +1082,14 @@ end
 
 
 private class ExceptionCodec
+  def decoder()
+    return self
+  end
+  
+  def encoder()
+    return self
+  end
+
   def decode(s)
     raise TypeError("foo")
   end
@@ -1082,4 +1101,10 @@ end
 
 
 private class EmptyCodec
+  def decoder()
+    return self
+  end
+  def encoder()
+    return self
+  end
 end

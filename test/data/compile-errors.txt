@@ -1408,9 +1408,11 @@ file.alo, line 3: "X" undefined
 
 [case testGarbageAfterBind]
 interface A
-  bind Object, Str
+  bind C, D
   def (y
 end
+class C; end
+class D; end
 [out]
 file.alo: In interface "A":
 file.alo, line 2: Parse error before ,

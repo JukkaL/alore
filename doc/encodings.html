@@ -2,8 +2,8 @@
 @module encodings
 @title <tt>encodings</tt>: Character encodings
 
-<p>This module contains functions and classes for dealing with text data in
-different character encodings.
+<p>This module contains constants and types for dealing with text data
+in different character encodings.
 Its main use is converting strings between 16-bit Unicode and 8-bit (narrow)
 representations. <!-- Narrow strings must be used when dealing with narrow
 streams and other narrow data sources.-->
@@ -16,6 +16,19 @@ only support 8-bit strings.
 <p>In addition to 8-bit Unicode encodings, this module also defines several
 locale-specific encodings that only support a subset of Unicode.
 
+<p>Examples:
+
+@example
+  "\u00c3\u00a4".decode(Utf8)             -- Decode "&#228;" in UTF-8 to 16-bit Unicode
+  
+  "\u20ac".encode(Utf8)                   -- Encode the Euro sign using UTF-8
+  
+  "s&#228;&#228;".encode(Ascii, Unstrict)           -- "s??" (replace characters that cannot be represented
+                                          -- in ASCII with question marks)
+                                          
+  TextStream("file.txt", Latin1)          -- Open encoded text file for reading
+@end
+
 @see Use methods @ref{Str.encode} and @ref{Str.decode} for encoding and
      decoding strings.
 @end
@@ -25,104 +38,135 @@ locale-specific encodings that only support a subset of Unicode.
 
 <h2>Constants</h2>
 
-@var Strict
-@desc Option for character set classes indicating strict encoding and decoding.
-      Invalid input causes an @ref{EncodeError} or a @ref{DecodeError}
-      exception to be raised. This is the default behavior.
+@var Strict as Constant
+@desc Mode option for encoding objects that indicates strict encoding or
+      decoding. Invalid input causes an @ref{EncodeError} or a
+      @ref{DecodeError} exception to be raised. This is the default behavior.
 @end
 
-@var Unstrict
-@desc Option for character set classes indicating unstrict encoding and
+@var Unstrict as Constant
+@desc Mode option for encoding objects that indicates unstrict encoding and
       decoding. Invalid characters are replaced with question marks
       (<tt>"?"</tt>, when encoding) or with replacement
       characters (<tt>"\ufffd"</tt>, when decoding).
 @end
 
-@var Bom
-@desc The byte order mark character (<tt>"\ufeff"</tt>).
+@var Bom as Str
+@desc The byte order mark character (<tt>"\ufeff"</tt>). Some platforms
+      (most notably, Windows) often insert this character to the beginning
+      of text files when using a Unicode encoding such as UTF-8.
 @end
 
 <h2>Character encodings</h2>
 
-<p>The following character encoding classes are defined. They all conform to
-the @href{Character encoding interface}.
+<p>This module defines the following character encoding objects. They all
+implement the interface @href{Encoding}.
 
-@var Ascii
+@var Ascii as Encoding
 @desc The 7-bit ASCII encoding.
 @end
 
-@var Utf8
+@var Utf8 as Encoding
 @desc The UTF-8 Unicode encoding.
 @end
 
-@var Uft16
-@var Utf16Le
-@var Utf16Be
+@var Uft16 as Encoding
+@var Utf16Le as Encoding
+@var Utf16Be as Encoding
 @desc The UTF-16 Unicode encoding. The different variants stand for native,
       little endian and big endian byte orders.
 @end
 
-@var Iso8859_1 (Latin1)
-@var Iso8859_2 (Latin2)
-@var Iso8859_3 (Latin3)
-@var Iso8859_4 (Latin4)
-@var Iso8859_5
-@var Iso8859_6
-@var Iso8859_7
-@var Iso8859_8
-@var Iso8859_9 (Latin5)
-@var Iso8859_10 (Latin6)
-@var Iso8859_11
-@var Iso8859_13 (Latin7)
-@var Iso8859_14 (Latin8)
-@var Iso8859_15 (Latin9)
-@var Iso8859_16 (Latin10)
+@var Iso8859_1 as Encoding (Latin1)
+@var Iso8859_2 as Encoding (Latin2)
+@var Iso8859_3 as Encoding (Latin3)
+@var Iso8859_4 as Encoding (Latin4)
+@var Iso8859_5 as Encoding
+@var Iso8859_6 as Encoding
+@var Iso8859_7 as Encoding
+@var Iso8859_8 as Encoding
+@var Iso8859_9 as Encoding (Latin5)
+@var Iso8859_10 as Encoding (Latin6)
+@var Iso8859_11 as Encoding
+@var Iso8859_13 as Encoding (Latin7)
+@var Iso8859_14 as Encoding (Latin8)
+@var Iso8859_15 as Encoding (Latin9)
+@var Iso8859_16 as Encoding (Latin10)
 @desc The ISO 8859 8-bit encodings, with alias constants in parentheses.
 @end
 
-@var Windows1250
-@var Windows1251
-@var Windows1252
+@var Windows1250 as Encoding
+@var Windows1251 as Encoding
+@var Windows1252 as Encoding
 @desc These Windows encodings are also known as Windows code pages.
 @end
 
-@var Cp437
-@var Cp850
+@var Cp437 as Encoding
+@var Cp850 as Encoding
 @desc Legacy encodings that match MS-DOS code pages. Note that encoded
       characters in the range 0 to 31 and character 127 are decoded as the
       corresponding ASCII characters instead of the legacy graphical
       characters.
 @end
 
-@var Koi8R
+@var Koi8R as Encoding
 @desc The KOI8-R encoding for Russian.
 @end
   
-@var Koi8U
+@var Koi8U as Encoding
 @desc The KOI8-U encoding for Ukrainian.
 @end
 
-@h2 Character encoding interface
+@class-hidden Encoding
+@h2 Interface <tt>Encoding</tt>
 
-<p>The character encoding classes can be instantiated without
-arguments or with an optional strictness argument (@ref{Strict} or
-@ref{Unstrict}). Each of their instances keeps
-track of the state of a single encoded / decoded text stream.
+<p>Character encoding objects support creating <i>encoder</i> and
+<i>decoder</i> objects using the methods <tt>encoder</tt> and <tt>decoder</tt>,
+respectively. These methods can be called without
+arguments or with an optional mode argument (@ref{Strict} or
+@ref{Unstrict}). If mode is not specified, it defaults to
+<tt>Strict</tt>. Each encoder / decoder instance keeps track of the state of a
+single encoded / decoded text sequence.
 
-@fun encode(s)
+<p>Programs typically do not use <tt>Encoder</tt> and <tt>Decoder</tt> objects
+directly, but they use @ref{Str.encode} and @ref{Str.decode} methods and text
+streams.
+
+@fun encoder([mode as Constant]) as Encoder
+@desc Construct an encoder object for the encoding.
+@end
+
+@fun decoder([mode as Constant]) as Decoder
+@desc Construct a decoder object for the encoding.
+@end
+
+@var name as Str
+@desc The name of the encoding. Example:
+      @example
+        Utf8.name   -- "Utf8"
+      @end
+@end
+
+@class-hidden Encoder
+@h2 Interface <tt>Encoder</tt>
+
+@fun encode(str as Str) as Str
 @desc Encode the argument string and return the encoded string. The entire
       string is always encoded.
 @end
 
-@fun decode(s)
+@class-hidden Decoder
+@h2 Interface <tt>Decoder</tt>
+
+@fun decode(str as Str) as Str
 @desc Decode as many characters as possible from the argument string and
       return them. If any partial characters remain at the end of the string,
       remember them and prepend them to the next argument to decode. Use
       <tt>unprocessed</tt> to have a peek at them.
 @end
 
-@fun unprocessed()
-@desc Return the current buffer of partial characters or an empty string if
+@fun unprocessed() as Str
+@desc Return the current buffer of partial characters, or an empty string if
       there are none.
 @end
 
@@ -142,27 +186,28 @@ track of the state of a single encoded / decoded text stream.
 
 <h2>Functions</h2>
 
-@fun Decode(string, encoding[, strictness])
+@fun Decode(string as Str, encoding as Encoding[, mode as Constant]) as Str
 @desc @deprecated
-      Decode a string. The strictness argument may be @ref{Strict}
+      Decode a string. The mode argument may be @ref{Strict}
       (this is the default if the argument is omitted) or @ref{Unstrict}.
       Example:
       @example
         Decode(s, Utf8)         -- Decode UTF-8 string to 16-bit Unicode
       @end
-      @note Use the @ref{decode} method of <tt>Str</tt> objects instead.
+      @note Use the @ref{Str.decode} method instead.
       @end
 @end
 
-@fun Encode(string, encoding[, strictness])
+@fun Encode(string as Str, encoding as Encoding[, mode as Constant]) as Str
 @desc @deprecated
-      Encode a string. Identical to <tt>encoding([strictness]).encode(s)</tt>.
-      The strictness argument may be @ref{Strict} (this is the default if
+      Encode a string. Identical to
+      <tt>encoding.encoder([mode]).encode(s)</tt>.
+      The mode argument may be @ref{Strict} (this is the default if
       the argument is omitted) or @ref{Unstrict}. Example:
       @example
         Encode("\u20ac", Utf8)  -- Encode the Euro sign in UTF-8
       @end
-      @note Use the @ref{encode} method of <tt>Str</tt> objects instead.
+      @note Use the @ref{Str.encode} method instead.
       @end
 @end
 

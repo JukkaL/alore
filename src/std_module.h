@@ -91,6 +91,7 @@ extern int ARemovedMarkerNum;
 /* Declarations for std::Type */
 
 AValue ATypeSupertype(AThread *t, AValue *frame);
+AValue ATypeInterfaces(AThread *t, AValue *frame);
 
 
 #endif

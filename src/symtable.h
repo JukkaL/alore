@@ -15,7 +15,7 @@
 struct ASymbolInfo_;
 
 
-/* A symbol is an identifier or a keyword. SymbolInfo structure is used by
+/* A symbol is an identifier or a keyword. ASymbolInfo structure is used by
    identifiers only. It is a list of all the possible meanings of an
    identifier. The last structure in the list has a pointer to the Symbol
    structure, forming a circular list. */
@@ -34,17 +34,27 @@ typedef struct ASymbolInfo_ {
     struct ASymbolInfo_ *next;    /* NOTE: has to be the second field */
     int num;
     unsigned char type;           /* NOTE: has to be the fourth field */
+    
+    /* The active union member depends on the type member. */
     union {
         int blockDepth; /* Block depth of a local variable */
         unsigned memberValue; /* An integer + some of A_MEMBER_* flags */
+        /* Information related to global definitions */
         struct {
             unsigned char isPrivate;
             char minArgs;
             unsigned short maxArgs;
         } global;
+        /* Information related to module symbols */
         struct {
             unsigned char isActive;     /* Is this an active prefix */
             unsigned char isImported;   /* Has the module been imported */
+            /* Status of the module; one of the following values:
+                 A_CM_NON_C (not a C module)
+                 A_CM_ACTIVE (realized C module)
+                 A_CM_AUTO_IMPORT (C module that is automatically imported;
+                                   currently only std)
+                 index to CModule array | 1024 (unrealized C module) */
             short cModule;
         } module;
     } info;

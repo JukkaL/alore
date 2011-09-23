@@ -1,5 +1,7 @@
 module std
 
+import encodings
+
 
 -- Interfaces
 
@@ -153,6 +155,12 @@ class Str implements Comparable<Str>, Sequence<Str>, Iterable<Str>,
   def join(seq as Sequence<Str>) as Str
   end
   
+  def encode(enc as Encoding, strictness = Strict as Constant)
+  end
+  
+  def decode(enc as Encoding, strictness = Strict as Constant)
+  end
+  
   def iterator() as Iterator<Str>
   end
   
@@ -261,6 +269,9 @@ class Type
   -- FIX: Should not allow calling the constructor.
 
   def supertype() as Type
+  end
+  
+  def interfaces() as Array<Type>
   end
   
   def _str() as Str

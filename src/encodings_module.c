@@ -10,6 +10,7 @@
 #include "encodings_module.h"
 #include "str.h"
 #include "gc.h"
+#include "util.h"
 
 
 /* Size of the reverse mapping (unicode => 8-bit) hash table of 8-bit
@@ -79,18 +80,21 @@ static EightBitCodecInfo *Codecs[NUM_8_BIT_CODECS];
 int AStrictNum;   /* encodings::Strict */
 int AUnstrictNum; /* encodings::Unstrict */
 
-int AUtf8Num;     /* encodings::Utf8 */
+int ADecodeErrorNum;
+int AEncodeErrorNum;
 
-int ALatin1Num;   /* encodings::LatinN */
-int ALatin2Num;
-int ALatin3Num;
-int ALatin4Num;
-int ALatin5Num;
-int ALatin6Num;
-int ALatin7Num;
-int ALatin8Num;
-int ALatin9Num;
-int ALatin10Num;
+/* Global numbers of encoder/decoder classes (all private). */
+static int Iso8859_1EncoderDecoderNum;
+static int EightBitEncoderDecoderNum;
+static int Utf8EncoderDecoderNum;
+static int Utf16LeEncoderDecoderNum;
+static int Utf16BeEncoderDecoderNum;
+
+
+int AUtf8Num;        /* encodings::Utf8 */
+int AUtf16LeNum;     /* encodings::Utf16Le */
+int AUtf16BeNum;     /* encodings::Utf16Be */
+int AUtf16Num;       /* encodings::Utf16 */
 
 int AIso8859_1Num;   /* encodings::Iso8859_N */
 int AIso8859_2Num;
@@ -107,18 +111,11 @@ int AIso8859_13Num;
 int AIso8859_14Num;
 int AIso8859_15Num;
 int AIso8859_16Num;
+
 int AAsciiNum;        /* encodings::Ascii */
 int AKoi8RNum;        /* encodings::Koi8R */
 int AKoi8UNum;        /* encodings::Koi8U */
 
-int ADecodeErrorNum;
-int AEncodeErrorNum;
-
-static int ACp437Num;
-static int ACp850Num;
-static int AWindows1250Num;
-static int AWindows1251Num;
-static int AWindows1252Num;
 
 
 /* The replacement character as a string */
@@ -132,90 +129,88 @@ enum {
 };
 
 
+/* Slot ids of Encoder/Decoder objects (NOTE: not for Encoding objects) */
+enum {
+    SLOT_MODE,      /* Strictness; MODE_STRICT or MODE_UNSTRICT */
+    SLOT_ENCODING   /* CODEC_x number; only in EightBitEncoderDecoder */
+};
+
+
 #define ENC_DATA_SIZE 8
 
 
+/* Return pointer to the encoding buffer of a Encoder/Decoder object.
+   Assume that the object has exactly 2 slots. */
+#define ENC_BUF(value) \
+    ((unsigned char *)APtrAdd(AValueToInstance(value), 3 * sizeof(AValue)))
+
+
 /* encodings::Decode(str, encoding[, strictness])
-   [Deprecated] This is almost identical to decode method of std::Str. */
+   [Deprecated] This is just calls the decode method of the first argument. */
 static AValue Decode(AThread *t, AValue *frame)
 {
-    ABool isStrict = TRUE;
-    
     if (AIsDefault(frame[2]))
-        frame[2] = ACallValue(t, frame[1], 0, frame + 2);
-    else {
-        if (frame[2] == AGlobalByNum(AUnstrictNum))
-            isStrict = FALSE;
-        frame[2] = ACallValue(t, frame[1], 1, frame + 2);
-    }
-        
-    if (AIsError(frame[2]))
-        return AError;
-
-    frame[3] = frame[0];
-    frame[0] = ACallMethod(t, "decode", 1, frame + 2);
-    if (AIsError(frame[0]))
-        return AError;
-
-    frame[1] = ACallMethod(t, "unprocessed", 0, frame + 2);
-    if (AIsError(frame[1]))
-        return AError;
-    if (!AIsStr(frame[1]))
-        ARaiseTypeError(t, AMsgStrExpected);
-    if (AStrLen(frame[1]) != 0) {
-        if (isStrict)
-            return ARaiseByNum(t, ADecodeErrorNum, "Partial character");
-        else {
-            frame[2] = AMakeStrW(t, ReplChar);
-            frame[0] = AConcat(t, frame[0], frame[2]);            
-        }
-    }
-    
-    return frame[0];
+        return ACallMethod(t, "decode", 1, frame);
+    else
+        return ACallMethod(t, "decode", 2, frame);
 }
 
 
 /* encodings::Encode(str, encoding[, strictness])
-   [Deprecated] This is almost identical to encode method of std::Str. */
+   [Deprecated] This just call the encode method of the first argument. */
 static AValue Encode(AThread *t, AValue *frame)
 {
     if (AIsDefault(frame[2]))
-        frame[2] = ACallValue(t, frame[1], 0, frame + 2);
+        return ACallMethod(t, "encode", 1, frame);
     else
-        frame[2] = ACallValue(t, frame[1], 1, frame + 2);
-    
-    if (AIsError(frame[2]))
-        return AError;
-
-    frame[3] = frame[0];
-    return ACallMethod(t, "encode", 1, frame + 2);
+        return ACallMethod(t, "encode", 2, frame);
 }
 
 
-#define ENC_BUF(value) \
-    ((unsigned char *)APtrAdd(AValueToInstance(value), 2 * sizeof(AValue)))
-
-
-/* The constructor for a 8-bit encoding; this is shared by all the 8-bit
-   encoding classes. */
-static AValue EncodingCreate(AThread *t, AValue *frame)
+/* Initialize an encoder/decoder object. The argument encoding should point to
+   a reference to the object, and strictness is the a strictness constant or
+   ADefault. Num is the number of a regular 8-bit encoding (CODEC_x); it is -1
+   for other kinds of encoding. Return the encoder/decoder object. */
+static AValue InitializeCodec(AThread *t, AValue *encoding,
+                              AValue strictness, int num)
 {
     /* Just initialize the state (encoding buffer and strictness). */
     
-    if (frame[1] == ADefault || frame[1] == AGlobalByNum(AStrictNum))
-        ASetMemberDirect(t, frame[0], 0, AMakeInt(t, MODE_STRICT));
-    else if (frame[1] == AGlobalByNum(AUnstrictNum))
-        ASetMemberDirect(t, frame[0], 0, AMakeInt(t, MODE_UNSTRICT));
+    if (strictness == ADefault || strictness == AGlobalByNum(AStrictNum))
+        ASetMemberDirect(t, *encoding, SLOT_MODE, AMakeInt(t, MODE_STRICT));
+    else if (strictness == AGlobalByNum(AUnstrictNum))
+        ASetMemberDirect(t, *encoding, SLOT_MODE, AMakeInt(t, MODE_UNSTRICT));
     else
         ARaiseValueError(t, "Invalid mode");
 
-    ENC_BUF(frame[0])[0] = 0;
+    if (num != -1)
+        ASetMemberDirect(t, *encoding, SLOT_ENCODING, AMakeInt(t, num));
+
+    ENC_BUF(*encoding)[0] = 0;
     
-    return frame[0];
+    return *encoding;
 }
 
 
-/* The unprocessed method of 8-bit encodings. */
+/* The shared "name" getter of Encoding classes. */
+static AValue EncodingName(AThread *t, AValue *frame)
+{
+    return AMemberDirect(frame[0], 0);
+}
+
+
+/* The shared _str() method of Encoding classes. */
+static AValue Encoding_str(AThread *t, AValue *frame)
+{
+    char name[128];
+    char result[128];
+    AGetStr(t, AMemberDirect(frame[0], 0), name, sizeof(name));
+    AFormatMessage(result, sizeof(result), "<%s encoding>", name);
+    return AMakeStr(t, result);
+}
+
+
+/* The shared unprocessed() method of all Decoder classes. */
 static AValue EncodingUnprocessed(AThread *t, AValue *frame)
 {
     int n;
@@ -229,6 +224,17 @@ static AValue EncodingUnprocessed(AThread *t, AValue *frame)
         ASetStrItem(v, i, ENC_BUF(frame[0])[i + 1]);
 
     return v;
+}
+
+
+/* Utf8Encoding encoder([strictness])
+   Utf8Encoding decoder([strictness])
+   (the implementation is shared) */
+static AValue Utf8EncodingFactoryMethod(AThread *t, AValue *frame)
+{
+    AValue codecType = AGlobalByNum(Utf8EncoderDecoderNum);
+    frame[2] = ACallValue(t, codecType, 0, frame + 2);
+    return InitializeCodec(t, &frame[2], frame[1], -1);
 }
 
 
@@ -317,7 +323,7 @@ static AValue Utf8Decode(AThread *t, AValue *frame)
 
       DecodeError:
 
-        if (AMemberDirect(frame[0], 0) == AMakeInt(t, MODE_STRICT))
+        if (AMemberDirect(frame[0], SLOT_MODE) == AMakeInt(t, MODE_STRICT))
             return ARaiseByNum(t, ADecodeErrorNum, NULL);
 
         ASetStrItem(s, i, 0xfffd);
@@ -374,6 +380,17 @@ static AValue Utf8Encode(AThread *t, AValue *frame)
 }
 
 
+/* Iso8859_1Encoding encoder([strictness])
+   Iso8859_1Encoding decoder([strictness])
+   (the implementation is shared) */
+static AValue Iso8859_1EncodingFactoryMethod(AThread *t, AValue *frame)
+{
+    AValue codecType = AGlobalByNum(Iso8859_1EncoderDecoderNum);
+    frame[2] = ACallValue(t, codecType, 0, frame + 2);
+    return InitializeCodec(t, &frame[2], frame[1], -1);
+}
+
+
 /* Decode method of Iso8859_1 */
 static AValue Iso8859_1Decode(AThread *t, AValue *frame)
 {
@@ -389,7 +406,8 @@ static AValue Iso8859_1Decode(AThread *t, AValue *frame)
             if (ch <= 0xff)
                 ASetStrItem(s, i, AStrItem(frame[1], i));
             else {
-                if (AMemberDirect(frame[0], 0) == AMakeInt(t, MODE_STRICT))
+                if (AMemberDirect(frame[0], SLOT_MODE) ==
+                        AMakeInt(t, MODE_STRICT))
                     return ARaiseByNum(t, ADecodeErrorNum, NULL);
                 else
                     ASetStrItem(s, i, 0xfffd);
@@ -417,7 +435,8 @@ static AValue Iso8859_1Encode(AThread *t, AValue *frame)
             if (ch <= 0xff)
                 ASetStrItem(s, i, AStrItem(frame[1], i));
             else {
-                if (AMemberDirect(frame[0], 0) == AMakeInt(t, MODE_STRICT))
+                if (AMemberDirect(frame[0], SLOT_MODE) ==
+                        AMakeInt(t, MODE_STRICT))
                     return ARaiseByNum(t, AEncodeErrorNum, NULL);
                 else
                     ASetStrItem(s, i, '?');
@@ -427,6 +446,28 @@ static AValue Iso8859_1Encode(AThread *t, AValue *frame)
         return s;
     } else    
         return ARaiseTypeError(t, AMsgStrExpected);
+}
+
+
+/* Utf16LeEncoding encoder([strictness])
+   Utf16LeEncoding decoder([strictness])
+   (the implementation is shared) */
+static AValue Utf16LeEncodingFactoryMethod(AThread *t, AValue *frame)
+{
+    AValue codecType = AGlobalByNum(Utf16LeEncoderDecoderNum);
+    frame[2] = ACallValue(t, codecType, 0, frame + 2);
+    return InitializeCodec(t, &frame[2], frame[1], -1);
+}
+
+
+/* Utf16BeEncoding encoder([strictness])
+   Utf16BeEncoding decoder([strictness])
+   (the implementation is shared) */
+static AValue Utf16BeEncodingFactoryMethod(AThread *t, AValue *frame)
+{
+    AValue codecType = AGlobalByNum(Utf16BeEncoderDecoderNum);
+    frame[2] = ACallValue(t, codecType, 0, frame + 2);
+    return InitializeCodec(t, &frame[2], frame[1], -1);
 }
 
 
@@ -482,14 +523,14 @@ static AValue Utf16Decode(AThread *t, AValue *frame, ABool isBigEndian)
 }
 
 
-/* Decode method of Utf16Le */
+/* Decode method of Utf16LeEncoderDecoder */
 static AValue Utf16LeDecode(AThread *t, AValue *frame)
 {
     return Utf16Decode(t, frame, FALSE);
 }
 
 
-/* Encode method of Utf16Le */
+/* Encode method of Utf16LeEncoderDecoder */
 static AValue Utf16LeEncode(AThread *t, AValue *frame)
 {
     int len;
@@ -511,14 +552,14 @@ static AValue Utf16LeEncode(AThread *t, AValue *frame)
 }
 
 
-/* Decode method of Utf16Be */
+/* Decode method of Utf16BeEncoderDecoder */
 static AValue Utf16BeDecode(AThread *t, AValue *frame)
 {
     return Utf16Decode(t, frame, TRUE);
 }
 
 
-/* Encode method of Utf16Be */
+/* Encode method of Utf16BeEncoderDecoder */
 static AValue Utf16BeEncode(AThread *t, AValue *frame)
 {
     int len;
@@ -537,6 +578,21 @@ static AValue Utf16BeEncode(AThread *t, AValue *frame)
     }
     
     return s;
+}
+
+
+/* EightBitEncoding encoder([strictness])
+   EightBitEncoding decoder([strictness])
+   (the implementation is shared)
+   Create a decoder/encoder object for a regular 8-bit encoding which uses
+   a table-based description of character mapping. */
+AValue EightBitEncodingFactoryMethod(AThread *t, AValue *frame)
+{
+    AValue codecType = AGlobalByNum(EightBitEncoderDecoderNum);
+    int num;
+    frame[2] = ACallValue(t, codecType, 0, frame + 2);
+    num = AValueToInt(AMemberDirect(frame[0], 1));
+    return InitializeCodec(t, &frame[2], frame[1], num);
 }
 
 
@@ -615,15 +671,20 @@ static void RealizeCodec(AThread *t, int codec)
 }
 
 
-/* Encode a string using a 8-bit encoding. Realize the encoding first, if
+/* EightBitEncoderDecoder encode(s)
+   Encode a string using a 8-bit encoding. Realize the encoding first, if
    needed. */
-static AValue EightBitEncode(AThread *t, AValue *frame, int codec)
+static AValue EightBitCodecEncode(AThread *t, AValue *frame)
 {
     int len;
     AValue s;
     int i;
     EightBitCodecInfo *info;
+    int codec;
 
+    /* Look up the internal encoding number (CODEC_x). */
+    codec = AValueToInt(AMemberDirect(frame[0], SLOT_ENCODING));
+    
     /* Realize codec if it is uninitialized. */
     if (Codecs[codec] == NULL)
         RealizeCodec(t, codec);
@@ -653,7 +714,8 @@ static AValue EightBitEncode(AThread *t, AValue *frame, int codec)
                 ASetStrItem(s, i, info->reverseMap[j].dst); /* Found it */
             else {
                 /* Invalid input character */
-                if (AMemberDirect(frame[0], 0) == AMakeInt(t, MODE_STRICT))
+                if (AMemberDirect(frame[0], SLOT_MODE) ==
+                        AMakeInt(t, MODE_STRICT))
                     return ARaiseByNum(t, AEncodeErrorNum, NULL);
                 else
                     ASetStrItem(s, i, '?');
@@ -665,14 +727,19 @@ static AValue EightBitEncode(AThread *t, AValue *frame, int codec)
 }
 
 
-/* Decode a string using a 8-bit encoding. Realize the encoding first, if
+/* EightBitEncoderDecoder decode(s)
+   Decode a string using a 8-bit encoding. Realize the encoding first, if
    needed. */
-static AValue EightBitDecode(AThread *t, AValue *frame, int codec)
+static AValue EightBitCodecDecode(AThread *t, AValue *frame)
 {
     int len;
     AValue s;
     int i;
     AWideChar *map;
+    int codec;
+    
+    /* Look up the internal encoding number (CODEC_x). */
+    codec = AValueToInt(AMemberDirect(frame[0], SLOT_ENCODING));
     
     /* Realize codec if it is uninitialized. */
     if (Codecs[codec] == NULL)
@@ -701,7 +768,8 @@ static AValue EightBitDecode(AThread *t, AValue *frame, int codec)
             
           Error:
 
-            if (AMemberDirect(frame[0], 0) == AMakeInt(t, MODE_STRICT))
+            if (AMemberDirect(frame[0], SLOT_MODE) ==
+                    AMakeInt(t, MODE_STRICT))
                 return ARaiseByNum(t, ADecodeErrorNum, NULL);
             else
                 ASetStrItemW(s, i, 0xfffd);
@@ -712,79 +780,132 @@ static AValue EightBitDecode(AThread *t, AValue *frame, int codec)
 }
 
 
-/* encodings::Main() */
+/* Create an Encoding object for an encoding. Create an instance based on the
+   given fully qualified name of an encoding class. Assign the encoding object
+   to the constant with the given name in the encodings module. The num
+   argument must be one of CODEC_x constants for regular 8-bit encodings or
+   -1 for other encodings. The frame argument should be able to hold at least
+   one value. */
+static void InitializeEncoding(AThread *t, const char *name,
+                               const char *encodingClass, int num,
+                               AValue *frame)
+{
+    char fullName[128];
+    int targetNum;
+    AValue nameObj;
+
+    /* Build and initialize encoding object. */
+    frame[0] = ACall(t, encodingClass, 0, frame);
+    if (AIsError(frame[0]))
+        ARaiseValueError(t, "Initialization failed");
+
+    /* Initialize encoding name. */
+    nameObj = AMakeStr(t, name);
+    ASetMemberDirect(t, frame[0], 0, nameObj);
+    
+    /* Initialize encoding number of 8-bit encodings. */
+    if (num >= 0)
+        ASetMemberDirect(t, frame[0], 1, AMakeInt(t, num));
+
+    /* Get the global num of the encoding constant. */
+    AFormatMessage(fullName, sizeof(fullName), "encodings::%s", name);
+    targetNum = AGetGlobalNum(t, fullName);
+
+    /* Initialize the encoding constant. */
+    ASetConstGlobalByNum(t, targetNum, frame[0]);
+}
+
+
+/* Create an Encoding object for a regular 8-bit encoding. Assign it to the
+   constant with the given name in the encodings module. The num argument
+   must be one of CODEC_x constants. The frame argument should be able to hold
+   at least one value. */
+static void Initialize8BitEncoding(AThread *t, const char *name, int num,
+                                   AValue *frame)
+{
+    InitializeEncoding(t, name, "encodings::EightBitEncoding", num, frame);
+}
+
+
+/* Assign value of encodings::<codec> to constant encodings::<alias>. */
+static void InitializeCodecAlias(AThread *t, const char *alias,
+                                 const char *codec)
+{
+    char fullAlias[128];
+    char fullCodec[128];
+    int aliasNum;
+    AFormatMessage(fullAlias, sizeof(fullAlias), "encodings::%s", alias);
+    AFormatMessage(fullCodec, sizeof(fullCodec), "encodings::%s", codec);
+    aliasNum = AGetGlobalNum(t, fullAlias);
+    ASetConstGlobalByNum(t, aliasNum, AGlobal(t, fullCodec));
+}
+
+
+/* encodings::Main()
+   Initialize encoding objects. */
 static AValue EncodingsMain(AThread *t, AValue *frame)
 {
+    /* Initialize Iso8859_1 encoding. */
+    InitializeEncoding(t, "Iso8859_1", "encodings::Iso8859_1Encoding", -1,
+                       frame);
+    
+    /* Initialize Unicode encodings. */
+    InitializeEncoding(t, "Utf8", "encodings::Utf8Encoding", -1, frame);
+    InitializeEncoding(t, "Utf16Le", "encodings::Utf16LeEncoding", -1, frame);
+    InitializeEncoding(t, "Utf16Be", "encodings::Utf16BeEncoding", -1, frame);
+    
+    /* Set encodings::Utf16 to match the platform byte order. */
+#ifdef A_HAVE_LITTLE_ENDIAN
+    ASetConstGlobalByNum(t, AUtf16Num, AGlobalByNum(AUtf16LeNum));
+#else
+    ASetConstGlobalByNum(t, AUtf16Num, AGlobalByNum(AUtf16BeNum));
+#endif
+    
+    /* Initialize regular 8-bit encodings. */
+    Initialize8BitEncoding(t, "Iso8859_2", CODEC_Iso8859_2, frame);
+    Initialize8BitEncoding(t, "Iso8859_3", CODEC_Iso8859_3, frame);
+    Initialize8BitEncoding(t, "Iso8859_4", CODEC_Iso8859_4, frame);
+    Initialize8BitEncoding(t, "Iso8859_5", CODEC_Iso8859_5, frame);
+    Initialize8BitEncoding(t, "Iso8859_6", CODEC_Iso8859_6, frame);
+    Initialize8BitEncoding(t, "Iso8859_7", CODEC_Iso8859_7, frame);
+    Initialize8BitEncoding(t, "Iso8859_8", CODEC_Iso8859_8, frame);
+    Initialize8BitEncoding(t, "Iso8859_9", CODEC_Iso8859_9, frame);
+    Initialize8BitEncoding(t, "Iso8859_10", CODEC_Iso8859_10, frame);
+    Initialize8BitEncoding(t, "Iso8859_11", CODEC_Iso8859_11, frame);
+    Initialize8BitEncoding(t, "Iso8859_13", CODEC_Iso8859_13, frame);
+    Initialize8BitEncoding(t, "Iso8859_14", CODEC_Iso8859_14, frame);
+    Initialize8BitEncoding(t, "Iso8859_15", CODEC_Iso8859_15, frame);
+    Initialize8BitEncoding(t, "Iso8859_16", CODEC_Iso8859_16, frame);
+    Initialize8BitEncoding(t, "Ascii", CODEC_Ascii, frame);
+    Initialize8BitEncoding(t, "Cp437", CODEC_Cp437, frame);
+    Initialize8BitEncoding(t, "Cp850", CODEC_Cp850, frame);
+    Initialize8BitEncoding(t, "Windows1250", CODEC_Windows1250, frame);
+    Initialize8BitEncoding(t, "Windows1251", CODEC_Windows1251, frame);
+    Initialize8BitEncoding(t, "Windows1252", CODEC_Windows1252, frame);
+    Initialize8BitEncoding(t, "Koi8R", CODEC_Koi8R, frame);
+    Initialize8BitEncoding(t, "Koi8U", CODEC_Koi8U, frame);
+    
     /* Initialize encoding alias constants. */
-    ASetConstGlobalByNum(t, ALatin1Num, AGlobalByNum(AIso8859_1Num));
-    ASetConstGlobalByNum(t, ALatin2Num, AGlobalByNum(AIso8859_2Num));
-    ASetConstGlobalByNum(t, ALatin3Num, AGlobalByNum(AIso8859_3Num));
-    ASetConstGlobalByNum(t, ALatin4Num, AGlobalByNum(AIso8859_4Num));
-    ASetConstGlobalByNum(t, ALatin5Num, AGlobalByNum(AIso8859_9Num));
-    ASetConstGlobalByNum(t, ALatin6Num, AGlobalByNum(AIso8859_10Num));
-    ASetConstGlobalByNum(t, ALatin7Num, AGlobalByNum(AIso8859_13Num));
-    ASetConstGlobalByNum(t, ALatin8Num, AGlobalByNum(AIso8859_14Num));
-    ASetConstGlobalByNum(t, ALatin9Num, AGlobalByNum(AIso8859_15Num));
-    ASetConstGlobalByNum(t, ALatin10Num, AGlobalByNum(AIso8859_16Num));
+    InitializeCodecAlias(t, "Latin1", "Iso8859_1");
+    InitializeCodecAlias(t, "Latin2", "Iso8859_2");
+    InitializeCodecAlias(t, "Latin3", "Iso8859_3");
+    InitializeCodecAlias(t, "Latin4", "Iso8859_4");
+    InitializeCodecAlias(t, "Latin5", "Iso8859_9");
+    InitializeCodecAlias(t, "Latin6", "Iso8859_10");
+    InitializeCodecAlias(t, "Latin7", "Iso8859_13");
+    InitializeCodecAlias(t, "Latin8", "Iso8859_14");
+    InitializeCodecAlias(t, "Latin9", "Iso8859_15");
+    InitializeCodecAlias(t, "Latin10", "Iso8859_16");
+    
     return ANil;
 }
 
 
-/* This macro defines the decode and encode functions and a static variable for
-   a 8-bit codec. */
-#define EIGHT_BIT_CODEC_DEFS(name) \
-static AValue name##Decode(AThread *t, AValue *frame) \
-{                                                     \
-    return EightBitDecode(t, frame, CODEC_##name);    \
-}                                                     \
-static AValue name##Encode(AThread *t, AValue *frame) \
-{                                                     \
-    return EightBitEncode(t, frame, CODEC_##name);    \
-}
-
-
-/* Define the decode and encode functions for a 8-bit codec. */
-EIGHT_BIT_CODEC_DEFS(Iso8859_2)
-EIGHT_BIT_CODEC_DEFS(Iso8859_3)
-EIGHT_BIT_CODEC_DEFS(Iso8859_4)
-EIGHT_BIT_CODEC_DEFS(Iso8859_5)
-EIGHT_BIT_CODEC_DEFS(Iso8859_6)
-EIGHT_BIT_CODEC_DEFS(Iso8859_7)
-EIGHT_BIT_CODEC_DEFS(Iso8859_8)
-EIGHT_BIT_CODEC_DEFS(Iso8859_9)
-EIGHT_BIT_CODEC_DEFS(Iso8859_10)
-EIGHT_BIT_CODEC_DEFS(Iso8859_11)
-EIGHT_BIT_CODEC_DEFS(Iso8859_13)
-EIGHT_BIT_CODEC_DEFS(Iso8859_14)
-EIGHT_BIT_CODEC_DEFS(Iso8859_15)
-EIGHT_BIT_CODEC_DEFS(Iso8859_16)
-EIGHT_BIT_CODEC_DEFS(Ascii)
-EIGHT_BIT_CODEC_DEFS(Cp437)
-EIGHT_BIT_CODEC_DEFS(Cp850)
-EIGHT_BIT_CODEC_DEFS(Windows1250)
-EIGHT_BIT_CODEC_DEFS(Windows1251)
-EIGHT_BIT_CODEC_DEFS(Windows1252)
-EIGHT_BIT_CODEC_DEFS(Koi8R)
-EIGHT_BIT_CODEC_DEFS(Koi8U)
-
-
 A_MODULE(encodings, "encodings")
-    A_DEF("Main", 0, 0, EncodingsMain)
+    A_DEF("Main", 0, 1, EncodingsMain)
 
     A_SYMBOLIC_CONST_P("Strict", &AStrictNum)
     A_SYMBOLIC_CONST_P("Unstrict", &AUnstrictNum)
-
-    /* Encoding alias constants */
-    A_EMPTY_CONST_P("Latin1", &ALatin1Num)
-    A_EMPTY_CONST_P("Latin2", &ALatin2Num)
-    A_EMPTY_CONST_P("Latin3", &ALatin3Num)
-    A_EMPTY_CONST_P("Latin4", &ALatin4Num)
-    A_EMPTY_CONST_P("Latin5", &ALatin5Num)
-    A_EMPTY_CONST_P("Latin6", &ALatin6Num)
-    A_EMPTY_CONST_P("Latin7", &ALatin7Num)
-    A_EMPTY_CONST_P("Latin8", &ALatin8Num)
-    A_EMPTY_CONST_P("Latin9", &ALatin9Num)
-    A_EMPTY_CONST_P("Latin10", &ALatin10Num)
     
     A_DEF_OPT("Decode", 2, 3, 1, Decode)
     A_DEF_OPT("Encode", 2, 3, 1, Encode)
@@ -797,93 +918,168 @@ A_MODULE(encodings, "encodings")
         A_INHERIT("std::ValueError")
     A_END_CLASS()
 
-    A_CLASS_PRIV_P("Utf8", 1, &AUtf8Num)
+    A_INTERFACE("Encoding")
+        A_METHOD_OPT("decoder", 0, 1, 0, NULL)
+        A_METHOD_OPT("encoder", 0, 1, 0, NULL)
+        A_GETTER("name", 0, NULL)
+    A_END_INTERFACE()
+
+    A_INTERFACE("Decoder")
+        A_METHOD("decode", 1, 0, NULL)
+        A_METHOD("unprocesser", 0, 0, NULL)
+    A_END_INTERFACE()
+
+    A_INTERFACE("Encoder")
+        A_METHOD("encode", 1, 0, NULL)
+    A_END_INTERFACE()
+
+    /* NOTE: The shared "name" getter assumes that Encoding classes have 1
+       private slot that contains the name of the encoding. */
+
+    /* NOTE: Some functions assume that all Encoder/Decoder objects have the
+       same internal structure: 2 private slots + ENC_DATA_SIZE bytes of
+       binary data. */
+
+    /* Implementations of Unicode encodings */
+
+    A_CLASS_PRIV(A_PRIVATE("Utf8Encoding"), 1)
+        A_IMPLEMENT("::Encoding")
+        A_METHOD_OPT("decoder", 0, 1, 1, Utf8EncodingFactoryMethod)
+        A_METHOD_OPT("encoder", 0, 1, 1, Utf8EncodingFactoryMethod)
+        A_GETTER("name", 0, EncodingName)
+        A_METHOD("_str", 0, 0, Encoding_str)
+    A_END_CLASS()
+
+    A_CLASS_PRIV_P(A_PRIVATE("Utf8EncoderDecoder"), 2, &Utf8EncoderDecoderNum)
+        A_IMPLEMENT("::Encoder")
+        A_IMPLEMENT("::Decoder")
         A_BINARY_DATA(ENC_DATA_SIZE)
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)
         A_METHOD("decode", 1, 0, Utf8Decode)
         A_METHOD("encode", 1, 0, Utf8Encode)
         A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
     A_END_CLASS()
 
+    A_CLASS_PRIV(A_PRIVATE("Utf16LeEncoding"), 1)
+        A_IMPLEMENT("::Encoding")
+        A_METHOD_OPT("decoder", 0, 1, 1, Utf16LeEncodingFactoryMethod)
+        A_METHOD_OPT("encoder", 0, 1, 1, Utf16LeEncodingFactoryMethod)
+        A_GETTER("name", 0, EncodingName)
+        A_METHOD("_str", 0, 0, Encoding_str)
+    A_END_CLASS()
+
+    A_CLASS_PRIV_P(A_PRIVATE("Utf16LeEncoderDecoder"), 2,
+                   &Utf16LeEncoderDecoderNum)
+        A_IMPLEMENT("::Encoder")
+        A_IMPLEMENT("::Decoder")
+        A_BINARY_DATA(ENC_DATA_SIZE)
+        A_METHOD("decode", 1, 0, Utf16LeDecode)
+        A_METHOD("encode", 1, 0, Utf16LeEncode)
+        A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
+    A_END_CLASS()
+
+    A_CLASS_PRIV(A_PRIVATE("Utf16BeEncoding"), 1)
+        A_IMPLEMENT("::Encoding")
+        A_METHOD_OPT("decoder", 0, 1, 1, Utf16BeEncodingFactoryMethod)
+        A_METHOD_OPT("encoder", 0, 1, 1, Utf16BeEncodingFactoryMethod)
+        A_GETTER("name", 0, EncodingName)
+        A_METHOD("_str", 0, 0, Encoding_str)
+    A_END_CLASS()
+
+    A_CLASS_PRIV_P(A_PRIVATE("Utf16BeEncoderDecoder"), 2,
+                   &Utf16BeEncoderDecoderNum)
+        A_IMPLEMENT("::Encoder")
+        A_IMPLEMENT("::Decoder")
+        A_BINARY_DATA(ENC_DATA_SIZE)
+        A_METHOD("decode", 1, 0, Utf16BeDecode)
+        A_METHOD("encode", 1, 0, Utf16BeEncode)
+        A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
+    A_END_CLASS()
+
     /* The ISO 8859-1 (Latin 1) encoding has a special, optimized
        implementation, unlike other 8-bit encodings. */
-    A_CLASS_PRIV_P("Iso8859_1", 1, &AIso8859_1Num)
+        
+    A_CLASS_PRIV(A_PRIVATE("Iso8859_1Encoding"), 1)
+        A_IMPLEMENT("::Encoding")
+        A_METHOD_OPT("decoder", 0, 1, 1, Iso8859_1EncodingFactoryMethod)
+        A_METHOD_OPT("encoder", 0, 1, 1, Iso8859_1EncodingFactoryMethod)
+        A_GETTER("name", 0, EncodingName)
+        A_METHOD("_str", 0, 0, Encoding_str)
+    A_END_CLASS()
+
+    A_CLASS_PRIV_P(A_PRIVATE("Iso8859_1EncoderDecoder"), 2,
+                   &Iso8859_1EncoderDecoderNum)
+        A_IMPLEMENT("::Encoder")
+        A_IMPLEMENT("::Decoder")
         A_BINARY_DATA(ENC_DATA_SIZE)
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)
         A_METHOD("decode", 1, 0, Iso8859_1Decode)
         A_METHOD("encode", 1, 0, Iso8859_1Encode)
         A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
     A_END_CLASS()
 
-/* Macro for defining a 8-bit codec class. They share most of the class
-   structure. */
-#define EIGHT_BIT_CODEC_CLASS(name) \
-    A_CLASS_PRIV_P(#name, 1, &A##name##Num) \
-        A_BINARY_DATA(ENC_DATA_SIZE)                         \
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)      \
-        A_METHOD("decode", 1, 0, name##Decode)               \
-        A_METHOD("encode", 1, 0, name##Encode)               \
-        A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)   \
+    /* Most 8-bit (or 7-bit)  encodings share this implementation class. */
+    
+    A_CLASS_PRIV(A_PRIVATE("EightBitEncoding"), 2)
+        A_IMPLEMENT("::Encoding")
+        A_METHOD_OPT("decoder", 0, 1, 1, EightBitEncodingFactoryMethod)
+        A_METHOD_OPT("encoder", 0, 1, 1, EightBitEncodingFactoryMethod)
+        A_GETTER("name", 0, EncodingName)
+        A_METHOD("_str", 0, 0, Encoding_str)
     A_END_CLASS()
 
-    /* Definitions of 8-bit codec classes */
-    EIGHT_BIT_CODEC_CLASS(Iso8859_2)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_3)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_4)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_5)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_6)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_7)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_8)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_9)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_10)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_11)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_13)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_14)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_15)
-    EIGHT_BIT_CODEC_CLASS(Iso8859_16)
-    EIGHT_BIT_CODEC_CLASS(Ascii)
-    EIGHT_BIT_CODEC_CLASS(Cp437)
-    EIGHT_BIT_CODEC_CLASS(Cp850)
-    EIGHT_BIT_CODEC_CLASS(Windows1250)
-    EIGHT_BIT_CODEC_CLASS(Windows1251)
-    EIGHT_BIT_CODEC_CLASS(Windows1252)
-    EIGHT_BIT_CODEC_CLASS(Koi8R)
-    EIGHT_BIT_CODEC_CLASS(Koi8U)
-
-    A_CLASS_PRIV("Utf16Le", 1)
+    A_CLASS_PRIV_P(A_PRIVATE("EightBitEncoderDecoder"), 2,
+                   &EightBitEncoderDecoderNum)
+        A_IMPLEMENT("::Encoder")
+        A_IMPLEMENT("::Decoder")
         A_BINARY_DATA(ENC_DATA_SIZE)
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)
-        A_METHOD("decode", 1, 0, Utf16LeDecode)
-        A_METHOD("encode", 1, 0, Utf16LeEncode)
+        A_METHOD("decode", 1, 0, EightBitCodecDecode)
+        A_METHOD("encode", 1, 0, EightBitCodecEncode)
         A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
     A_END_CLASS()
 
-    A_CLASS_PRIV("Utf16Be", 1)
-        A_BINARY_DATA(ENC_DATA_SIZE)
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)
-        A_METHOD("decode", 1, 0, Utf16BeDecode)
-        A_METHOD("encode", 1, 0, Utf16BeEncode)
-        A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
-    A_END_CLASS()
+    /* Unicode encoding constants */
+    A_EMPTY_CONST_P("Utf8", &AUtf8Num)
+    A_EMPTY_CONST_P("Utf16Le", &AUtf16LeNum)
+    A_EMPTY_CONST_P("Utf16Be", &AUtf16BeNum)
+    A_EMPTY_CONST_P("Utf16", &AUtf16Num)
+    
+    /* 8-bit encoding constants */
+        
+    A_EMPTY_CONST_P("Iso8859_1", &AIso8859_1Num)
+    A_EMPTY_CONST_P("Iso8859_2", &AIso8859_2Num)
+    A_EMPTY_CONST_P("Iso8859_3", &AIso8859_3Num)
+    A_EMPTY_CONST_P("Iso8859_4", &AIso8859_4Num)
+    A_EMPTY_CONST_P("Iso8859_5", &AIso8859_5Num)
+    A_EMPTY_CONST_P("Iso8859_6", &AIso8859_6Num)
+    A_EMPTY_CONST_P("Iso8859_7", &AIso8859_7Num)
+    A_EMPTY_CONST_P("Iso8859_8", &AIso8859_8Num)
+    A_EMPTY_CONST_P("Iso8859_9", &AIso8859_9Num)
+    A_EMPTY_CONST_P("Iso8859_10", &AIso8859_10Num)
+    A_EMPTY_CONST_P("Iso8859_11", &AIso8859_11Num)
+    A_EMPTY_CONST_P("Iso8859_13", &AIso8859_13Num)
+    A_EMPTY_CONST_P("Iso8859_14", &AIso8859_14Num)
+    A_EMPTY_CONST_P("Iso8859_15", &AIso8859_15Num)
+    A_EMPTY_CONST_P("Iso8859_16", &AIso8859_16Num)
 
-    /* The definition of the Utf16 encoding is different for little and big
-       endian architectures. */
-#ifdef A_HAVE_LITTLE_ENDIAN
-    A_CLASS_PRIV("Utf16", 1)
-        A_BINARY_DATA(ENC_DATA_SIZE)
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)
-        A_METHOD("decode", 1, 0, Utf16LeDecode)
-        A_METHOD("encode", 1, 0, Utf16LeEncode)
-        A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
-    A_END_CLASS()
-#elif defined(HAVE_BIG_ENDIAN)
-    A_CLASS_PRIV("Utf16", 1)
-        A_BINARY_DATA(ENC_DATA_SIZE)
-        A_METHOD_OPT("create", 0, 1, 0, EncodingCreate)
-        A_METHOD("decode", 1, 0, Utf16BeDecode)
-        A_METHOD("encode", 1, 0, Utf16BeEncode)
-        A_METHOD("unprocessed", 0, 0, EncodingUnprocessed)
-    A_END_CLASS()
-#endif
+    A_EMPTY_CONST_P("Ascii", &AAsciiNum)
+    A_EMPTY_CONST_P("Koi8R", &AKoi8RNum)
+    A_EMPTY_CONST_P("Koi8U", &AKoi8UNum)
 
+    A_EMPTY_CONST("Cp437")
+    A_EMPTY_CONST("Cp850")
+
+    A_EMPTY_CONST("Windows1250")
+    A_EMPTY_CONST("Windows1251")
+    A_EMPTY_CONST("Windows1252")
+
+    /* Encoding alias constants */
+    A_EMPTY_CONST("Latin1")
+    A_EMPTY_CONST("Latin2")
+    A_EMPTY_CONST("Latin3")
+    A_EMPTY_CONST("Latin4")
+    A_EMPTY_CONST("Latin5")
+    A_EMPTY_CONST("Latin6")
+    A_EMPTY_CONST("Latin7")
+    A_EMPTY_CONST("Latin8")
+    A_EMPTY_CONST("Latin9")
+    A_EMPTY_CONST("Latin10")
 A_END_MODULE()

@@ -99,6 +99,16 @@ class InterfacesSuite is Suite
     Assert('x' is BindBuiltIns)
     Assert(not 1.1 is BindBuiltIns)
   end
+  
+  -- Test querying the interfaces when using interface binding using 
+  -- Type interfaces().
+  def testQueryingInterfaces()
+    AssertEqual(CBind2.interfaces(), [Bind2])
+    AssertEqual(Int.interfaces(), [Comparable, BindBuiltIns])
+    
+    -- Return both the directly implemented interface and the superinterface.
+    AssertEqual(Cif7.interfaces(), [If3, If1])
+  end
 end
 
 

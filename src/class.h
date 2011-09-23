@@ -88,6 +88,9 @@ void AVerifyInterface(ATypeInfo *type, ATypeInfo *interface, int lineNumber,
 #define AInterfaceListPtr(interfaces, i) \
     ((ATypeInfo **)APtrAdd(AValueToPtr(interfaces), \
                            sizeof(AValue) + (i) * sizeof(ATypeInfo *)))
+
+/* ATypeInfo *ATypeInterface(ATypeInfo *type, Assize_t index);
+   Return an interface that is directly implemented by the type. */
 #define ATypeInterface(type, i) \
     (*AInterfaceListPtr((type)->interfaces, i))
 

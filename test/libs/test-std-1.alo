@@ -692,7 +692,8 @@ class StdSuite is Suite
     Assert(not Int._eq(1))
   end
   
-  def testBaseType()
+  -- Test std::Type supertype().
+  def testTypeSupertype()
     AssertEqual(Object.supertype(), nil)
     AssertEqual(Int.supertype(), Object)
     AssertEqual(Range.supertype(), Object)
@@ -701,6 +702,17 @@ class StdSuite is Suite
     AssertEqual(File.supertype(), Stream)
     AssertEqual(Suite.supertype(), Object)
     AssertEqual(StdSuite.supertype(), Suite)
+  end
+  
+  -- Test std::Type interfaces(). See also runtime::InterfacesSuite.
+  def testTypeInterfaces()
+    AssertEqual(Object.interfaces(), [])
+    AssertEqual(Float.interfaces(), [Comparable])
+    AssertEqual(Array.interfaces(), [Multipliable, Comparable, Sequence, 
+                                     Iterable])
+    
+    -- Interface implemented by superclass.
+    AssertEqual(File.interfaces(), [Iterable])
   end
   
   def testChr()

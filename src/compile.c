@@ -113,7 +113,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
 
     if (!AInitializeCompiler(t, modulePath, interpreter, isStandalone,
                              maxHeap))
-        FailAndExit("Out of memory during initialization");
+        FailAndExit("Compiler initialization failed");
 
     /* Determine program path. */
     if (isStandalone)
@@ -136,7 +136,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
        statically-linked C modules. */
     for (i = 0; AAllModules[i] != NULL; i++) {
         if (!ACreateModule(AAllModules[i], FALSE)) {
-            FailAndExit("CompileError in module initialization");
+            FailAndExit("Error in module initialization");
             break;
         }
     }
@@ -147,7 +147,7 @@ int ALoadAloreProgram(AThread **t, const char *file,
         FailAndExit("Could not disallow old gen gc");
 
     if (!ASetupCommandLineArgs(*t, argc, argv))
-        FailAndExit("CompileError setting up arguments");
+        FailAndExit("Error setting up arguments");
 
     if (!ACompileFile(*t, file, "", &num)) {
         ADisplayErrorMessages(ADefDisplay, NULL);
@@ -201,7 +201,7 @@ int AEndAloreProgram(AThread *t, AValue val)
     }
 
     if (ATry(t)) {
-        ADefDisplay("Uncaught exception at program exit", NULL);
+        ADefDisplay("alore: Uncaught exception at program exit", NULL);
         return UNCAUGHT_EXCEPTION_STATUS;
     }
     
@@ -230,10 +230,12 @@ int AEndAloreProgram(AThread *t, AValue val)
         }
     }
     
-    if (!AExecuteExitHandlers(t))
-        ADefDisplay("Uncaught exception raised by an exit handler", NULL);
-    else if (AIsError(val))
+    if (AIsError(val))
         ADisplayStackTraceback(t, ADefDisplay, NULL);
+    
+    if (!AExecuteExitHandlers(t))
+        ADefDisplay("alore: Uncaught exception raised by an exit handler",
+                    NULL);
     
     AEndTry(t);
     
@@ -595,8 +597,13 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
     if (ACurMainModule == NULL)
         goto NoMemory;
 
+    /* Initialize symbol that represents the module formed by the main source
+       file. */
     ACurMainModule->type = ID_GLOBAL_MODULE_MAIN;
-
+    ACurMainModule->info.module.isActive = FALSE;
+    ACurMainModule->info.module.isImported = FALSE;
+    ACurMainModule->info.module.cModule = A_CM_NON_C;
+    
     file = ACAlloc(sizeof(AFileList));
     if (file == NULL)
         goto NoMemory;
@@ -1048,8 +1055,8 @@ AValue ACreateConstant(ASymbolInfo *sym)
 /* FIX: Use a better error handling mechanism. */
 static void FailAndExit(const char *msg)
 {
-    fprintf(stderr, "%s\n", msg);
-    exit(1);
+    fprintf(stderr, "alore: %s\n", msg);
+    exit(3);
 }
 
 

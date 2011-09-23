@@ -205,9 +205,9 @@ the second to last character, etc.
 @desc Return a boolean indicating whether the string ends with the suffix.
 @end
 
-@fun decode(encoding as Encoding[, strictness as Constant]) as Str
+@fun decode(encoding as Encoding[, mode as Constant]) as Str
 @desc Decode the string to 16-bit Unicode using the given character encoding.
-      The strictness argument may be @ref{encodings::Strict}
+      The mode argument may be @ref{encodings::Strict}
       (the default) or @ref{encodings::Unstrict}. Use this to
       convert strings in 8-bit binary encodings to Unicode so that you can
       use them with operations such as @ref{lower}() that expect Unicode
@@ -221,13 +221,13 @@ the second to last character, etc.
       @end
 @end
 
-@fun encode(encoding as Encoding[, strictness as Constant]) as Str
+@fun encode(encoding as Encoding[, mode as Constant]) as Str
 @desc Encode the string (interpreted as 16-bit Unicode) using the given
       character encoding. 
-      The strictness argument may be @ref{encodings::Strict} (the
+      The mode argument may be @ref{encodings::Strict} (the
       default) or @ref{encodings::Unstrict}.
       Calling this method is
-      equivalent to <tt>encoding([strictness]).encode(str)</tt>.
+      equivalent to <tt>encoding.encoder([mode]).encode(str)</tt>.
       
       <p>Example:
       @example
