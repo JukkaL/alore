@@ -436,7 +436,7 @@ private class Lexer
   -- Verify that a token (represented by a string) is encoded correctly 
   -- according to the file encoding.
   private def verifyEncoding(str as Str, context as Constant)
-    var codec = nil as def (Constant=) as Encoding
+    var codec = nil as Encoding
     switch self.enc
       case AsciiEncoding
         codec = Ascii
