@@ -33,6 +33,17 @@ and <tt>interface</tt> constructs.
       exists.
 @end
 
+@fun interfaces() as Array<Type>
+@desc Return an array of type objects that contains all the interfaces that
+      the type implements. It also includes any interfaces that any supertypes
+      implement and any superinterfaces of implemented interfaces. It also
+      includes any interfaces implemented using a <tt>bind</tt> declaration.
+      Example:
+      @example
+        Int.interfaces()     -- Result: [Comparable]
+      @end
+@end
+
 <h2>Operations</h2>
 
 <p>Type objects support the following operations:
