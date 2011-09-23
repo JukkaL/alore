@@ -271,6 +271,9 @@ class Type
   def supertype() as Type
   end
   
+  def interfaces() as Array<Type>
+  end
+  
   def _str() as Str
   end
 end
