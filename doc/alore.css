@@ -225,6 +225,14 @@ ul.sep {
     padding: 1px;
 }
 
+.contents li {
+    padding-top: 4px;
+}
+
+.contents li ul li {
+    padding-top: 4px;
+}
+
 /* Formatting (specific) */
 
 #contents-lib {
