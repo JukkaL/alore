@@ -218,7 +218,7 @@ src/std_array.o: src/std_array.c src/alore.h src/value.h src/common.h \
 src/std_type.o: src/std_type.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/std_module.h src/wrappers.h src/runtime.h \
- src/operator.h
+ src/operator.h src/class.h src/symtable.h
 src/std_int.o: src/std_int.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/runtime.h src/operator.h src/memberid.h src/int.h \

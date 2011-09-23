@@ -1269,6 +1269,7 @@ A_MODULE(std, "std")
     A_CLASS_PRIV_P(A_PRIVATE("__Type"), 1, &TypeClassNum)
         A_METHOD("create", 0, 0, AHiddenCreate)
         A_METHOD("supertype", 0, 0, ATypeSupertype)
+        A_METHOD("interfaces", 0, 1, ATypeInterfaces)
         A_METHOD("_str", 0, 0, AStrWrapper)
     A_END_CLASS()
 
