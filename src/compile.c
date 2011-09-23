@@ -597,8 +597,13 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
     if (ACurMainModule == NULL)
         goto NoMemory;
 
+    /* Initialize symbol that represents the module formed by the main source
+       file. */
     ACurMainModule->type = ID_GLOBAL_MODULE_MAIN;
-
+    ACurMainModule->info.module.isActive = FALSE;
+    ACurMainModule->info.module.isImported = FALSE;
+    ACurMainModule->info.module.cModule = A_CM_NON_C;
+    
     file = ACAlloc(sizeof(AFileList));
     if (file == NULL)
         goto NoMemory;
