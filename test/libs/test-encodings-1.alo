@@ -285,6 +285,31 @@ class CodecsSuite is Suite
     end
   end
   
+  -- Test converting encodings to strings using Str().
+  def testEncodingStr()
+    AssertEqual(Str(Utf8), '<Utf8 encoding>')
+    AssertEqual(Str(Utf16Le), '<Utf16Le encoding>')
+    AssertEqual(Str(Utf16Be), '<Utf16Be encoding>')
+    AssertEqual(Str(Iso8859_1), '<Iso8859_1 encoding>')
+    AssertEqual(Str(Iso8859_2), '<Iso8859_2 encoding>')
+    AssertEqual(Str(Ascii), '<Ascii encoding>')
+    AssertEqual(Str(Latin1), '<Iso8859_1 encoding>')
+    
+    Assert(Str(Utf16) in ['<Utf16Be encoding>', '<Utf16Le encoding>'])
+  end
+  
+  def testEncodingName()
+    AssertEqual(Utf8.name, 'Utf8')
+    AssertEqual(Utf16Le.name, 'Utf16Le')
+    AssertEqual(Utf16Be.name, 'Utf16Be')
+    AssertEqual(Iso8859_1.name, 'Iso8859_1')
+    AssertEqual(Iso8859_2.name, 'Iso8859_2')
+    AssertEqual(Ascii.name, 'Ascii')
+    AssertEqual(Latin1.name, 'Iso8859_1')
+    
+    Assert(Utf16.name in ['Utf16Le', 'Utf16Be'])
+  end
+  
   private def assertEncode(src, codec, dst)
     var c = codec.encoder()
     AssertEqual(c.encode(src), unhexify(dst))
