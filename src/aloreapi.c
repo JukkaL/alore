@@ -429,7 +429,7 @@ int AGetGlobalNum(AThread *t, const char *name)
 
     if (sym->type == ID_ERR_PARSE || sym->num == 0) {
         AUnlockInterpreter();
-        ARaiseValueError(t, "Invalid global variable");
+        ARaiseValueError(t, "Invalid global variable \"%s\"", name);
         return -1;
     } else
         num = sym->num;
