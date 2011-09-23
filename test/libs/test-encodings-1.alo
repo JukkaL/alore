@@ -310,6 +310,15 @@ class CodecsSuite is Suite
     Assert(Utf16.name in ['Utf16Le', 'Utf16Be'])
   end
   
+  def testImplementedInterfaces()
+    for enc in Utf8, Utf16Le, Utf16Be, Iso8859_1, Iso8859_1, Ascii, Latin1,
+               Utf16
+      Assert(enc is Encoding)
+      Assert(enc.encoder() is Encoder)
+      Assert(enc.decoder() is Decoder)
+    end
+  end
+  
   private def assertEncode(src, codec, dst)
     var c = codec.encoder()
     AssertEqual(c.encode(src), unhexify(dst))
