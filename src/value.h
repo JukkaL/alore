@@ -66,7 +66,7 @@ typedef struct ATypeInfo_ {
     unsigned dataOffset;   /* Offset of extra binary data from block start */
     unsigned instanceSize; /* Total size of an instance, rounded up */
     unsigned numInterfaces; /* Number of interfaces implemented by the type */
-    unsigned interfacesSize; /* Size of the interfaces array */
+    unsigned interfacesSize; /* Length of the interfaces array */
     char isInterface;      /* Is the type an interface */
     char hasEqOverload;    /* Does the type have an overloaded == operator? */
     char hasHashOverload;  /* Does the type have a _hash method? */
