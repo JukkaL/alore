@@ -103,7 +103,7 @@ class SymbolTableNode
   end
   
   def _str() as Str
-    var s = "{}/{}".format(CleanUp(Str(kind)), TypeName(node))
+    var s = "{}/{}".format(CleanUp(Str(kind)), ShortType(node))
     if self.modId != nil
       s += " ({})".format(self.modId)
     end

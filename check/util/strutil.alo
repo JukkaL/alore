@@ -7,7 +7,7 @@ import reflect
 
 -- Return the last component of the type name of an object. If obj is nil,
 -- return 'nil'. For example, if obj is 1, return 'Int'.
-def TypeName(obj as Object) as Str
+def ShortType(obj as Object) as Str
   if obj == nil
     return "nil"
   end

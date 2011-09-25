@@ -22,7 +22,7 @@ class Token
   end
   
   def _str() as Str
-    var t = TypeName(self)
+    var t = ShortType(self)
     return t + "(" + fix(pre) + fix(str) + ")"
   end
   

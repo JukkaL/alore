@@ -17,7 +17,7 @@ private class StrConv is NodeVisitor<Str>
   -- is produced from the type name of obj and its line number. See 
   -- util::DumpTagged for a description of the nodes argument. 
   private def dump(nodes, obj)
-    return DumpTagged(nodes, TypeName(obj) + ":" + Str(obj.line))
+    return DumpTagged(nodes, ShortType(obj) + ":" + Str(obj.line))
   end
   
   -- Return an array in a format suitable for dump() that represents the
@@ -320,7 +320,7 @@ private class StrConv is NodeVisitor<Str>
       -- Add tag to signify a member reference.
       n += " [m]"
     end
-    return TypeName(o) + "(" + n + ")"
+    return ShortType(o) + "(" + n + ")"
   end
   
   def visitMemberExpr(o)

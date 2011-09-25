@@ -45,7 +45,7 @@ class TypeExportSuite is Suite
       var keys = []
       for k in kk
         if k.line != nil and k.line != -1 and map[k] != nil 
-          if Match(mask, TypeName(k)) != nil or
+          if Match(mask, ShortType(k)) != nil or
              (k is NameExpr and Match(mask, k.name) != nil)
             keys.append(k)
           end
@@ -53,10 +53,10 @@ class TypeExportSuite is Suite
       end
       for key in Sort(keys, 
                   def (n, m)
-                    return (n.line, TypeName(n), Str(n)) < 
-                           (m.line, TypeName(m), Str(m))
+                    return (n.line, ShortType(n), Str(n)) < 
+                           (m.line, ShortType(m), Str(m))
                   end)
-        a.append("{}({}) : {}".format(TypeName(key), key.line, map[key]))
+        a.append("{}({}) : {}".format(ShortType(key), key.line, map[key]))
       end
     except e is CompileError
       a = e.messages
