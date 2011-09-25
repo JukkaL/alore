@@ -3435,34 +3435,6 @@ $as_echo "no" >&6; }
 fi
 rm -f confCaSe.x
 
-## Check if we have a good enough x86 assembler that supports the C
-## preprocessor. This is is needed by the JTI compiler support code.
-#AC_MSG_CHECKING([for supported x86 assembler])
-#AC_SUBST(JIT_SRC)
-#JIT_SRC=
-#cat >conftest.S <<_ACEOF
-#/* comment */
-##define REG %eax
-#        .globl Foo
-#        .p2align 4,,15
-#Foo:
-#        pushl REG
-#        movl %eax, %ebx
-#        popl %eax
-#        ret
-#_ACEOF
-#$CC -o conftest.o -c conftest.S 2>conftest.err
-#rm -f conftest.S
-#if { test -f conftest.o && test ! -s conftest.err; }; then
-#  AC_DEFINE(HAVE_JIT_COMPILER, 1,
-#            [Define to 1 if JIT compiler support is available.])
-#  JIT_SRC="src/asm_module.c src/asm.c src/asm_ops.S"
-#  AC_MSG_RESULT([yes])
-#else
-#  AC_MSG_RESULT([no])
-#fi
-#rm -f conftest.o conftest.err
-
 # Checks for libraries.
 
 
@@ -4251,7 +4223,6 @@ done
 #fi
 
 # Checks for typedefs, structures, and compiler characteristics.
-#AC_TYPE_SIZE_T
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for an ANSI C-conforming const" >&5
 $as_echo_n "checking for an ANSI C-conforming const... " >&6; }
 if test "${ac_cv_c_const+set}" = set; then :
@@ -4674,10 +4645,7 @@ _ACEOF
 
 
 # Checks for library functions.
-#AC_FUNC_CLOSEDIR_VOID
-#AC_FUNC_MEMCMP
-#AC_FUNC_MALLOC
-#AC_FUNC_REALLOC
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether lstat correctly handles trailing slash" >&5
 $as_echo_n "checking whether lstat correctly handles trailing slash... " >&6; }
 if test "${ac_cv_func_lstat_dereferences_slashed_symlink+set}" = set; then :
@@ -4848,9 +4816,6 @@ esac
 
 fi
 
-
-# FIX This is buggy, hangs with gcc 4.3.. Probably not needed anyway.
-#AC_FUNC_MKTIME
 
 
 
@@ -5299,7 +5264,7 @@ done
 
 
 # These C89 functions are not checked and are assumed to work:
-#   floor memmove memset pow sqrt strchr
+#   floor memmove memset pow sqrt strchr memcmp malloc realloc
 
 for ac_func in dlopen dlclose dlsym mremap gettimeofday getpwuid_r
 do :

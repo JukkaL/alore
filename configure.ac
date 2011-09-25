@@ -216,34 +216,6 @@ else
 fi
 rm -f confCaSe.x
 
-## Check if we have a good enough x86 assembler that supports the C
-## preprocessor. This is is needed by the JTI compiler support code.
-#AC_MSG_CHECKING([for supported x86 assembler])
-#AC_SUBST(JIT_SRC)
-#JIT_SRC=
-#cat >conftest.S <<_ACEOF
-#/* comment */
-##define REG %eax   
-#        .globl Foo
-#        .p2align 4,,15
-#Foo:
-#        pushl REG
-#        movl %eax, %ebx
-#        popl %eax
-#        ret
-#_ACEOF
-#$CC -o conftest.o -c conftest.S 2>conftest.err
-#rm -f conftest.S
-#if { test -f conftest.o && test ! -s conftest.err; }; then
-#  AC_DEFINE(HAVE_JIT_COMPILER, 1,
-#            [Define to 1 if JIT compiler support is available.])
-#  JIT_SRC="src/asm_module.c src/asm.c src/asm_ops.S"
-#  AC_MSG_RESULT([yes])
-#else
-#  AC_MSG_RESULT([no])
-#fi
-#rm -f conftest.o conftest.err
-
 # Checks for libraries.
 
 AC_CHECK_LIB([m], [sin])
@@ -287,7 +259,6 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdint.h sys
 #fi
 
 # Checks for typedefs, structures, and compiler characteristics.
-#AC_TYPE_SIZE_T
 AC_C_CONST
 AC_TYPE_OFF_T
 AC_TYPE_SSIZE_T
@@ -305,15 +276,9 @@ AC_CHECK_SIZEOF(size_t)
 AC_CHECK_SIZEOF(ssize_t)
 
 # Checks for library functions.
-#AC_FUNC_CLOSEDIR_VOID
-#AC_FUNC_MEMCMP
-#AC_FUNC_MALLOC
-#AC_FUNC_REALLOC
+
 AC_FUNC_LSTAT
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
-
-# FIX This is buggy, hangs with gcc 4.3.. Probably not needed anyway.
-#AC_FUNC_MKTIME
 
 AC_FUNC_MMAP
 AC_FUNC_STAT
@@ -323,8 +288,8 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gethostname inet_ntoa localtime_r mkdir munmap setenv socket utime])
 
 # These C89 functions are not checked and are assumed to work:
-#   floor memmove memset pow sqrt strchr
-    
+#   floor memmove memset pow sqrt strchr memcmp malloc realloc
+
 AC_CHECK_FUNCS([dlopen dlclose dlsym mremap gettimeofday getpwuid_r])
 
 # The POSIX version of getpwuid_r takes 5 arguments, while the one in Solaris
