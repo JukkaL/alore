@@ -299,6 +299,43 @@ ABool AIsSpecialType(AValue val)
 }
 
 
+/* Return the type object that corresponds to the class of the object
+   argument. Raise ValueError if the argument is nil. */
+AValue AGetTypeObject(AThread *t, AValue object)
+{
+    if (AIsInstance(object)) {
+        /* Anonymous functions need special processing. */
+        if (AIsAnonFunc(object))
+            return AGlobalByNum(AStdFunctionNum);
+        else {
+            /* This is the generic case. It covers all user-defined types
+               and most C and library types. */
+            AInstance *inst = AValueToInstance(object);
+            return AGlobalByNum(AGetInstanceType(inst)->sym->num);
+        }
+    } else if (AIsInt(object))
+        return AGlobalByNum(AStdIntNum);
+    else if (AIsStr(object))
+        return AGlobalByNum(AStdStrNum);
+    else if (AIsFloat(object))
+        return AGlobalByNum(AStdFloatNum);
+    else if (AIsNil(object))
+        return ARaiseValueError(t, "Type of nil not defined");
+    else if (AIsConstant(object))
+        return AGlobalByNum(AStdConstantNum);
+    else if (AIsPair(object))
+        return AGlobalByNum(AStdPairNum);
+    else if (AIsRange(object))
+        return AGlobalByNum(AStdRangeNum);
+    else if (AIsOfType(object, AGlobalByNum(AStdTypeNum)) == A_IS_TRUE)
+        return AGlobalByNum(AStdTypeNum);
+    else if (AIsGlobalFunction(object) || AIsMethod(object))
+        return AGlobalByNum(AStdFunctionNum);
+    else
+        return ARaiseValueError(t, NULL);
+}
+
+
 /* Compare two values for equality. Return AZero if the result is false,
    AIntToValue(1) if true, and AError on error. */
 AValue AIsEqual(AThread *t, AValue left, AValue right)

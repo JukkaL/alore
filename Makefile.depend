@@ -254,7 +254,7 @@ src/io_text.o: src/io_text.c src/alore.h src/value.h src/common.h \
 src/encodings_module.o: src/encodings_module.c src/alore.h src/value.h \
  src/common.h src/aconfig.h config.h src/module.h src/thread.h \
  src/globals.h src/errmsg.h src/encodings_module.h src/str.h src/mem.h \
- src/gc.h src/heapalloc.h src/debug_params.h
+ src/gc.h src/heapalloc.h src/debug_params.h src/util.h
 src/encodings_tables.o: src/encodings_tables.c src/encodings_module.h
 src/errno_module.o: src/errno_module.c src/aconfig.h config.h src/alore.h \
  src/value.h src/common.h src/module.h src/thread.h src/globals.h \
@@ -285,8 +285,8 @@ src/athread_win32.o: src/athread_win32.c src/athread.h src/aconfig.h config.h
 src/reflect_module.o: src/reflect_module.c src/alore.h src/value.h \
  src/common.h src/aconfig.h config.h src/module.h src/thread.h \
  src/globals.h src/errmsg.h src/runtime.h src/operator.h src/memberid.h \
- src/class.h src/symtable.h src/std_module.h src/str.h src/mem.h \
- src/internal.h src/gc.h src/heapalloc.h src/debug_params.h
+ src/class.h src/symtable.h src/str.h src/mem.h src/internal.h src/gc.h \
+ src/heapalloc.h src/debug_params.h
 src/re_module.o: src/re_module.c src/alore.h src/value.h src/common.h \
  src/aconfig.h config.h src/module.h src/thread.h src/globals.h \
  src/errmsg.h src/re.h src/debug_params.h

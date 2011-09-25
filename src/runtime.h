@@ -112,6 +112,8 @@ AValue ACoerce(AThread *t, AOperator op, AValue left, AValue right,
 
 AValue AIsIn(AThread *t, AValue left, AValue right);
 
+AValue AGetTypeObject(AThread *t, AValue object);
+
 AValue AWrapObject(AThread *thread, AValue obj);
 
 

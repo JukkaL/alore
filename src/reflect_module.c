@@ -10,7 +10,6 @@
 #include "runtime.h"
 #include "memberid.h"
 #include "class.h"
-#include "std_module.h"
 #include "str.h"
 #include "internal.h"
 #include "gc.h"
@@ -161,37 +160,7 @@ static AValue ReflectSetMember(AThread *t, AValue *frame)
 /* reflect::TypeOf(obj) */
 static AValue ReflectTypeOf(AThread *t, AValue *frame)
 {
-    /* IDEA: Combine with InternalType? */
-    if (AIsInstance(frame[0])) {
-        /* Anonymous functions need special processing. */
-        if (AIsAnonFunc(frame[0]))
-            return AGlobalByNum(AStdFunctionNum);
-        else {
-            /* This is the generic case. It covers all user-defined types
-               and most C and library types. */
-            AInstance *inst = AValueToInstance(frame[0]);
-            return AGlobalByNum(AGetInstanceType(inst)->sym->num);
-        }
-    } else if (AIsInt(frame[0]))
-        return AGlobalByNum(AStdIntNum);
-    else if (AIsStr(frame[0]))
-        return AGlobalByNum(AStdStrNum);
-    else if (AIsFloat(frame[0]))
-        return AGlobalByNum(AStdFloatNum);
-    else if (AIsNil(frame[0]))
-        return ARaiseValueError(t, "Type of nil not defined");
-    else if (AIsConstant(frame[0]))
-        return AGlobalByNum(AStdConstantNum);
-    else if (AIsPair(frame[0]))
-        return AGlobalByNum(AStdPairNum);
-    else if (AIsRange(frame[0]))
-        return AGlobalByNum(AStdRangeNum);
-    else if (AIsOfType(frame[0], AGlobalByNum(AStdTypeNum)) == A_IS_TRUE)
-        return AGlobalByNum(AStdTypeNum);
-    else if (AIsGlobalFunction(frame[0]) || AIsMethod(frame[0]))
-        return AGlobalByNum(AStdFunctionNum);
-    else
-        return ARaiseValueErrorND(t, NULL);
+    return AGetTypeObject(t, frame[0]);
 }
 
 
