@@ -20,6 +20,8 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
+MKDIR_P = @MKDIR_P@
+
 PLATFORM = @PLATFORM@
 
 OPT_MODULES = @OPT_MODULES@
@@ -166,12 +168,12 @@ install: alore alorec
 	for dir in $(bindir) $(libdir) $(alorelibdir) $(incdir) \
 	           $(aloreincdir); do \
 	  if [ ! -d $$dir ]; then \
-	    mkdir -p $$dir; \
+	    $(MKDIR_P) $$dir; \
 	  fi; \
 	done
 
 	for lib in $(ALORELIBS); do \
-	  mkdir -p $(alorelibdir)/$$lib; \
+	  $(MKDIR_P) $(alorelibdir)/$$lib; \
 	  $(INSTALL_DATA) lib/$$lib/*.alo $(alorelibdir)/$$lib; \
 	done
 	for lib in $(MODULES); do \
@@ -189,26 +191,26 @@ install: alore alorec
 	$(INSTALL_PROGRAM) alore $(bindir)
 	$(INSTALL_PROGRAM) alorec $(bindir)
 	$(INSTALL_DATA) lib/libalorec.a $(libdir)
-	mkdir -p "$(aloredatadir)/check"
+	$(MKDIR_P) "$(aloredatadir)/check"
 	$(INSTALL_DATA) check/check.alo "$(aloredatadir)/check"
 	@echo "Copy checker modules:"
 	@for modp in check/*; do \
 	  mod=`basename $$modp`; \
 	  if [ -d $$modp ] && [ $$mod != testchk ] && [ $$mod != tmp ]; then \
 	    echo "  $$modp -> $(aloredatadir)/$$modp"; \
-	    mkdir -p "$(aloredatadir)/$$modp"; \
+	    $(MKDIR_P) "$(aloredatadir)/$$modp"; \
 	    $(INSTALL_DATA) $$modp/*.alo "$(aloredatadir)/$$modp"; \
 	  fi; \
 	done
 	@echo "Copy library stubs:"
 	@for modp in stubs/*; do \
 	  echo "  $$modp -> $(aloredatadir)/$$modp"; \
-	  mkdir -p "$(aloredatadir)/$$modp"; \
+	  $(MKDIR_P) "$(aloredatadir)/$$modp"; \
 	  $(INSTALL_DATA) $$modp/*.alo "$(aloredatadir)/$$modp"; \
 	done
 	if test $(PLATFORM) != windows; then \
-	  if [ ! -d $(mandir) ]; then mkdir -p $(mandir); fi; \
-	  if [ ! -d $(mandir)/man1 ]; then mkdir -p $(mandir)/man1; fi; \
+	  if [ ! -d $(mandir) ]; then $(MKDIR_P) $(mandir); fi; \
+	  if [ ! -d $(mandir)/man1 ]; then $(MKDIR_P) $(mandir)/man1; fi; \
 	  $(INSTALL_DATA) doc/alore.man $(mandir)/man1/alore.1; \
 	  $(INSTALL_DATA) doc/alorec.man $(mandir)/man1/alorec.1; \
 	fi
