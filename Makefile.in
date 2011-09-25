@@ -16,6 +16,8 @@ aloredatadir = @aloredatadir@
 CC = @CC@
 LD = $(CC)
 
+RANLIB = @RANLIB@
+
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -137,7 +139,7 @@ alorec: alore lib/libalorec.a $(ALOREC_SRC) $(MODULE_LIBS) $(MODULES)
 
 lib/libalorec.a: $(COMPILED_OBJ)
 	ar rc $@ $(COMPILED_OBJ)
-	ranlib $@
+	$(RANLIB) $@
 
 # Windows resource file (contains the icon)
 alore.res: windows/alore.rc windows/alore.ico
@@ -283,7 +285,7 @@ lib/__testc@SOEXT@: src/testc_module_dyn.o $(IMPLIB)
 
 lib/liba__testc.a: src/testc_module.o
 	ar rc $@ src/testc_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/unicode@SOEXT@: src/unicode_module_dyn.o src/unicode_names_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/unicode_module_dyn.o src/unicode_names_dyn.o \
@@ -291,7 +293,7 @@ lib/unicode@SOEXT@: src/unicode_module_dyn.o src/unicode_names_dyn.o $(IMPLIB)
 
 lib/libaunicode.a: src/unicode_module.o src/unicode_names.o
 	ar rc $@ src/unicode_module.o src/unicode_names.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/socket@SOEXT@: src/socket_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/socket_module_dyn.o $(IMPLIB) \
@@ -299,7 +301,7 @@ lib/socket@SOEXT@: src/socket_module_dyn.o $(IMPLIB)
 
 lib/libasocket.a: src/socket_module.o
 	ar rc $@ src/socket_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/serversocket@SOEXT@: src/serversocket_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/serversocket_module_dyn.o $(IMPLIB) \
@@ -307,21 +309,21 @@ lib/serversocket@SOEXT@: src/serversocket_module_dyn.o $(IMPLIB)
 
 lib/libaserversocket.a: src/serversocket_module.o
 	ar rc $@ src/serversocket_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/base64@SOEXT@: src/base64_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/base64_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
 
 lib/libabase64.a: src/base64_module.o
 	ar rc $@ src/base64_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/__dummy@SOEXT@: src/dummy_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/dummy_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
 
 lib/liba__dummy.a: src/dummy_module.o
 	ar rc $@ src/dummy_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 .c_dyn.o:
 	$(CC) $(MOD_CFLAGS) -c $< -o $@
