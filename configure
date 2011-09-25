@@ -3229,7 +3229,7 @@ Linux)    PLATFORM='linux';;
 FreeBSD)  PLATFORM='freebsd';;
 SunOS)    PLATFORM='solaris';;
 MINGW*)   PLATFORM='windows';;
-Darwin)   PLATFORM='osx';;
+Darwin)   PLATFORM='mac';;
 *)        PLATFORM='unknown';;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PLATFORM" >&5
@@ -3348,7 +3348,7 @@ freebsd)        CC_SHARED_FLAGS="-fPIC";;
 solaris-sparc)  CC_SHARED_FLAGS="-xcode=pic32";;
 solaris-*)      CC_SHARED_FLAGS="-KPIC";;
 windows)        CC_SHARED_FLAGS="";;
-osx)            CC_SHARED_FLAGS="";;
+mac)            CC_SHARED_FLAGS="";;
 *)              CC_SHARED_FLAGS="-fPIC";;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC_SHARED_FLAGS" >&5
@@ -3395,7 +3395,7 @@ $as_echo "$IMPLIB" >&6; }
 $as_echo_n "checking for suffix of shared libraries... " >&6; }
 case $PLATFORM in
 windows)       SOEXT=".dll";;
-osx)           SOEXT=".so";;
+mac)           SOEXT=".so";;
 *)	       SOEXT=".so";;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SO" >&5
