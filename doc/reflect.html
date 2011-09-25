@@ -24,7 +24,7 @@
 @end
 
 @fun TypeOf(instance) as Type
-@desc Return a type object representing the class of the argument.
+@desc Return the type object corresponding to the class of the argument.
       <tt>TypeOf</tt> works for all values except <tt>nil</tt>;
       if the argument is <tt>nil</tt>, raise a @ref{ValueError} exception.
       The returned object is a type object bound to the relevant class
@@ -33,5 +33,8 @@
       @example
         TypeOf(1)        -- std::Int
         TypeOf([1, 2])   -- std::Array
+      @end
+
+      @see @ref{std::TypeName}
       @end
 @end

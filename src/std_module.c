@@ -427,6 +427,33 @@ static AValue ArrayRepr(AThread *t, AValue *array, AValue *acc,
 }
 
 
+/* std::TypeName(object)
+   Return the class name of an object. Return "nil" for nil. */
+AValue AStdTypeName(AThread *t, AValue *frame)
+{
+    AValue type;
+    char name[256];
+
+    /* Handle nil specially. */
+    if (AIsNil(frame[0]))
+        return AMakeStr(t, "nil");
+
+    /* Get the class object. */
+    type = AGetTypeObject(t, frame[0]);
+    
+    /* The class object can be represented as a global function (e.g. Int) or
+       a Type object. */
+    if (AIsGlobalFunction(type))
+        AFormatMessage(name, sizeof(name), "%q",
+                       AValueToFunction(type)->sym);
+    else
+        AFormatMessage(name, sizeof(name), "%q",
+                       AValueToType(type)->sym);
+
+    return AMakeStr(t, name);
+}
+
+
 /* std::Exception create([message]) */
 AValue AStdExceptionCreate(AThread *t, AValue *frame)
 {
@@ -1283,6 +1310,8 @@ A_MODULE(std, "std")
        internally represented as function objects. */
     A_DEF_P("Str", 1, 0, AStdStr, &AStdStrNum) /* NOTE: don't change args */
     A_DEF_P("Repr", 1, 0, AStdRepr, &AStdReprNum) /* NOTE: don't change args */
+    A_DEF("TypeName", 1, 0, AStdTypeName)
+
     A_DEF_OPT_P("Int", 1, 2, 0, AStdInt, &AStdIntNum)
     A_DEF_P("Type", 0, 0, StdType, &AStdTypeNum)
     A_DEF_P("Float", 1, 0, AStdFloat, &AStdFloatNum)

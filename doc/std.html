@@ -130,6 +130,19 @@ and its services are used by practically every Alore program.
     If even that fails, return a generic representation of the argument that
     indicates the type of the object.
 @end
+
+@fun TypeName(object) as Str
+@desc Return the class name of the argument. Do not include module prefix
+      for <tt>std</tt> module classes. Return the fully qualified name for
+      other classes. Return <tt>"nil"</tt> if the argument is <tt>nil</tt>.
+      Examples:
+      @example
+        TypeName(1)       -- "Int"
+        TypeName(StdIn)   -- "io::TextStream"
+      @end
+      @see @ref{reflect::TypeOf}
+      @end
+@end      
   
 @fun Chr(n as Int) as Str
 @desc Return a single-character string with character code <tt>n</tt>.

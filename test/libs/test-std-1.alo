@@ -776,6 +776,25 @@ class StdSuite is Suite
                  def (); Tuple(); end)
   end
   
+  def testTypeName()
+    AssertEqual(TypeName(1), "Int")
+    AssertEqual(TypeName([]), "Array")
+    AssertEqual(TypeName(True), "Boolean")
+    AssertEqual(TypeName("\1234"), "Str")
+    AssertEqual(TypeName(Int), "Type")
+    AssertEqual(TypeName(Comparable), "Type")
+    
+    AssertEqual(TypeName(StdSuite), "Type")
+    AssertEqual(TypeName(self), "libs::StdSuite")
+    AssertEqual(TypeName(StdIn), "io::TextStream")
+    
+    AssertEqual(TypeName(Sort), "Function")
+    AssertEqual(TypeName(def (); end), "Function")
+    AssertEqual(TypeName(testTypeName), "Function")
+    
+    AssertEqual(TypeName(nil), "nil")
+  end
+  
   private def test(a, b = 2, *c)
     return [a, b] + c
   end
