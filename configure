@@ -600,6 +600,7 @@ GREP
 CPP
 OPT_MODULES
 SOEXT
+RESFILE
 IMPLIB
 MOD_LDFLAGS
 CC_SHARED_FLAGS
@@ -3388,6 +3389,17 @@ windows)       IMPLIB="libalore.a";;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $IMPLIB" >&5
 $as_echo "$IMPLIB" >&6; }
+
+# In Mingw, we need to build a resource file.
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for resource file" >&5
+$as_echo_n "checking for resource file... " >&6; }
+case $PLATFORM in
+windows)   RESFILE="alore.res";;
+*)	       RESFILE="";;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $RESFILE" >&5
+$as_echo "$RESFILE" >&6; }
 
 # Determine shared library extension.
 
