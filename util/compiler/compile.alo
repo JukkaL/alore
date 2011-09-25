@@ -15,7 +15,7 @@ import io
 import __testc
 
 
-var BuiltInImports = Map("os" : ["time"])
+var BuiltInImports = Map("os" : ["time", "__os"])
 
 -- Modules that are required to be included in a program even if they are
 -- not explicitly imported (i.e. they are required by the std module).
