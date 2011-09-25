@@ -182,6 +182,15 @@ windows)       IMPLIB="libalore.a";;
 esac
 AC_MSG_RESULT([$IMPLIB])
 
+# In Mingw, we need to build a resource file.
+AC_SUBST(RESFILE)
+AC_MSG_CHECKING([for resource file])
+case $PLATFORM in
+windows)   RESFILE="alore.res";;
+*)	       RESFILE="";;
+esac
+AC_MSG_RESULT([$RESFILE])
+
 # Determine shared library extension.
 AC_SUBST(SOEXT)
 AC_MSG_CHECKING([for suffix of shared libraries])

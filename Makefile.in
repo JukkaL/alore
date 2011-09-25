@@ -29,6 +29,7 @@ LDFLAGS = @LDFLAGS@ @LD_EXPORT_FLAGS@ @LIBS@
 MOD_LDFLAGS = @MOD_LDFLAGS@ @LIBS@
 MOD_CFLAGS = $(CFLAGS) @CC_SHARED_FLAGS@
 IMPLIB = @IMPLIB@
+RESFILE = @RESFILE@
 
 # Either buildversion or empty (depending on whether we are building from a
 # git working copy or not).
@@ -123,8 +124,8 @@ ALOREC_SRC += util/compiler/platdeps.alo util/compiler/options.alo
 
 all: alore alorec $(MODULES) $(IMPLIB)
 
-alore $(IMPLIB): $(INTERP_OBJ)
-	$(LD) -o $@ $(INTERP_OBJ) $(LDFLAGS)
+alore $(IMPLIB): $(INTERP_OBJ) $(RESFILE)
+	$(LD) -o $@ $(INTERP_OBJ) $(LDFLAGS) $(RESFILE)
 
 alorec: alore lib/libalorec.a $(ALOREC_SRC) $(MODULE_LIBS) $(MODULES)
 	./alore util/alorec.alo -L lib util/alorec.alo
@@ -133,6 +134,10 @@ alorec: alore lib/libalorec.a $(ALOREC_SRC) $(MODULE_LIBS) $(MODULES)
 lib/libalorec.a: $(COMPILED_OBJ)
 	ar rc $@ $(COMPILED_OBJ)
 	ranlib $@
+
+# Windows resource file (contains the icon)
+alore.res: windows/alore.rc windows/alore.ico
+	windres windows/alore.rc -O coff -o alore.res
 
 test: alore $(MODULES)
 	test/test.sh
