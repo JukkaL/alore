@@ -16,11 +16,13 @@ aloredatadir = @aloredatadir@
 CC = @CC@
 LD = $(CC)
 
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
 PLATFORM = @PLATFORM@
 
-PG_LDFLAGS = @PG_LDFLAGS@
 OPT_MODULES = @OPT_MODULES@
-#JIT_SRC = @JIT_SRC@
 
 # C compiler and linker options
 CFLAGS = @CFLAGS@ -I. @CPPFLAGS@
@@ -170,45 +172,45 @@ install: alore alorec
 
 	for lib in $(ALORELIBS); do \
 	  mkdir -p $(alorelibdir)/$$lib; \
-	  cp lib/$$lib/*.alo $(alorelibdir)/$$lib; \
+	  $(INSTALL_DATA) lib/$$lib/*.alo $(alorelibdir)/$$lib; \
 	done
 	for lib in $(MODULES); do \
-	  cp $$lib $(alorelibdir); \
+	  $(INSTALL_DATA) $$lib $(alorelibdir); \
 	done
 	for lib in $(MODULE_LIBS); do \
-	  cp $$lib $(alorelibdir); \
+	  $(INSTALL_DATA) $$lib $(alorelibdir); \
 	done
 	for inf in $(MODULE_LIBS:.a=.inf); do \
 	  if [ -f $$inf ]; then \
-	    cp $$inf $(alorelibdir); \
+	    $(INSTALL_DATA) $$inf $(alorelibdir); \
 	  fi; \
 	done
-	cp $(API_INC) $(aloreincdir)
-	cp alore $(bindir)
-	cp alorec $(bindir)
-	cp lib/libalorec.a $(libdir)
+	$(INSTALL_DATA) $(API_INC) $(aloreincdir)
+	$(INSTALL_PROGRAM) alore $(bindir)
+	$(INSTALL_PROGRAM) alorec $(bindir)
+	$(INSTALL_DATA) lib/libalorec.a $(libdir)
 	mkdir -p "$(aloredatadir)/check"
-	cp check/check.alo "$(aloredatadir)/check"
+	$(INSTALL_DATA) check/check.alo "$(aloredatadir)/check"
 	@echo "Copy checker modules:"
 	@for modp in check/*; do \
 	  mod=`basename $$modp`; \
 	  if [ -d $$modp ] && [ $$mod != testchk ] && [ $$mod != tmp ]; then \
 	    echo "  $$modp -> $(aloredatadir)/$$modp"; \
 	    mkdir -p "$(aloredatadir)/$$modp"; \
-	    cp $$modp/*.alo "$(aloredatadir)/$$modp"; \
+	    $(INSTALL_DATA) $$modp/*.alo "$(aloredatadir)/$$modp"; \
 	  fi; \
 	done
 	@echo "Copy library stubs:"
 	@for modp in stubs/*; do \
 	  echo "  $$modp -> $(aloredatadir)/$$modp"; \
 	  mkdir -p "$(aloredatadir)/$$modp"; \
-	  cp $$modp/*.alo "$(aloredatadir)/$$modp"; \
+	  $(INSTALL_DATA) $$modp/*.alo "$(aloredatadir)/$$modp"; \
 	done
 	if test $(PLATFORM) != windows; then \
 	  if [ ! -d $(mandir) ]; then mkdir -p $(mandir); fi; \
 	  if [ ! -d $(mandir)/man1 ]; then mkdir -p $(mandir)/man1; fi; \
-	  cp doc/alore.man $(mandir)/man1/alore.1; \
-	  cp doc/alorec.man $(mandir)/man1/alorec.1; \
+	  $(INSTALL_DATA) doc/alore.man $(mandir)/man1/alore.1; \
+	  $(INSTALL_DATA) doc/alorec.man $(mandir)/man1/alorec.1; \
 	fi
 
 # Update dependencies in Makefile.depend. Run this every time dependicies
