@@ -18,6 +18,8 @@ LD = $(CC)
 
 RANLIB = @RANLIB@
 
+STRIP = strip
+
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -216,6 +218,14 @@ install: alore alorec
 	  $(INSTALL_DATA) doc/alore.man $(mandir)/man1/alore.1; \
 	  $(INSTALL_DATA) doc/alorec.man $(mandir)/man1/alorec.1; \
 	fi
+
+# Install files and strip binaries.
+install-strip: install
+	$(STRIP) $(bindir)/alore
+	$(STRIP) $(bindir)/alorec
+	for lib in $(MODULES); do \
+	  $(STRIP) $(alorelibdir)/`basename $$lib`; \
+	done
 
 # Update dependencies in Makefile.depend. Run this every time dependicies
 # change. This is not run automatically!
