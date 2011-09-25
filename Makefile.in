@@ -91,7 +91,6 @@ SRC += src/time_module.c
 SRC += src/bitop_module.c
 SRC += src/sys_module.c
 SRC += src/pack_module.c
-#SRC += $(JIT_SRC)
 
 # Dynamically linked modules
 MODULE_SRC  = src/testc_module.c src/unicode_module.c src/unicode_names.c
