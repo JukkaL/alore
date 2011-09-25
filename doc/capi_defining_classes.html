@@ -162,13 +162,21 @@ definitions in the superclass by using C API functions @ref{ASuperMember} and
 @h2 Interface implementation
 
 <p>C classes may implement interfaces using the A_IMPLEMENT macro. Any members
-defined in the interface must be implemented in the class.
+defined in the interface must be implemented in the class or a superclass.
 
 @fun A_IMPLEMENT(interfaceName)
 @desc Make the current class implement an interface. The name should be the
       fully qualified name of the interface as a string. Use the form ::A if
-      the interface is defined in the current module. The rules for the name
-      are otherwise similar to A_INHERIT.
+      the interface is defined in the current module. If the interface
+      is defined in another module than the current module or @ref{std}, that
+      module must also be imported in the current module using @ref{A_IMPORT}.
+      You can use multiple A_IMPLEMENT macros in a class to implement more
+      than one interface.
+
+      @note The A_IMPLEMENT macros must always come immediately
+            after the A_INHERIT macro (if present) or the A_CLASS* macro
+            (otherwise).
+      @end
 @end
 
 @h2 Accessing member variable slots directly

@@ -12,11 +12,21 @@ in the previous section.
 used within interfaces:
 
 <ul>
-  <li>@ref{A_DEF} for defining interface methods
+  <li>@ref{A_METHOD} for defining interface methods
   <li>@ref{A_GETTER} for defining getters
   <li>@ref{A_SETTER} for defining setters
   <li>@ref{A_INHERIT} for interface inheritance
 </ul>
+
+<p>When using macros A_METHOD, A_GETTER or A_SETTER,
+replace the implementation function pointer with NULL, since there is no
+implementation. Example:
+
+@example
+    A_INTERFACE("Example")
+        A_GETTER("a", 0, NULL)
+    A_END_INTERFACE()
+@end
 
 @fun A_INTERFACE(name)
 @desc Define a C interface with the given name. The definition of the interface
