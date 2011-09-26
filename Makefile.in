@@ -194,6 +194,9 @@ install: alore alorec
 	$(INSTALL_PROGRAM) alore@EXEEXT@ $(bindir)
 	$(INSTALL_PROGRAM) alorec@EXEEXT@ $(bindir)
 	$(INSTALL_DATA) lib/libalorec.a $(libdir)
+	if test ${PLATFORM} == windows; then \
+	  ${INSTALL_DATA} ${IMPLIB} ${libdir}; \
+	fi
 	$(MKDIR_P) "$(aloredatadir)/check"
 	$(INSTALL_DATA) check/check.alo "$(aloredatadir)/check"
 	@echo "Copy checker modules:"
