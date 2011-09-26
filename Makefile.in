@@ -16,11 +16,19 @@ aloredatadir = @aloredatadir@
 CC = @CC@
 LD = $(CC)
 
+RANLIB = @RANLIB@
+
+STRIP = strip
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+MKDIR_P = @MKDIR_P@
+
 PLATFORM = @PLATFORM@
 
-PG_LDFLAGS = @PG_LDFLAGS@
 OPT_MODULES = @OPT_MODULES@
-#JIT_SRC = @JIT_SRC@
 
 # C compiler and linker options
 CFLAGS = @CFLAGS@ -I. @CPPFLAGS@
@@ -29,6 +37,7 @@ LDFLAGS = @LDFLAGS@ @LD_EXPORT_FLAGS@ @LIBS@
 MOD_LDFLAGS = @MOD_LDFLAGS@ @LIBS@
 MOD_CFLAGS = $(CFLAGS) @CC_SHARED_FLAGS@
 IMPLIB = @IMPLIB@
+RESFILE = @RESFILE@
 
 # Either buildversion or empty (depending on whether we are building from a
 # git working copy or not).
@@ -82,7 +91,6 @@ SRC += src/time_module.c
 SRC += src/bitop_module.c
 SRC += src/sys_module.c
 SRC += src/pack_module.c
-#SRC += $(JIT_SRC)
 
 # Dynamically linked modules
 MODULE_SRC  = src/testc_module.c src/unicode_module.c src/unicode_names.c
@@ -123,8 +131,8 @@ ALOREC_SRC += util/compiler/platdeps.alo util/compiler/options.alo
 
 all: alore alorec $(MODULES) $(IMPLIB)
 
-alore $(IMPLIB): $(INTERP_OBJ)
-	$(LD) -o $@ $(INTERP_OBJ) $(LDFLAGS)
+alore $(IMPLIB): $(INTERP_OBJ) $(RESFILE)
+	$(LD) -o $@ $(INTERP_OBJ) $(LDFLAGS) $(RESFILE)
 
 alorec: alore lib/libalorec.a $(ALOREC_SRC) $(MODULE_LIBS) $(MODULES)
 	./alore util/alorec.alo -L lib util/alorec.alo
@@ -132,7 +140,11 @@ alorec: alore lib/libalorec.a $(ALOREC_SRC) $(MODULE_LIBS) $(MODULES)
 
 lib/libalorec.a: $(COMPILED_OBJ)
 	ar rc $@ $(COMPILED_OBJ)
-	ranlib $@
+	$(RANLIB) $@
+
+# Windows resource file (contains the icon)
+alore.res: windows/alore.rc windows/alore.ico
+	windres windows/alore.rc -O coff -o alore.res
 
 test: alore $(MODULES)
 	test/test.sh
@@ -159,52 +171,60 @@ install: alore alorec
 	for dir in $(bindir) $(libdir) $(alorelibdir) $(incdir) \
 	           $(aloreincdir); do \
 	  if [ ! -d $$dir ]; then \
-	    mkdir -p $$dir; \
+	    $(MKDIR_P) $$dir; \
 	  fi; \
 	done
 
 	for lib in $(ALORELIBS); do \
-	  mkdir -p $(alorelibdir)/$$lib; \
-	  cp lib/$$lib/*.alo $(alorelibdir)/$$lib; \
+	  $(MKDIR_P) $(alorelibdir)/$$lib; \
+	  $(INSTALL_DATA) lib/$$lib/*.alo $(alorelibdir)/$$lib; \
 	done
 	for lib in $(MODULES); do \
-	  cp $$lib $(alorelibdir); \
+	  $(INSTALL_DATA) $$lib $(alorelibdir); \
 	done
 	for lib in $(MODULE_LIBS); do \
-	  cp $$lib $(alorelibdir); \
+	  $(INSTALL_DATA) $$lib $(alorelibdir); \
 	done
 	for inf in $(MODULE_LIBS:.a=.inf); do \
 	  if [ -f $$inf ]; then \
-	    cp $$inf $(alorelibdir); \
+	    $(INSTALL_DATA) $$inf $(alorelibdir); \
 	  fi; \
 	done
-	cp $(API_INC) $(aloreincdir)
-	cp alore $(bindir)
-	cp alorec $(bindir)
-	cp lib/libalorec.a $(libdir)
-	mkdir -p "$(aloredatadir)/check"
-	cp check/check.alo "$(aloredatadir)/check"
+	$(INSTALL_DATA) $(API_INC) $(aloreincdir)
+	$(INSTALL_PROGRAM) alore@EXEEXT@ $(bindir)
+	$(INSTALL_PROGRAM) alorec@EXEEXT@ $(bindir)
+	$(INSTALL_DATA) lib/libalorec.a $(libdir)
+	$(MKDIR_P) "$(aloredatadir)/check"
+	$(INSTALL_DATA) check/check.alo "$(aloredatadir)/check"
 	@echo "Copy checker modules:"
 	@for modp in check/*; do \
 	  mod=`basename $$modp`; \
 	  if [ -d $$modp ] && [ $$mod != testchk ] && [ $$mod != tmp ]; then \
 	    echo "  $$modp -> $(aloredatadir)/$$modp"; \
-	    mkdir -p "$(aloredatadir)/$$modp"; \
-	    cp $$modp/*.alo "$(aloredatadir)/$$modp"; \
+	    $(MKDIR_P) "$(aloredatadir)/$$modp"; \
+	    $(INSTALL_DATA) $$modp/*.alo "$(aloredatadir)/$$modp"; \
 	  fi; \
 	done
 	@echo "Copy library stubs:"
 	@for modp in stubs/*; do \
 	  echo "  $$modp -> $(aloredatadir)/$$modp"; \
-	  mkdir -p "$(aloredatadir)/$$modp"; \
-	  cp $$modp/*.alo "$(aloredatadir)/$$modp"; \
+	  $(MKDIR_P) "$(aloredatadir)/$$modp"; \
+	  $(INSTALL_DATA) $$modp/*.alo "$(aloredatadir)/$$modp"; \
 	done
 	if test $(PLATFORM) != windows; then \
-	  if [ ! -d $(mandir) ]; then mkdir -p $(mandir); fi; \
-	  if [ ! -d $(mandir)/man1 ]; then mkdir -p $(mandir)/man1; fi; \
-	  cp doc/alore.man $(mandir)/man1/alore.1; \
-	  cp doc/alorec.man $(mandir)/man1/alorec.1; \
+	  if [ ! -d $(mandir) ]; then $(MKDIR_P) $(mandir); fi; \
+	  if [ ! -d $(mandir)/man1 ]; then $(MKDIR_P) $(mandir)/man1; fi; \
+	  $(INSTALL_DATA) doc/alore.man $(mandir)/man1/alore.1; \
+	  $(INSTALL_DATA) doc/alorec.man $(mandir)/man1/alorec.1; \
 	fi
+
+# Install files and strip binaries.
+install-strip: install
+	$(STRIP) $(bindir)/alore@EXEEXT@
+	$(STRIP) $(bindir)/alorec@EXEEXT@
+	for lib in $(MODULES); do \
+	  $(STRIP) $(alorelibdir)/`basename $$lib`; \
+	done
 
 # Update dependencies in Makefile.depend. Run this every time dependicies
 # change. This is not run automatically!
@@ -274,7 +294,7 @@ lib/__testc@SOEXT@: src/testc_module_dyn.o $(IMPLIB)
 
 lib/liba__testc.a: src/testc_module.o
 	ar rc $@ src/testc_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/unicode@SOEXT@: src/unicode_module_dyn.o src/unicode_names_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/unicode_module_dyn.o src/unicode_names_dyn.o \
@@ -282,7 +302,7 @@ lib/unicode@SOEXT@: src/unicode_module_dyn.o src/unicode_names_dyn.o $(IMPLIB)
 
 lib/libaunicode.a: src/unicode_module.o src/unicode_names.o
 	ar rc $@ src/unicode_module.o src/unicode_names.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/socket@SOEXT@: src/socket_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/socket_module_dyn.o $(IMPLIB) \
@@ -290,7 +310,7 @@ lib/socket@SOEXT@: src/socket_module_dyn.o $(IMPLIB)
 
 lib/libasocket.a: src/socket_module.o
 	ar rc $@ src/socket_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/serversocket@SOEXT@: src/serversocket_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/serversocket_module_dyn.o $(IMPLIB) \
@@ -298,21 +318,21 @@ lib/serversocket@SOEXT@: src/serversocket_module_dyn.o $(IMPLIB)
 
 lib/libaserversocket.a: src/serversocket_module.o
 	ar rc $@ src/serversocket_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/base64@SOEXT@: src/base64_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/base64_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
 
 lib/libabase64.a: src/base64_module.o
 	ar rc $@ src/base64_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 lib/__dummy@SOEXT@: src/dummy_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/dummy_module_dyn.o $(IMPLIB) $(MOD_LDFLAGS)
 
 lib/liba__dummy.a: src/dummy_module.o
 	ar rc $@ src/dummy_module.o
-	ranlib $@
+	$(RANLIB) $@
 
 .c_dyn.o:
 	$(CC) $(MOD_CFLAGS) -c $< -o $@

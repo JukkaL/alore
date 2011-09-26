@@ -4,6 +4,7 @@ alorec
 alore.exe
 alorec.exe
 libalore.a
+alore.res
 build.h
 config.h
 config.status

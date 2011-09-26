@@ -83,7 +83,7 @@ def GetCOpts(isDebug)
 
   if Platform == "windows"  
     if IsStandalone
-      var incPaths = [Join(p, "include")]
+      var incPaths = [Join(p, "include", "alore")]
       if not IsDir(incPaths[0])
         incPaths = [Join(p, "src"), p]
       end
