@@ -191,8 +191,8 @@ install: alore alorec
 	  fi; \
 	done
 	$(INSTALL_DATA) $(API_INC) $(aloreincdir)
-	$(INSTALL_PROGRAM) alore $(bindir)
-	$(INSTALL_PROGRAM) alorec $(bindir)
+	$(INSTALL_PROGRAM) alore@EXEEXT@ $(bindir)
+	$(INSTALL_PROGRAM) alorec@EXEEXT@ $(bindir)
 	$(INSTALL_DATA) lib/libalorec.a $(libdir)
 	$(MKDIR_P) "$(aloredatadir)/check"
 	$(INSTALL_DATA) check/check.alo "$(aloredatadir)/check"
@@ -220,8 +220,8 @@ install: alore alorec
 
 # Install files and strip binaries.
 install-strip: install
-	$(STRIP) $(bindir)/alore
-	$(STRIP) $(bindir)/alorec
+	$(STRIP) $(bindir)/alore@EXEEXT@
+	$(STRIP) $(bindir)/alorec@EXEEXT@
 	for lib in $(MODULES); do \
 	  $(STRIP) $(alorelibdir)/`basename $$lib`; \
 	done
