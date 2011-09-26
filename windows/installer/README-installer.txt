@@ -48,5 +48,7 @@ About icons:
    should be in Vista format, with size 256x256 variant using PNG compression)
 
 Limitations/TODO:
- * It is only possible to install Alore for all users, not only for the current 
-   user. This requires Administrator privileges.
+ * The Start menu folder is installed only for the current user.
+ * If you install Alore as a restricted user, the .alo file association is 
+   not set up, but there is no indication in the installer that this has 
+   failed.
