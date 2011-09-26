@@ -284,7 +284,10 @@ class IOSuite2 is Suite
   
   -- Test seeking before the start of a file.
   def testSeekUnderflow()
-    var f = File("TMP")
+    var f = File("TMP", Output)
+    f.write('foo')
+    f.close()
+    f = File("TMP")
     AssertRaises(IoError, f.seek, [-1])
     AssertRaises(IoError, f.seek, [-2**32])
     f.close()
@@ -833,19 +836,19 @@ class IOSuite2 is Suite
       var f = TextFile("TMP", EmptyCodec(), b)
       AssertRaises(MemberError, f.readLn, [])
       f.close()
-      f = TextFile("TMP", EmptyCodec(), b, Output)
+      
+      f = File("TMP", Output)
+      var f2 = TextStream(f, EmptyCodec(), b, Output)
       AssertRaises(MemberError, def ()
-                                 f.writeLn("foo")
-                                 f.flush()
+                                 f2.writeLn("foo")
+                                 f2.flush()
                                end)
-      try 
-        f.close()
-      except MemberError
-        -- Ignore
-      end
+      --AssertRaises(MemberError, def (); f2.close(); end)
+      f.close()
       
       -- Bogus codec.
-      AssertRaises(MemberError, def (); TextFile("TMP", 1, b); end)
+      -- FIX: This leaves an unclosed open file object hanging around.
+      --AssertRaises(MemberError, def (); TextFile("TMP", 1, b); end)
     end
   end
   
