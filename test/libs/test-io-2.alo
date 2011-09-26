@@ -14,6 +14,12 @@ import encodings
 
 
 class IOSuite2 is Suite
+  def tearDown()
+    if IsFile("TMP")
+      Remove("TMP")
+    end
+  end
+
   -- Test basic file operations with file streams (essentially verify that they
   -- "kind of" work without trying to be exhaustive).
   --   * writing
@@ -40,12 +46,16 @@ class IOSuite2 is Suite
         TestFileWriteLine(["a"], (GetStr(i), GetStr(j)), ["b"])
       end
     end
-    
+  end
+  
+  def testWritingSeveralStringsAtAAtime()    
     -- Test writing several strings at a time.
     TestFileWrite((GetStr(1), GetStr(2), GetStr(3), GetStr(4), GetStr(5)))
     var a = ["abc"] * 1000
     TestFileWrite(a)
-    
+  end
+  
+  def testFileWriteSpecialCases()    
     -- Test writing exactly the same size as the buffer.
     TestFileWrite((LongNarrowStr()[0:LineBufferSize], "a"))
     TestFileWrite((LongNarrowStr()[0:BufferSize], "a"))
