@@ -140,15 +140,14 @@ module! These Linux instructions also apply to FreeBSD.
 
 <h3>Compiling in Windows</h3>
 
-<p>For Windows, you first need to install the MinGW development tools,
+<p>In Windows, you first need to install the MinGW development tools and MSYS,
 available at <a href="http://www.mingw.org">www.mingw.org</a>. Then
-the module can be compiled in the MinGW shell:
-
-<!-- FIX: Test these -->
+you can compile the module in the MinGW shell like this (replace instances of
+<tt>C:/Alore</tt> below with the actual install path of Alore):
 
 @example
-  gcc -c hello_module.c
-  gcc -shared -o hello.dll hello_module.o
+  gcc -IC:/Alore/include -c hello_module.c
+  gcc -shared -o hello.dll hello_module.o C:/Alore/lib/libalore.a
 @end
 
 <p>Note that unlike in Linux, the name of the compiled module file is
