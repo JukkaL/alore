@@ -96,6 +96,8 @@ typedef unsigned long long AIntU64;
 
 #define A_MODULE_SEARCH_PATH_BASE "/usr/local/lib/alore"
 
+#define A_EXECUTABLE_EXT ""
+
 #define A_HAVE_POSIX
 
 #define A_APIFUNC
@@ -135,6 +137,8 @@ typedef unsigned long long AIntU64;
 #define A_MAX_PATH_LEN 1024 /* FIX */
 
 #define A_MODULE_SEARCH_PATH_BASE "c:\\alore"
+
+#define A_EXECUTABLE_EXT ".exe"
 
 #ifdef A_DYNAMIC
 #define A_APIFUNC __declspec(dllimport)

@@ -302,6 +302,12 @@ static ABool FindProgram(char *path, const char *src)
             env = s + 1;
             if (!AJoinPath(fp, comp, src))
                 return FALSE;
+                
+            /* Concatenate executable extension to path (.exe in Windows). */
+            if (strlen(fp) + strlen(A_EXECUTABLE_EXT) >= A_MAX_PATH_LEN)
+                return FALSE;
+            strcat(fp, A_EXECUTABLE_EXT);
+            
             if (AIsFile(fp)) {
                 strcpy(path, fp);
                 return TRUE;
