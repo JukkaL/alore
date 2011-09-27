@@ -7,8 +7,8 @@ Copyright (c) 2010-2011 Jukka Lehtosalo
 What's Alore?
 -------------
 
-Alore is a dynamically-typed, object-oriented general-purpose programming
-language.
+Alore is an object-oriented general-purpose programming language with an 
+optional static type system.
 
 
 License
@@ -35,12 +35,36 @@ under /usr/local:
   make install
 
 (or "sudo make install", depending on your configuration)
+  
+Now you can run an Alore program using the Alore interpreter:
+
+  alore program.alo
 
 
 Quick start (Windows)
 ---------------------
 
- 1. Install and configure MinGW and MSYS (http://www.mingw.org/).
+The easiest way to use Alore in Windows is to download the Windows installer 
+from http://www.alorelang.org/ and use it to install Alore. 
+
+You may also wish to add c:\Alore to your PATH (assuming you used the default
+target folder when installing). Do it like this in Command prompt:
+
+  C:\>set path=%path%;c:\alore
+  
+Now you can run an Alore program using the Alore interpreter:
+
+  C:\Work>alore program.alo
+
+
+Building from source code (Windows)
+-----------------------------------
+
+Alternatively, you can build Alore from source code:
+
+ 1. Install MinGW and MSYS (http://www.mingw.org/). These are free software 
+    products that provide the GCC C compiler and a lightweight Unix-like build 
+    environment for Windows.
  2. Start MSYS shell.
  3. Change to the source package root directory (that also contains
     README.txt).
@@ -53,14 +77,13 @@ under c:\Alore:
 
  6. Type "make install".
 
-Finally, you may wish to add c:\Alore to your PATH.
-
 
 Release notes
 -------------
 
-This is a pre-release version of Alore. Things might break or change without
-a warning. Documentation may not be up-to-date.
+Alore is still pre-beta software. Although Alore developers try to avoid 
+unnecessary changes that break compatibility, this may happen occasionally. 
+Documentation may not always be up-to-date.
 
 See also "Known bugs and limitations" below.
 
@@ -68,7 +91,7 @@ See also "Known bugs and limitations" below.
 Running tests
 -------------
 
-To run Alore test cases, first build Alore and then type (in shell)
+To run Alore test cases, first build Alore and then type (in the shell)
 
   make test
 
@@ -81,9 +104,16 @@ a single binary using the alorec tool:
 
   alorec program.alo
 
-This creates the executable "program" (or "program.exe").
+This creates the executable "program" (or "program.exe"). You need to have
+a supported C compiler (gcc) installed and in your PATH. 
 
-Note that the source code is directly included in the executable file.
+In Windows you can use MinGW (see above); you may have to add C:\MinGW\bin to 
+your PATH (the exact location of MinGW files may differ in your configuration):
+
+  C:\>set path=%path%;c:\mingw\bin
+
+NOTE: The source code of your program is directly included in the generated 
+      executable file.
 
 
 Software requirements
@@ -109,7 +139,15 @@ On other operating systems, the standard C build environment is supported.
 Documentation
 -------------
 
-Alore documentation is available online at http://www.alorelang.org/doc/.
+The latest Alore documentation is available online at 
+http://www.alorelang.org/doc/.
+
+
+Giving feedback
+---------------
+
+Any comments (good or bad) about Alore and suggestions for future improvements 
+are gladly accepted. Send feedback to jukka.lehtosalo@iki.fi.
 
 
 How to report bugs
@@ -122,19 +160,11 @@ can be fixed.
 Send bug reports by email to bugs@alorelang.org.
 
 
-Contributing
-------------
-
-Any help in the development, testing and documentation of Alore (and any
-other related tasks) is gladly accepted. If you are interested, please
-contact the author at jukka@alorelang.org.
-
-
 Credits
 -------
 
 Alore was conceived, designed and implemented by Jukka Lehtosalo
-(jukka@alorelang.org), with help and useful comments from many people;
+(jukka.lehtosalo@iki.fi), with help and useful comments from many people;
 see the file CREDITS.txt for a list of contributors.
 
 
@@ -144,7 +174,7 @@ Known bugs and limitations
 A partial list of major bugs and limitations in the current Alore release:
 
  * not much testing on some supported operating systems
- * big-endian architectures not supported
+ * big-endian architectures not tested
  * incomplete support for 64-bit operating systems
    * 64-bit Windows builds not tested
  * limited support for non-ASCII paths and file names
