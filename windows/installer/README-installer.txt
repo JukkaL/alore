@@ -15,16 +15,20 @@ The installer does the following things:
    program
  * Associate .alo files to alore interpreter
  * Support uninstalling everything
- * Support Windows 7, Vista and XP
+ * Support Windows 7, Vista and XP (probably also Windows Server 2003/2008 but
+   this has not been tested)
 
-Prerequisities:
- * Working Alore build environment (mingw and msys)
+Prerequisites:
+ * Working Alore build environment (MinGW and MSYS)
  * NSIS (Nullsoft Scriptable Install System)
-   * At least version 2.46 works
+   * Version 2.46 is known to work; more recent versions are probably fine
  
 Building the installer:
- * First build Alore without debug information; use the default C:\Alore 
-   prefix:
+ * Clone Alore git repository or extract Alore source zip/tar.gz file to local 
+   hard disk.
+   * The directory that contains the sources is the build directory.
+ * First build Alore without debug information. Do this in the MSYS shell
+   (you should not change the default install prefix):
      $ make clean 
      $ ./configure CFLAGS=-O2 
      $ make && make test
@@ -32,20 +36,22 @@ Building the installer:
      $ make doc
  * Install stripped binaries to C:\Alore:
      $ make install-strip
- * Use MakeNSISW to build windows\installer\alore.nsi (in the Alore build
-   directory)
-   * It uses the files in the build directory (documentation) and the 
-     installed files in C:\Alore (the rest; the path is hard coded)
- * If everything works correctly, the resulting installer is 
-     windows\installer\Alore-setup.exe
-
-Additional notes:
- * You want to update the version number before building the installer
-   (BrandingText in windows\installer\alore.nsi)
+ * Use MakeNSISW to build windows\installer\alore.nsi (this file is within the 
+   Alore build directory, not in C:\Alore).
+   * You may want to set the Alore version number before building the installer
+     (BrandingText in windows\installer\alore.nsi).
+   * The installer generation script uses the files in the build directory (for 
+     documentation) and the installed files in C:\Alore (for the rest of the 
+     files). The latter path is hard coded.
+   * If everything works correctly, the resulting installer is 
+     windows\installer\alore-setup.exe.
+ * Rename alore-setup.exe to reflect the current version number (e.g. 
+   alore-setup-1.2.3.exe).
 
 About icons:
  * The icon file windows\alore.ico is used for .alo files (note that the icon
-   should be in Vista format, with size 256x256 variant using PNG compression)
+   should be in Vista format; it should also have a size 256x256 variant that 
+   uses PNG compression).
 
 Limitations/TODO:
  * The Start menu folder is installed only for the current user.
