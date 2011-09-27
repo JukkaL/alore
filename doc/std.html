@@ -128,7 +128,12 @@ and its services are used by practically every Alore program.
     First try to return the result of calling the <tt>_repr</tt> method without
     arguments. If that fails, return the result of the <tt>_str</tt> method.
     If even that fails, return a generic representation of the argument that
-    indicates the type of the object.
+    indicates the type of the object. Examples:
+    @example
+      Repr(3)            -- "3"
+      Repr('foo' + LF)   -- "'foo\u000a'"
+      Repr([nil, True])  -- "[nil, True]"
+    @end
 @end
 
 @fun TypeName(object) as Str
