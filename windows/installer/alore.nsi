@@ -41,6 +41,7 @@
 ; Interface Settings
 
   !define MUI_ABORTWARNING
+  !define MUI_COMPONENTSPAGE_NODESC
 
 ; Pages
 
@@ -130,23 +131,6 @@ Section "Start menu folder" SecStartMenu
   CreateShortCut "$SMPROGRAMS\Alore\Documentation.lnk" "$INSTDIR\doc\index.html" ""
   ${EndIf}
 SectionEnd
-
-; Descriptions
-
-  ; Language strings
-  LangString DESC_SecBasic ${LANG_ENGLISH} \
-    "Alore interpreter, type checker and standard library modules."
-  LangString DESC_SecDocs ${LANG_ENGLISH} \
-    "Alore HTML documentation."
-  LangString DESC_SecStartMenu ${LANG_ENGLISH} \
-    "Create Start menu folder."
-
-  ; Assign language strings to sections
-  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecBasic} $(DESC_SecBasic)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecDocs} $(DESC_SecDocs)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecStartMenu} $(DESC_SecStartMenu)
-  !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Uninstaller Section
 
