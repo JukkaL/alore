@@ -24,7 +24,7 @@
 
   ; Program name and installer file
   Name "Alore"
-  OutFile "Alore-setup.exe"
+  OutFile "alore-setup.exe"
 
   ; Default installation folder
   InstallDir "C:\Alore"
