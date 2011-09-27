@@ -23,6 +23,7 @@ this document without difficulty.
 <ul class="contents">
 <li><a href="#introduction">Introduction</a>
 <li><a href="#hello">Hello, world</a>
+<li><a href="#running">Running Alore programs</a>
 <li><a href="#localvars">Local variables and the Main function</a>
 <li><a href="#comments">Comments</a>
 <li><a href="#statements">Statements</a>
@@ -180,18 +181,22 @@ information on specific topics.
   Print('Hello, world')
 @end
 
-<p>Enter the program in any text editor and save it as "hello.alo". If
-you have the Alore interpreter in your PATH, you can then run the program
-in the shell or the command prompt:
+<p>Enter the program in any text editor and save it as "hello.alo". We'll show
+how to run the program in the next section.
+
+<p>The above example only defines a single statement that calls the
+<tt>Print</tt> function to display the familiar message.
+
+<h2><a name="running"></a>Running Alore programs</h2>
+
+<p>If you have the Alore interpreter in your PATH, you can then run the program
+you created in the previous section in the shell or the command prompt:
 
 @example
   $ <b>alore hello.alo</b>
   Hello, world
   $
 @end
-
-<p>The above example only defines a single statement that calls the
-<tt>Print</tt> function to display the message.
 
 <p>If you don't have Alore in your PATH, you need to provide the path to
 the Alore interpreter explicitly. If you used the default installation 
@@ -201,7 +206,17 @@ directory, you can run the program in the Windows Command prompt like this:
   C:\Work><b>\Alore\alore hello.alo</b>
 @end
 
-<p>
+<p>You may wish to add the Alore interpreter to your PATH in Windows (this
+assumes that you used the default installation folder
+<tt>C:\Alore</tt>):
+
+@example
+  C:\><b>set path=%path%;C:\Alore</b>
+@end
+
+<p>Alternatively, you can run the program in Windows by double-clicking the
+program file. For this program this method isn't very useful, since the
+program only flashes quickly and closes immediately.
 
 <h2><a name="localvars"></a>Local variables and the Main function</h2>
 
