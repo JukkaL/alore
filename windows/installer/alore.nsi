@@ -161,7 +161,8 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\share"
   RMDir /r "$INSTDIR\lib"
   
-  Delete "$INSTDIR\include\*.h"
+  Delete "$INSTDIR\include\alore\*.h"
+  RMDir "$INSTDIR\include\alore"
   RMDir "$INSTDIR\include"
 
   Delete "$INSTDIR\alore*.exe"
