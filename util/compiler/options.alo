@@ -34,7 +34,7 @@ def AddLibPath(path)
     return
   end
   
-  var opt = "-L{}".format(path)
+  var opt = '"-L{}"'.format(path)
   if not opt in LinkDirOpts
     LinkDirOpts.append(opt)
   end

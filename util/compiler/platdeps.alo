@@ -88,12 +88,12 @@ def GetCOpts(isDebug)
         incPaths = [Join(p, "src"), p]
       end
       for ip in incPaths
-        copts.append("-I{}".format(ip))
+        copts.append('"-I{}"'.format(ip))
       end
     else
       if BaseName(p).lower() == "util"
-        copts.append("-I{}".format(Join(DirName(p), "src")))
-        copts.append("-I{}".format(DirName(p)))
+        copts.append('"-I{}"'.format(Join(DirName(p), "src")))
+        copts.append('"-I{}"'.format(DirName(p)))
       end
     end
   else
@@ -101,16 +101,16 @@ def GetCOpts(isDebug)
     
     if IsStandalone
       if p.endsWith("/bin")
-        copts.append("-I{}".format(Join(DirName(p), "include/alore")))
+        copts.append('"-I{}"'.format(Join(DirName(p), "include/alore")))
       else
         -- Probably running alorec in the build directory.
-        copts.append("-I{}".format(Join(p, "src")))
-        copts.append("-I{}".format(p))
+        copts.append('"-I{}"'.format(Join(p, "src")))
+        copts.append('"-I{}"'.format(p))
       end
     else
       if p.endsWith("/util")
-        copts.append("-I{}".format(Join(DirName(p), "src")))
-        copts.append("-I{}".format(DirName(p)))
+        copts.append('"-I{}"'.format(Join(DirName(p), "src")))
+        copts.append('"-I{}"'.format(DirName(p)))
       end
     end
   end
