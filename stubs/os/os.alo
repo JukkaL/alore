@@ -100,7 +100,7 @@ end
 def MakeSymLink(sourcepath as Str, linkpath as Str)
 end
 
-def ReadSymLink(path as Str)
+def ReadSymLink(path as Str) as Str
 end
 
 def GetEnv(variable as Str, default = nil as Str) as Str

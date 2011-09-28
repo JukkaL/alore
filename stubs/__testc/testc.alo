@@ -21,9 +21,6 @@ def CallTrace(f, *args) -- FIX
   return [Exception(), ["x"]]
 end
 
-def TypeName(x)
-end
-
 def CollectGarbage()
 end
 

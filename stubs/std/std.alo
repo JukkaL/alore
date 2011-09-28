@@ -349,6 +349,9 @@ class Array<T> implements Comparable<Array<T>>, Sequence<T>, Iterable<T>,
   def extend(a as Sequence<T>)
   end
   
+  def remove(object as T)
+  end
+  
   def removeAt(index as Int) as T
   end
   
@@ -423,6 +426,9 @@ class Map<KT, VT> implements Iterable<(KT, VT)>
   
   def values() as Array<VT>
   end
+  
+  def items() as Array<(KT, VT)>
+  end
 
   def iterator() as Iterator<(KT, VT)>
   end
@@ -486,6 +492,9 @@ def ReadLn() as Str
 end
 
 def Repr(object as Object) as Str
+end
+
+def TypeName(object as Object) as Str
 end
 
 def Chr(n as Int) as Str
