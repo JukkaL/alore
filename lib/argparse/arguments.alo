@@ -9,6 +9,9 @@ module argparse
 
 
 -- This class represents a parsed command line argument list.
+--
+-- NOTE: The interface of this class is likely to change in the future. The
+--       details are still unclear.
 class Arguments
   private const parser         as ArgumentParser
   -- List of (option name, value) pairs. The names are normalized.
