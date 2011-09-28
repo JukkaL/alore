@@ -8,20 +8,28 @@
   <div class="release-id">@release</div>
 </div>
 
-<h2><a name="preface"></a>Preface</h2>
+<h2><a name="preface"></a>Introduction</h2>
 
-<p>Alore is a dynamically-typed, object-oriented general-purpose programming
-language.
-This document introduces the main features of the Alore programming language in
-a concise manner for a reader who already understands the basics
-of programming. Some programming experience with an object-oriented programming
-language such as Java, C++ or Python should be enough to understand
-this document without difficulty.
+<p>Alore is an object-oriented general-purpose programming
+language with an optional static type system. This document is a short
+introduction to Alore for a reader who already understands the basics of
+programming. Some programming experience with an object-oriented programming
+language such as Python, Java or C# should be enough to understand this
+document without difficulty.
+
+<p>This document only covers the dynamically-typed subset of Alore. Knowing
+this subset is enough to get started and to be a productive Alore programmer,
+but understanding the type system allows you to use Alore to its full
+potential.
+The companion document <a href="typemain.html">Introduction to Alore Type
+System</a> gives an overview of the type system. As this document introduces
+you to the basic features of Alore, you should at least skim this document
+before reading the type system introduction.
 
 <h2>Contents</h2>
 
 <ul class="contents">
-<li><a href="#introduction">Introduction</a>
+<li><a href="#overview">Overview</a>
 <li><a href="#hello">Hello, world</a>
 <li><a href="#running">Running Alore programs</a>
 <li><a href="#localvars">Local variables and the Main function</a>
@@ -85,29 +93,31 @@ this document without difficulty.
 <li><a href="#stdlib">The standard library</a>
 </ul>
 
-<h2><a name="introduction"></a>Introduction</h2>
+<h2><a name="introduction"></a>Overview</h2>
 
 <p>Alore is a general-purpose programming language designed to be
 suitable for many typical programming tasks, ranging from small scripts to
 large and complex applications. It strives for a balanced middle ground
 between scripting
 languages and statically-typed object-oriented programming languages. Alore
-provides high-level
-data types, powerful string processing facilities and a quick edit-run
-cycle like a typical scripting language, but it also naturally supports a more
-structured programming approach than most traditional scripting languages.
+has a compact syntax, flexible built-in data types, powerful string processing
+facilities and a quick edit-test cycle like a typical scripting language.
+Unlike pure dynamic or scripting languages, Alore also has an optional static
+type system that makes it much easier to develop and maintain large and
+complex applications in Alore.
 
 <p>This document aims to give a concise overview of programming in Alore.
-Alore is a fairly small language and easy to master, and an
+Alore is a small language and easy to master, and an
 experienced programmer should become productive with Alore in a day
-or two.
+or two. To highlight the fact that using and knowing the static type system is
+optional, this document only discusses the dynamically-typed subset of Alore.
 
 <p>Alore has a design philosophy strongly favoring simplicity, clarity and
 consistency,
 while always remaining pragmatic. Alore tries to achieve a good balance
 between readability and expressive power, resulting in a language that
 encourages writing clear and compact code that is easy to write,
-understand and modify.
+understand and maintain.
 
 <p>Alore borrows ideas from many other programming languages. Python
 is the main source of influence, and there are many
@@ -123,21 +133,29 @@ obvious similarities between Alore and Python in both syntax and libraries.
       <li>improve run-time efficiency</li>
       <li>make the formal specification and analysis of Alore practical
     </ul>
-  <li>dynamic typing (objects have types, not variables)
   <li>classes with inheritance
   <li>everything is an object, including primitive types such as integers and
     booleans
   <li>flexible and powerful high-level basic types, including
     arbitrary-precision
     integers, Unicode strings, growable arrays and hash-table-based maps
+  <li>dynamic typing (objects have types, not variables)
+  <li>optional static typing
+    <ul>
+      <li>variables may have declared types that allow many common programming
+        errors to be detected without running the program
+      <li>type checking can always be bypassed, and programs can always be run
+        immediately without a costly type checking or compilation step
+      <li>type declarations serve as automatically-checked documentation
+    </ul>
   <li>automatic garbage collection (no need to manually free memory)
-  <li>strong dynamic typing (few implicit type conversions, all objects have
+  <li>strong typing (few implicit type conversions, all objects have
       well-defined types)
   <li>structured and extensible exception handling
   <li>safety from pointer errors and crashes (all error conditions in Alore
     code are checked by the virtual machine)
   <li>proper, language-enforced encapsulation both at class and module
-    levels
+    levels using private members or definitions
   <li>hierarchical modules with separate namespaces
   <li>accessor methods for member variables (also known as properties)
   <li>anonymous functions and lexical closures
@@ -149,7 +167,7 @@ obvious similarities between Alore and Python in both syntax and libraries.
 
 <p>This introduction uses a bottom-up approach: basics are introduced first,
 and explanations of more advances concepts are built on top of more basic
-concepts. The next section presents the traditional
+concepts. The next sections present the traditional
 "Hello world" program in Alore, and 
 instructions for getting your first program up and running.
 The rest of this document explains different language
@@ -162,8 +180,8 @@ modules.
 
 <p>We include quite a few details that we could arguably have omitted for
 brevity. This is used to emphasize the fact that
-Alore is not only easy to get started with, but there aren't many hidden
-complex features and trivia needed to properly master the language.
+Alore is not only easy to get started with, but there aren't hidden
+complex features and trivia that you need to properly master the language.
 
 <p>You may refer to the
 <a href="langref.html">Alore Language Reference</a> for more detailed
@@ -171,7 +189,9 @@ explanations after having read this document. The
 <a href="libmain.html">Alore Library Reference</a> explains
 all the modules and types in the Alore standard library. This introduction 
 contains links to the Library Reference for getting further
-information on specific topics.
+information on specific topics. You can optionally read
+<a href="typemain.html">Introduction to Alore Type System</a> after you
+have read this document to learn how to use static typing in Alore programs.
 
 <h2><a name="hello"></a>Hello, world</h2>
 
