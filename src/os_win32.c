@@ -200,26 +200,31 @@ AValue AOsSystem(AThread *t, AValue *frame)
 /* Wrapper around stat() that behaves closer to Posix stat(). */
 static int MyStat(const char *path, struct stat *buf)
 {
-	char path2[A_MAX_PATH_LEN];
-	int status;	
-	int fixed;
-	int len = strlen(path);
-	ABool trailing = FALSE;
-	
-	if (len >= A_MAX_PATH_LEN)
-		return -1;
-	
-	strcpy(path2, path);
-	
-	/* Strip trailing dir separators, as otherwise the stat call may
-           fail. */
-	fixed =  A_IS_DRIVE_PATH(path2) ? 3 : 1;
-	while (len > fixed && A_IS_DIR_SEPARATOR(path2[len - 1])) {
-		len--;
-		trailing = TRUE;
-	}
-	path2[len] = '\0';
-	
+    char path2[A_MAX_PATH_LEN];
+    int status; 
+    int fixed;
+    int len = strlen(path);
+    ABool trailing = FALSE;
+    
+    if (len >= A_MAX_PATH_LEN)
+        return -1;
+    
+    strcpy(path2, path);
+    
+    /* Strip trailing dir separators, as otherwise the stat call may
+       fail. Keep the initial dir separator. */
+    fixed = A_IS_DRIVE_PATH(path2) ? 3 : 1;
+    while (len > fixed && A_IS_DIR_SEPARATOR(path2[len - 1])) {
+        len--;
+        trailing = TRUE;
+    }
+    path2[len] = '\0';
+    
+    /* stat() of path of form "x:" will fail. Translate it to "x:." instead, 
+       which is equivalent and works. */
+    if (len == 2 && A_IS_DRIVE_PATH(path2))
+        strcat(path2, ".");
+    
     AAllowBlocking();
     status = stat(path2, buf);
     AEndBlocking();

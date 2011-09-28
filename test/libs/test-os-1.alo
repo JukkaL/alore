@@ -167,6 +167,13 @@ class OSSuite is Suite
       Assert(not IsDir("TMP-LINK"))
     end
     
+    if Platform == "windows"
+      Assert(IsDir('c:'))
+      Assert(IsDir('c:\'))
+      Assert(IsDir('c:/'))
+      Assert(IsDir('c:.'))
+    end
+    
     Remove("TMP")
     Remove("TMPDIR")
 
@@ -455,6 +462,12 @@ class OSSuite is Suite
     Assert(Stat("TMPDIR" + Separator).isDir)
     if AltSeparator != nil
       Assert(Stat("TMPDIR" + AltSeparator).isDir)
+    end
+    
+    if Platform == "windows"
+      Assert(Stat("c:").isDir)
+      Assert(Stat("c:.").isDir)
+      Assert(Stat("c:\").isDir)
     end
     
     Remove("TMP")
