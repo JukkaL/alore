@@ -124,10 +124,10 @@ typedef unsigned long long AIntU64;
 
 #define A_IS_ABS(path) \
     (A_IS_DIR_SEPARATOR((path)[0]) || \
-     (A_IS_DRIVE_PATH(path) && A_IS_DIR_SEPARATOR(path[2])))
+     (A_IS_DRIVE_PATH(path) && A_IS_DIR_SEPARATOR((path)[2])))
 
 #define A_IS_DRIVE_PATH(path) \
-    (((path)[0] | 32) >= 'a' && ((path)[0] | 32) <= 'z' && path[1] == ':')
+    (((path)[0] | 32) >= 'a' && ((path)[0] | 32) <= 'z' && (path)[1] == ':')
 
 #define A_PATH_SEPARATOR ';'
 #define A_PATH_SEPARATOR_STRING ";"
