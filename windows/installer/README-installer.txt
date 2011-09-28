@@ -38,8 +38,9 @@ Building the installer:
      $ make install-strip
  * Use MakeNSISW to build windows\installer\alore.nsi (this file is within the 
    Alore build directory, not in C:\Alore).
-   * You may want to set the Alore version number before building the installer
-     (BrandingText in windows\installer\alore.nsi).
+   * Set the Alore version number before building an installer for an Alore
+     release (ALORE_VERSION in windows\installer\alore.nsi). The correct format
+     is "1.2.3" (even if the last number is 0).
    * The installer generation script uses the files in the build directory (for 
      documentation) and the installed files in C:\Alore (for the rest of the 
      files). The latter path is hard coded.

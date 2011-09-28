@@ -8,6 +8,8 @@
 ;    make install)
 ;  * Documentation must have been built (make doc)
 
+; Version information
+  !define ALORE_VERSION "(development version)"
 
 ; Include Modern UI
 
@@ -37,7 +39,7 @@
   RequestExecutionLevel user
   
   ; Replace the "Nullsoft Install System v..." text in the installer
-  BrandingText "Alore (development version)"
+  BrandingText "Alore ${ALORE_VERSION}"
 
 ; Interface Settings
 
@@ -103,7 +105,11 @@ Section "Core components" SecBasic
   ; Write the uninstall keys for Windows. Note that we set this up for the
   ; current user only.
   WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayName" "Alore"
+  WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayVersion" "${ALORE_VERSION}"
+  WriteRegStr HKCU "${REG_UNINSTALL}" "Publisher" "Alore"
   WriteRegStr HKCU "${REG_UNINSTALL}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayIcon" '"$INSTDIR\alore.exe",0'
+  WriteRegStr HKCU "${REG_UNINSTALL}" "HelpLink" "http://www.alorelang.org/"
   WriteRegDWORD HKCU "${REG_UNINSTALL}" "NoModify" 1
   WriteRegDWORD HKCU "${REG_UNINSTALL}" "NoRepair" 1
   
