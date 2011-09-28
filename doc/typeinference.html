@@ -1,0 +1,63 @@
+@head
+@title Basics of type inference
+
+<p>The Alore type checker can often automatically <i>infer</i> the types of
+local variables. Often the type of a variable is obvious, and an explicit type
+annotation does not improve the readability or maintainability of your program.
+In these cases giving the type is just extra work for the programmer. 
+
+<p>Here are some examples of type inference:
+
+@example
+  def F(i as Int)
+    var j = i              -- Infer j to be Int
+    var s = 'abc'          -- Infer s to be Str
+    var f = 1 + 1.1        -- Infer f to be Float
+    var b = j > 1 or j < 4 -- Infer b to be Boolean
+  end
+@end
+
+<p>Note that type inference only works for local variables (variables defined
+within functions). Global variables and member variables need explicit types.
+If they don't have a type, they are dynamically-typed by default (to be
+precise, they have the type <tt>dynamic</tt>). Mixing dynamically-typed and
+statically-typed variables is possible and often useful, and it will be
+discussed later in section @href{The <tt>dynamic</tt> type and mixed typing}.
+
+<p>Type inference uses the type of the initialization expression to infer the
+type of the variable. The type checker always tries to pick the most specific
+or descriptive type for a variable, but sometimes this is not possible. In the
+simplest case, there is no initialization expression. In this case the
+programmer must always provide a type:
+
+@example
+  def F(i as Int)
+    var j as Int    -- Need explicit type (no initializer)
+    i = j
+  end
+@end
+
+<p>Similarly, if the initializer is <tt>nil</tt>, the type checker fails to
+infer a meaningful type:
+
+@example
+  def F() as void
+    var s = nil as Str
+    s = 'abc'
+  end
+@end
+
+<p>Sometimes (but rarely) the type checker can infer a type for a variable,
+but this type is not the right one. In this case you can insert an explicit
+type annotation. There is probably something tricky going on, so the annotation
+serves as a useful reminder for programmer not familiar with the code (which
+could be you in six months).
+
+<p>Remember that the type checker does not infer types in the bodies of
+dynamically-typed functions (dynamically-typed functions have no declared
+argument or return values types). Type inference and static typing in general
+require some additional work from the programmer, and one of the goals of
+dynamic typing is to not require this work.
+
+<p>The next section explains type inference with generic types. It requires
+some new concepts to be introduced. 

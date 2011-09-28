@@ -1,0 +1,143 @@
+@head
+@title Simple types
+
+<p>A simple type is just the name of a class. If a variable has a simple type
+(or a <i>class type</i>),
+it declares that the variable can hold an instance of that class, or an
+instance of any subclass of that class.
+
+@h2 Variables with types
+
+<p>The following example declares a few variables with different simple types:
+
+@example
+  var s as Str
+  var i = 1 as Int
+  s = 'foo'
+  i += 1
+  s += 1    <span class="error">-- Type error</span>
+@end
+
+<p>The <tt>as</tt> keyword followed by a type declares the type of a
+variable. If the variable
+has an initializer (as <tt>i</tt> has above on line 2), the type declaration
+comes <i>after</i> the initialization expression. On the final line of the
+example we try to add 1 to a string value. The type checker rejects the program
+due to this nonsensical line.
+
+@h2 The <tt>nil</tt> value
+
+<p>Additionally, a variable of any type can hold the <tt>nil</tt> value:
+
+@example
+  var s as Str    -- Initialize by default to nil
+  Print(s)        -- nil
+  s = nil         -- Ok
+@end
+
+@h2 Function type signatures
+
+<p>We already had an example of a statically-typed function in the previous
+section. I have copied the <i>type signature</i> of the function here for
+convenience:
+
+@example
+  def Triangle(n as Int, ch as Str)
+@end
+
+<p>The <tt>Triangle</tt> function did not return a value (or to be precise,
+it always returned implicitly <tt>nil</tt>). If we try to use the return value
+in a statically-typed context (I will explain this later in detail; now it
+means that I assign the return value to a variable with a declared type),
+the type checker reports an error:
+
+@example
+  var i as Int
+  i = Triangle(2, '*')    <span class="error">-- Error</span>
+@end
+
+<p>The return value type of a function is declared again using <tt>as</tt>,
+after the function arguments:
+
+@example
+  def Highlight(message as Str) as Str
+    return '*** ' + message + ' ***'
+  end
+@end
+
+<p>Calling the function may now result in a type error, but is otherwise
+identical to the dynamically-typed case:
+
+@example
+  var s as Str
+  s = Highlight('Hello')
+  var i = Highlight('Howdy') as Int  <span class="error">-- Type error</span>
+@end
+
+<p>You can also ignore the return value, even though it is not very useful
+in the case of <tt>Highlight</tt>:
+
+@example
+  Highlight('x')
+@end
+
+@h2 Dynamically-typed functions and the <tt>void</tt> type
+
+<p>If you don't declare any types in the function signature, the type checker
+considers that function to be dynamically-typed. This means that the type
+checker simply skips the function body, and never reports an error. It also
+does no type inference within the function body. The reason
+for this behaviour is actually related to type inference, but we postpone the
+explanation until later. However, this
+poses the dilemma of dealing with functions that take no arguments and do
+not return a value. Is the following function statically-typed or
+dynamically-typed?
+
+@example
+  def Bark()
+    Print('Bark!')
+  end
+@end
+
+<p>For this example it does not really make a difference, but for more complex
+functions it often would. The Alore checker treats any function similar to the
+above as dynamically typed. To make it statically-typed, we need to give it a 
+<tt>void</tt> return type, which signifies that the function does not return
+a value <i>and is statically typed</i>:
+
+@example
+  def Bark() as void
+    Print('Bark!')
+  end
+@end
+
+@h2 Statically-typed classes
+
+<p>The examples so far haven't had any class definitions. Defining
+statically-typed classes is straightforward:
+
+@example
+  import time
+
+  class Person
+    var name as Str
+    var birthDate as Date
+
+    def show() as void
+      WriteLn('Name: ', self.name)
+      WriteLn('Date of birth: ', self.birthDate)
+    end
+  end
+@end
+
+<p>Now you can define variables with type <tt>Person</tt>, and use the variable
+to access variables and methods defined in <tt>Person</tt>. The type checker
+can verify that the members are used correctly:
+
+@example
+  var p = Person('John Smith', Date('1982-12-03')) as Person
+  p.show()                          -- Ok
+  p.birthDate = Date(1982, 12, 4)   -- Ok
+  p.name = 2             <span class="error">-- Error: name must be a string</span>
+  p.show(True)           <span class="error">-- Error: show does not take any arguments</span>
+@end

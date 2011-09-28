@@ -1,0 +1,104 @@
+@head
+@title Casts
+
+<p>Sometimes you have a value with a general type such as <tt>Object</tt>,
+but would like to convert the value to a more specific type (such as
+<tt>Str</tt>). You can do this by using <i>casts</i>.
+
+@h2 Successful cast
+
+<p>Alore uses the <tt>as</tt> operator for casts:
+
+@example
+  var o as Object         -- Declare o to have type Object
+  o = 'foo'
+  o[0]                    <span class="error">-- Type check error: Object does not support [ ]</span>
+  (o as Str)[0]           -- Ok after casting to Str (result 'f')
+@end
+
+<p>In the above example <tt>o</tt> has type <tt>Object</tt>, but we know that
+it really refers to a <tt>Str</tt> value. On the third line we cast the value
+to <tt>Str</tt>, allowing us to use all <tt>Str</tt> operations such as
+indexing.
+
+@h2 Different uses of "<tt>as</tt>"
+
+<p>The <tt>as</tt> keyword is also used for declaring the types of variables.
+If ambiguous, the <tt>as</tt> is assumed to be a declaration, not a cast.
+Place a cast within parentheses if it may be confused with a declaration:
+
+@example
+  def F() as void
+    var o = 'foo' as Object  -- Declaration, not a cast
+    var s = (o as Str)       -- Cast; infer type Str for s
+    var s = o as Str         <span class="error">-- Type check error: declaration with an incompatible initializer
+                             -- (cannot assign Object to Str)</span>
+  end
+@end
+
+<p>To more clearly see why the last variable definition is invalid, we
+rewrite it to use a separate assignment statement for initialization:
+
+@example
+    ...
+    var s as Str
+    s = o                    <span class="error">-- Type check error: incompatible types</span>
+  end
+@end
+  
+
+@h2 Failed casts
+
+<p>The <tt>as</tt> expression checks that the runtime value of the left
+operand has the expected type, and returns the left operand value unmodified.
+The type is specified by the right operand. If the operand does not have the
+expected value, it raises a <tt>CastError</tt> exception at runtime:
+
+@example
+  var o = 'foo' as Object
+  (o as Int) + 2           <span class="error">-- CastError: Cannot cast from Str to Int</span>
+@end
+
+@h2 The precedence of "<tt>as</tt>"
+
+<p>The <tt>as</tt> operator has a lower precedence than most other operators.
+Therefore the left operand rarely needs to be within parentheses:
+
+@example
+  var a = (obj.method(arg) + 5 as Int)  -- The entire expression obj... is the
+                                        -- left operand of "as"
+@end
+
+@h2 Invalid casts and converting values
+
+<p>Casts never modify the value of the left operand.
+For example, casting an <tt>Int</tt> value to
+<tt>Float</tt> results in a type check error, not a numeric conversion:
+
+@example
+  var i = 1 as Int
+  var f = (i as Float)     <span class="error">-- Type check error: Cast from Int to Float can never succeed</span>
+@end
+
+<p>The cast can never succeed if the source and target types do not have a
+subtyping relationship, and the type checker reports this as an error.
+
+<p>The correct way to convert integers to floats is to call <tt>Float</tt>:
+
+@example
+  var i = 1 as Int
+  var f = Float(i)
+@end
+
+<p>Use <tt>Int</tt> to perform the inverse conversion:
+
+@example
+  var i = Int(2.2)
+@end
+
+@h2 Casts to generic types and dynamic casts
+
+<p>Alore does not support casts to generic types such as
+<tt>Array&lt;Int&gt;</tt> or casts to tuple types (other than <tt>Tuple</tt>).
+However, the next section discusses <i>dynamic casts</i> which are often a good
+alternative to the unsupported cast operations.

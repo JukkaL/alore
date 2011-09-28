@@ -1,0 +1,299 @@
+@head
+@title Using generic types
+
+<p>Simple types are good for many purposes, but they are poor at modelling
+collection types such as arrays, maps and sets. Consider arrays as an example.
+An array of integers seems to be a different type from an array of strings,
+but they have many things in common.
+
+<p><i>Generic types</i> allow types to have
+<i>parameters</i> that modify the base type. For example, the class
+<tt>Array&lt;T&gt;</tt>
+has a single type parameter <tt>T</tt> which describes the type of the array
+items.
+<tt>Array&lt;Int&gt;</tt> is an array of integers, while
+<tt>Array&lt;Str&gt;</tt> is an array of strings.
+
+<p>This section discusses <i>using</i> generic types.
+We discuss
+<i>defining</i> generic types and generic functions later in Sections
+@href{Defining generic types and functions} and
+@href{Generic inheritance and generic interfaces}.
+
+
+@h2 Using <tt>Array</tt> types
+
+<p>The following two functions illustrate using different array types. They
+simply return the first item of the argument array:
+
+@example
+  def FirstInt(ai as Array&lt;Int&gt;) as Int
+    return ai[0]
+  end
+  
+  def FirstStr(as as Array&lt;Str&gt;) as Str
+    return as[0]
+  end
+@end
+
+<p>The type of the first return value, <tt>ai[0]</tt> is <tt>Int</tt>, since
+<tt>ai</tt> is an array of integers. Correspondingly the type of the second
+return value, <tt>as[0]</tt>, is <tt>Str</tt>.
+
+<p>Both of the array types in the previous example derive from the
+same generic type <tt>Array&lt;T&gt;</tt>; here <tt>T</tt> is a type variable
+that can be replaced with any type to create a type instance. All type
+instances have the same members, but any type variables in the types of the
+members are replaced with the type parameters of the type instance. For
+example, the return value of the Array <tt>[]</tt> operator is declared to
+be <tt>T</tt> (remember that the <tt>_get</tt> method implements the
+<tt>[]</tt> operator behind the scenes; the return type of <tt>_get</tt> is
+<tt>T</tt>). 
+
+@h2 Constructing <tt>Array</tt> instances
+
+<p>The example above did not create any arrays. Creating an array object
+with a specific item type is done using an expression of form
+<tt>[...] as &lt;...&gt;</tt>. The item type is within angle brackets &lt; &gt;
+while the array items are within the square brackets:
+
+@example
+  var a as Array&lt;Int&gt;
+  a = [1, 3, 5] as &lt;Int&gt;    -- Create integer array with 3 items
+  a[1]                      -- 3
+@end
+
+@h2 Type inference for arrays
+
+<p>You can often leave out the <tt>as &lt;...&gt;</tt> portion when creating
+arrays. In this case the array item type is inferred:
+
+@example
+  var a as Array&lt;Int&gt;
+  a = [1, 3, 5]     -- Ok
+  a = []            -- Ok
+@end
+
+<p>The most common case where you have to give the item type is when you
+initialize a local variable with an empty array:
+
+@example
+  def F() as void
+    var a = []      <span class="error">-- Cannot infer type of a</span>
+    a.append(1)
+  end
+@end
+
+<p>You can correct the code by giving array item type explicitly:
+
+@example
+  def F() as void
+    var a = [] as &lt;Int&gt;       -- Ok, infer Array&lt;Int&gt; as the type of a
+    a.append(1)
+  end
+@end
+
+<p>You can also define the type of <tt>a</tt> explicitly. In this case it is
+not necessary to give the array item type when creating the empty array:
+
+@example
+  def F() as void
+    var a = [] as Array&lt;Int&gt;  -- Ok
+    a.append(1)
+  end
+@end
+
+<p>Note that in the first corrected example above the
+<tt>as &lt;Int&gt;</tt> construct
+applied to the preceding <tt>[]</tt> expression only; the local variable type
+is inferred based on the type of the initializer. In the second example,
+the <tt>as Array&ltInt&gt;</tt> construct refers to the variable declaration
+as a whole. It is equivalent to the following:
+
+@example
+  def F() as void
+    var a as Array&lt;Int&gt;
+    a = []
+    a.append(1)
+  end
+@end
+
+@h2 Multiple assignment with arrays
+
+<p>You can an array value as the rvalue in multiple assignment as in
+dynamically-typed programs:
+
+@example
+  def F() as void
+    var a = [1, 2]
+    var b as Int
+    var c as Int
+    b, c = a        -- Ok
+  end
+@end
+
+<p>Multiple initialization is also possible:
+
+@example
+  def F(a as Array&lt;Int&gt;)
+    var b, c = a    -- Infer b and c to integers
+  end
+  F([1, 2]
+@end
+
+<p>We continue the discussion on multiple initialization later in Section
+@href{Tuple types}.
+
+@h2 Using <tt>Map</tt> objects
+
+<p><tt>Map</tt> is a type with two generic type parameters, which is expressed
+by the full type name <tt>Map&lt;KT, VT&gt;</tt>. Here <tt>KT</tt> refers
+to <i>key type</i> and <tt>VT</tt> refers to <i>value type</i>. Using
+<tt>Map</tt> objects is straightforward in statically-typed code:
+
+@example
+  def F(m as Map&lt;Str, Int&gt;)
+    m['foo'] = 5
+    m['bar'] = 3
+    Print(m['foo'] + m['bar'])
+  end
+@end
+
+<p>Constructing <tt>Map</tt> object is similar to arrays, but there are two
+type arguments, and the arguments are given after the call to <tt>Map</tt>
+using <tt>as &lt;...&gt;</tt>:
+
+@example
+  var m as Map&lt;Str, Int&gt;
+  m = Map() as &lt;Str, Int&gt;
+@end
+
+<p>Type inference is supported for type arguments:
+
+@example
+  var m = Map&lt;Str, Int&gt;
+  m = Map()      -- Ok
+
+  def F() as void
+    var m = Map(5 : 'foo', 3 : 'bar')  -- Infer type to be Map&lt;Int, Str&gt;
+  end
+@end
+
+@h2 <tt>Pair</tt> objects
+
+<p>The <tt>Pair</tt> type is also a generic type, <tt>Pair&lt;L, R&gt;</tt>.
+Usually the type of a pair expression <tt>x : y</tt> can be inferred, for
+example:
+
+@example
+  def F() as void
+    var p = 1 : 'foo'         -- Pair&lt;Int, Str&gt;
+    p.left                    -- Int
+    p.right                   -- Str
+  end
+@end
+
+<p>Sometimes it is necessary to specify type arguments explicitly. Do this
+using the <tt>as &lt;...&gt;</tt> construct, as for other generic types.
+In this case the <tt>Pair</tt> expression must be within parentheses
+due to operator precedence:
+
+@example
+  (nil : 'x') as &lt;Str, Str&gt;     -- Pair&lt;Str, Str&gt;
+@end
+
+@h2 Generic type compatibility
+
+<p>Two instances of a generic type are compatible, if their arguments are
+identical. For example, the following code is valid, as it assigns a value
+of type <tt>Array&lt;Int&gt;</tt> into a variable of type
+<tt>Array&lt;Int&gt;</tt>:
+
+@example
+  var a = [1, 2, 3] as Array&lt;Int&gt;
+  var b as Array&lt;Int&gt;
+  b = a          -- Ok
+@end
+
+<p>As always, assignment only copies references to objects, not objects
+itself. In the above example <tt>a</tt> and <tt>b</tt> will refer to the
+same <tt>Array</tt> object.
+
+<p>The type checker generates an error if the type arguments are different:
+
+@example
+  var a as Array&lt;Int&gt;
+  var b as Array&lt;Object&gt;
+  a = [1]
+  b = a     <span class="error">-- Error: incompatible types
+@end
+
+<p>As an exception, if the type arguments include type <tt>dynamic</tt>
+within them, the types may not
+have to be identical. You can also sometimes work around the above
+restrictions by using <i>dynamic casts</i>.
+Section
+@href{The <tt>dynamic</tt> type and mixed typing} discusses these topics.
+
+<p>Types which have a subtyping relationship (also generic ones) are also
+compatible.
+See @href{Generic inheritance and generic interfaces} for a discussion on this.
+
+@h2 Nested generics
+
+<p>In the examples above, the type arguments of generic types were always
+simple types. Type arguments with more complex types are possible and often
+useful:
+
+@example
+  var a as Array&lt;Array&lt;Float&gt;&gt;   -- Array of arrays
+  var m as Map&lt;Str, Array&lt;Int&gt;&gt;  -- Map from Str to Array of Int
+@end
+
+<p>You can use an array of arrays (such as <tt>a</tt> above) to represent a
+multidimensional array:
+
+@example
+  a = [[1.0, 0.0, 0.0],
+       [0.0, 1.0, 0.0],
+       [0.0, 0.0, 1.0]]
+@end
+
+<p>Type inference supports complex types, as shown in the example above.
+Actually, type inference is especially useful when dealing with complex
+types, as otherwise programming can become very cumbersome. Compare
+the above fragment to an equivalent one with explicit types:
+
+@example
+  a = [[1.0, 0.0, 0.0] as &lt;Float&gt;,
+       [0.0, 1.0, 0.0] as &lt;Float&gt;,
+       [0.0, 0.0, 1.0] as &lt;Float&gt;] as &lt;Array&lt;Float&gt;&gt;
+@end
+
+@h2 Constructing arbitrary generic instances
+
+<p>You may have figured out the pattern for constructing generic instances
+with explicit type arguments. You can construct an instance of arbitrary
+generic type <tt>X&lt;T1, T2, ...&gt;</tt> like this:
+
+@example
+  X(...) as &lt;A1, A2, ...&gt;
+@end
+
+<p>The above form is called a <i>type application</i>. The first <tt>...</tt>
+refers to the arguments to the <tt>create</tt> method; they are ordinary
+values, not types. <tt>A1</tt>, <tt>A2</tT>, ... are types; they are the
+values of the type arguments <tt>T1</tt>, <tt>T2</tt>, etc.
+
+<p>For example, constructing an instance of @ref{Set}&lt;T&gt; with
+explicit type arguments happens like this:
+
+@example
+  import set
+
+  Set([1, 2, 6, 3]) as &lt;Int&gt;
+@end
+
+<p>As usual, the type application above is unnecessary as
+the type checker can infer the type argument.
+

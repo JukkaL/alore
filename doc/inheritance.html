@@ -1,0 +1,138 @@
+@head
+@title Inheritance and subtyping
+
+<p>If class <tt>X</tt> extends (inherits from) class <tt>Y</tt>, you can
+use a value with type <tt>X</tt> (the subtype) whenever a value of
+type <tt>Y</tt> (the supertype) is expected. For example, <tt>io::File</tt>
+inherits from <tt>io::Stream</tt>. Therefore, the following code is valid:
+
+@example
+  var s as Stream
+  var f = File('data.txt') as File
+  s = f
+@end
+
+<p>As <tt>s</tt> has type <tt>Stream</tt>, we can only access members defined
+in <tt>Stream</tt> by using <tt>s</tt>. For example, <tt>seek</tt> is defined
+in <tt>File</tt> but not in <tt>Stream</tt>:
+
+@example
+  f.seek(2)    -- Ok
+  s.seek(2)    <span class="error">-- Error: member "seek" not defined in Stream</span>
+@end
+    
+@h2 The <tt>Object</tt> type
+
+<p>The <tt>Object</tt> is the top of the Alore class hierarchy: every other
+class is a subclass of <tt>Object</tt>, either directly or via a superclass.
+Thus any Alore value can be stored in a variable with the <tt>Object</tt> type:
+
+@example
+  var o as Object
+  o = 1               -- Ok
+  o = 'x'             -- Ok
+@end
+
+<p>However, values with the <tt>Object</tt> type only support a few
+interesting operations. You can use casts, discussed later in Section
+@href{Casts}, to convert an <tt>Object</tt> value to a more specific type.
+
+@h2 Overriding methods
+
+<h3>Overriding with identical signature</h3>
+
+<p>If a method overrides a superclass method, the signature of the method
+must be compatible with the superclass method. In the simple case the signature
+is identical:
+
+@example
+  import io
+
+  class Super
+    def open(path as Str) as Stream
+      return File(path)
+    end
+  end
+
+  class Sub is Super
+    def open(path as Str) as Stream   -- Ok: identical signature
+      return File(path + '.ext')
+    end
+  end
+@end
+
+<h3>Additional arguments in overriding method</h3>
+
+<p>The overriding method may define additional optional arguments compared
+to the original method signature. Intuitively, the overriding method is still
+compatible because it can be called with either the original signature
+<i>or</i> with the additional arguments. Here is an example:
+
+@example
+  class Super
+    def f(a as Int)
+      ...
+    end
+
+    def g() as void
+      ...
+    end
+  end
+
+  class Sub is Super
+    def foo(a as Int, b = '' as Str)  -- Ok, since b is optional
+      ...
+    end
+
+    def g(*args as Int)   -- Ok, since args is a varargs argument
+      ...
+    end
+  end
+@end
+
+<h3>Contravariance and covariance</h3>
+
+<p>In addition, the argument types in the subclass may be <i>supertypes</i> of
+the corresponding supertype method argument (<i>contravariance</i>). Similarly,
+the return type may be a <i>subtype</i> of the return type of the supertype
+method (<i>covariance</i>):
+
+@example
+  class Sub is Super
+    def open(path as Object) as File   -- Ok: contravariant argument type,
+      ...                              --     covariant return value type
+    end
+  end
+@end
+
+<p>The above example is valid, since <tt>Object</tt> (type of <tt>path</tt>)
+is a supertype of <tt>Str</tt>, and the return type <tt>File</tt> is a subtype
+of <tt>Stream</tt>.
+
+<h3>Overriding and <tt>dynamic</tt></h3>
+
+<p>We will discuss how the type <tt>dynamic</tt> affects overriding later in
+Section @href{The <tt>dynamic</tt> type and mixed typing}.
+
+@h2 Overriding member variables and accessors
+
+<p>A subclass may override member variables and accessors defined in a
+superclass using accessors. In this case the type in the subclass must be
+equivalent to the superclass type. This example illustrates it:
+
+@example
+  class Super
+    var i as Int
+    var o as Object
+  end
+  
+  class Sub is Super
+    def i as Int    -- Ok, same type as in superclass
+      ...
+    end
+
+    def o as Str    <span class="error">-- Error: Str incompatible with Object</span>
+      ...
+    end
+  end
+@end
