@@ -227,8 +227,8 @@ static int MyStat(const char *path, struct stat *buf)
     /* If there was a trailing separator but the name does not refer to a
        directory, we must return an error. */
     if (status >= 0 && trailing && !S_ISDIR(buf->st_mode)) {
-	    errno = ENOTDIR;
-	    return -1;
+        errno = ENOTDIR;
+        return -1;
     }
     
     return status;
@@ -920,18 +920,18 @@ AValue AOsGetpwnam(AThread *t, AValue *frame)
    needs this to work in Windows. This is an internal function. */
 AValue AOsGetFullPathName(AThread *t, AValue *frame)
 {
-	char file[A_MAX_PATH_LEN];
-	char out[A_MAX_PATH_LEN];
-	char *outp;
-	DWORD status;
-	
-	AGetStr(t, frame[0], file, sizeof(file));
-	
-	status = GetFullPathName(file, sizeof(out), out, &outp);
-	if (status < 0 || status >= sizeof(out))
-		return ARaiseWin32Exception(t, AStdIoErrorNum);
-		
-	return AMakeStr(t, out);
+    char file[A_MAX_PATH_LEN];
+    char out[A_MAX_PATH_LEN];
+    char *outp;
+    DWORD status;
+    
+    AGetStr(t, frame[0], file, sizeof(file));
+    
+    status = GetFullPathName(file, sizeof(out), out, &outp);
+    if (status < 0 || status >= sizeof(out))
+        return ARaiseWin32Exception(t, AStdIoErrorNum);
+        
+    return AMakeStr(t, out);
 }
 
 
