@@ -55,7 +55,5 @@ About icons:
    uses PNG compression).
 
 Limitations/TODO:
- * The Start menu folder is installed only for the current user.
- * If you install Alore as a restricted user, the .alo file association is 
-   not set up, but there is no indication in the installer that this has 
-   failed.
+ * The Start menu folder and file associations are always installed for the 
+   current user only.
