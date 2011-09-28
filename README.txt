@@ -139,8 +139,14 @@ On other operating systems, the standard C build environment is supported.
 Documentation
 -------------
 
-The latest Alore documentation is available online at 
+The documentation for the latest Alore release is available online at 
 http://www.alorelang.org/doc/.
+
+You can build the documentation from sources using make:
+
+  make doc
+
+The documentation is generated in directory doc/html.
 
 
 Giving feedback
