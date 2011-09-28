@@ -48,6 +48,9 @@
   
   ; Icon for the installer (same as the interpreter icon for now)
   !define MUI_ICON "..\alore.ico"
+  
+  !define MUI_HEADERIMAGE  
+  !define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\win.bmp"
 
 ; Pages
 
