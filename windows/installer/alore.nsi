@@ -83,16 +83,17 @@ Section "Core components" SecBasic
   ; Store installation folder (for current user)
   WriteRegStr HKCU Software\Alore "" "$INSTDIR"
   
-  ; Set file association
+  ; Set file association (for current user only to work without admin
+  ; privileges)
   
   ; Define extension .alo
-  WriteRegStr HKCR ".alo" "" "Alore.File"
+  WriteRegStr HKCU "Software\Classes\.alo" "" "Alore.File"
   ; Define user-visible name for Alore files
-  WriteRegStr HKCR "Alore.File" "" "Alore File"
+  WriteRegStr HKCU "Software\Classes\Alore.File" "" "Alore File"
   ; Define icon for Alore files
-  WriteRegStr HKCR "Alore.File\DefaultIcon" "" "$INSTDIR\alore.exe,0"
+  WriteRegStr HKCU "Software\Classes\Alore.File\DefaultIcon" "" "$INSTDIR\alore.exe,0"
   ; Run alore interpreter when an Alore file is double cliecked
-  WriteRegStr HKCR "Alore.File\shell\open\command" "" \
+  WriteRegStr HKCU "Software\Classes\Alore.File\shell\open\command" "" \
       '"$INSTDIR\alore.exe" "%1"'
   ; Refresh icons and make the association active
   ${RefreshShellIcons}
@@ -147,10 +148,10 @@ Section "Uninstall"
   DeleteRegKey /ifempty HKCU "Software\Alore"
   
   ; Remove file association-related registry keys
-  DeleteRegKey HKCR ".alo"
-  DeleteRegKey HKCR "Alore.File"
-  DeleteRegKey HKCR "Alore.File\DefaultIcon"
-  DeleteRegKey HKCR "Alore.File\shell\open\command"
+  DeleteRegKey HKCU "Software\Classes\.alo"
+  DeleteRegKey HKCU "Software\Classes\Alore.File\DefaultIcon"
+  DeleteRegKey HKCU "Software\Classes\Alore.File\shell\open\command"
+  DeleteRegKey HKCU "Software\Classes\Alore.File"
   ; Refresh icons and make the association removal active
   ${RefreshShellIcons}
 
