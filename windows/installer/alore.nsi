@@ -30,10 +30,11 @@
   InstallDir "C:\Alore"
   
   ; Get installation folder from registry if available
-  InstallDirRegKey HKLM Software\Alore ""
+  InstallDirRegKey HKCU Software\Alore ""
 
   ; Request application privileges for Windows Vista and later
-  RequestExecutionLevel admin
+  ; We support installing as a regular user.
+  RequestExecutionLevel user
   
   ; Replace the "Nullsoft Install System v..." text in the installer
   BrandingText "Alore (development version)"
@@ -79,8 +80,8 @@ Section "Core components" SecBasic
   File "..\..\CHANGELOG.txt"
   File "..\..\CREDITS.txt"
   
-  ; Store installation folder
-  WriteRegStr HKLM Software\Alore "" "$INSTDIR"
+  ; Store installation folder (for current user)
+  WriteRegStr HKCU Software\Alore "" "$INSTDIR"
   
   ; Set file association
   
@@ -96,11 +97,14 @@ Section "Core components" SecBasic
   ; Refresh icons and make the association active
   ${RefreshShellIcons}
   
-  ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "DisplayName" "Alore"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "NoModify" 1
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore" "NoRepair" 1
+  !define REG_UNINSTALL "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
+  
+  ; Write the uninstall keys for Windows. Note that we set this up for the
+  ; current user only.
+  WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayName" "Alore"
+  WriteRegStr HKCU "${REG_UNINSTALL}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKCU "${REG_UNINSTALL}" "NoModify" 1
+  WriteRegDWORD HKCU "${REG_UNINSTALL}" "NoRepair" 1
   
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -138,9 +142,9 @@ Section "Uninstall"
   ; Delete registry keys
   
   ; Delete Add/remove programs uninstall key
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Alore"
   ; Delete private registry key
-  DeleteRegKey /ifempty HKLM "Software\Alore"
+  DeleteRegKey /ifempty HKCU "Software\Alore"
   
   ; Remove file association-related registry keys
   DeleteRegKey HKCR ".alo"
