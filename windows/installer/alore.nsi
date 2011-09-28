@@ -45,6 +45,9 @@
 
   !define MUI_ABORTWARNING
   !define MUI_COMPONENTSPAGE_NODESC
+  
+  ; Icon for the installer (same as the interpreter icon for now)
+  !define MUI_ICON "..\alore.ico"
 
 ; Pages
 
