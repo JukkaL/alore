@@ -43,7 +43,7 @@ def NormPath(path)
   var res = []
   for c in components
     if not c in ('.', '')
-      if c == '..' and res != []
+      if c == '..' and res != [] and res[-1] != '..'
         res.removeAt(-1)
       else
         res.append(c)

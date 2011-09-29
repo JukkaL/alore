@@ -681,6 +681,8 @@ class OSSuite is Suite
                       ('..', '..'),
                       ('.', '.'),
                       ('../x', '../x'),
+                      ('../../x', '../../x'),
+                      ('../../foo/bar', '../../foo/bar'),
                       ('//fo/ba', '//fo/ba'),
                       ('\u1234', '\u1234')
       AssertEqual(NormPath(native(orig)), native(norm))
