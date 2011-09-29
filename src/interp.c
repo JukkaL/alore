@@ -2924,6 +2924,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     break;
                 }
 
+                if (AIsFloat(left) && AIsInt(right)) {
+                    power = APowFloatInt(t, left, right);
+                    if (AIsError(power))
+                        goto ExceptionRaised;
+                    break;
+                }
+                
                 if (AIsInstance(left)) {
                     member = AM_POW;
                     args[0] = left;

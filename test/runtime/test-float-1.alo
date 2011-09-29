@@ -208,26 +208,57 @@ class FloatSuite is Suite
     Assert(i == 2)
   end
 
-  -- Test exponentiation
-  def testExponentiation()
+  -- Test float**float.
+  def testExponentiationWithFloatExponent()
     VerifyFloats(4.0**2.5, 32.0)
     VerifyFloats(16.0**0.25, 2.0)
-    VerifyFloats(2.0**-4, 0.0625)
     VerifyFloats(2.0**-2.0, 0.25)
     VerifyFloats(0.0**1e100, 0.0)
     VerifyFloats(8.6198234678961234**1.0, 8.6198234678961234)
     VerifyFloats(1.0**123234876.0, 1.0)
     VerifyFloats(1.438276e200**0.0, 1.0)
+    
     VerifyFloats(0.0**0.0, 1.0)
-    VerifyFloats(0.0**0, 1.0)
 
     AssertRaises(ArithmeticError, def (); (-1.0)**2.0; end)
   end
   
+  -- Test float**shortint.
+  def testExponentiationWithShortIntExponent()
+    VerifyFloats(2.0**-4, 0.0625)
+    VerifyFloats(0.0**0, 1.0)
+    
+    VerifyFloats(0.0**2, 0.0)
+    VerifyFloats(1.5**2, 2.25)
+    
+    VerifyFloats((-2.0)**1, -2.0)
+    VerifyFloats((-2.0)**2, 4.0)
+    VerifyFloats((-2.0)**3, -8.0)
+    VerifyFloats((-2.0)**4, 16.0)
+    
+    VerifyFloats((-1.5)**2, 2.25)
+    
+    Assert(IsInf(2.0**100000))
+    Assert(2.0**100000 > 0)
+    
+    Assert(IsInf((-2.0)**2001))
+    Assert((-2.0)**2001 < 0)    
+  end
+  
+  -- Test float**longint.
+  def testExponentiationWithLongIntExponent()
+    var n = 10**1000
+    VerifyFloats(0.0**n, 0.0)
+    VerifyFloats(1.0**n, 1.0)
+    VerifyFloats(0.9**n, 0.0)
+    Assert(IsInf(1.1**n))
+    Assert(IsInf(-1.1**n))
+  end
+  
   def testMembers()
     var f = 1.5
-    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow", "_eq", 
-             "_lt", "_gt", "_hash", "_int", "_str", "_repr"
+    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow", 
+             "_eq", "_lt", "_gt", "_hash", "_int", "_str", "_repr"
       AssertEqual(HasMember(f, m), True)
     end
     AssertEqual(HasMember(f, "foo"), False)
@@ -241,6 +272,7 @@ class FloatSuite is Suite
     AssertEqual(f._idiv(2), 0)
     AssertEqual(5.5._mod(3), 2.5)
     AssertEqual(2.0._pow(3), 8)
+    AssertEqual((-2.0)._pow(3), -8.0)
     AssertEqual(1.0._eq(1), True)
     AssertEqual(1.0._eq(1.0), True)
     AssertEqual(1.0._eq(2), False)

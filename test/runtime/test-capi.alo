@@ -716,7 +716,10 @@ class CApiSuite is Suite
     
     AssertEqual(APow(4.0, 0.5), 2.0)
     
-    AssertRaises(ArithmeticError, APow, (-2.0, 1))
+    AssertEqual(APow(-1.5, 2), 2.25)
+    AssertEqual(APow(-2.0, 3), -8.0)
+    
+    AssertEqual(APow(-2.0, 1), -2.0)
     
     AssertEqual(APow(OpOverload(), 5), 19)
     AssertRaises(TypeError, def (); APow(5, OpOverload()); end)

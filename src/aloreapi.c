@@ -1010,6 +1010,14 @@ AValue APow(AThread *t, AValue a, AValue b)
             ADispatchException(t);
     }
     
+    if (AIsFloat(a) && AIsInt(b)) {
+        AValue p = APowFloatInt(t, a, b);
+        if (!AIsError(p))
+            return p;
+        else
+            ADispatchException(t);
+    }
+    
     if (AIsInstance(a))
         return InstanceOp(t, a, b, AM_POW);
 

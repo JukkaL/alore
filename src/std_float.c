@@ -17,6 +17,7 @@
 #include "util.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 
 static ABool TryConvertStrToSpecialFloat(char *s, double *f);
@@ -185,6 +186,22 @@ AValue AFloatHashValue(double f)
         hash = 33 * hash + v.arr[i];
 
     return AIntToValue(hash);
+}
+
+
+/* Calculate fval**ival. Assume fval is a float and ival is an integer.
+   Never raise a direct exception. */
+AValue APowFloatInt(AThread *t, AValue fval, AValue ival)
+{
+    double f = AValueToFloat(fval);
+    if (f == 0.0)
+        return ACreateFloat(t, ival == AZero ? 1.0 : 0.0);
+    if (AIsShortInt(ival))
+        return ACreateFloat(t, pow(f, AValueToInt(ival)));
+    else {
+        double exp = ALongIntToFloat(ival);
+        return ACreateFloat(t, pow(f, exp));
+    }
 }
 
 

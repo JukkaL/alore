@@ -25,4 +25,7 @@ double ALongIntToFloat(AValue liVal);
 AValue AFloatHashValue(double f);
 
 
+AValue APowFloatInt(AThread *t, AValue fval, AValue ival);
+
+
 #endif
