@@ -22,7 +22,10 @@ import email
 private var MaxPostSize = 10 * 1024 * 1024 as Int
 
 
-def HtmlEncode(s as Str) as Str
+def Html(s as Str) as Str
+  if s == nil
+    return nil
+  end
   s = s.replace("&", "&amp;")
   s = s.replace("<", "&lt;")
   s = s.replace(">", "&gt;")
@@ -31,8 +34,11 @@ def HtmlEncode(s as Str) as Str
 end
 
 
-def HtmlEncodeQuotes(s as Str) as Str
-  s = HtmlEncode(s)
+def HtmlQuot(s as Str) as Str
+  if s == nil
+    return nil
+  end
+  s = Html(s)
   s = s.replace("'", "&#39;")
   return s
 end
@@ -182,7 +188,7 @@ def DumpEnv() as void
   var s = StdOut
   s.write("<pre>")
   for e in ListEnv()
-    s.writeLn("{} {}".format(HtmlEncode(e), HtmlEncode(Repr(GetEnv(e)))))
+    s.writeLn("{} {}".format(Html(e), Html(Repr(GetEnv(e)))))
   end
   s.writeLn("</pre>")
   s.flush()

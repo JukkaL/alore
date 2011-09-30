@@ -122,15 +122,16 @@ operations and methods.
 
 <h2>Functions</h2>
 
-@fun HtmlEncode(str as Str) as Str
+@fun Html(str as Str) as Str
 @desc Return the input string encoded as HTML. HTML special characters &lt;,
       &gt;, &amp; and &quot; are replaced with the corresponding
-      character entities.
+      character entities. If the argument is <tt>nil</tt>, return <tt>nil</tt>.
 @end
 
-@fun HtmlEncodeQuotes(str as Str) as Str
-@desc Return the input string encoded as HTML. Like <tt>HtmlEncode</tt>,
+@fun HtmlQuot(str as Str) as Str
+@desc Return the input string encoded as HTML. Like <tt>Html</tt>,
       but also replace the single quote ' with a character entity.
+      If the argument is <tt>nil</tt>, return <tt>nil</tt>.
 @end
 
 @fun SetMaxPostSize(n as Int)

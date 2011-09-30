@@ -29,7 +29,7 @@ def Main()
   
   WriteLn("<p>")
   for k in r.keys()
-    WriteLn("{}: {}<br>".format(HtmlEncode(k), HtmlEncode(r[k])))
+    WriteLn("{}: {}<br>".format(Html(k), Html(r[k])))
     if r.hasUpload(k)
       WriteLn("<b>Error: {} is upload</b><br>".format(k))
     end
@@ -39,28 +39,28 @@ def Main()
   
   WriteLn("<p>")
   for k in r.keys()
-    WriteLn("{}: {}<br>".format(HtmlEncode(k), 
-                                HtmlEncode(Str(r.valueList(k)))))
+    WriteLn("{}: {}<br>".format(Html(k), 
+                                Html(Str(r.valueList(k)))))
   end
   
   WriteLn("<h2>Uploads</h2>")
   
   if r.uploads() != []
     for up in r.uploads()
-      WriteLn("<h3>{}</h3>".format(HtmlEncode(up)))
+      WriteLn("<h3>{}</h3>".format(Html(up)))
       if not r.hasUpload(up)
         WriteLn("<p><b>Error: {} is not upload</b>".format(up))
       end
       for f in r.uploadList(up)
-        WriteLn("fileName: {}<br>".format(HtmlEncode(Repr(f.fileName))))
-        WriteLn("contentType: {}<br>".format(HtmlEncode(f.contentType)))
+        WriteLn("fileName: {}<br>".format(Html(Repr(f.fileName))))
+        WriteLn("contentType: {}<br>".format(Html(f.contentType)))
         WriteLn("data: ")
         var data = Repr(f.data)
         if data.length() > 70
           data = data[:35] + " ... " + data[-35:]
         end
         WriteLn("<pre style=""margin-left: 2em;"">{}</pre>".format(
-          HtmlEncode(data)))
+          Html(data)))
       end
     end
   else
