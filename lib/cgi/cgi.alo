@@ -179,12 +179,13 @@ end
 
 
 def DumpEnv() as void
-  var s = RawStdOut
+  var s = StdOut
   s.write("<pre>")
   for e in ListEnv()
     s.writeLn("{} {}".format(HtmlEncode(e), HtmlEncode(Repr(GetEnv(e)))))
   end
   s.writeLn("</pre>")
+  s.flush()
 end
 
 
