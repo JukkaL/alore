@@ -3,6 +3,7 @@ module types
 import nodes
 
 
+-- Abstract base class for all types.
 class Typ
   const line as Int
   const repr as dynamic
@@ -22,6 +23,7 @@ class Typ
 end
 
 
+-- Instance type that has not been bound during semantic analysis.
 class UnboundType is Typ
   const name as Str
   const args as Array<Typ>
@@ -50,6 +52,7 @@ class ErrorType is Typ
 end
 
 
+-- The type "dynamic".
 class Dynamic is Typ
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitDynamic(self)
@@ -57,6 +60,8 @@ class Dynamic is Typ
 end
 
 
+-- The return type "void". This can only be used as the return type in a
+-- callable type and as the result type of calling such callable.
 class Void is Typ
   const source as Str   -- May be nil; function that generated this value
   
@@ -75,6 +80,13 @@ class Void is Typ
 end
 
 
+-- The type of "nil". This is only used internally during type inference.
+-- Programs cannot declare a variable of this type, and the type checker
+-- refuses to infer this type for a variable. However, subexpressions often
+-- have this type. Note that this is not used as the result type when calling 
+-- a function with a void type, even though semantically such a function 
+-- returns a nil value; the void type is used instead so that we can report an
+-- error if the caller tries to do anything with the return value.
 class NilType is Typ
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitNilType(self)
@@ -249,6 +261,7 @@ class Callable is FunctionLike
 end
 
 
+-- The tuple type (T1, ..., Tn).
 class TupleType is Typ
   const items as Array<Typ>
   
@@ -267,6 +280,14 @@ class TupleType is Typ
 end
 
 
+-- The intersection type T1 /\ T2. Both operands must be function-like types.
+-- Note that the syntax for intersection types uses "or" instead of /\, since
+-- that somehow feels more natural.
+--
+-- Note that there is some potential for confusion, since symbols associated 
+-- with "or" have been used by others (including obsolete development versions
+-- of Alore) for union types. Since Alore only has intersection types, no 
+-- union types, this is unlikely to be a problem.
 class Intersection is FunctionLike
   const item1 as FunctionLike
   const item2 as FunctionLike
@@ -311,6 +332,8 @@ class Intersection is FunctionLike
 end
 
 
+-- Representation of type variables of a function or type (i.e.
+-- <T1 [is B1], ..., Tn [is Bn]>).
 class TypeVars
   const items as Array<TypeVarDef>
   const repr
@@ -333,6 +356,8 @@ class TypeVars
 end
 
 
+-- Definition of a single type variable, with an optional bound (for bounded
+-- polymorphism).
 class TypeVarDef
   const name  as Str
   const id    as Int
