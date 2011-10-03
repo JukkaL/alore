@@ -1,13 +1,13 @@
 module libs
 
--- Test cases for the glob module.
+-- Test cases for the fileutil module.
 
 import unittest, sys
-import glob
+import fileutil
 import os, io
 
 
-class GlobSuite is Suite
+class FileUtilSuite is Suite
   -- Constants used by test cases.
   private const tmpDir = "GLOBTMP"
   private const caseInsensitive = Platform in ("windows", "mac")

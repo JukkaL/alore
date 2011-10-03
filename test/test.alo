@@ -117,7 +117,7 @@ class FullSuite is Suite
   const testEmailSuite = EmailSuite()
   const testHttpSuite = HttpSuite()
   const testMemoryStreamSuite = MemoryStreamSuite()
-  const testGlob = GlobSuite()
+  const testFileUtilSuite = FileUtilSuite()
   
   const testArgparseParse = ArgparseParseSuite()
   const testArgparseWrap = ArgparseWrapSuite()

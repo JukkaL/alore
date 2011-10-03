@@ -48,7 +48,7 @@ VERSIONDEP = @VERSIONDEP@
 # End of variables set by configure
 
 ALORELIBS  = re string time unittest pack tempfile url cgi http
-ALORELIBS += memorystream email __os argparse glob
+ALORELIBS += memorystream email __os argparse fileutil
 
 # Core (parser, interpreter, module and symbol table management, etc.)
 SRC  = src/lex.c src/strtonum.c src/symtable.c src/common.c src/compile.c

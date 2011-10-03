@@ -1,4 +1,4 @@
-module glob
+module fileutil
 
 import os
 
