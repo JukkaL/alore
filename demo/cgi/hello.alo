@@ -1,0 +1,7 @@
+#!/usr/bin/env alore
+
+-- A "hello, world" cgi script for testing web server configuration.
+
+WriteLn('Content-Type: text/plain')
+WriteLn()
+WriteLn('hello, world')

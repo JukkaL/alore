@@ -1,0 +1,60 @@
+-- Simple unit testing example.
+
+import unittest, complex, sys
+
+
+class ComplexSuite is Suite
+  def testCreate()
+    var c = Complex(1.0, -2.5)
+    AssertEqual(c.re, 1.0)
+    AssertEqual(c.im, -2.5)
+  end
+  
+  def testEquality()
+    AssertEqual(Complex(1.0, 2.0), Complex(1.0, 2.0))
+    AssertNotEqual(Complex(1.1, 2.0), Complex(1.0, 2.0))
+    AssertNotEqual(Complex(1.0, 2.1), Complex(1.0, 2.0))
+    
+    AssertEqual(Complex(1.0, 0.0), 1.0)
+    
+    AssertNotEqual(Complex(1.0, 2.1), 'foo')
+  end
+
+  def testAdd()
+    AssertEqual(Complex(1.0, 2.0) + Complex(-2.0, 2.5), Complex(-1.0, 4.5))
+    AssertEqual(Complex(1.0, 2.0) + 1.5, Complex(2.5, 2.0))
+    AssertEqual(1.5  + Complex(1.0, 2.0), Complex(2.5, 2.0))
+  end
+  
+  def testSubtract()
+    AssertEqual(Complex(1.0, 2.0) - Complex(-2.0, 2.5), Complex(3.0, -0.5))
+    AssertEqual(Complex(1.0, 2.0) - 1.5, Complex(-0.5, 2.0))
+  end
+  
+  def testMultiply()
+    AssertEqual(Complex(2.0, 3.0) * Complex(1.5, 0.5), Complex(1.5, 5.5))
+    AssertEqual(Complex(-1.0, -2.0) * 0.5, Complex(-0.5, -1.0))
+    AssertEqual(0.5 * Complex(-1.0, -2.0), Complex(-0.5, -1.0))
+  end
+  
+  def testDivide()
+    AssertEqual(Complex(2.0, 3.0) / Complex(1.5, 0.5), Complex(1.8, 1.4))
+    AssertEqual(Complex(2.0, 3.0) / 0.5, Complex(4.0, 6.0))
+  end
+  
+  def testStrConversion()
+    AssertEqual(Str(Complex(1.0, 2.5)), '(1 + 2.5j)')
+    AssertEqual(Str(Complex(1.5, -2.0)), '(1.5 - 2j)')
+  end
+  
+  def testAbs()
+    AssertEqual(Complex(3.0, -4.0).abs(), 5.0)
+  end
+  
+  def testConj()
+    AssertEqual(Complex(1.0, 2.0).conj(), Complex(1.0, -2.0))
+  end
+end
+
+
+RunTest(ComplexSuite(), sys::Args)

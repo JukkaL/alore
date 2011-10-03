@@ -1,0 +1,51 @@
+#!/usr/bin/env alore
+
+-- CGI script that dumps information provided by the web server.
+
+import cgi, io, os
+
+var s = StdOut
+
+s.writeLn('content-type: text/html')
+s.writeLn()
+s.writeLn('<html><body>')
+
+var r = Request()
+
+s.writeLn('<h2>Request properties</h2>')
+
+s.writeLn('<pre>')
+s.writeLn('method: {}'.format(r.method))
+s.writeLn('contentType: {}'.format(Html(r.contentType)))
+s.writeLn('contentLength: {}'.format(r.contentLength))
+s.writeLn('pathInfo: {}'.format(Html(r.pathInfo)))
+s.writeLn('userAgent: {}'.format(Html(r.userAgent)))
+s.writeLn('remoteAddr: {}'.format(Html(r.remoteAddr)))
+s.writeLn('remoteHost: {}'.format(Html(r.remoteHost)))
+s.writeLn('</pre>')
+
+s.writeLn('<h2>Request parameters</h2>')
+
+s.writeLn('<pre>')
+for k, v in r
+  s.writeLn('{}: {}'.format(Html(k), Html(v)))
+end
+s.writeLn('</pre>')
+
+s.writeLn('<h2>Request parameters (value list)</h2>')
+
+s.writeLn('<pre>')
+for k in r.keys()
+  s.writeLn('{}: {}'.format(Html(k), Html(Str(r.valueList(k)))))
+end
+s.writeLn('</pre>')
+
+s.writeLn('<h2>CGI script user name</h2>')
+
+s.writeLn('<p>The current user name is <tt>{}</tt>.'.format(Html(User())))
+
+s.writeLn('<h2>Environment variables</h2>')
+
+DumpEnv()
+
+s.writeLn('</body></html>')

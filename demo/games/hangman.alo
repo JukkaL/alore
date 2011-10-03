@@ -1,0 +1,132 @@
+-- Usage: hangman.alo
+--
+-- The "hangman" word guessing game. The word list is in file words.txt.
+
+import io, random, set
+
+
+const WordFile = 'words.txt' -- File containing the list of all possible words
+const NumParts = 9           -- How many failures until the hangman is complete
+
+
+def Main()
+  var correct = ''
+  var word = RandomWord()
+  var needed = Set(word).length()
+  var failures = 0
+  
+  WriteLn('--- Hangman ---')
+  
+  while failures < NumParts
+    DrawWord(word, correct)
+    var letter = AskLetter()
+    if letter in correct
+      WriteLn(Newline, "You've already given '{}'.".format(letter))
+    elif letter in word
+      correct += letter
+      if correct.length() == needed
+        WriteLn(Newline, 
+             '*** Congratulations, you won! The word is {}. ***'.format(word))
+        Exit(1)
+      end
+    else
+      failures += 1
+      DrawHangman(failures)
+      WriteLn(Newline, 'Wrong guess!')
+    end    
+  end
+  
+  DrawHangman(failures)
+  WriteLn(Newline, '*** Sorry, you lost! The word was {}. ***'.format(word))
+end
+
+
+def AskLetter()
+  var s
+  while True
+    Write(Newline, 'Enter a letter: ')
+    s = ReadLn().upper()
+    if s >= 'A' and s <= 'Z' and s.length() == 1
+      break
+    end
+    WriteLn(Newline, 'Please enter a letter (A-Z).')
+  end
+  return s[0]
+end
+
+
+def DrawWord(word, correct)
+  WriteLn()
+  for c in word
+    if c in correct
+      Write(' ' + c)
+    else
+      Write(' _')
+    end
+  end
+  WriteLn()
+end
+
+
+def RandomWord()
+  var a = File(WordFile).readLines()
+  return a[Random(a.length())].upper()
+end
+
+
+def DrawHangman(n)
+  if n == 0
+    return
+  end
+  
+  WriteLn()
+  for y in 0 to Image.length()
+    Write('  ')
+    for x in 0 to Image[y].length()
+      if Order[y][x] != ' ' and Int(Order[y][x]) < n
+        Write(Image[y][x])
+      else
+        Write(' ')
+      end
+    end
+    WriteLn()
+  end
+end
+
+
+const Image = [
+  '   +---------   ',
+  '   | /     |    ',
+  '   |/      |    ',
+  '   |     /---\  ',
+  '   |     |   |  ',
+  '   |     |   |  ',
+  '   |     \___/  ',
+  '   |       |    ',
+  '   |    ---+--- ',
+  '   |       |    ',
+  '   |       |    ',
+  '   |      / \   ',
+  '   |     /   \  ',
+  '  _-_   /     \ ',
+  ' /   \          ',
+  '/     \         ']
+
+
+const Order = [   -- Description of the order in which the parts appear
+  '   1222222222   ',
+  '   1 2     2    ',
+  '   12      2    ',
+  '   1     33333  ',
+  '   1     33333  ',
+  '   1     33333  ',
+  '   1     33333  ',
+  '   1       4    ',
+  '   1    5554666 ',
+  '   1       4    ',
+  '   1       4    ',
+  '   1      7 8   ',
+  '   1     7   8  ',
+  '  000   7     8 ',
+  ' 0   0          ',
+  '0     0         ']

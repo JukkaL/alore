@@ -1,0 +1,139 @@
+#!/usr/bin/env alore
+
+-- A simple CGI-based wiki application. Run this by copying to the CGI 
+-- directory of your web server (and update WikiPath below).
+--
+-- This example uses static typing.
+
+import cgi, io, sys, re, os
+
+
+-- Before running this, you must define the directory where to store the wiki 
+-- pages below. Use an absolute path and make sure the directory exists and is
+-- writable by the CGI script user (you can run the dump.alo CGI with the
+-- web server to check the user name).
+const WikiPath = '' as Str
+
+
+def Main() as void
+  WriteLn('content-type: text/html')
+  WriteLn()
+  
+  WriteLn('<html><body>')
+    
+  if WikiPath == '' or not IsDir(WikiPath)
+    WriteLn('WikiPath in {} must refer to a directory.'.format(
+              Html(ProgramPath)))
+    Exit()
+  end
+  
+  var wiki = Wiki()  
+  var r = Request()
+  var page = Cleanup(r.get('page', 'FrontPage'))
+  
+  var action = r.get('action', 'update')
+  switch action
+    case 'update'  
+      -- Show and/or update page.
+      wiki.showPage(page, r.get('content', nil))
+    case 'edit'
+      wiki.editPage(page)
+    case 'list'
+      wiki.showList()
+    else
+      WriteLn('Unknown action "{}"'.format(Html(action)))
+  end
+  
+  WriteLn('</body></html>')
+end
+
+
+class Wiki
+  def showPage(name as Str, content = nil as Str)
+    header(name, pageLink(name, 'edit', 'Edit'))
+    
+    if content != nil
+      storePage(name, content)
+      WriteLn('<b><i>Page updated.</i></b>')
+    end
+    
+    renderPage(name)
+  end
+  
+  def editPage(name as Str)
+    header(name)
+    showForm(name)
+  end
+  
+  def showList() as void
+    header('Wiki page list')
+    WriteLn('<ul>')
+    for name in Sort(ListDir(WikiPath))
+      if Cleanup(name) == name
+        WriteLn('<li>', pageLink(name))
+      end
+    end
+    WriteLn('</ul>')
+  end
+  
+  private def header(title as Str, extra = nil as Str)
+    if extra != nil
+      WriteLn(extra, ' | ')
+    end
+    WriteLn('<a href="wiki.alo">Front page</a> | ',
+        '<a href="wiki.alo?action=list">Page list</a>')
+    WriteLn('<hr>')
+    WriteLn('<h2>{}</h2>'.format(title))
+  end
+  
+  private def renderPage(name as Str)
+    var s = contents(name, '<i>This page has not been created yet.</i>')
+    -- Convert PageName links.
+    s = Subst(s, '\<[A-Z]+[a-z0-9]+[A-Z][A-Za-z0-9]*\>', 
+              def (m as MatchResult) as Str
+                return pageLink(m.group(0))
+              end)
+    -- An empty line acts as a paragraph break.
+    s = Subst(s, '\n\r?\n', '<p>')
+    WriteLn('<p>', s)
+  end
+  
+  private def showForm(name as Str)
+    var s = contents(name, 'Enter page contents and click Save.')
+    WriteLn('<p>Page contents (use NameLikeThis for links):')
+    WriteLn('<p><form method="post" action="wiki.alo">')
+    WriteLn('<input type="hidden" name="page" value="{}">'.format(name))
+    WriteLn('<textarea rows="20" cols="80" name="content">')
+    WriteLn(s)
+    WriteLn('</textarea>')
+    WriteLn('<p><input type="submit" value="Save">')
+    WriteLn('</form>')
+  end
+  
+  private def contents(name as Str, default as Str) as Str
+    var path = Join(WikiPath, name)
+    if IsFile(path)
+      return Html(File(path).read())
+    else
+      return default
+    end
+  end
+  
+  private def storePage(name as Str, content as Str) as Str
+    var f = File(Join(WikiPath, name), Output)
+    f.write(content)
+    f.close()
+  end
+  
+  private def pageLink(name as Str, action = 'update' as Str, 
+                       text = name as Str) as Str
+    return '<a href="wiki.alo?action={}&page={}">{}</a>'.format(action, name, 
+                                                                text)
+  end
+end
+
+
+-- Remove non-alphanumeric characters from a page name.
+def Cleanup(name as Str) as Str
+  return Subst(name, '[^A-Za-z0-9]', '')
+end
