@@ -6,14 +6,40 @@ import types
 -- This class represents a bound method (callable) with some type variables 
 -- that are partially defined by upper and lower bounds.
 --
--- Intermediate type only generated via type inference. This will collapsed
--- immediately into a Callable type by binding the type variables.
+-- This is an intermediate type that is only generated during type inference. 
+-- This will be collapsed immediately into a Callable type by binding the type 
+-- variables.
+--
+-- The reason we need range types is somewhat complicated. Suppose we have a
+-- method call (_add), and the base object has a range type for a type 
+-- variable (Array<Str..Object> in this case):
+--
+--   ['x'] + [1]
+--
+-- Now the type of the method _add can be represented as a range callable
+--
+--   def (Array<T>) as Array<T> for some T in Str..Object.
+--
+-- (Note that is *not* a generic method; the type variable T is associated 
+-- with class Array, not method _add.)
+--
+-- But we do not want to complicate things by supporting range types for all
+-- callable types. So we only support them in this particular case, when 
+-- evaluating member access. After the argument type has been inferred 
+-- (Array<Int..Object>) we can solve and fix the type T of the method type (to
+-- Object) so we get the non-generic callable type
+--
+--   def (Array<Object>) as Array<Object>.
+--
+-- Easy, huh?
 class RangeCallable is Typ
-  const bottoms   as Array<Typ> -- Lower bounds; for type vars 1, 2, ...
-  const tops      as Array<Typ> -- Upper bounds; for type vars 1, 2, ...
-                                -- Each may be nil if collapsed.
+  -- Lower bounds for type variabless 1, 2, ... of the base object.
+  const bottoms   as Array<Typ>
+  -- Upper bounds for type variabless 1, 2, ... of the base object. Each may 
+  -- be nil if collapsed.
+  const tops      as Array<Typ>
   const rangeIds  as Array<Int> -- Ids of range types (or nil if collapse).
-  const callable  as Callable   -- The generic callable type these apply to.
+  const callable  as Callable   -- The callable type these apply to.
   
   def create(bottoms as Array<Typ>, tops as Array<Typ>, rangeIds as Array<Int>,
              callable as Callable)
