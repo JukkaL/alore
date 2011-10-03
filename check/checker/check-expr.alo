@@ -366,7 +366,7 @@ class ExpressionChecker
       callee = expandRangeCallable(callee as RangeCallable, argTypes, isVarArg,
                                    context)
     end
-                        
+    
     if callee is Callable
       var callable = (callee as Callable)
       if callable.isGeneric()
