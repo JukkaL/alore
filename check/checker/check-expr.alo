@@ -195,7 +195,7 @@ class ExpressionChecker
                    itype.args,
                    itype.argTops,
                    itype.rangeIds,
-                   chk.functionType(method) as dynamic) -- FIX bad cast?
+                   chk.functionType(method))
         else
           -- No ranges; return an ordinary Callable.
           return ExpandTypeByInstance(chk.functionType(method), itype)
@@ -402,13 +402,33 @@ class ExpressionChecker
   -- Expand a range callable into an ordinary callable type. The resulting
   -- type may have ranges, but they are embedded within Instance type 
   -- components of the type.
+  --
+  -- This may return Dynamic if target item inference of an intersection type 
+  -- was not possible. Potentially also report an error.
   private def expandRangeCallable(callee as RangeCallable, 
                                   argTypes as Array<Typ>, 
                                   isVarArg as Boolean, 
                                   context as Context) as Typ
+    -- If the callable has an intersection type, infer the item that the 
+    -- argument types target and replace the callable with this in the range 
+    -- type.
+    if callee.callable is Intersection
+      var target = intersectionTypeCallTarget(
+                     argTypes, isVarArg, callee.callable as Intersection,
+                     context)
+      -- Inference may be unsuccessful; in this case we just return Dynamic().
+      if target is Dynamic
+        return target
+      end
+      -- The cast below will succeed, since we checked for dynamic above.
+      callee = RangeCallable(callee.bottoms, callee.tops, callee.rangeIds,
+                             target as Callable)
+    end
+    
     var inferredArgs = InferRangeCallableTypeArguments(
                          callee, argTypes, isVarArg, chk.basicTypes())
-    return applyInferredArguments(callee.callable, inferredArgs, 
+    -- The cast below will succeed, since we replace intersection types above.
+    return applyInferredArguments(callee.callable as Callable, inferredArgs, 
                                   callee.typeVarIds(), context)
   end
   

@@ -38,11 +38,12 @@ class RangeCallable is Typ
   -- Upper bounds for type variabless 1, 2, ... of the base object. Each may 
   -- be nil if collapsed.
   const tops      as Array<Typ>
-  const rangeIds  as Array<Int> -- Ids of range types (or nil if collapse).
-  const callable  as Callable   -- The callable type these apply to.
+  const rangeIds  as Array<Int>   -- Ids of range types (or nil if collapse).
+  -- The callable/intersection type the above apply to.
+  const callable  as FunctionLike
   
   def create(bottoms as Array<Typ>, tops as Array<Typ>, rangeIds as Array<Int>,
-             callable as Callable)
+             callable as FunctionLike)
     self.bottoms = bottoms
     self.tops = tops
     self.rangeIds = rangeIds

@@ -28,6 +28,8 @@ end
 -- the type variables; first for instance type variables and then for function
 -- type variables (if any).
 --
+-- Assume that the range callable refers to Callable, not Intersection.
+--
 --   calleeType: the target method type
 --   argTypes:   argument types at the call site
 --   isVarArg:   is the call a vararg call (if yes, last arg type is vararg)
@@ -35,9 +37,9 @@ end
 private def InferRangeCallableTypeArguments(
                 callee as RangeCallable, argTypes as Array<Typ>, 
                 isVarArg as Boolean, basic as BasicTypes) as Array<(Typ, Typ)>
+  var callable = (callee.callable as Callable)
   -- Infer constraints for all type variables (both type and function).
-  var constraints = InferConstraintsForCallable(callee.callable, argTypes, 
-                                                isVarArg)
+  var constraints = InferConstraintsForCallable(callable, argTypes, isVarArg)
   
   -- Add constraints from the RangeCallable.
   for i in 0 to callee.numTypeVars()
@@ -45,6 +47,6 @@ private def InferRangeCallableTypeArguments(
     constraints.append(Constraint(i + 1, SubtypeOf, callee.tops[i]))
   end
   
-  var typeVars = callee.typeVarIds() + callee.callable.typeVarIds()
+  var typeVars = callee.typeVarIds() + callable.typeVarIds()
   return SolveConstraints(typeVars, constraints, basic)  
 end

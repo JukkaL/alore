@@ -708,6 +708,52 @@ main, line 1: Incompatible types in assignment
 main, line 2: Incompatible types in assignment
 
 
+-- Special cases (regression tests etc.)
+-- -------------------------------------
+
+
+-- Test method range type with an intersection type.
+[case testRangeCallableWithIntersection]
+b = A().f(B())
+o = A().f(B())
+b = A().f(C()) -- Fail
+b = (A() as <Object>).f(B()) -- Fail
+
+var b as B
+var o as Object
+
+class A<T>
+  def f(x as B) as T or
+       (x as C) as Object
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 3: Incompatible types in assignment
+main, line 4: Incompatible types in assignment
+
+-- Test method range type with an intersection type so that the intersection
+-- item cannot be uniquely inferred (defaulting to dynamic).
+[case testRangeCallableWithIntersectionAndFailedInference]
+b = A().f(Object() as dynamic, B())
+b = A().f(Object() as dynamic, C())  -- Fail
+
+var b as B
+
+class A<T>
+  def f(x as B, y as B) or
+       (x as C, y as B) as Object
+  end
+end
+
+class B; end
+class C; end
+[out]
+main, line 2: No variant of method "f" of "A" matches argument types
+
+
 -- type application and method with range type
 
 -- member access with range-valued type
