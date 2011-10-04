@@ -67,7 +67,7 @@ typedef struct AThread_ {
     AValue *untracedEnd;
 
     AValue *stack;       /* Thread Alore-level stack (grows down) */
-    
+
     AValue *stackTop;    /* Top of stack */
     AValue *stackPtr;    /* Current stack pointer */
 
@@ -96,7 +96,7 @@ typedef struct AThread_ {
                             compiled code offset to execute */
     int finallyStackSize; /* Used in finally handling; size indicator of the
                              current compiled function low-level stack */
-    
+
     /* Cache for compiled regular expressions. regExp[2n] is a string object
        and regExp[2n + 1] is the corresponding regular expression object
        compiled with flags in regExpFalgs[n]. */

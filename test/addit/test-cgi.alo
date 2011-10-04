@@ -11,11 +11,11 @@ def Main()
   WriteLn()
   WriteLn("<html><body>")
   WriteLn("<h1>CGI test script</h1>")
-  
+
   var r = Request()
-  
+
   WriteLn("<h2>Request properties</h2>")
-    
+
   WriteLn("<p>")
   WriteLn("method: {}<br>".format(r.method))
   WriteLn("contentType: {}<br>".format(r.contentType))
@@ -24,9 +24,9 @@ def Main()
   WriteLn("userAgent: {}<br>".format(r.userAgent))
   WriteLn("remoteAddr: {}<br>".format(r.remoteAddr))
   WriteLn("remoteHost: {}<br>".format(r.remoteHost))
-  
+
   WriteLn("<h2>Parameters (single value)</h2>")
-  
+
   WriteLn("<p>")
   for k in r.keys()
     WriteLn("{}: {}<br>".format(Html(k), Html(r[k])))
@@ -34,17 +34,17 @@ def Main()
       WriteLn("<b>Error: {} is upload</b><br>".format(k))
     end
   end
-  
+
   WriteLn("<h2>Parameters (value list)</h2>")
-  
+
   WriteLn("<p>")
   for k in r.keys()
     WriteLn("{}: {}<br>".format(Html(k),
                                 Html(Str(r.valueList(k)))))
   end
-  
+
   WriteLn("<h2>Uploads</h2>")
-  
+
   if r.uploads() != []
     for up in r.uploads()
       WriteLn("<h3>{}</h3>".format(Html(up)))
@@ -66,6 +66,6 @@ def Main()
   else
     WriteLn("<p>No uploads.")
   end
-  
+
   WriteLn("<p><b>End of script output</b></body></html>")
 end

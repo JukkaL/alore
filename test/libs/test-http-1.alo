@@ -24,24 +24,24 @@ private const BasicRead, ChunkRead, LineRead, CloseRead
 class HttpSuite is Suite
   def testHeaders()
     var h = HttpHeaders(["Content-Type: text/html", "Content-Length:  40  "])
-    
+
     AssertEqual(h.length(), 2)
-    
+
     Assert(h.hasKey("content-type"))
     Assert(h.hasKey("Content-Type"))
     Assert(h.hasKey("CONTENT-LENGTH"))
     Assert(not h.hasKey("contenttype"))
-    
+
     AssertEqual(h["content-type"], "text/html")
     AssertEqual(h["Content-Length"], "40")
-    
+
     AssertEqual(h.keys(), ["Content-Type", "Content-Length"])
     AssertEqual(h.values(), ["text/html", "40"])
-    
+
     AssertRaises(ValueError, h._set, ["content-type", "foo"])
     AssertRaises(ValueError, h.remove, ["content-type"])
   end
-  
+
   def testSplitHeaders()
     var h = HttpHeaders(["Content-Type: text/html; ",
                          Tab + " charset=UTF-8",
@@ -50,16 +50,16 @@ class HttpSuite is Suite
     AssertEqual(h["content-type"], "text/html; " + LF + " charset=UTF-8")
     AssertEqual(h["content-length"], "333")
   end
-  
+
   def testCombinedHeaders()
     var h = HttpHeaders(["Accept: foo", "Accept:  bar  "])
     AssertEqual(h["accept"], "foo, bar")
   end
-  
+
   def testHttpPort()
     AssertEqual(HttpPort, 80)
   end
-  
+
   def testDefaultProxy()
     SetEnv("http_proxy", nil)
     AssertEqual(DefaultProxy(), nil)
@@ -68,7 +68,7 @@ class HttpSuite is Suite
     SetEnv("http_proxy", "proxy.foobar.com:1234")
     AssertEqual(DefaultProxy(), ("proxy.foobar.com", 1234))
   end
-  
+
   def testBasicGet()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
@@ -76,7 +76,7 @@ class HttpSuite is Suite
                   Headers: ["content-length" : "3",
                             "content-type" : "text/html"])
   end
-  
+
   def testBasicPost()
     assertRequest(Method: "POST", Body: "foobar",
                   InData: ["POST / HTTP/1.1", "Host: localhost:8080",
@@ -84,7 +84,7 @@ class HttpSuite is Suite
                   OutData: ["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
                   Headers: ["content-length" : "3"])
   end
-  
+
   def testChunkedEncoding()
     assertRequest(Path: ["/foo.x?bar=zar&y"],
                   InData: ["GET /foo.x?bar=zar&y HTTP/1.1",
@@ -96,7 +96,7 @@ class HttpSuite is Suite
                   Headers: ["transfer-encoding" : "chunked"],
                   Content: "1234567890foo")
   end
-  
+
   def testBasicAuthentication()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 401 Authorization Required",
@@ -112,7 +112,7 @@ class HttpSuite is Suite
                   Headers: ["content-length" : "4"],
                   Content: "bart")
   end
-  
+
   def testRequestHeaders()
     assertRequest(RequestHeaders: ["User-Agent": "XAZ-bar/2.11 alore/0.0.1",
                                    "Referer": "http://www.xxx/"],
@@ -122,7 +122,7 @@ class HttpSuite is Suite
                   OutData: ["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
                   Headers: ["content-length" : "3"])
   end
-  
+
   def testHttp10WithNoContentLength()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.0 200 OK", "Content-Type: text/html", "",
@@ -131,7 +131,7 @@ class HttpSuite is Suite
                   Version: "1.0",
                   IsOpen: False)
   end
-  
+
   -- Multiple requests can be sent with a single HTTP connection in HTTP 1.1,
   -- unless the "Connection: close" header was sent by the client.
   -- HTTP 1.0 clients might use "Connection: Keep-Alive" or the Keep-Alive
@@ -159,7 +159,7 @@ class HttpSuite is Suite
                             ["content-length" : "3"]],
                   Content: ["foo", "zar"])
   end
-  
+
   def testLongResponse()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
@@ -168,7 +168,7 @@ class HttpSuite is Suite
                             "content-type" : "text/html"],
                   Content: "foo" * 10000)
   end
-  
+
   def testDifferentReadModes()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
@@ -177,7 +177,7 @@ class HttpSuite is Suite
                             "content-type" : "text/html"],
                   Content: "<" + "foo" * 10000,
                   ReadMode: ChunkRead)
-                  
+
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
                            "Transfer-Encoding: chunked", "",
@@ -187,7 +187,7 @@ class HttpSuite is Suite
                             "content-type" : "text/html"],
                   Content: "<" + LF + "foo" * 10000 + LF,
                   ReadMode: LineRead)
-                  
+
     assertRequest(Path: ["/", "/foo.html"],
                   InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
                           ["GET /foo.html HTTP/1.1",
@@ -200,7 +200,7 @@ class HttpSuite is Suite
                   Content: ["fo", "za"],
                   ReadMode: CloseRead)
   end
-  
+
   -- Test invalid response header from the server (i.e., not a HTTP server).
   def testInvalidResponse()
     var ss = ServerSocket(8080)
@@ -215,7 +215,7 @@ class HttpSuite is Suite
     h.close()
     t.join()
   end
-  
+
   def testInvalidCalls()
     var ss = ServerSocket(8080)
     var t = Thread(def ()
@@ -234,7 +234,7 @@ class HttpSuite is Suite
     h.close()
     t.join()
   end
-  
+
   -- Test simulated connection through a proxy.
   def testProxy()
     assertRequest(Path: ["http://www.foobar.com/"],
@@ -245,7 +245,7 @@ class HttpSuite is Suite
                   Headers: ["content-length" : "3",
                             "content-type" : "text/html"])
   end
-  
+
   def testConnectionCloseHeader()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 200 OK", "Connection: close",
@@ -254,7 +254,7 @@ class HttpSuite is Suite
                             "connection" : "close"],
                   IsOpen: False)
   end
-  
+
   def test1xxResponses()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
                   OutData: ["HTTP/1.1 100 Continue", "",
@@ -262,7 +262,7 @@ class HttpSuite is Suite
                            "HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
                   Headers: ["content-length" : "3"])
   end
-  
+
   private def assertRequest(*args)
     var m = Map(Method: "GET", Path: ["/"], Body: nil, Auth: nil,
                 Content: "foo", Version: "1.1", Status: 200, Reason: "OK",
@@ -270,23 +270,23 @@ class HttpSuite is Suite
     for p in args
       m[p.left] = p.right
     end
-    
+
     if m[InData][0] is Str
       m[InData] = [m[InData]]
       m[OutData] = [m[OutData]]
       m[Content] = [m[Content]]
       m[Headers] = [m[Headers]]
     end
-  
+
     var ss = ServerSocket(8080)
     var t = Thread(def (); runServer(ss, m[InData], m[OutData], m[Body]); end)
     var h = Http("localhost", 8080)
     if m[Auth] != nil
       h.auth(*m[Auth])
     end
-    
+
     Assert(h.isOpen())
-    
+
     for i in 0 to m[Path].length()
       if m[Body] == nil and m[RequestHeaders] == nil
         h.request(m[Method], m[Path][i])
@@ -307,7 +307,7 @@ class HttpSuite is Suite
       AssertEqual(r.version, m[Version])
       AssertEqual(r.status, m[Status])
       AssertEqual(r.reason, m[Reason])
-      
+
       var content
       if m[ReadMode] == BasicRead
         content = r.read()
@@ -328,15 +328,15 @@ class HttpSuite is Suite
       Assert(r.eof())
       AssertEqual(content, m[Content][i])
     end
-    
+
     AssertEqual(h.isOpen(), m[IsOpen])
-    
+
     h.close()
     -- Must be able to close again without problems.
     h.close()
     t.join()
   end
-  
+
   private def runServer(ss, input, output, body)
     var sock = ss.accept()
     var s = ""

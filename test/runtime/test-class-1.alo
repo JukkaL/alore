@@ -9,15 +9,15 @@ import unittest
 class ClassSuite1 is Suite
   def testMemberVars()
     var i = MemberTest()
-  
+
     Assert(i.puv == nil)
     i.WritePuv(3)
     Assert(i.ReadPuv() == 3)
-  
+
     Assert(i.ReadPrv() == nil)
     i.WritePrv(5)
     Assert(i.ReadPrv() == 5)
-  
+
     var f = 0
     try
       var k = i.prv
@@ -30,7 +30,7 @@ class ClassSuite1 is Suite
       f += 1
     end
     Assert(f == 2)
-  
+
     Assert(i.puc == 7)
     Assert(i.ReadPuc() == 7)
     try
@@ -39,7 +39,7 @@ class ClassSuite1 is Suite
       f += 1
     end
     Assert(f == 3)
-  
+
     Assert(i.ReadPrc() == 9)
     try
       var k = i.prc
@@ -52,16 +52,16 @@ class ClassSuite1 is Suite
       f += 1
     end
     Assert(f == 5)
-  
+
     Ok()
   end
-  
+
   -- Test public/private methods
   def testTestMethods()
     var i = MethodTest()
     Assert(i.Pm(5) == 6)
     Assert(i.CallPv(7) == 9)
-  
+
     var f = 0
     try
       i.Pv(3)
@@ -69,48 +69,48 @@ class ClassSuite1 is Suite
       f += 1
     end
     Assert(f == 1)
-  
+
     try
       i.Pm = 8
     except MemberError
       f += 1
     end
     Assert(f == 2)
-  
+
     try
       i.Pv = 8
     except MemberError
       f += 1
     end
     Assert(f == 3)
-  
+
     Ok()
   end
-  
+
   -- Test public getters / setters
   def testGetterSetter()
     var i = GetterSetterTestPublic()
-  
+
     Assert(i.g1 == 3)
-  
+
     Assert(i.g2 == nil)
     i.g2 = 7
     Assert(i.g2 == 7)
-  
+
     Assert(i.Test() == 78)
-  
+
     Ok()
   end
-  
+
   -- Test private getters / setters
   def testPrivateGetterSetter()
     var i = GetterSetterTestPrivate()
-  
+
     Assert(i.Test() == 65)
-  
+
     Ok()
   end
-  
+
   def testUndefinedSelfMember()
     var i = UndefinedSelfTester()
     i.test()
@@ -121,7 +121,7 @@ end
 private class MemberTest
   var puv
   private var prv
-  
+
   def create()
   end
 
@@ -156,7 +156,7 @@ end
 
 private class MethodTest
   var v
-  
+
   def create()
   end
 
@@ -176,10 +176,10 @@ end
 
 private class GetterSetterTestPublic
   -- Only getters / setters
-  
+
   def create()
   end
-  
+
   def g1
     return 3
   end
@@ -239,19 +239,19 @@ private class SelfBase
   def read()
     return self.c
   end
-  
+
   def assign()
     self.v = 2
   end
-  
+
   def read2()
     return self.gs
   end
-  
+
   def assign2()
     self.gs = 7
   end
-  
+
   def call()
     return self.f(44)
   end
@@ -260,17 +260,17 @@ end
 
 private class UndefinedSelfTester is SelfBase
   const c = 5
-  
+
   var v
-  
+
   def f(n)
     return n + 1
   end
-  
+
   def gs
     return v + 2
   end
-  
+
   def gs = n
     v = n
   end

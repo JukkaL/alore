@@ -58,7 +58,7 @@ ASymbol *AGetSymbolFromSymbolInfo(ASymbolInfo *sym)
     do {
         sym = sym->next;
     } while (AIsId(sym->type));
-    
+
     return (ASymbol *)sym;
 }
 
@@ -88,7 +88,7 @@ void AFreeModuleIdentifiers(ASymbolInfo *module)
 
     /* Flag the module SymbolInfo structure as empty. Note that it is not
        freed.
-       
+
        IDEA: Free the module SymbolInfo structure unless there is a very good
              reason why it cannot or should not be done. */
     module->info.module.cModule = A_CM_NON_C;

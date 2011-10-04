@@ -8,17 +8,17 @@ import unittest
 
 
 -- Parse a file with test case descriptions. Return an array of test cases.
-def ParseTestCases(path as Str, 
-                   perform as def (DataDrivenTestCase), 
-                   basePath = "." as Str, 
+def ParseTestCases(path as Str,
+                   perform as def (DataDrivenTestCase),
+                   basePath = "." as Str,
                    optionalOut = False as Boolean,
-                   includePath = DirName(path) as Str) as 
+                   includePath = DirName(path) as Str) as
                                            Array<DataDrivenTestCase>
   var l = File(path).readLines()
   var p = ParseTestData(l, path)
   var out = [] as <DataDrivenTestCase>
-  
-  -- Process the parsed items. Each item has a header of form [id args], 
+
+  -- Process the parsed items. Each item has a header of form [id args],
   -- optionally followed by lines of text.
   var i = 0
   while i < p.length()
@@ -26,7 +26,7 @@ def ParseTestCases(path as Str,
     var i0 = i
     if p[i].id == "case"
       i += 1
-      
+
       var files = [] as <(Str, Str)> -- path and contents
       while i < p.length() and not p[i].id in ("out", "case")
         if p[i].id == "file"
@@ -44,7 +44,7 @@ def ParseTestCases(path as Str,
         end
         i += 1
       end
-      
+
       var tcout = [] as <Str>
       if i < p.length() and p[i].id == "out"
         tcout = p[i].data
@@ -53,7 +53,7 @@ def ParseTestCases(path as Str,
       elif optionalOut
         ok = True
       end
-      
+
       if ok
         var input = ExpandIncludes(p[i0].data, includePath)
         var tc = DataDrivenTestCase(p[i0].arg, input, tcout,
@@ -66,7 +66,7 @@ def ParseTestCases(path as Str,
         path, p[i0].line))
     end
   end
-  
+
   return out
 end
 
@@ -89,7 +89,7 @@ class DataDrivenTestCase is TestCase
     self.perform = perform
     self.files = files
   end
-  
+
   def setUp() as void
     super.setUp()
     self.cleanUp = []
@@ -104,8 +104,8 @@ class DataDrivenTestCase is TestCase
        cleanUp.append((False, path))
     end
   end
-  
-  -- Add all subdirectories required to create dir. Return an array of the 
+
+  -- Add all subdirectories required to create dir. Return an array of the
   -- created directories in the order of creation.
   private def addDirs(dir as Str) as Array<Str>
     if dir == "" or IsDir(dir)
@@ -114,7 +114,7 @@ class DataDrivenTestCase is TestCase
       var dirs = addDirs(DirName(dir)) + [dir]
       MakeDir(dir)
       return dirs
-    end      
+    end
   end
 
   def run()
@@ -124,7 +124,7 @@ class DataDrivenTestCase is TestCase
       self.perform(self)
     end
   end
-  
+
   def tearDown() as void
     for isDir, path in Reversed(self.cleanUp)
       Remove(path)
@@ -149,23 +149,23 @@ end
 -- Parse a list of lines that represent a sequence of test items.
 def ParseTestData(l as Array<Str>, fnam as Str) as Array<TestItem>
   var ret = [] as <TestItem>
-  
+
   var id = nil as Str
   var arg = nil as Str
   var data = [] as <Str>
-  
+
   var i = 0
   var i0 = 0
   while i < l.length()
     var s = l[i].strip()
-  
+
     if l[i].startsWith("[") and s.endsWith("]") and not s.startsWith("[[")
       if id != nil
         data = CollapseLineContinuation(data)
         data = StripList(data)
         ret.append(TestItem(id, arg, StripList(data), fnam, i0 + 1))
       end
-    
+
       i0 = i
       id = s[1:-1]
       arg = nil
@@ -175,7 +175,7 @@ def ParseTestData(l as Array<Str>, fnam as Str) as Array<TestItem>
       end
       data = []
     elif l[i].startsWith("[[")
-      data.append(l[i][1:])      
+      data.append(l[i][1:])
     elif not l[i].startsWith("--")
       data.append(l[i])
     elif l[i].startsWith("----")
@@ -183,19 +183,19 @@ def ParseTestData(l as Array<Str>, fnam as Str) as Array<TestItem>
     end
     i += 1
   end
-  
+
   -- Process the last item.
   if id != nil
     data = CollapseLineContinuation(data)
     data = StripList(data)
     ret.append(TestItem(id, arg, data, fnam, i + 1))
   end
-  
+
   return ret
 end
 
 
--- Return a stripped copy of l. Strip whitespace at the end of all lines, and 
+-- Return a stripped copy of l. Strip whitespace at the end of all lines, and
 -- strip all empty lines from the end of the array.
 private def StripList(l as Array<Str>) as Array<Str>
   var r = [] as <Str>
@@ -207,7 +207,7 @@ private def StripList(l as Array<Str>) as Array<Str>
   while r.length() > 0 and r[-1] == ""
     r.removeAt(-1)
   end
-  
+
   return r
 end
 

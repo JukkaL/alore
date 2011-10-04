@@ -24,10 +24,10 @@ def GetSupertypeToSubtypeTvarRelation(
   if subtype.bases[0] == nil
     return nil
   end
-  
+
   -- The cast will succeed if we get here.
   var base = (subtype.bases[0] as Instance) -- IDEA: Support interfaces
-  
+
   -- Go through all the supertype tvars to find a match.
   for i in 0 to base.args.length()
     var mapping = FindTvarMapping(base.args[i], subtvindex)
@@ -35,7 +35,7 @@ def GetSupertypeToSubtypeTvarRelation(
       return [i + 1] + mapping
     end
   end
-  
+
   return nil
 end
 

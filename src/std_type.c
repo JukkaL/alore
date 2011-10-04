@@ -50,10 +50,10 @@ AValue ATypeInterfaces(AThread *t, AValue *frame)
             AValueToFunction(frame[0])->sym);
         frame[0] = AGlobalByNum(sym->num);
     }
-    
+
     /* Create a wrapper instance for the type object. */
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     frame[1] = AMakeArray(t, 0);
 
     /* Go though all types in the inheritance chain and collect the
@@ -68,11 +68,11 @@ AValue ATypeInterfaces(AThread *t, AValue *frame)
             /* Add interface and all its superinterfaces. */
             do {
                 AValue ifaceVal = ATypeToValue(iface);
-                
+
                 /* Add the interface to the array, but avoid duplicates. */
                 if (AIn(t, ifaceVal, frame[1]) == 0)
                     AAppendArray(t, frame[1], ifaceVal);
-                
+
                 iface = iface->super;
             } while (iface != NULL);
         }

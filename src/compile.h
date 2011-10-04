@@ -88,7 +88,7 @@ ABool AInitializeDefaultModuleSearchPath(const char *additPath);
 
 void ASetupFileInterface(AFileInterface *fileIface);
 void AGetDefaultFileInterface(AFileInterface *fileIface);
-    
+
 ABool ADefInitCompilation(const char *path, char *moduleSearchPath,
                           void *param);
 void *ADefOpenFile(char *path, void *param);

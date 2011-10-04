@@ -125,10 +125,10 @@ ABool AInitializeSymbolTable(void)
     /* The first thee member id's are M_NONE, M_INITIALIZER and M_FINALIZER.
        They don't have symbols. */
     ANumMemberIds = 3;
-    
+
     /* FIX: make sure that we can call GetMemberSymbol */
     ACreateMemberSymbol = AGetMemberSymbol(tok->info.sym);
-    
+
     /* Initialize special member names. The -3 is because the first three
        builtin members don't have symbols. The 2 is because the first two
        non-special members are handled above as special cases. */
@@ -137,11 +137,11 @@ ABool AInitializeSymbolTable(void)
         prev = tok;
         tok = AAdvanceTok(tok);
     }
-    
+
     /* Initialize the "dummy" that is used to flag AFunction structures that
        refer to anonymous functions. */
     AAnonFunctionDummySymbol = AGetMemberSymbol(prev->info.sym);
-    
+
     AFreeTokens(tokHead);
 
     return TRUE;
@@ -167,7 +167,7 @@ ABool AAddSymbol(unsigned hashValue, const unsigned char *id, unsigned idLen,
 
     if (sym == NULL)
         return FALSE;
-    
+
     sym->next = NULL;
     sym->type = TT_ID;
     sym->info = (ASymbolInfo *)sym;
@@ -196,7 +196,7 @@ ABool AGetSymbol(const char *id, unsigned idLen, ASymbol **symRet)
     } else {
         unsigned hashValue;
         int i;
-        
+
         /* Calculate hash value. Inlined for efficiency. */
         hashValue = 0;
         for (i = 0; i < idLen; i++)
@@ -245,7 +245,7 @@ static ABool GrowSymbolTable(void)
     int grow = ASymSize + 1;
 
     /* FIX: possibly gotta get rid of AllocSymbolTable.. */
-    
+
     table = AllocSymbolTable(2 * grow);
     if (table == NULL)
         return FALSE;
@@ -254,7 +254,7 @@ static ABool GrowSymbolTable(void)
         table[i] = ASym[i];
 
     AFreeStatic(ASym);
-    
+
     ASym = table;
     ASymSize += grow;
 
@@ -276,7 +276,7 @@ static ABool GrowSymbolTable(void)
                 oldSym = oldSym->next;
         }
     }
-    
+
     return TRUE;
 }
 
@@ -285,7 +285,7 @@ static ASymbol **AllocSymbolTable(unsigned len)
 {
     ASymbol **table;
     int i;
-    
+
     /* Allocate the symbol table. */
     table = AAllocStatic(len * sizeof(ASymbol *));
     if (table == NULL)

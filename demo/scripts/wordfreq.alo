@@ -16,19 +16,19 @@ def Main(args as Array<Str>)
 
   var map = Map() as <Str, Int>
   var n = Int(args[0])
-  
+
   for fnam in args[1:]
     var s = TextFile(fnam).read()
     for word in Subst(s, '\W', ' ').split()
       map[word] = map.get(word, 0) + 1
     end
   end
-  
+
   var a = [] as <(Int, Str)>
   for word, freq in map
     a.append((freq, word))
   end
-  
+
   for freq, word in Reversed(Sort(a)[-n:])
     WriteLn('{-6:} {}'.format(freq, word))
   end

@@ -15,11 +15,11 @@ def ExpandTabs(s as Str, tabSize = 8 as Int) as Str
   if tabSize <= 0
     return s.replace(Tab, "")
   end
-  
+
   var a = [] as Array<Str>
   var i = 0
   var column = 0
-  
+
   -- Process string in chunks until encountering the end of string.
   while True
     var next = s.find(Tab, i)
@@ -52,7 +52,7 @@ def ExpandTabs(s as Str, tabSize = 8 as Int) as Str
     column += n
     i = next + 1
   end
-  
+
   return "".join(a)
 end
 

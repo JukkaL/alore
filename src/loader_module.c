@@ -85,10 +85,10 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
 {
     /* FIX: If CreateCompileErrorList or similar runs out of memory, a direct
        exception is raised and AllowOldGenGc etc. might not be called. */
-    
+
     /* IDEA: Make it possible to pass command line arguments to dynamically
        loaded programs. */
-    
+
     char *path;
     int moduleNum;
     int funcNum;
@@ -107,7 +107,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
         return ARaiseMemoryErrorND(t);
 
     AFreezeOtherThreads();
-    
+
     /* Setup the file interface. */
     AGetDefaultFileInterface(&fileIface);
     ASetupFileInterface(&fileIface);
@@ -128,7 +128,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
             return AError;
         }
     }
-    
+
     searchPath = AAllocCStrFromString(t, frame[SEARCH_PATH], NULL, 0);
     if (searchPath == NULL) {
         AFreeCStrFromString(path);
@@ -143,7 +143,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
         AValue exception;
 
         /* There was a compiler error. */
-        
+
         list = CreateCompileErrorList(t, frame + 2);
         if (AIsError(list)) {
             AWakeOtherThreads();
@@ -151,7 +151,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
         }
 
         AWakeOtherThreads();
-        
+
         /* Construct a CompileError object containg the error list and raise
            the object. */
         frame[2] = list;
@@ -159,7 +159,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
                                1, frame + 2);
         if (!AIsError(exception))
             ARaiseExceptionValue(t, exception);
-        
+
         goto Failure;
     }
 
@@ -183,13 +183,13 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
     if (run) {
         if (AIsError(ACallValue(t, func, 0, NULL)))
             goto Failure2;
-        
+
         /* Allocate a Module object. */
         /* IDEA: Use a function/macro for creating an instance. */
         inst = AAlloc(t, (1 + NUM_MODULE_IVARS) * sizeof(AValue));
         if (inst == NULL)
             goto Failure2;
-        
+
         /* Initialize the object. */
         AInitInstanceBlock(&inst->type,
                            AValueToType(AGlobalByNum(ModuleClassNum)));
@@ -197,7 +197,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
         /* Keep a reference to the module contents. Otherwise the module might
            be freed by the garbage collector. */
         inst->member[1] = frame[TMP];
-        
+
         ADebugVerifyMemory();
 
         AFreeCStrFromString(path);
@@ -219,7 +219,7 @@ AValue ALoaderLoadInternal(AThread *t, AValue *frame, ABool run)
     AAllowOldGenGC();
 
   Failure2:
-    
+
     AFreeCStrFromString(path);
     AFreeCStrFromString(searchPath);
 
@@ -281,7 +281,7 @@ static ABool StoreError(const char *msg, void *data)
     *info->tempPtr = ACreateStringFromCStr(info->t, msg);
     if (*info->tempPtr == AError)
         return FALSE;
-    
+
     info->index++;
     return ASetArrayItemND(info->t, *info->arrayPtr, info->index - 1,
                         *info->tempPtr);
@@ -338,18 +338,18 @@ static int GetGlobalVariableNum(AThread *t, ASymbolInfo *mod,
     id = AAllocCStrFromString(t, varName, buf, sizeof(buf));
     if (id == NULL)
         return GLOBAL_ERROR;
-    
+
     ALockInterpreter();
 
     num = GLOBAL_MISSING;
-    
+
     /* Try to find the symbol of the variable. */
     sym = AFindSymbol(id, strlen(id));
     if (sym == NULL)
         goto Leave;
 
     /* IDEA: Maybe the following code should reside somewhere else? */
-    
+
     /* Try to find a variable that is defined in the module. */
     for (info = sym->info; AIsId(info->type); info = info->next) {
         if (AIsGlobalId(info->type)
@@ -368,7 +368,7 @@ static int GetGlobalVariableNum(AThread *t, ASymbolInfo *mod,
     AUnlockInterpreter();
 
     AFreeCStrFromString(id);
-    
+
     return num;
 }
 
@@ -384,7 +384,7 @@ static AValue ModuleContents(AThread *t, AValue *frame)
     int i;
     int n;
     ASymbolInfo *module;
-    
+
     ALockInterpreter();
 
     /* Unlock the interpreter lock if a direct exception is raised. */
@@ -392,7 +392,7 @@ static AValue ModuleContents(AThread *t, AValue *frame)
         AUnlockInterpreter();
         return AError;
     }
-    
+
     module = GetModuleSymbol(frame[0]);
 
     /* Loop over all symbol table entries and calculate the number of
@@ -414,7 +414,7 @@ static AValue ModuleContents(AThread *t, AValue *frame)
 
     /* Create an array for the symbol names. */
     frame[1] = AMakeArray(t, n);
-    
+
     /* Loop over all symbol table entries and collect all of the names in the
        module to the array. */
     n = 0;
@@ -448,7 +448,7 @@ static AValue ModuleContents(AThread *t, AValue *frame)
     AEndTry(t);
 
     AUnlockInterpreter();
-    
+
     return frame[1];
 }
 

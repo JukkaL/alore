@@ -86,15 +86,15 @@ AValue ACreateBasicExceptionInstance(AThread *t, int num, const char *message)
         *t->tempStack = AMakeStr(t, message);
     else
         *t->tempStack = ANil;
-    
+
     type = AValueToType(AGlobalByNum(AErrorClassNum[num]));
-    
+
     inst = AAlloc(t, type->instanceSize);
     if (inst == NULL)
         ADispatchException(t);
-    
+
     AInitInstanceBlock(&inst->type, type);
-    
+
     inst->member[AError_TRACEBACK] = ANil;
     inst->member[AError_MESSAGE] = *t->tempStack;
 
@@ -131,7 +131,7 @@ ABool ADisplayStackTraceback(AThread *t,
     int i;
 
     *t->tempStack = t->exception;
-    
+
     if (!AAllocTempStack(t, 2))
         return FALSE;
 
@@ -145,7 +145,7 @@ ABool ADisplayStackTraceback(AThread *t,
 
     if (!display("Traceback (most recent call last):", data))
         goto Fail;
-        
+
     for (i = AArrayLen(TMP[0]) - 1; i >= 0; i--) {
         AString *s;
         int len;
@@ -158,7 +158,7 @@ ABool ADisplayStackTraceback(AThread *t,
         buf[len] = '\0';
 
         AFormatMessage(msg, MAX_TRACEBACK_MESSAGE_LENGTH, "  %s", buf);
-        
+
         if (!display(msg, data))
             goto Fail;
     }
@@ -239,7 +239,7 @@ static int GetLineNumber(AThread *t, AOpcode *ip, AFunction *func)
                         found = cur;
                         foundLine = line;
                     }
-                    
+
                     val >>= 7;
                     if (val == 0)
                         break;
@@ -255,11 +255,11 @@ static int GetLineNumber(AThread *t, AOpcode *ip, AFunction *func)
 
         opc++;
     }
-    
+
 #else
 
     FIX;
-    
+
 #endif
 
     return foundLine;
@@ -313,7 +313,7 @@ ABool ACreateTracebackArray(AThread *t)
        the current stack pointer values so that they can restored. */
     oldStackPtr = t->stackPtr;
     t->stackPtr = t->uncaughtExceptionStackPtr;
-    
+
     if (!AAllocTempStack(t, 3))
         return FALSE;
 
@@ -327,7 +327,7 @@ ABool ACreateTracebackArray(AThread *t)
     TMP[1] = tmp;
 
     /* Fill the array with stack traceback entries. */
-    
+
     stack = t->uncaughtExceptionStackPtr;
 
     prev = NULL;
@@ -346,23 +346,23 @@ ABool ACreateTracebackArray(AThread *t)
 #endif
         else
             ip = NULL;
-        
+
         if (!AIsClassConstructor(stack[1])
             || AValueToFunction(stack[1])->sym != prev) {
             AFunction *func;
             char msg[MAX_TRACEBACK_MESSAGE_LENGTH];
             AValue str;
-            
+
             func = AValueToFunction(stack[1]);
             prev = func->sym;
-            
+
             AFormatMessage(msg, MAX_TRACEBACK_MESSAGE_LENGTH, "%F", func);
-            
+
             if (!AIsCompiledFunction(func)
                     || stack[2] != A_COMPILED_FRAME_FLAG) {
                 char file[MAX_PATH_LENGTH];
                 int line;
-                
+
                 AGetFilePath(file, MAX_PATH_LENGTH, func->fileNum);
                 line = GetLineNumber(t, ip, func);
 
@@ -390,7 +390,7 @@ ABool ACreateTracebackArray(AThread *t)
                         AFormatMessage(msg, MAX_TRACEBACK_MESSAGE_LENGTH,
                                        "... %d entries skipped ...",
                                        len - MAX_TRACEBACK_ENTRIES + 1);
-                    
+
                     str = ACreateStringFromCStr(t, msg);
                     if (AIsError(str))
                         goto Fail;
@@ -404,7 +404,7 @@ ABool ACreateTracebackArray(AThread *t)
 
             i++;
         }
-        
+
         stack = ANextFrame(stack, stack[0]);
     }
 
@@ -417,24 +417,24 @@ ABool ACreateTracebackArray(AThread *t)
             goto Fail;
         TMP[1] = newArr;
     }
-    
+
     if (!ASetInstanceMember(t, AValueToInstance(TMP[0]),
                            AError_TRACEBACK, &TMP[1]))
         goto Fail;
 
     t->exception = TMP[0];
     t->tempStackPtr -= 3;
-    
+
     t->stackPtr = oldStackPtr;
-    
+
     return TRUE;
 
   Fail:
 
     t->tempStackPtr -= 3;
-    
+
     t->stackPtr = oldStackPtr;
-    
+
     return FALSE;
 }
 
@@ -454,7 +454,7 @@ AValue AFilterTracebackArray(AThread *t)
     arrayLen = AArrayLen(t->tempStack[0]);
 
     t->tempStack[1] = t->exception;
-    
+
     /* Create a new array in the new generation. It may be longer than what
        we'll need, but we will truncate it later if necessary. */
     dst = AMakeArrayND(t, arrayLen);
@@ -472,7 +472,7 @@ AValue AFilterTracebackArray(AThread *t)
         /* IDEA: This code seriously needs to cleaned up! */
 
         ASetArrayItemNewGen(dst, i - drop, AArrayItem(src, i));
-        
+
         str = AValueToStr(AArrayItem(src, i));
         len = AGetStrLen(str);
 
@@ -534,7 +534,7 @@ AValue ARaisePreallocatedMemoryErrorND(AThread *t)
     /* Clear traceback member. */
     AValueToInstance(AGlobalByNum(GL_MEMORY_ERROR_INSTANCE))->member[
         AError_TRACEBACK] = ANil;
-    
+
     return ARaiseExceptionValue(t, AGlobalByNum(GL_MEMORY_ERROR_INSTANCE));
 }
 
@@ -700,7 +700,7 @@ AValue ARaiseArgumentErrorND(AThread *t, AValue func, int nargs, int numHidden)
     int maxArgs = AValueToFunction(func)->maxArgs - isMethod - numHidden;
 
     nargs -= isMethod;
-    
+
     AFormatMessage(fstr, 256, "%F", AValueToFunction(func));
 
     if (maxArgs == 0)
@@ -716,7 +716,7 @@ AValue ARaiseArgumentErrorND(AThread *t, AValue func, int nargs, int numHidden)
     else
         AFormatMessage(msg, 256, "%s expects at most %d argument%s (%d given)",
                        fstr, maxArgs, PluralS(maxArgs), nargs);
-    
+
     return ARaiseByNum(t, AErrorClassNum[EX_VALUE_ERROR], msg);
 }
 
@@ -750,7 +750,7 @@ AValue ARaiseKeyErrorWithRepr(AThread *t, AValue key)
    exception. Return PROPAGATE_TO_CALLER (-1) if the execption should be
    propagated to the calling function or EXCEPTION_RAISED (-2) if an exception
    was raised during exception propagation.
-   
+
    Preconditions:
      exception raised
      thread->stackPtr is valid
@@ -773,7 +773,7 @@ int AGetExceptionHandler(AThread *t, AFunction *func, int codeInd)
     /* If the exception was raised within an except block, skipDepth
        is used to keep track of the depth of the enclosing try statement
        so that the except blocks of this statement can be ignored:
-       
+
          try
            ..
          except X
@@ -791,28 +791,28 @@ int AGetExceptionHandler(AThread *t, AFunction *func, int codeInd)
        statements. */
     depth = 0;
     exceptType = AGetInstanceType(AValueToInstance(t->exception));
-        
+
     /* Find out whether there is a except or finally block
        corresponding to the opcode index. */
     /* IDEA: Is skipDepth used properly? */
     for (;;) {
         int code = *exceptInfo;
-        
+
         if (AIsExceptCode(code)) {
             /* Handle a single except case in a try-except statement.
                Invariant: depth > 0 */
-            
+
             unsigned exceptIndex = exceptInfo[1];
             if (exceptIndex > codeInd && depth != skipDepth) {
                 unsigned global = exceptInfo[2];
                 ATypeInfo *type = AValueToType(AGlobalByNum(global));
                 ATypeInfo *e = exceptType;
-                
+
                 if (isDirect[depth - 1]) {
                     t->contextIndex--;
                     isDirect[depth - 1] = FALSE;
                 }
-                
+
                 do {
                     if (e == type) {
                         t->stackPtr[exceptInfo[0] >> 3] =
@@ -825,26 +825,26 @@ int AGetExceptionHandler(AThread *t, AFunction *func, int codeInd)
                 isDirect[depth - 1] = FALSE;
                 skipDepth = depth;
             }
-            
+
             exceptInfo += 3;
         } else if (AIsEndTryCode(code)) {
             /* End a try statement. */
-            
+
             exceptInfo++;
             if (depth == skipDepth)
                 skipDepth = NO_SKIP;
             depth--;
         } else if (AIsBeginTryCode(code)) {
             /* Begin a try statement. */
-            
+
             exceptInfo++;
-            
+
             /* If try statement begins after current code index, skip it. */
             if (AGetBeginTryCodeIndex(code) > codeInd) {
                 unsigned count = 1;
                 for (;;) {
                     code = *exceptInfo;
-                    
+
                     if (AIsEndTryCode(code)) {
                         exceptInfo++;
                         count--;
@@ -865,10 +865,10 @@ int AGetExceptionHandler(AThread *t, AFunction *func, int codeInd)
             }
         } else if (AIsFinallyCode(code)) {
             /* Handle the finally block in a try-finally statement. */
-            
+
             if (AGetFinallyCodeIndex(exceptInfo) > codeInd) {
                 /* Execute the finally block. */
-                
+
                 /* Generate partial stack trace. */
                 if (!ACreateTracebackArray(t)) {
                     t->contextIndex = oldContextIndex;
@@ -877,10 +877,10 @@ int AGetExceptionHandler(AThread *t, AFunction *func, int codeInd)
 
                 /* Store the exception in the stack. */
                 t->stackPtr[AGetFinallyLvar(code)] = t->exception;
-                
+
                 if (isDirect[depth - 1])
                     t->contextIndex--;
-                
+
                 return AGetFinallyCodeIndex(exceptInfo);
             } else {
                 /* Ignore the finally block. */

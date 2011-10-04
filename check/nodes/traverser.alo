@@ -7,14 +7,14 @@ module nodes
 -- method allows reusing the travelsal implementation.
 class TraverserVisitor is NodeVisitor
   -- Helper methods
-  
+
   def acceptBlock(block)
     visitBlock(block)
     for s in block
       s.accept(self)
     end
   end
-  
+
   -- Visit methods
 
   def visitAloreFile(o)
@@ -22,16 +22,16 @@ class TraverserVisitor is NodeVisitor
       d.accept(self)
     end
   end
-  
+
   def visitEncoding(o)
   end
-  
+
   def visitHeader(o)
   end
-  
+
   def visitImport(o)
   end
-  
+
   private def visitFunc(o)
     for i in o.init
       if i != nil
@@ -43,17 +43,17 @@ class TraverserVisitor is NodeVisitor
     end
     acceptBlock(o.body)
   end
-  
+
   def visitFuncDef(o)
     visitFunc(o)
   end
-  
+
   def visitTypeDef(o)
     for d in o.defs
       d.accept(self)
     end
   end
-  
+
   def visitVarDef(o)
     if o.init != nil
       o.init.accept(self)
@@ -62,42 +62,42 @@ class TraverserVisitor is NodeVisitor
       visitVar(v)
     end
   end
-  
+
   def visitVar(o)
   end
-  
+
   def visitAnnotation(o)
   end
-  
+
   def visitBlock(o)
   end
-  
+
   def visitExpressionStmt(o)
     o.expr.accept(self)
   end
-  
+
   def visitAssignmentStmt(o)
     o.rvalue.accept(self)
     for l in o.lvalues
       l.accept(self)
     end
   end
-  
+
   def visitOperatorAssignmentStmt(o)
     o.rvalue.accept(self)
     o.lvalue.accept(self)
   end
-  
+
   def visitWhileStmt(o)
     o.expr.accept(self)
     acceptBlock(o.body)
   end
-  
+
   def visitRepeatStmt(o)
     o.expr.accept(self)
     acceptBlock(o.body)
   end
-  
+
   def visitForStmt(o)
     for ind in o.index
       ind.accept(self)
@@ -105,13 +105,13 @@ class TraverserVisitor is NodeVisitor
     o.expr.accept(self)
     acceptBlock(o.body)
   end
-  
+
   def visitReturnStmt(o)
     if o.expr != nil
       o.expr.accept(self)
     end
   end
-  
+
   def visitIfStmt(o)
     for e in o.expr
       e.accept(self)
@@ -123,14 +123,14 @@ class TraverserVisitor is NodeVisitor
       acceptBlock(o.elseBody)
     end
   end
-  
+
   def visitBreakStmt(o)
   end
-  
+
   def visitRaiseStmt(o)
     o.expr.accept(self)
   end
-  
+
   def visitTryExceptStmt(o)
     acceptBlock(o.body)
     for i in 0 to o.types.length()
@@ -138,12 +138,12 @@ class TraverserVisitor is NodeVisitor
       acceptBlock(o.handlers[i])
     end
   end
-  
+
   def visitTryFinallyStmt(o)
     acceptBlock(o.body)
     acceptBlock(o.finallyBody)
   end
-  
+
   def visitSwitchStmt(o)
     o.expr.accept(self)
     for c in o.cases
@@ -155,23 +155,23 @@ class TraverserVisitor is NodeVisitor
       acceptBlock(b)
     end
   end
-  
+
   -- Lvalue expressions.
   def visitNameLvalue(o)
   end
-  
+
   def visitMemberLvalue(o)
     o.expr.accept(self)
   end
-  
+
   def visitIndexLvalue(o)
     o.base.accept(self)
     o.index.accept(self)
   end
-  
+
   def visitSuperLvalue(o)
   end
-  
+
   -- This is called before and in addition to one of the following methods.
   def visitExpression(o)
   end
@@ -187,60 +187,60 @@ class TraverserVisitor is NodeVisitor
   end
   def visitNameExpr(o)
   end
-  
+
   def visitParenExpr(o)
     o.expr.accept(self)
   end
-  
+
   def visitMemberExpr(o)
     o.expr.accept(self)
   end
-  
+
   def visitCallExpr(o)
     for a in o.args
       a.accept(self)
     end
     o.callee.accept(self)
   end
-  
+
   def visitOpExpr(o)
     o.left.accept(self)
     o.right.accept(self)
   end
-  
+
   def visitCastExpr(o)
     o.expr.accept(self)
     o.typeName.accept(self)
   end
-  
+
   def visitUnaryExpr(o)
     o.expr.accept(self)
   end
-  
+
   def visitArrayExpr(o)
     for item in o.items
       item.accept(self)
     end
   end
-  
+
   def visitTupleExpr(o)
     for item in o.items
       item.accept(self)
     end
   end
-  
+
   def visitIndexExpr(o)
     o.base.accept(self)
     o.index.accept(self)
   end
-  
+
   def visitSuperExpr(o)
   end
-  
+
   def visitTypeApplication(o)
     o.expr.accept(self)
   end
-  
+
   def visitFuncExpr(o)
     visitFunc(o)
   end

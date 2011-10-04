@@ -10,48 +10,48 @@ const Eqc
 class OperatorOverloadingSuite is Suite
   def testOperators()
     var oo = OpOverload()
-    
+
     -- Indexing
     Assert(oo[5] == 6)
     oo[7] = 8
     Assert(oo.slot == 17)
-    
+
     -- Addition
     Assert(oo + 3 == -2)
     Assert(3 + oo == -2)
     Assert(3.0 + oo == -2)
-    
+
     -- Subtraction
     Assert(oo - 100 == 201)
     AssertRaises(TypeError, def (); 200 - oo; end)
-    
+
     -- Multiplication
     Assert(oo * 9 == 18)
     Assert(9 * oo == 18)
     Assert(9.0 * oo == 18)
-    
+
     -- Division
     Assert(oo / 9 == 18 + 3)
     Assert(oo / 0 == 3)
     AssertRaises(TypeError, def (); 9 / oo; end)
-    
+
     -- Modulus
     Assert(oo mod 9 == 18 + 5)
     Assert(oo mod 0 == 5)
     AssertRaises(TypeError, def (); 9 mod oo; end)
-    
+
     -- Integer division
     Assert(oo div 9 == 18 + 7)
     Assert(oo div 0 == 7)
     AssertRaises(TypeError, def (); 9 div oo; end)
-    
+
     -- Exponentiation
     Assert(oo**9 == 18 + 9)
     AssertRaises(TypeError, def (); 9**oo; end)
-    
+
     -- Negation
     Assert(-oo == 13)
-    
+
     -- Increment / decrement
     var foo = oo
     foo += 1
@@ -60,10 +60,10 @@ class OperatorOverloadingSuite is Suite
     foo -= 1
     Assert(foo == 3)
   end
- 
+
   def testCalls()
     var oo = OpOverload()
-    
+
     var x, y, z = oo(41)
     Assert(x == 42)
     Assert(y == 44)
@@ -75,19 +75,19 @@ class OperatorOverloadingSuite is Suite
     Assert(z[0] == 61)
     Assert(z[1] == 71)
   end
-    
+
   def testEquality()
     var oo = OpOverload()
-    
+
     -- Equality
-    
+
     Assert(oo == 2)
     Assert(oo == 1.5)
     Assert(oo == "x")
     Assert(oo == [])
     VerifyNot(oo == 1)
     VerifyNot(oo == 3)
-    
+
     Assert(2 == oo)
     Assert(1.5 == oo)
     Assert(2._eq(oo))
@@ -97,25 +97,25 @@ class OperatorOverloadingSuite is Suite
     VerifyNot("x" == oo)
     VerifyNot("x"._eq(oo))
     VerifyNot([] == oo)
-    
+
     -- Inequality
-    
+
     Assert(oo != 1)
     Assert(oo != 3)
     VerifyNot(oo != 2)
     VerifyNot(oo != "x")
     VerifyNot(oo != [])
-    
+
     Assert(1 != oo)
     Assert(3 != oo)
     Assert([] != oo)
     VerifyNot(2 != oo)
     VerifyNot(1.5 != oo)
   end
-  
+
   def testOrder()
     var oo = OpOverload()
-    
+
     Assert(oo < 4)
     Assert(oo < 3)
     VerifyNot(oo < 2)
@@ -126,7 +126,7 @@ class OperatorOverloadingSuite is Suite
     Assert(1.0._lt(oo))
     VerifyNot(2 < oo)
     VerifyNot(2.0 < oo)
-    
+
     Assert(oo > 0)
     Assert(oo > 1)
     VerifyNot(oo > 2)
@@ -137,7 +137,7 @@ class OperatorOverloadingSuite is Suite
     Assert(3.0._gt(oo))
     VerifyNot(2 > oo)
     VerifyNot(2.0 > oo)
-    
+
     Assert(oo <= 3)
     Assert(oo <= 2)
     VerifyNot(oo <= 1)
@@ -146,7 +146,7 @@ class OperatorOverloadingSuite is Suite
     Assert(2.0 <= oo)
     VerifyNot(3 <= oo)
     VerifyNot(3.0 <= oo)
-  
+
     Assert(oo >= 1)
     Assert(oo >= 2)
     VerifyNot(oo >= 3)
@@ -155,7 +155,7 @@ class OperatorOverloadingSuite is Suite
     Assert(2.0 >= oo)
     VerifyNot(1 >= oo)
     VerifyNot(1.0 >= oo)
-    
+
     var o = Ordered()
     Assert(o < "i")
     VerifyNot(o < "h")
@@ -165,30 +165,30 @@ class OperatorOverloadingSuite is Suite
     VerifyNot(o > "h")
     Assert(o >= "g")
     Assert(o >= "h")
-    
+
     AssertRaises(TypeError, def (); "i" < o; end)
     AssertRaises(TypeError, def (); "i" > o; end)
     AssertRaises(TypeError, def (); "i" <= o; end)
     AssertRaises(TypeError, def (); "i" >= o; end)
-    
+
     AssertRaises(TypeError, def (); "i"._lt(o); end)
     AssertRaises(TypeError, def (); "i"._gt(o); end)
   end
-  
+
   def testIn()
     var oo = OpOverload()
-    
+
     -- in
     Assert(7 in oo)
     Assert(not 6 in oo)
     VerifyNot(6 in oo)
     VerifyNot(not 7 in oo)
   end
-  
+
   def testTestExceptionInOperator()
     -- FIX test
   end
-  
+
   -- Test that the order of equality comparison against nil literal is
   -- switched (a == nil => nil == a).
   def testNilEq()
@@ -199,7 +199,7 @@ class OperatorOverloadingSuite is Suite
     AssertEqual(e != nil, True)
     AssertEqual(e != (nil), True)
     AssertEqual(not e._eq(nil), False)
-    
+
     -- Other related cases should not be switched.
     var n = nil
     AssertEqual(e == n, True)
@@ -218,66 +218,66 @@ private class OpOverload
   var m1 = 1
   var m2 = 2
   var slot
-  
+
   def create()
   end
-  
+
   def _get(x)
     return m1 + x
   end
-  
+
   def _set(x, y)
     slot = m2 + x + y
   end
-  
+
   def _add(x)
     return m1 - x
   end
-  
+
   def _sub(x)
     return m1 + 2 * x
   end
-  
+
   def _mul(x)
     return m2 * x
   end
-  
+
   def _div(x)
     return m2 * x + 3
   end
-  
+
   def _mod(x)
     return m2 * x + 5
   end
-  
+
   def _idiv(x)
     return m2 * x + 7
   end
-  
+
   def _pow(x)
     return m2 * x + 9
   end
-  
+
   def _neg()
     return m2 + 11
   end
-  
+
   def _call(x, y = x + 3, *z)
     return x + m1, y, z
   end
-  
+
   def _eq(x)
     return m2 == x or x == 1.5 or x == "x" or x == []
   end
-  
+
   def _lt(x)
     return m2 < x
   end
-  
+
   def _gt(x)
     return m2 > x
   end
-  
+
   def _in(x)
     return m2 + 5 == x
   end
@@ -288,7 +288,7 @@ class Ordered
   def _lt(x)
     return "h" < x
   end
-  
+
   def _gt(x)
     return "h" > x
   end

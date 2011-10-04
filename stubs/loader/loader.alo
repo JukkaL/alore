@@ -11,10 +11,10 @@ end
 class Module
   def contents() as Array<Str>
   end
-  
+
   def _get(x as Str) as dynamic
   end
-  
+
   def _set(x as Str, y as Object)
   end
 end

@@ -8,7 +8,7 @@ import nodes
 class OutputVisitor is NodeVisitor
   private var result = [] -- Array<Str>
   private var lineNumber = 1
-  
+
   var omitNextSpace = False -- If True, omit the next character if
                             -- it is a space
 
@@ -23,29 +23,29 @@ class OutputVisitor is NodeVisitor
     nodes(o.imports)
     nodes(o.defs); token(o.repr.eof)
   end
-  
+
   def visitEncoding(o)
     var r = o.repr
     tokens([r.encodingTok, r.name, r.br])
   end
-  
+
   def visitHeader(o)
     var r = o.repr
     token(r.moduleTok); tokens(r.components); token(r.br)
   end
-  
+
   def visitImport(o)
     var r = o.repr
     token(r.importTok); tokens(r.components); token(r.separator)
   end
-  
+
   def visitTypeDef(o)
     classHeader(o)
     nodes(o.defs)
     var r = o.repr
     tokens([r.endTok, r.endBr])
   end
-  
+
   def classHeader(o)
     var r = o.repr
     tokens([r.visibility, r.type, r.name])
@@ -72,7 +72,7 @@ class OutputVisitor is NodeVisitor
       token(r.bindBrs[i])
     end
   end
-  
+
   def typeVars(v)
     -- IDEA: Combine this with typeVars in outputtype.alo.
     if v != nil and v.repr != nil
@@ -92,49 +92,49 @@ class OutputVisitor is NodeVisitor
       token(r.rangle)
     end
   end
-  
+
   def visitFuncDef(o)
     var r = o.repr
-    
+
     -- Implicit create has no textual representation -- ignore it.
     if r == nil
       return
     end
-    
+
     token(r.visibility); token(r.defTok); token(r.name)
-    
+
     if o.isAccessor()
       accessorHeader(o, r.args[0])
     else
       functionHeader(o, r.args)
     end
-    
+
     token(r.defBr)
     nodes(o.body)
     token(r.endTok); token(r.endBr)
   end
-  
+
   def functionHeader(o, argReprs, preArgsFunc = nil)
     var r = o.repr
-  
+
     var t = nil
     if o.type != nil
       t = o.type.type.items()
     end
-    
+
     functionArgs(t, 0, argReprs[0], o.init, preArgsFunc)
     for i in 1 to argReprs.length()
       functionArgs(t, i, argReprs[i], nil, preArgsFunc)
     end
   end
-  
+
   def functionArgs(t, ti, argRepr, init, preArgsFunc)
     var rr = argRepr
-    
+
     if t != nil
       typeVars(t[ti].variables)
     end
-    
+
     token(rr.lseparator)
     if preArgsFunc != nil
       preArgsFunc()
@@ -157,15 +157,15 @@ class OutputVisitor is NodeVisitor
       token(rr.commas[i])
     end
     token(rr.rseparator)
-    
+
     if t != nil
       token(rr.asToks[-1])
       type(t[ti].retType)
     end
-    
+
     token(rr.orTok)
   end
-  
+
   def accessorHeader(o, argRepr)
     var r = o.repr
     token(argRepr.lseparator)
@@ -176,7 +176,7 @@ class OutputVisitor is NodeVisitor
       node(o.type)
     end
   end
-  
+
   def visitVarDef(o)
     var r = o.repr
     token(r.visibility); token(r.type); nodes(o.names)
@@ -184,48 +184,48 @@ class OutputVisitor is NodeVisitor
     node(o.type)
     token(r.br)
   end
-  
+
   def visitVar(o)
     var r = o.repr
     token(r.name); token(r.comma)
   end
-  
+
   -- Statements
-  
+
   def visitExpressionStmt(o)
     node(o.expr); token(o.repr.br)
   end
-  
+
   def visitAssignmentStmt(o)
     var r = o.repr
     tokens(r.lparens); commaList(o.lvalues, r.commas); tokens(r.rparens)
     token(r.assign); node(o.rvalue); token(r.br)
   end
-  
+
   def visitOperatorAssignmentStmt(o)
     var r = o.repr
     node(o.lvalue); token(r.assign); node(o.rvalue); token(r.br)
   end
-  
+
   def visitReturnStmt(o)
     token(o.repr.returnTok); node(o.expr); token(o.repr.br)
   end
-  
+
   def visitBreakStmt(o)
     token(o.repr.breakTok); token(o.repr.br)
   end
-  
+
   def visitRaiseStmt(o)
     token(o.repr.raiseTok); node(o.expr); token(o.repr.br)
   end
-  
+
   def visitWhileStmt(o)
     var r = o.repr
     token(r.whileTok); node(o.expr); token(r.whileBr)
     nodes(o.body)
     token(r.endTok); token(r.endBr)
   end
-  
+
   def visitRepeatStmt(o)
     var r = o.repr
     token(r.repeatTok)
@@ -233,7 +233,7 @@ class OutputVisitor is NodeVisitor
     nodes(o.body)
     token(r.untilTok); node(o.expr); token(r.untilBr)
   end
-  
+
   def visitForStmt(o)
     var r = o.repr
     token(r.forTok)
@@ -246,7 +246,7 @@ class OutputVisitor is NodeVisitor
     token(r.forBr)
     nodes(o.body); token(r.endTok); token(r.endBr)
   end
-  
+
   def visitIfStmt(o)
     var r = o.repr
     token(r.ifTok); node(o.expr[0]); token(r.ifBr)
@@ -261,7 +261,7 @@ class OutputVisitor is NodeVisitor
     end
     tokens([r.endTok, r.endBr])
   end
-  
+
   def visitSwitchStmt(o)
     var r = o.repr
     token(r.switchTok); node(o.expr); token(r.switchBr)
@@ -281,7 +281,7 @@ class OutputVisitor is NodeVisitor
     end
     tokens([r.endTok, r.endBr])
   end
-  
+
   def visitTryFinallyStmt(o)
     var r = o.repr
     tokens([r.tryTok, r.tryBr])
@@ -290,7 +290,7 @@ class OutputVisitor is NodeVisitor
     nodes(o.finallyBody)
     tokens([r.endTok, r.endBr])
   end
-  
+
   def visitTryExceptStmt(o)
     var r = o.repr
     tokens([r.tryTok, r.tryBr])
@@ -303,24 +303,24 @@ class OutputVisitor is NodeVisitor
     end
     tokens([r.endTok, r.endBr])
   end
-  
+
   -- Expressions
-  
+
   def visitExpression(o)
   end
-  
+
   def visitIntExpr(o)
     token(o.repr.int)
   end
-  
+
   def visitStrExpr(o)
     token(o.repr.str)
   end
-  
+
   def visitFloatExpr(o)
     token(o.repr.float)
   end
-  
+
   def visitNilExpr(o)
     -- Index expressions with slicing may have implicit nil arguments, which
     -- do not have a textual representation.
@@ -328,59 +328,59 @@ class OutputVisitor is NodeVisitor
       token(o.repr.nilTok)
     end
   end
-  
+
   def visitSelfExpr(o)
     token(o.repr.selfTok)
   end
-  
+
   def visitParenExpr(o)
     token(o.repr.lparen); node(o.expr); token(o.repr.rparen)
   end
-  
+
   def visitNameLvalue(o)
     var r = o.repr
     tokens(r.lparens); tokens(r.base.components); tokens(r.rparens)
   end
-  
+
   def visitNameExpr(o)
     -- Supertype references may not have a representation.
     if o.repr != nil
       tokens(o.repr.components)
     end
   end
-  
+
   def visitMemberLvalue(o)
     var r = o.repr
     tokens(r.lparens); node(o.expr); token(r.base.dot); token(r.base.name)
     tokens(r.rparens)
   end
-  
+
   def visitMemberExpr(o)
     node(o.expr); token(o.repr.dot); token(o.repr.name)
   end
-  
+
   def visitSuperLvalue(o)
     var r = o.repr
     tokens(r.lparens)
     token(r.base.superTok); token(r.base.dot); token(r.base.name)
     tokens(r.rparens)
   end
-  
+
   def visitSuperExpr(o)
     token(o.repr.superTok); token(o.repr.dot); token(o.repr.name)
   end
-  
+
   def visitIndexLvalue(o)
     var r = o.repr
     tokens(r.lparens)
     node(o.base); token(r.base.lbracket); node(o.index); token(r.base.rbracket)
     tokens(r.rparens)
   end
-  
+
   def visitIndexExpr(o)
     node(o.base); token(o.repr.lbracket); node(o.index); token(o.repr.rbracket)
   end
-  
+
   def visitCallExpr(o)
     var r = o.repr
     node(o.callee)
@@ -397,48 +397,48 @@ class OutputVisitor is NodeVisitor
     end
     token(r.rparen)
   end
-  
+
   def visitOpExpr(o)
     node(o.left); token(o.repr.op); token(o.repr.br); node(o.right)
   end
-  
+
   def visitCastExpr(o)
     node(o.expr); token(o.repr.asTok); node(o.typeName)
   end
-  
+
   def visitUnaryExpr(o)
     token(o.repr.op); node(o.expr)
   end
-  
+
   def visitArrayExpr(o)
     var r = o.repr
     token(r.lbracket); commaList(o.items, r.commas); token(r.rbracket)
   end
-  
+
   def visitTupleExpr(o)
     var r = o.repr
     token(r.lparen); commaList(o.items, r.commas); token(r.rparen)
   end
-  
+
   def visitFuncExpr(o)
     visitFuncDef(o)
   end
-  
+
   def visitTypeApplication(o)
     node(o.expr); token(o.repr.asTok); token(o.repr.langle)
     typeList(o.types, o.repr.commas); token(o.repr.rangle)
   end
-  
+
   -- Types
-  
+
   def visitAnnotation(o)
     token(o.repr.asTok)
     type(o.type)
     token(o.repr.br)
   end
-  
+
   -- Helpers
-  
+
   def line()
     return self.lineNumber
   end
@@ -456,33 +456,33 @@ class OutputVisitor is NodeVisitor
       self.result.append(s)
     end
   end
-  
+
   -- Output a token.
   def token(t)
     str(t.rep)
   end
-  
+
   -- Output an array of tokens.
   def tokens(a)
     for t in a
       token(t)
     end
   end
-  
+
   -- Output a node.
   def node(n)
     if n != nil
       n.accept(self)
     end
   end
-  
+
   -- Output an array of nodes.
   def nodes(a)
     for n in a
       node(n)
     end
   end
-  
+
   def commaList(items, commas)
     for i in 0 to items.length()
       node(items[i])
@@ -491,7 +491,7 @@ class OutputVisitor is NodeVisitor
       end
     end
   end
-  
+
   def typeList(items, commas)
     for i in 0 to items.length()
       type(items[i])
@@ -500,7 +500,7 @@ class OutputVisitor is NodeVisitor
       end
     end
   end
-  
+
   -- Output a type.
   def type(t)
     if t != nil
@@ -509,7 +509,7 @@ class OutputVisitor is NodeVisitor
       str(v.output())
     end
   end
-  
+
   def lastOutputChar()
     if self.result != [] and self.result[-1] != ''
       return self.result[-1][-1]

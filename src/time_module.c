@@ -21,7 +21,7 @@ static AValue TimeNow(AThread *t, AValue *frame)
     int usecs;
     time_t t1;
     struct tm t2;
-    
+
     frame[0] = AMakeArray(t, 7);
 #ifdef HAVE_GETTIMEOFDAY
     {
@@ -43,7 +43,7 @@ static AValue TimeNow(AThread *t, AValue *frame)
 #else
     t2 = *localtime(&t1);
 #endif
-    
+
     ASetArrayItem(t, frame[0], 0, AIntToValue(t2.tm_year + 1900));
     ASetArrayItem(t, frame[0], 1, AIntToValue(t2.tm_mon + 1));
     ASetArrayItem(t, frame[0], 2, AIntToValue(t2.tm_mday));
@@ -51,7 +51,7 @@ static AValue TimeNow(AThread *t, AValue *frame)
     ASetArrayItem(t, frame[0], 4, AIntToValue(t2.tm_min));
     ASetArrayItem(t, frame[0], 5, AIntToValue(t2.tm_sec));
     ASetArrayItem(t, frame[0], 6, AIntToValue(usecs));
-    
+
     return frame[0];
 }
 

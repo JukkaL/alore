@@ -62,9 +62,9 @@ ABool AInitializeFileList(void)
     PathBuffer = AAllocStatic(PathBufferSize);
     if (PathBuffer == NULL)
         return FALSE;
-    
+
     AList = &Sentinel;
-    
+
     return TRUE;
 }
 
@@ -84,7 +84,7 @@ unsigned AAddNewFile(char *name)
     unsigned len;
 
     len = strlen(name);
-    
+
     if (len > 0) {
         /* FIX: path separator */
         for (start = name + len - 1;
@@ -101,7 +101,7 @@ unsigned AAddNewFile(char *name)
         Finalize();
         FindNewSpot();
     }
-    
+
     return CurIndex++;
 }
 
@@ -139,7 +139,7 @@ static void Finalize(void)
         block = AList;
         while (CurIndex <= block->next->firstFileIndex)
             block = block->next;
-    
+
         newBlock->next = block->next;
         block->next = newBlock;
     }
@@ -152,7 +152,7 @@ static void AddString(char *str, int len)
 {
     while (PathBufferIndex + len + 1 > PathBufferSize) {
         char *newBuf = AGrowStatic(PathBuffer, 2 * PathBufferSize);
-        
+
         if (newBuf == NULL) {
             Status = FALSE;
             return;
@@ -199,7 +199,7 @@ void AGetFilePath(char *buf, int bufLen, int fileNum)
     int nameLen;
     char *s;
     int i;
-    
+
     block = AList;
     while (block->firstFileIndex > fileNum)
         block = block->next;
@@ -235,12 +235,12 @@ int ACreateModulePath(char *path, int max, AModuleId *mod)
 
         while (*id != '\0')
             path[i++] = *id++;
-        
+
         if (partInd < mod->numParts - 1)
             path[i++] = A_DIR_SEPARATOR;
     }
 
     path[i] = '\0';
-    
+
     return i;
 }

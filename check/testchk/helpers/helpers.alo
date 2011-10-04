@@ -7,35 +7,35 @@ import os
 import re
 
 
--- AssertStringArraysEqual displays special line alignment helper messages if 
+-- AssertStringArraysEqual displays special line alignment helper messages if
 -- the first different line has at least this many characters,
 private const MinLineLengthForAlignment = 5
 
 
--- Assert that two string arrays are equal. Display any differences in a 
+-- Assert that two string arrays are equal. Display any differences in a
 -- human-readable form.
-def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>, 
+def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>,
                             msg as Str)
   actual = CleanUp(actual)
-  
+
   if actual != expected
     var numSkipStart = NumSkippedPrefixLines(expected, actual)
     var numSkipEnd = NumSkippedSuffixLines(expected, actual)
-    
+
     StdErr.writeLn("Expected:")
-    
+
     -- If omit some lines at the beginning, indicate it by displaying a line
     -- with '...'.
     if numSkipStart > 0
       StdErr.writeLn("  ...")
     end
-    
+
     -- Keep track of the first different line.
     var firstDiff = -1
-    
+
     -- Display only this many first characers of identical lines.
     var width = 75
-    
+
     for i in numSkipStart to expected.length() - numSkipEnd
       if i >= actual.length() or expected[i] != actual[i]
         if firstDiff < 0
@@ -54,13 +54,13 @@ def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>,
     if numSkipEnd > 0
       StdErr.writeLn("  ...")
     end
-    
+
     StdErr.writeLn("Actual:")
-    
+
     if numSkipStart > 0
       StdErr.writeLn("  ...")
     end
-    
+
     for i in numSkipStart to actual.length() - numSkipEnd
       if i >= expected.length() or expected[i] != actual[i]
         StdErr.write("  {-45:} (diff)".format(actual[i]))
@@ -79,9 +79,9 @@ def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>,
     if numSkipEnd > 0
       StdErr.writeLn("  ...")
     end
-    
+
     StdErr.writeLn()
-    
+
     if firstDiff >= 0 and firstDiff < actual.length() and
        (expected[firstDiff].length() >= MinLineLengthForAlignment or
         actual[firstDiff].length() >= MinLineLengthForAlignment)
@@ -89,7 +89,7 @@ def AssertStringArraysEqual(expected as Array<Str>, actual as Array<Str>,
       -- long lines.
       ShowAlignMessage(expected[firstDiff], actual[firstDiff])
     end
-    
+
     raise AssertionFailure(msg)
   end
 end
@@ -112,21 +112,21 @@ def ShowAlignMessage(s1 as Str, s2 as Str)
   end
 
   var maxw = 72 -- Maximum number of characters shown
-  
+
   StdErr.writeLn('Alignment of first line difference:')
-  
+
   var trunc = False
   while s1[:30] == s2[:30]
     s1 = s1[10:]
     s2 = s2[10:]
     trunc = True
   end
-  
+
   if trunc
     s1 = '...' + s1
     s2 = '...' + s2
   end
-  
+
   var maxLen = Max(s1.length(), s2.length())
   var extra = ''
   if maxLen > maxw
@@ -152,21 +152,21 @@ end
 
 -- Like above, but let a line with only "..." in expected match any number of
 -- lines in actual.
-def AssertStringArraysEqualWildcards(expected as Array<Str>, 
+def AssertStringArraysEqualWildcards(expected as Array<Str>,
                                      actual as Array<Str>, msg as Str)
   actual = CleanUp(actual)
-  
+
   while actual != [] and actual[-1] == ''
     actual = actual[:-1]
   end
-  
+
   -- Expand "..." wildcards away.
   expected = MatchArray(expected, actual)
   AssertStringArraysEqual(expected, actual, msg)
 end
 
 
--- Remove common directory prefix from all strings in a (perform a naive 
+-- Remove common directory prefix from all strings in a (perform a naive
 -- string replace; it seems to work well enough). Also remove trailing carriage
 -- returns.
 private def CleanUp(a)
@@ -188,7 +188,7 @@ def MatchArray(pattern as Array<Str>, target as Array<Str>) as Array<Str>
   var res = [] as <Str>
   var i = 0
   var j = 0
-  
+
   while i < pattern.length()
     if pattern[i] == '...'
       -- Wildcard in pattern.
@@ -215,11 +215,11 @@ def MatchArray(pattern as Array<Str>, target as Array<Str>) as Array<Str>
         i += 1
         j = jj
       end
-    elif j < target.length() and 
+    elif j < target.length() and
          (pattern[i] == target[j] or
            (i + 1 < pattern.length() and j + 1 < target.length() and
             pattern[i + 1] == target[j + 1]))
-      -- In sync; advance one line. The above condition keeps sync also if 
+      -- In sync; advance one line. The above condition keeps sync also if
       -- only a single line is different, but loses it if two consecutive lines
       -- fail to match.
       res.append(pattern[i])
@@ -246,7 +246,7 @@ end
 
 private def NumSkippedSuffixLines(a1 as Array<Str>, a2 as Array<Str>) as Int
   var numEq = 0
-  while numEq < Min(a1.length(), a2.length()) and 
+  while numEq < Min(a1.length(), a2.length()) and
         a1[-numEq -1] == a2[-numEq - 1]
     numEq += 1
   end

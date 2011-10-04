@@ -13,7 +13,7 @@ class TimeSuite is Suite
     Assert(d.month in 1 to 13)
     Assert(d.weekday in 1 to 8)
   end
-  
+
   def testDateFromComponents()
     var d = Date(2099, 12, 31)
     Assert(d.day == 31)
@@ -21,73 +21,73 @@ class TimeSuite is Suite
     Assert(d.year == 2099)
     Assert(d.weekday == 4)
   end
-  
+
   def testDateFromStr()
     var d = Date("2004-07-09")
     AssertEqual(d.day, 9)
     AssertEqual(d.month, 7)
     AssertEqual(d.year, 2004)
     AssertEqual(d.weekday, 5)
-    
+
     d = Date("1900-01-01")
     Assert(d.day == 1)
     Assert(d.month == 1)
     Assert(d.year == 1900)
     Assert(d.weekday == 1)
-    
+
     d = Date("28.11.2005", "DD.MM.YYYY")
     Assert(d.day == 28)
     Assert(d.month == 11)
     Assert(d.year == 2005)
-    
+
     d = Date("Dec 11 2047", "MMM DD YYYY")
     Assert(d.day == 11)
     Assert(d.month == 12)
     Assert(d.year == 2047)
-    
+
     d = Date("dEC 11 2047", "MMM DD YYYY")
     Assert(d.day == 11)
     Assert(d.month == 12)
     Assert(d.year == 2047)
-    
+
     d = Date("January 11 2047", "MMMM DD YYYY")
     Assert(d.day == 11)
     Assert(d.month == 1)
     Assert(d.year == 2047)
-    
+
     d = Date("januaRY 11 2047", "MMMM DD YYYY")
     Assert(d.day == 11)
     Assert(d.month == 1)
     Assert(d.year == 2047)
-    
+
     -- Escape character
     d = Date("4D6M2003", "D\DM\MYYYY")
     Assert(d.day == 4)
     Assert(d.month == 6)
     Assert(d.year == 2003)
   end
-  
+
   def testDateToStr()
     var d = Date("2004-07-09")
     Assert(Str(d) == "2004-07-09")
   end
-  
+
   def testNormalizeDate()
     var d = Date(2004, 2, 0)
     Assert(d.day == 31)
     Assert(d.month == 1)
     Assert(d.year == 2004)
-    
+
     d = Date(2004, 2, 30)
     Assert(d.day == 1)
     Assert(d.month == 3)
     Assert(d.year == 2004)
-    
+
     d = Date(2003, 12, 33)
     Assert(d.day == 2)
     Assert(d.month == 1)
     Assert(d.year == 2004)
-    
+
     d = Date(2004, 1, -1)
     Assert(d.day == 30)
     Assert(d.month == 12)
@@ -103,7 +103,7 @@ class TimeSuite is Suite
     Assert(d.month == 12)
     Assert(d.year == 2003)
   end
-  
+
   def testWeekOfDate()
     -- First four day week is the first week of a year
     Assert(Date(2004, 1, 5).week() == 2)
@@ -114,13 +114,13 @@ class TimeSuite is Suite
     Assert(Date(2003, 12, 28).week() == 52)
     Assert(Date(1999, 1, 1).week() == 53)
     Assert(Date(1998, 12, 31).week() == 53)
-    
+
     -- The week containing the 1st of January is the first week of a year.
     Assert(Date(2001, 1, 1).week(FirstWeek) == 1)
     Assert(Date(2000, 12, 31).week(FirstWeek) == 53)
     Assert(Date(2006, 1, 1).week(FirstWeek) == 1)
     Assert(Date(2005, 12, 31).week(FirstWeek) == 1)
-    
+
     -- The first full week in January is the first week of a year.
     Assert(Date(2001, 1, 1).week(FirstFullWeek) == 1)
     Assert(Date(2000, 12, 31).week(FirstFullWeek) == 52)
@@ -129,7 +129,7 @@ class TimeSuite is Suite
     Assert(Date(2002, 1, 7).week(FirstFullWeek) == 1)
     Assert(Date(2001, 12, 31).week(FirstFullWeek) == 53)
   end
-  
+
   def testDateCompareEquality()
     Assert(Date(2004, 2, 12) == Date(2004, 2, 12))
     Assert(Date(2005, 2, 12) != Date(2004, 2, 12))
@@ -137,25 +137,25 @@ class TimeSuite is Suite
     Assert(Date(2004, 2, 13) != Date(2004, 2, 12))
     Assert(Date(1900, 1, 1) != nil)
   end
-  
+
   def testDateCompareOrder()
     Assert(Date(2000, 10, 10) < Date(2001, 1, 1))
     Assert(Date(2000, 10, 10) <= Date(2001, 1, 1))
-    
+
     Assert(Date(2000, 10, 10) < Date(2000, 11, 1))
     Assert(Date(2000, 10, 10) <= Date(2000, 11, 1))
-    
+
     Assert(Date(2000, 10, 10) < Date(2000, 10, 11))
     Assert(Date(2000, 10, 10) <= Date(2000, 10, 11))
-    
+
     Assert(Date(2000, 1, 1) <= Date(2000, 1, 1))
     Assert(Date(2000, 1, 1) >= Date(2000, 1, 1))
-    
+
     Assert(not Date(2000, 1, 2) <= Date(2000, 1, 1))
     Assert(not Date(2000, 1, 1) >= Date(2000, 1, 2))
     Assert(not Date(2000, 1, 2) < Date(2000, 1, 1))
   end
-  
+
   def testDateSubtraction()
     Assert(Date(2004, 11, 11) - Date(2004, 11, 10) == 1)
     Assert(Date(2004, 11, 10) - Date(2004, 11, 11) == -1)
@@ -164,13 +164,13 @@ class TimeSuite is Suite
     Assert(Date(2006, 2, 2) - Date(2004, 3, 3) == 701)
     Assert(Date(2004, 3, 3) - Date(2006, 2, 2) == -701)
   end
-  
+
   def testDateAddition()
     AssertEqual(Date(2004, 11, 11) + 10, Date(2004, 11, 21))
     AssertEqual(Date(2001, 12, 8) + 365, Date(2002, 12, 8))
     AssertEqual(1 + Date(2001, 12, 31), Date(2002, 1, 1))
   end
-  
+
   def testDateFormat()
     Assert(Date(1970, 3, 8).format("YYYY-MM-DD") == "1970-03-08")
     Assert(Date(1970, 3, 8).format("D.M.YY") == "8.3.70")
@@ -185,7 +185,7 @@ class TimeSuite is Suite
     Assert(Date(2004, 11, 14).format("") == "")
     Assert(Date(2004, 11, 14).format("\W\\\D") == "W\D")
   end
-  
+
   def testDateHash()
     var h1 = Hash(Date(2000, 1, 1))
     var h2 = Hash(Date(2000, 1, 2))
@@ -194,7 +194,7 @@ class TimeSuite is Suite
     Assert(h1 != h2)
     Assert(h2 == h3)
   end
-  
+
   def testDaysInMonth()
     Assert(DaysInMonth(2004, 1) == 31)
     Assert(DaysInMonth(2004, 2) == 29)
@@ -208,14 +208,14 @@ class TimeSuite is Suite
     Assert(DaysInMonth(2004, 10) == 31)
     Assert(DaysInMonth(2004, 11) == 30)
     Assert(DaysInMonth(2004, 12) == 31)
-    
+
     Assert(DaysInMonth(2000, 2) == 29)
     Assert(DaysInMonth(2001, 2) == 28)
     Assert(DaysInMonth(2002, 2) == 28)
     Assert(DaysInMonth(2003, 2) == 28)
     Assert(DaysInMonth(2100, 2) == 28)
   end
-  
+
   def testCurrentTime()
     var t = Time()
     Assert(t.day == 0)
@@ -226,7 +226,7 @@ class TimeSuite is Suite
     Assert(t.second >= 0 and t.second < 60)
     Assert(t.second is Float)
   end
-  
+
   def testTimeFromComponents()
     -- Basic variants
     var t = Time(12.5)
@@ -239,7 +239,7 @@ class TimeSuite is Suite
     AssertTime(t, 122, 21, 33, 12)
     t = Time(59.999999999999)
     AssertTime(t, 0, 0, 1, 0)
-    
+
     -- Negative time
     t = Time(-12.5)
     AssertTime(t, 0, 0, 0, -12.5)
@@ -249,7 +249,7 @@ class TimeSuite is Suite
     AssertTime(t, 0, -21, -33, -12)
     t = Time(-122, -21, -33, -12)
     AssertTime(t, -122, -21, -33, -12)
-    
+
     -- Normalizing
     t = Time(130.5)
     AssertTime(t, 0, 0, 2, 10.5)
@@ -263,7 +263,7 @@ class TimeSuite is Suite
     AssertTime(t, 0, 0, -2, -10.5)
     t = Time(-7, -49, -63, -61)
     AssertTime(t, -9, -2, -4, -1)
-    
+
     -- Normalize mixed negative and positive time
     t = Time(0, 0, -6, 2)
     AssertTime(t, 0, 0, -5, -58)
@@ -274,94 +274,94 @@ class TimeSuite is Suite
     t = Time(1, -1, 0, 0)
     AssertTime(t, 0, 23, 0, 0)
   end
-  
+
   def testNormalizeFractions()
     AssertTime(Time(0, 0,  0,  0.25), 0, 0,  0,   0.25)
     AssertTime(Time(0, 0,  0, -0.25), 0, 0,  0,  -0.25)
-    
+
     AssertTime(Time(0, 0,  6,  0.25), 0, 0,  6,   0.25)
     AssertTime(Time(0, 0, -6,  0.25), 0, 0, -5, -59.75)
     AssertTime(Time(0, 0,  6, -0.25), 0, 0,  5,  59.75)
     AssertTime(Time(0, 0, -6, -0.25), 0, 0, -6,  -0.25)
-    
+
     AssertTime(Time(0, 0,  6,  1.25), 0, 0,  6,   1.25)
     AssertTime(Time(0, 0, -6,  1.25), 0, 0, -5, -58.75)
     AssertTime(Time(0, 0,  6, -1.25), 0, 0,  5,  58.75)
     AssertTime(Time(0, 0, -6, -1.25), 0, 0, -6,  -1.25)
   end
-  
+
   def testNormalizeFractionsAndRounding()
     AssertTime(Time(0, 0, 0,  0.9999999999), 0, 0,  0,   1.00)
     AssertTime(Time(0, 0, 0, -0.9999999999), 0, 0,  0,  -1.00)
-    
+
     AssertTime(Time(0, 0, 0,  59.9999999999), 0, 0,  1,   0.00)
     AssertTime(Time(0, 0, 0, -59.9999999999), 0, 0, -1,   0.00)
-    
+
     AssertTime(Time(0, 0, -1,  0.9999999999), 0, 0,  0, -59.00)
     AssertTime(Time(0, 0,  1, -0.9999999999), 0, 0,  0,  59.00)
     AssertTime(Time(0, 0, -1, -0.9999999999), 0, 0, -1,  -1.00)
     AssertTime(Time(0, 0,  1,  0.9999999999), 0, 0,  1,   1.00)
   end
-  
+
   def testTimeFromStr()
     var t = Time("3d 13:55:23.5")
     AssertTime(t, 3, 13, 55, 23.5)
-    
+
     t = Time("-3d 13:55:23.5")
     AssertTime(t, -3, -13, -55, -23.5)
-    
+
     t = Time("13:55:23.5")
     AssertTime(t, 0, 13, 55, 23.5)
-    
+
     t = Time("-13:55:23.5")
     AssertTime(t, 0, -13, -55, -23.5)
-    
+
     t = Time("-13:55:23")
     AssertTime(t, 0, -13, -55, -23)
-    
+
     t = Time("-13:55:23.75000")
     AssertTime(t, 0, -13, -55, -23.75000)
-    
+
     t = Time("3:45:22")
     AssertTime(t, 0, 3, 45, 22)
-    
+
     t = Time("40:23", "mm:ss")
     AssertTime(t, 0, 0, 40, 23)
-    
+
     t = Time("13:23", "hh:mm")
     AssertTime(t, 0, 13, 23, 0)
-    
+
     t = Time("3:45", "h:mm")
     AssertTime(t, 0, 3, 45, 0)
   end
-  
+
   def testTimeFromStr12HourClock()
     var t
-    
+
     t = Time("1:00 a.m.", "h:mm [a.m./p.m.]")
     AssertTime(t, 0, 1, 0, 0)
-    
+
     t = Time("3:45 AM", "h:mm [AM/PM]")
     AssertTime(t, 0, 3, 45, 0)
-    
+
     t = Time("12:45 AM", "h:mm [AM/PM]")
     AssertTime(t, 0, 0, 45, 0)
-    
+
     t = Time("03:45 AM", "hh:mm [AM/PM]")
     AssertTime(t, 0, 3, 45, 0)
-    
+
     t = Time("1:00 PM", "h:mm [AM/PM]")
     AssertTime(t, 0, 13, 0, 0)
-    
+
     t = Time("3:45 PM", "h:mm [AM/PM]")
     AssertTime(t, 0, 15, 45, 0)
-    
+
     t = Time("12:45 PM", "h:mm [AM/PM]")
     AssertTime(t, 0, 12, 45, 0)
-    
+
     -- FIX invalid hour
   end
-  
+
   def testTimeToStr()
     AssertEqual(Str(Time("13:55:23.5")), "13:55:23.50")
     Assert(Str(Time("-13:55:23.5")) == "-13:55:23.50")
@@ -372,7 +372,7 @@ class TimeSuite is Suite
     Assert(Str(Time("00:00:59.9999999999")) == "00:01:00.00")
     Assert(Str(Time("-00:00:59.9999999999")) == "-00:01:00.00")
   end
-  
+
   def testTimeFormat()
     Assert(Time(0, 5, 6, 7.5).format("hh:mm:ss") == "05:06:07")
     Assert(Time(2, 5, 6, 7.5).format("d\d hh:mm:ss") == "2d 05:06:07")
@@ -385,11 +385,11 @@ class TimeSuite is Suite
     Assert(Time(-5.7768).format("-s.sss") == "-5.776")
     Assert(Time(5.5).format("") == "")
     Assert(Time(1, 0, 0, 5.5).format("") == "")
-    
+
     AssertEqual(Time(0, 12, 30, 10).format("hh:mm [a.m./p.m.]"), "12:30 p.m.")
     AssertEqual(Time(0, 03, 30, 10).format("h:mm [AM/PM]"), "3:30 AM")
   end
-  
+
   def testTimeToSeconds()
     AssertEqual(Time(5.5).toSeconds(), 5.5)
     AssertEqual(Time(-5.5).toSeconds(), -5.5)
@@ -398,7 +398,7 @@ class TimeSuite is Suite
     AssertEqual(Time(-987654325.5).toSeconds(), -987654325.5)
     AssertEqual(Time("01:00:00.0").toSeconds(), 3600)
   end
-  
+
   def testTimeToNanoSeconds()
     AssertType(Int, Time(234.5).toNanoSeconds())
     AssertEqual(Time(234.5).toNanoSeconds(), 234500000000)
@@ -406,7 +406,7 @@ class TimeSuite is Suite
     AssertEqual(Time(0.000000001).toNanoSeconds(), 1)
     AssertEqual(Time(-0.000000001).toNanoSeconds(), -1)
   end
-  
+
   def testTimeAddition()
     Assert(Time(5.5) + Time(6.0) == Time(11.5))
     Assert(Time(-5.5) + Time(6.0) == Time(0.5))
@@ -417,7 +417,7 @@ class TimeSuite is Suite
     Assert(Time(0, 13, 0, 0) + Time(0, 13, 0, 0) == Time(1, 2, 0, 0))
     Assert(Time(-2, -2, -2, -2) + Time(1, 1, 1, 1) == Time(-1, -1, -1, -1))
   end
-  
+
   def testTimeSubtraction()
     Assert(Time(0, 0, 1, 10) - Time(20) == Time(50))
     Assert(Time(9, 8, 7, 6) - Time(2, 3, 4, 5) == Time(7, 5, 3, 1))
@@ -427,13 +427,13 @@ class TimeSuite is Suite
     Assert(Time(-5.5) - Time(-1.5) == Time(-4))
     Assert(Time(1, 0, 0, 0) - Time(0, 25, 0, 0) == Time(0, -1, 0, 0))
   end
-  
+
   def testTimeNegation()
     Assert(-Time(5.5) == Time(-5.5))
     Assert(-Time(-5.5) == Time(5.5))
     Assert(-Time(1, 2, 3, 4) == Time(-1, -2, -3, -4))
   end
-  
+
   def testTimeMultiplication()
     Assert(Time(0) * 0 == Time(0))
     Assert(Time(1) * 0 == Time(0))
@@ -446,7 +446,7 @@ class TimeSuite is Suite
     Assert(Time(1, 0, 0, 0) * 26 == Time(26, 0, 0, 0))
     Assert(Time(1, 0, 0, 0) * 0.5 == Time(0, 12, 0, 0))
   end
-  
+
   def testTimeDivision()
     Assert(Time(1, 0, 0, 0) / 2 == Time(0, 12, 0, 0))
     Assert(Time(1, 0, 0, 0) / (24 * 2) == Time(0, 0, 30, 0))
@@ -455,7 +455,7 @@ class TimeSuite is Suite
     Assert(Time(-3) / 2 == Time(-1.5))
     Assert(Time(7) / -2 == Time(-3.5))
   end
-  
+
   def testTimeEquality()
     Assert(Time(5.5) == Time(5.5))
     Assert(Time(5.5) != Time(5.51))
@@ -469,7 +469,7 @@ class TimeSuite is Suite
     Assert(Time(-1) != Time(1))
     Assert(Time(0) != nil)
   end
-  
+
   def testTimeOrder()
     Assert(Time(5.5) < Time(6.0))
     Assert(Time(6) >= Time(5.5))
@@ -488,7 +488,7 @@ class TimeSuite is Suite
     Assert(Time(1, 1, 2, 2) <= Time(1, 2, 1, 1))
     Assert(Time(1, 1, 1, 2) <= Time(1, 1, 2, 1))
   end
-  
+
   def testTimeHash()
     var h1 = Hash(Time(0, 0, 1, 1))
     var h2 = Hash(Time(0, 0, 1, 2))
@@ -497,7 +497,7 @@ class TimeSuite is Suite
     Assert(h1 != h2)
     Assert(h2 == h3)
   end
-  
+
   def testCurrentDateTime()
     var d = DateTime()
     Assert(d.year >= 2004)
@@ -511,7 +511,7 @@ class TimeSuite is Suite
     Assert(d.second >= 0 and d.second < 60)
     Assert(d.second is Float)
   end
-  
+
   def testDateTimeFromComponents()
     -- Simple case
     var d = DateTime(2004, 11, 17, 23, 14, 23.5)
@@ -523,7 +523,7 @@ class TimeSuite is Suite
     Assert(d.second == 23.5)
     Assert(d.weekday == 3)
     Assert(d.week() == 47)
-    
+
     -- Normalization
     d = DateTime(2003, 13, 40, 12, 80, 80)
     Assert(d.year == 2004)
@@ -532,7 +532,7 @@ class TimeSuite is Suite
     Assert(d.hour == 13)
     Assert(d.minute == 21)
     Assert(d.second == 20)
-    
+
     -- Normalization when time >= 24h
     d = DateTime(2003, 1, 1, 74, 2, 2)
     Assert(d.year == 2003)
@@ -541,7 +541,7 @@ class TimeSuite is Suite
     Assert(d.hour == 2)
     Assert(d.minute == 2)
     Assert(d.second == 2)
-    
+
     -- Normalization with negative time
     d = DateTime(2003, 1, 10, -74, 2, 2)
     Assert(d.year == 2003)
@@ -551,7 +551,7 @@ class TimeSuite is Suite
     Assert(d.minute == 2)
     Assert(d.second == 2)
   end
-  
+
   def testDateTimeFromStr()
     var d = DateTime("2005-11-05 13:55:44")
     Assert(d.year == 2005)
@@ -560,7 +560,7 @@ class TimeSuite is Suite
     Assert(d.hour == 13)
     Assert(d.minute == 55)
     Assert(d.second == 44)
-    
+
     d = DateTime("2005-11-05 13:55:44.5")
     Assert(d.year == 2005)
     Assert(d.month == 11)
@@ -568,7 +568,7 @@ class TimeSuite is Suite
     Assert(d.hour == 13)
     Assert(d.minute == 55)
     Assert(d.second == 44.5)
-    
+
     d = DateTime("Nov 20 15:52:42.5 2004", "MMM D hh:mm:ss.s YYYY")
     Assert(d.year == 2004)
     Assert(d.month == 11)
@@ -577,17 +577,17 @@ class TimeSuite is Suite
     Assert(d.minute == 52)
     Assert(d.second == 42.5)
   end
-  
+
   def testDateTimeToStr()
     Assert(Str(DateTime("2005-11-05 13:55:44")) == "2005-11-05 13:55:44")
   end
-  
+
   def testDateTimeFormat()
     var d = DateTime("Nov 20 15:52:42 2004", "MMM D hh:mm:ss YYYY")
     Assert(d.format("WWW MMM D hh:mm:ss EET YYYY") ==
            "Sat Nov 20 15:52:42 EET 2004")
     Assert(d.format("") == "")
-    
+
     AssertEqual(DateTime("2000-01-01 00:12:13").format("h:mm [am/pm]"),
            "12:12 am")
     Assert(DateTime("2000-01-01 01:12:33").format("h:mm [am/pm]") ==
@@ -601,14 +601,14 @@ class TimeSuite is Suite
     Assert(DateTime("2000-01-01 23:12:13").format("hh:mm [A.M./P.M.]") ==
            "11:12 P.M.")
   end
-  
+
   def testDateTimeAddition()
     Assert(DateTime("2004-01-01 12:30:00") + Time(1, 12, 10, 15) ==
            DateTime("2004-01-03 00:40:15"))
     Assert(Time(365, 12, 10, 15) + DateTime("2004-01-01 12:30:00") ==
            DateTime("2005-01-01 00:40:15"))
   end
-  
+
   def testDateTimeSubtraction()
     Assert(DateTime("2004-01-01 12:30:00") - Time(1, 12, 10, 15) ==
            DateTime("2003-12-31 00:19:45"))
@@ -617,7 +617,7 @@ class TimeSuite is Suite
     Assert(DateTime("2004-03-03 12:30:00") - DateTime("2004-03-03 12:40:00") ==
            Time(0, 0, -10, 0))
   end
-  
+
   def testDateTimeEquality()
     Assert(DateTime(1990, 12, 13, 1, 2, 3.5) ==
            DateTime(1990, 12, 13, 1, 2, 3.5))
@@ -635,25 +635,25 @@ class TimeSuite is Suite
            DateTime(1990, 12, 13, 1, 2, 3))
     Assert(DateTime(1990, 12, 13, 1, 2, 3) != nil)
   end
-  
+
   def testDateTimeOrder()
     Assert(DateTime("2003-05-06 04:12:12") < DateTime("2004-04-23 15:43:00"))
     Assert(DateTime("2003-05-06 04:12:12") <= DateTime("2004-04-23 15:43:00"))
     Assert(DateTime("2004-04-23 15:43:00") > DateTime("2003-05-06 04:12:12"))
     Assert(DateTime("2004-04-23 15:43:00") >= DateTime("2003-05-06 04:12:12"))
-    
+
     Assert(DateTime("2003-05-06 04:12:12") < DateTime("2003-05-06 04:12:13"))
     Assert(DateTime("2003-05-06 04:12:12") < DateTime("2003-05-06 05:11:11"))
-    
+
     Assert(DateTime("2003-05-06 04:12:12") <= DateTime("2003-05-06 04:12:12"))
     Assert(DateTime("2003-05-06 04:12:12") >= DateTime("2003-05-06 04:12:12"))
-    
+
     Assert(DateTime(2003, 5, 6, 4, 12, 12.03) <
            DateTime(2003, 5, 6, 4, 12, 12.04))
     Assert(DateTime(2003, 5, 6, 4, 12, 12.000005) > DateTime(
                                                2003, 5, 6, 4, 12, 12.000004))
   end
-  
+
   def testDateTimeHash()
     var h1 = Hash(DateTime("2000-01-01 00:00:00"))
     var h2 = Hash(DateTime("2000-01-01 00:00:01"))
@@ -662,13 +662,13 @@ class TimeSuite is Suite
     Assert(h1 != h2)
     Assert(h2 == h3)
   end
-  
+
   def testIgnoreNonRelevantCharsInFormat()
     Assert(Date(1999, 1, 1).format("-d h H m s [") == "-d h H m s [")
     Assert(Time(1).format("Y M D W") == "Y M D W")
     Assert(DateTime().format("-d") == "-d")
   end
-  
+
   def testIgnoreNonRelevantCharsInParse()
     Assert(Date("-d h H m s p P W 1999-10-10",
                 "-d h H m s p P W YYYY-MM-DD") == Date("1999-10-10"))
@@ -676,7 +676,7 @@ class TimeSuite is Suite
     Assert(DateTime("-d W H p P 2000-01-01 00:00:01",
            "-d W H p P YYYY-MM-DD hh:mm:ss") == DateTime(2000, 1, 1, 0, 0, 1))
   end
-  
+
   def testMissingFieldsFromStr()
     -- Missing second is acceptable (it defaults to 0).
     var dt = DateTime("2000-01-01 12:30", "YYYY-MM-DD hh:mm")
@@ -686,7 +686,7 @@ class TimeSuite is Suite
     Assert(dt.hour == 12)
     Assert(dt.minute == 30)
     Assert(dt.second == 0)
-    
+
     -- Any values can be missing when constructing a Time object from Str.
     var t = Time("12:30", "hh:mm")
     Assert(t.day == 0)
@@ -695,7 +695,7 @@ class TimeSuite is Suite
     Assert(t.second == 0)
     t = Time("", "")
     AssertEqual(t, Time(0))
-    
+
     -- Missing year, month, day, hour or minute in Date or DateTime
     -- construction is an error.
     AssertRaises(ValueError, DateTime, ("01-01 12:30", "MM-DD hh:mm"))
@@ -707,7 +707,7 @@ class TimeSuite is Suite
     AssertRaises(ValueError, Date, ("2001-01", "YYYY-DD"))
     AssertRaises(ValueError, Date, ("2001-01", "YYYY-MM"))
   end
-  
+
   def testMonthOutsideRangeFromStr()
     -- Month outside range
     AssertRaises(ValueError, DateTime, ["2000-00-01 12:00:00.0"])
@@ -718,7 +718,7 @@ class TimeSuite is Suite
     Date("2000-01-01")
     Date("2000-12-01")
   end
-    
+
   def testDayOutsideRangeFromStr()
     -- Day outside range
     AssertRaises(ValueError, DateTime, ["2000-01-00 12:00:00.0"])
@@ -733,7 +733,7 @@ class TimeSuite is Suite
     Date("2000-02-29")
     Date("2000-04-30")
   end
-    
+
   def testHourOutsideRangeFromStr()
     -- Hour outside range
     AssertRaises(ValueError, DateTime, ["2000-01-01 24:00:00"])
@@ -751,7 +751,7 @@ class TimeSuite is Suite
     Time("23:59:01.0")
     Time("-23:59:01.0")
   end
-  
+
   def testInvalidAmPm()
     AssertRaises(ValueError, Time, ["1:00 am", "h:mm [am/am]"])
     AssertRaises(ValueError, Time, ["1:00 pm", "h:mm [/pm]"])
@@ -761,7 +761,7 @@ class TimeSuite is Suite
     AssertRaises(ValueError, Time, ["1:00 am", "h:mm [am/"])
     AssertRaises(ValueError, Time, ["1:00 am", "h:mm [am/pm"])
   end
-    
+
   def testMinuteOutsideRangeFromStr()
     -- Minute outside range
     AssertRaises(ValueError, DateTime, ["2000-01-01 01:60:01"])
@@ -772,7 +772,7 @@ class TimeSuite is Suite
     Time("01:59:01.0")
     Time("-01:59:01.0")
   end
-    
+
   def testSecondOutsideRangeFromStr()
     -- Second outside range
     AssertRaises(ValueError, DateTime, ["2000-01-01 01:01:60"])
@@ -783,7 +783,7 @@ class TimeSuite is Suite
     Time("01:01:59.9999999")
     Time("-01:01:59.9999999")
   end
-  
+
   def testInvalidFraction()
     AssertRaises(ValueError, Time, ["01:01:60.00", "hh:mm:ss.ss"])
   end

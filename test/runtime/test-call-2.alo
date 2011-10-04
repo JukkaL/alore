@@ -16,48 +16,48 @@ class CallSuite2 is Suite
     Assert(Fib(8) == 21)
     Assert(Fib(13) == 233)
     Assert(Fib(20) == 6765)
-  
+
     Assert(TheCount(0) == 0)
     Assert(TheCount(1) == 1)
     Assert(TheCount(100) == 100)
     Assert(TheCount(12345) == 12345)
-  
+
     Ok()
   end
-  
+
   -- Test mutual recursion
   def testT2()
     Assert(Count1(12356) == 12356)
     Ok()
   end
-  
+
   -- Test method recursion
   def testT3()
     var r = Rec()
     Assert(r.CountMethod1(6345) == 6345)
     Assert(r.CountMethod2(5432) == 5432)
-  
+
     Ok()
   end
-  
+
   -- Default arguments that depend on other arguments
   def testT4()
     VerifyArrays(Def1(7), (7, 7))
     VerifyArrays(Def1(7, 3), (7, 3))
-  
+
     VerifyArrays(Def2(), (1, 1))
     VerifyArrays(Def2(7), (7, 7))
     VerifyArrays(Def2(7, 3), (7, 3))
-  
+
     VerifyArrays(Def3(4), (4, 1, 2, 7, 8))
     VerifyArrays(Def3(4, 5), (4, 5, 2, 11, 12))
     VerifyArrays(Def3(4, 5, 6), (4, 5, 6, 15, 16))
     VerifyArrays(Def3(4, 5, 6, 7), (4, 5, 6, 7, 8))
     VerifyArrays(Def3(4, 5, 6, 7, 9), (4, 5, 6, 7, 9))
-  
+
     Ok()
   end
-  
+
 end
 
 

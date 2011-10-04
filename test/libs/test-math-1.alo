@@ -18,61 +18,61 @@ class MathSuite is Suite
     AssertFloatEqual(Sin(Pi / 2), 1)
     AssertFloatEqual(Sin(100 * Pi), 0)
     AssertFloatEqual(Sin(-Pi), 0)
-    
+
     AssertFloatEqual(Sin(1.0), 0.841470984)
     AssertFloatEqual(Sin(-90), -0.89399666)
   end
-  
+
   def testCos()
     AssertFloatEqual(Cos(0), 1)
     AssertFloatEqual(Cos(Pi), -1)
     AssertFloatEqual(Cos(Pi / 2), 0)
     AssertFloatEqual(Cos(100 * Pi), 1)
     AssertFloatEqual(Cos(-Pi), -1)
-    
+
     AssertFloatEqual(Cos(1.0), 0.540302305)
     AssertFloatEqual(Cos(-90), -0.44807361)
   end
-  
+
   def testTan()
     AssertFloatEqual(Tan(0), 0)
     AssertFloatEqual(Tan(Pi), 0)
     AssertFloatEqual(Tan(0.49 * Pi), 31.8205159)
     AssertFloatEqual(Tan(-105), -4.02780176)
   end
-  
+
   def testArcSin()
     AssertFloatEqual(ArcSin(0), 0)
     AssertFloatEqual(ArcSin(1), Pi / 2)
     AssertFloatEqual(ArcSin(-1), -Pi / 2)
     AssertFloatEqual(ArcSin(0.23), 0.23207768)
   end
-  
+
   def testArcSinError()
     AssertRaises(ValueError, ArcSin, [1.0001])
     AssertRaises(ValueError, ArcSin, [-1.0001])
     AssertRaises(ValueError, ArcSin, [10001])
   end
-  
+
   def testArcCos()
     AssertFloatEqual(ArcCos(0), Pi / 2)
     AssertFloatEqual(ArcCos(1), 0)
     AssertFloatEqual(ArcCos(-1), Pi)
     AssertFloatEqual(ArcCos(0.23), 1.33871864)
   end
-  
+
   def testArcCosError()
     AssertRaises(ValueError, ArcCos, [1.0001])
     AssertRaises(ValueError, ArcCos, [-1.0001])
     AssertRaises(ValueError, ArcCos, [10001])
   end
-  
+
   def testArcTan()
     AssertFloatEqual(ArcTan(0), 0)
     AssertFloatEqual(ArcTan(2.34),   1.1669365)
     AssertFloatEqual(ArcTan(-2.34), -1.1669365)
   end
-  
+
   def testArcTan2()
     AssertFloatEqual(ArcTan(0, 1), 0)
     AssertFloatEqual(ArcTan(1, 0), Pi / 2)
@@ -80,24 +80,24 @@ class MathSuite is Suite
     AssertFloatEqual(ArcTan(-1, -1), - 3 * Pi / 4)
     AssertFloatEqual(ArcTan(1.23, -2.34), 2.65764326)
   end
-  
+
   def testArcTanError()
     AssertRaises(ValueError, ArcTan, (0, 0))
   end
-  
+
   def testCeil()
     Assert(Ceil(0) == 0)
     Assert(Ceil(0) is Float)
     Assert(Ceil(1) == 1)
     Assert(Ceil(-1) == -1)
     Assert(Ceil(12345678901234) == 12345678901234)
-    
+
     AssertFloatEqual(Ceil(0.1), 1)
     AssertFloatEqual(Ceil(101.912), 102)
     AssertFloatEqual(Ceil(-9.32), -9)
     AssertFloatEqual(Ceil(-0.92), 0)
   end
-  
+
   def testFloor()
     Assert(Floor(0) == 0)
     Assert(Floor(0) is Float)
@@ -105,7 +105,7 @@ class MathSuite is Suite
     AssertFloatEqual(Floor(1.956), 1)
     AssertFloatEqual(Floor(-1.156), -2)
   end
-  
+
   def testRound()
     Assert(Round(0) == 0)
     Assert(Floor(0) is Float)
@@ -115,7 +115,7 @@ class MathSuite is Suite
     AssertFloatEqual(Round(-1.5), -2)
     AssertFloatEqual(Round(-1.4), -1)
   end
-  
+
   def testTrunc()
     Assert(Trunc(0) == 0)
     Assert(Trunc(0) is Float)
@@ -126,37 +126,37 @@ class MathSuite is Suite
     AssertFloatEqual(Trunc(-1.4), -1)
     AssertFloatEqual(Trunc(-1.0), -1)
   end
-  
+
   def testExp()
     AssertFloatEqual(Exp(0), 1)
     AssertFloatEqual(Exp(1), E)
     AssertFloatEqual(Exp(-5.23), 0.0053535)
     AssertFloatEqual(Exp(3.15), 23.3360645)
   end
-  
+
   def testLog()
     AssertFloatEqual(Log(E), 1)
     AssertFloatEqual(Log(1), 0)
     AssertFloatEqual(Log(1012.3), 6.91998024)
     AssertFloatEqual(Log(0.079), -2.53830742)
   end
-  
+
   def testLogError()
     AssertRaises(ValueError, Log, [0])
     AssertRaises(ValueError, Log, [-1.2])
   end
-  
+
   def testSqrt()
     AssertFloatEqual(Sqrt(0), 0)
     AssertFloatEqual(Sqrt(1), 1)
     AssertFloatEqual(Sqrt(1234.56), 35.13630600)
   end
-  
+
   def testSqrtError()
     AssertRaises(ValueError, Sqrt, [-1])
     AssertRaises(ValueError, Sqrt, [-0.001])
   end
-  
+
   def testIsInf()
     Assert(IsInf(Inf()))
     Assert(IsInf(-Inf()))
@@ -165,7 +165,7 @@ class MathSuite is Suite
     Assert(not IsInf(-1e30))
     Assert(not IsInf(NaN()))
   end
-  
+
   def testIsNaN()
     Assert(IsNaN(NaN()))
     Assert(not IsNaN(0.0))

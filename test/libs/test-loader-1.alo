@@ -21,7 +21,7 @@ class LoaderSuite is Suite
     AssertEqual(SymbolInfoCount(), numSyms)
     AssertEqual(GlobalValueCount(), numGlobals)
   end
-  
+
   -- Load a file that imports a module with errors in it. Check that cleanup
   -- is performed properly. The notes in the testResourceCleanup test case
   -- apply for this case as well.
@@ -33,7 +33,7 @@ class LoaderSuite is Suite
     AssertEqual(SymbolInfoCount(), numSyms + 1)
     AssertEqual(GlobalValueCount(), numGlobals)
   end
-  
+
   -- Load a file that contains errors and that loads a dynamic C module. Check
   -- that cleanup is performed properly. The notes in the testResourceCleanup
   -- test case  apply for this case as well.
@@ -45,56 +45,56 @@ class LoaderSuite is Suite
     AssertEqual(SymbolInfoCount(), numSyms + 1)
     AssertEqual(GlobalValueCount(), numGlobals)
   end
-  
+
   -- Load a simple file. Check that initialization works and it is possible to
   -- read and write global variables and call functions in the module.
   def testLoadBasics()
     var m = Load("data/loader-1-basic.alo")
-    
+
     -- Reading variables.
     Assert(m["Foo"] == 3)
     Assert(m["Global1"] == 6)
     Assert(m["Global2"] == 12)
-    
+
     -- Setting variables.
     m["Global1"] = 4
     Assert(m["Global1"] == 4)
-    
+
     -- Calling functions.
     Assert(m["TimesThree"](5) == 15)
   end
-  
+
   def testLoadErrors()
     var m = Load("data/loader-1-basic.alo")
-    
+
     -- Try to set a constant.
     AssertRaises(KeyError, def (); m["Foo"] = 4; end)
-    
+
     -- Try to set a function.
     AssertRaises(KeyError, def (); m["TimesThree"] = 4; end)
-    
+
     -- Try to read a private variable.
     AssertRaises(KeyError, def (); var x = m["Private1"]; end)
-    
+
     -- Try to set a private variable.
     AssertRaises(KeyError, def (); m["Private1"] = 3; end)
-    
+
     -- Try to read a non-existent variable.
     AssertRaises(KeyError, def (); var x = m["missing"]; end)
-    
+
     -- Try to read an empty variable.
     AssertRaises(KeyError, def (); var x = m[""]; end)
-    
+
     -- Try to read an invalid variable.
     AssertRaises(KeyError, def (); var x = m["+-"]; end)
-    
+
     -- Try to read with non-string argument.
     AssertRaises(TypeError, def (); var x = m[123]; end)
-     
+
     -- Try to read with an invalid variable name.
     AssertRaises(KeyError, def (); var x = m["Foo Bar"]; end)
   end
-  
+
   -- Load a module that imports several other modules.
   def testLoadWithImportedModules()
     try
@@ -108,22 +108,22 @@ class LoaderSuite is Suite
       raise e
     end
   end
-  
+
   -- Test using the module search path.
   def testUsingModuleSearchPath()
     Assert(ModuleSearchPath is Str)
     Assert(ModuleSearchPath != "")
-    
+
     -- Try passing module search path as an argument.
     var m1 = Load("data/loader-1-import-2.alo", "data/subdir")
     Assert(m1["Foo"] == 88)
-    
+
     -- Verify that the directory of the main file is consulted first when
     -- importing modules.
     var m2 = Load("data/loader-1-import-3.alo", "data/subdir")
     Assert(m2["Foo"] == 77)
   end
-  
+
   -- Test reporting compile errors from Load().
   def testLoadWithCompileErrors()
     -- Simple compile errors.
@@ -139,7 +139,7 @@ class LoaderSuite is Suite
          "data/loader-1-errors-1.alo, line 6: Parse error before end of line"))
     end
     Assert(nerr == 1)
-    
+
     -- Trying to import an invalid module.
     try
       var m = Load("data/loader-1-errors-2.alo")
@@ -150,7 +150,7 @@ class LoaderSuite is Suite
          "data/invalid/invalid.alo, line 4: ""xx"" undefined"))
     end
     Assert(nerr == 2)
-    
+
     -- Missing file.
     try
       var m = Load("data/nonexistent.alo")
@@ -161,7 +161,7 @@ class LoaderSuite is Suite
     end
     Assert(nerr == 3)
   end
-  
+
   -- Test garbage collection of dynamically loaded modules.
   def testLoadingAndGc()
     -- Load a module, collect garbage, and test that the module still works.
@@ -169,7 +169,7 @@ class LoaderSuite is Suite
     Assert(m1["Foo"] == 3)
     CollectAllGarbage()
     Assert(m1["Foo"] == 3)
-    
+
     -- Load a module, modify some state, collect garbage (module should be
     -- freed), load the same module and verify that the module instance is
     -- different from the previous one.
@@ -179,7 +179,7 @@ class LoaderSuite is Suite
     CollectAllGarbage()
     m2 = Load("data/loader-1-gc.alo")
     Assert(m2["Foo"] == 55)
-    
+
     -- Load a module, modify state (store recursive data structure).
     var m3 = Load("data/loader-1-gc-2.alo")
     m3["Set"]((1, 2, (3, 4)))
@@ -190,7 +190,7 @@ class LoaderSuite is Suite
     -- Verify that the modules are the same.
     Assert(m4["Get"]() == (1, 2, (3, 4)))
   end
-  
+
   -- Test returning the contents of a file (all the public names defined in
   -- the file).
   def testContents()
@@ -204,11 +204,11 @@ class LoaderSuite is Suite
            "MyClass" in a and
            "Global1" in a and
            "Global2" in a) -- Note: Main is always private
-    
+
     var a2 = m2.contents()
     Assert(a2.length() == 2 and "FooVar" in a2 and "ZarVar" in a2)
   end
-  
+
   -- Test creating an anonymous function object in a dynamically loaded file.
   def testAnonFunc()
     var m = Load("data/loader-1-anonfunc.alo")

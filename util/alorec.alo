@@ -37,10 +37,10 @@ import reflect
 
 def Main(args)
   var programPath = ParseArgs(args)
-  
+
   COpts = GetCOpts(Debug)
   LinkOpts += GetLinkOpts(Debug)
-  
+
   if DirName(programPath) == ""
     ModuleSearchPaths = ["."] + ModuleSearchPaths
   else
@@ -67,7 +67,7 @@ def Main(args)
   else
     Msg("Warning: Could not find libalorec.a")
   end
-  
+
   try
     Msg("Check syntax")
     CheckSyntax(programPath, ModuleSearchPathSeparator.join(
@@ -79,7 +79,7 @@ def Main(args)
     end
     Exit(1)
   end
-  
+
   try
     Compile(programPath)
   finally
@@ -118,12 +118,12 @@ def ParseArgs(args)
         Exit(1)
     end
   end
-  
+
   if args.length() != 1
     Usage()
     Exit(1)
   end
-  
+
   return args[0]
 end
 

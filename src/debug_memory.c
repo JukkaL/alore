@@ -132,9 +132,9 @@ void ADebugVerifyMemory_F(void)
         return;
 
     ADebugPeriodicCheck();
-    
+
     AFreezeOtherThreadsSilently();
-    
+
     ADebugStatusMsg(("Verifying memory\n"));
 
     for (i = 0; i < A_NUM_FREELISTS; i++)
@@ -155,7 +155,7 @@ void ADebugVerifyMemory_F(void)
 
         if (ADebug_MemoryDump)
             ADebugPrint(("  Heap block at %s\n", FMT("%p", b)));
-        
+
         /* Iterate over all the blocks in the heap chunk and check the blocks
            individually. */
         while (data < end) {
@@ -167,7 +167,7 @@ void ADebugVerifyMemory_F(void)
                 int size = GetFreeListBlockSize(data);
                 numFreeBlocks[AGetFreeListNum(size)]++;
             }
-            
+
             data = VerifyBlock(data, end, 1);
         }
 
@@ -177,7 +177,7 @@ void ADebugVerifyMemory_F(void)
 
         if (ADebug_MemoryDump)
             ADebugPrint(("  End of heap block\n"));
-        
+
         b = b->next;
     }
 
@@ -195,7 +195,7 @@ void ADebugVerifyMemory_F(void)
                          FMT("%lx", AThreadArgBuffer[i]));
         VerifyValue(AThreadArgBuffer[i]);
     }
-    
+
     /* IDEA: verify symbol table */
     /* IDEA: verify modules and other global stuff, including dynamic
        modules */
@@ -205,7 +205,7 @@ void ADebugVerifyMemory_F(void)
     VerifyNoReferencesToBlockData();
 
     FreeBlockMap();
-    
+
     if (ADebug_MemoryDump)
         ADebugStatusMsg(("End verifying memory\n"));
 
@@ -228,7 +228,7 @@ void InitBlockMap(void)
     for (b = AHeap; b != NULL; b = b->next) {
         void *start = AGetHeapBlockData(b);
         void *end = AGetHeapBlockDataEnd(b);
-        
+
         if (start < BlockMapStartOffset)
             BlockMapStartOffset = start;
         if (end > BlockMapEndOffset)
@@ -271,7 +271,7 @@ ABool IsValidValue(AValue v)
         v = AGetIndirectValue(v, ptr);
         ptr = AValueToPtr(v);
     }
-    
+
     if (!IsValidPointer(ptr)) {
         ADebugPrint_F("Invalid pointer %p!\n", ptr);
         return FALSE;
@@ -310,7 +310,7 @@ ABool IsValidPointer(void *p)
 
     if (AIsInNursery(p))
         return TRUE;
-    
+
     return FALSE;
 }
 
@@ -319,30 +319,30 @@ ABool IsValidPointer(void *p)
 void VerifyFreeLists(int *numExpected)
 {
     int i;
-    
+
     for (i = 1; i < A_NUM_FREELISTS; i++) {
         AFreeListNode *node = AFreeList[i];
         AFreeListNode *prev = AGetFreeList(i);
         int n = 0;
         int prevSize = 0;
-        
+
         while (node != &AListTerminator && node != &AHeapTerminator) {
             unsigned long size;
 
             n++;
-            
+
             if (!AIsFreeListBlock(&node->header))
                 ADebugError_F("No A_FREE_BLOCK_FLAG in free list\n");
-            
+
             size = node->header - A_FREE_BLOCK_FLAG + sizeof(AValue);
             if (size < prevSize)
                 ADebugError_F("Free list not sorted according to block "
                               "size\n");
             prevSize = size;
-            
+
             if (AGetFreeListNum(size) != i)
                 ADebugError_F("Wrong size in free list");
-            
+
             if (i > A_FIRST_BACKLINKED_FREELIST && node->prev != prev)
                 ADebugError_F("Wrong back pointer in free list %d\n", i);
 
@@ -350,13 +350,13 @@ void VerifyFreeLists(int *numExpected)
                 || APtrAdd(node, size) > A_MEM_END)
                 ADebugError_F("Free list block is out of bounds at %p\n",
                               node);
-            
+
             if (i >= 8 /* FIX A_FIRST_NONUNIFORM_FREE_LIST */) {
                 AFreeListNode *child = node->child;
                 AFreeListNode *childPrev = node;
                 while (child != NULL) {
                     n++;
-                    
+
                     if (child->header != node->header)
                         ADebugError_F("Bad header in child list\n");
                     if (child->prev != childPrev)
@@ -407,7 +407,7 @@ void CheckValueBlock(AValue *ptr)
     int i;
 
     SetAndCheckBlockType(ptr, VALUE_BLOCK);
-    
+
     len = AGetValueBlockDataLength(ptr) / sizeof(AValue);
 
     for (i = 0; i < len; i++) {
@@ -438,7 +438,7 @@ void CheckInstanceBlock(AValue *ptr)
     if (!IsValidPointer(type) || !AIsMixedBlock(&type->header1))
         ADebugError_F("Invalid typeinfo in instance block %s!\n",
                       FMT("%p", inst));
-    
+
     /* FIX: check typeinfo structure? */
 
     for (i = 0; i < type->totalNumVars; i++) {
@@ -483,7 +483,7 @@ void CheckValueTargetType(AValue v)
 {
     int type;
     void *ptr;
-    
+
     if (AIsShortInt(v))
         return;
 
@@ -579,7 +579,7 @@ void VerifyValue(AValue v)
             v = AGetIndirectValue(v, p);
             p = AValueToPtr(v);
         }
-        
+
         VerifyBlock(p, NULL, 0);
         if (!IsValidPointer(APtrAdd(p, GetAnyBlockSize(p) - 1)) ||
                 GetAnyBlockSize(p) > 100000000) /* FIX: bad check */
@@ -674,7 +674,7 @@ void VerifyThreads(void)
         if (t->tempStackPtr < t->tempStack || t->tempStackPtr >
             t->tempStackEnd)
             ADebugError_F("Invalid thread temp stack ptr!\n");
-        
+
         VerifyThreadStack(t);
         VerifyThreadData(t);
     }
@@ -686,21 +686,21 @@ void VerifyThreadData(AThread *t)
     int i;
     AGCListBlock *b;
     AGCListBlock *last;
-    
+
     /* Verify tempStack. */
     for (i = 0; t->tempStack + i < t->tempStackPtr; i++) {
         if (!IsValidValue(t->tempStack[i]))
             ADebugError_F("Invalid value in tempStack!\n");
         VerifyValue(t->tempStack[i]);
     }
-    
+
     /* Verify regExp. */
     for (i = 0; i < A_NUM_CACHED_REGEXPS * 2; i++) {
         if (!IsValidValue(t->regExp[i]))
             ADebugError_F("Invalid regular expression in thread!\n");
         VerifyValue(t->regExp[i]);
     }
-    
+
     /* Verify untraced. */
     last = AGetGCListBlock(t->untracedEnd);
     for (b = t->untraced; b != last; b = b->next) {
@@ -715,7 +715,7 @@ void VerifyThreadData(AThread *t)
             ADebugError_F("Invalid value in untraced list!\n");
         VerifyValue(b->data.val[i]);
     }
-    
+
     /* Verify newRef (old generation -> new generation references). */
     if (!ANewRefPtrListInvalid) {
         last = AGetGCListBlock(t->newRefEnd);
@@ -732,7 +732,7 @@ void VerifyThreadData(AThread *t)
             VerifyValue(*b->data.valPtr[i]);
         }
     }
-    
+
     /* Verify heapPtr and heapEnd. */
     /* FIX */
 
@@ -746,7 +746,7 @@ void DumpThreadStack(AThread *t, int num)
     AValue *sp = t->stackPtr;
     AValue *top = t->stackTop;
     AValue *bottom = t->stack;
-    
+
     ADebugPrint_F(A_MSG_HEADER "Thread %d stack dump:\n", num);
 
     if ((void *)sp < (void *)bottom || sp >= top) {
@@ -755,7 +755,7 @@ void DumpThreadStack(AThread *t, int num)
         ADebugPrint_F("\t  top    = %s\n", FMT("%p", top));
         ADebugPrint_F("\t  sp     = %s\n", FMT("%p", sp));
     }
-    
+
     for (;;) {
         int frameSize = sp[0] / sizeof(AValue);
         int i;
@@ -766,7 +766,7 @@ void DumpThreadStack(AThread *t, int num)
         }
         if (frameSize < 0 || frameSize > 20000)
             ADebugPrint_F("\t  Invalid frame size (%d)!\n", frameSize);
-        
+
         ADebugPrint_F("\t");
         ADebugPrint_F("[%s] ", FMT("%p", sp));
         ADebugPrintValue(sp[1]);
@@ -774,7 +774,7 @@ void DumpThreadStack(AThread *t, int num)
 
         if (frameSize == 3)
             ADebugPrint_F("\t  (empty)\n");
-        
+
         for (i = 3; i < frameSize; i++) {
             ADebugPrint_F("\t  %d: ", i);
             ADebugPrintValueWithType(sp[i]);
@@ -787,12 +787,12 @@ void DumpThreadStack(AThread *t, int num)
             if (sp + 1 != top)
                 ADebugPrint_F("\t  (not at top, %d diff)\n",
                              APtrDiff(top, sp + 1));
-            
+
             /* We are at the bottom of the stack. */
             break;
         }
     }
-    
+
     ADebugPrint_F(A_MSG_HEADER "End of stack dump.\n");
 }
 
@@ -817,7 +817,7 @@ void VerifyThreadStack(AThread *t)
 
             ADebugError_F("Corrupted end-of-stack marker\n");
         }
-        
+
         if (!AIsShortInt(sp[0]))
             ADebugError_F("Invalid stack frame size at %s! (%d)\n",
                          FMT("%p", sp), (int)sp[0]);
@@ -827,19 +827,19 @@ void VerifyThreadStack(AThread *t)
         if (!AIsShortInt(sp[2]))
             ADebugError_F("Invalid frame return address at %s!\n",
                          FMT("%p", sp));
-        
+
         frameSize = sp[0] / sizeof(AValue);
 
         if (sp + frameSize >= top)
             ADebugError_F("Corrupted stack: frame extends past stack top\n");
-        
+
         for (i = 3; i < frameSize; i++) {
             if (!IsValidValue(sp[i]))
                 ADebugError_F("Invalid value in frame %d at %d!\n",
                               (int)(top - sp), i);
             VerifyValue(sp[i]);
         }
-        
+
         sp = ANextFrame(sp, sp[0]);
     }
 }
@@ -876,7 +876,7 @@ void VerifyGlobals(void)
 
     for (i = 0; i < n; i++) {
         AValue v = AGlobalVars[i];
-        
+
         if (!IsValidValue(v))
             ADebugError_F("Invalid global variable %s!\n",
                          FMT3("%d (0x%lx, type %s)", i, v, ValueType(v)));
@@ -890,7 +890,7 @@ void VerifyGlobals(void)
     ADebugPrint_F(A_MSG_HEADER "Global variables:\n");
     for (i = 0; i < n; i++) {
         AValue v = AGlobalVars[i];
-        
+
         ADebugPrint_F("\t%d: ", i);
         ADebugPrintValueWithType(v);
         ADebugPrint_F("\n");
@@ -907,7 +907,7 @@ void VerifyGlobals(void)
 void VerifyClass(ATypeInfo *t)
 {
     int i;
-    
+
     /* FIX verify block sizes */
     /* FIX verify symbol */
 
@@ -974,7 +974,7 @@ void VerifyClass(ATypeInfo *t)
         for (j = 0; j <= m->size; j++) {
             AMemberNode *n = m->item[j].next;
             int item;
-            
+
             if (n != NULL && (n < m->item || n > m->item + m->size))
                 ADebugError_F(
                     "Invalid next pointer in member hash table %d in "
@@ -985,7 +985,7 @@ void VerifyClass(ATypeInfo *t)
 
             if (m->item[j].key == AM_NONE)
                 continue;
-            
+
             item = m->item[j].item;
             if ((item & A_VAR_METHOD)
                 || i == MT_METHOD_PUBLIC || i == MT_METHOD_PRIVATE) {
@@ -1047,7 +1047,7 @@ void VerifyClass(ATypeInfo *t)
 void DumpClass(ATypeInfo *t)
 {
     ADebugPrint_F("\t  Dump of class %q:\n", t->sym);
-    
+
     ADebugPrint_F("\t    Super:        ");
     if (t->super != NULL)
         ADebugPrint_F("%q\n", t->super->sym);
@@ -1075,13 +1075,13 @@ void DumpMemberHashTable(ATypeInfo *t, AMemberTableType tt, char *msg)
 {
     int i;
     AMemberHashTable *h;
-    
+
     ADebugPrint_F("\t  Hash table for %s:\n", msg);
-    
+
     h = AGetMemberTable(t, tt);
     for (i = 0; i <= h->size; i++) {
         int k;
-        
+
         ADebugPrint_F("\t    %d: ", i);
 
         k = h->item[i].key;
@@ -1163,7 +1163,7 @@ void VerifyNursery(void)
     do {
         prevCount = count;
         count = 0;
-        
+
         p = ANurseryBegin;
         while (p < (void *)ANurseryEnd) {
             if (BlockType(p) != UNKNOWN_BLOCK) {
@@ -1174,7 +1174,7 @@ void VerifyNursery(void)
                     void *p2 = AGetIndirectPointer(p);
                     p = APtrAdd(p, GetAnyBlockSize(p2));
                 }
-                    
+
                 count++;
             } else
                 p = APtrAdd(p, A_ALLOC_UNIT);
@@ -1274,7 +1274,7 @@ void PrintDynaModuleInfo(void)
     while (modNum != 0) {
         ADynaModule *mod = AValueToPtr(AGlobalByNum(modNum + 1));
         int len = AGetNumImportedModules(mod);
-        
+
         printf("Module %d:\n", modNum);
         printf("  submods: ");
         for (i = 0; i < len; i++)

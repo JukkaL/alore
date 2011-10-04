@@ -71,7 +71,7 @@ AValue AGetIdHashValue(AThread *t, AValue *v)
     void *p = AValueToPtr(*v);
     HashMappingTable *table;
     AValue hash;
-    
+
     if (AIsInNursery(p))
         table = &NewGenTable;
     else
@@ -81,7 +81,7 @@ AValue AGetIdHashValue(AThread *t, AValue *v)
     hash = GetHashMapping(table, p);
     if (AIsError(hash)) {
         /* Could not find a mapping -- insert a new hash mapping. */
-        
+
         int i;
         HashValueNode *n;
 
@@ -104,17 +104,17 @@ AValue AGetIdHashValue(AThread *t, AValue *v)
                 return ARaiseMemoryErrorND(t);
             }
         }
-        
+
         /* If the target value moved to the old generation, try again. */
         if (p != AValueToPtr(*v)) {
             FreeNode(n);
             AUnlockHashMappings();
             return AGetIdHashValue(t, v);
         }
-        
+
         /* Calculate hash value for the internal hash table. */
         i = PtrHashValue(p) & (table->size - 1);
-        
+
         /* Initialize the new table entry. */
         n->next = table->table[i];
         table->num++;
@@ -156,7 +156,7 @@ static HashValueNode *AllocNode(void *ptr)
 
         if (n == NULL)
             return NULL;
-        
+
         for (i = HASH_NODE_BUCKET_SIZE - 1; i >= 0; i--) {
             n[i].next = HashFreeList;
             HashFreeList = n + i;
@@ -199,11 +199,11 @@ void AMoveNewGenHashMappingsToOldGen(void)
         while (n != NULL) {
             HashValueNode *nn = n;
             n = n->next;
-            
+
             if (!AIsNewGenBlock((AValue *)nn->ptr)) {
                 void *oldAddress;
                 int oi;
-                
+
                 oldAddress = AGetIndirectPointer(nn->ptr);
                 oi = PtrHashValue(oldAddress) & (ot->size - 1);
                 nn->ptr = oldAddress;
@@ -256,7 +256,7 @@ static ABool GrowHashTable(HashMappingTable *t)
     a = AAllocStatic(sizeof(HashValueNode *) * newSize);
     if (a == NULL)
         return FALSE;
-    
+
     for (i = 0; i < newSize; i++)
         a[i] = NULL;
 

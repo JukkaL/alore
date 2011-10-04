@@ -15,68 +15,68 @@ class TypesSuite is Suite
   def testDynamic()
     AssertEqual(Str(Dynamic()), "dynamic")
   end
-  
+
   def testSimpleUnboundType()
     var u = UnboundType("Foo")
     AssertEqual(Str(u), "Foo?")
   end
-  
+
   def testGenericUnboundType()
     var u = UnboundType("Foo", [UnboundType("T"), Dynamic()])
     AssertEqual(Str(u), "Foo?<T?, dynamic>")
   end
-  
+
   def testVoidType()
     AssertEqual(Str(Void(nil)), "void")
   end
-  
+
   def testCallableType()
     var c = Callable([x, y], 2, False, Dynamic(), False)
     AssertEqual(Str(c), "def (X?, Y?) as dynamic")
-    
+
     var c2 = Callable([], 0, False, Void(nil), False)
     AssertEqual(Str(c2), "def ()")
   end
-  
+
   def testCallableTypeWithDefaultArgs()
     var c = Callable([x, y], 1, False, Dynamic(), False)
     AssertEqual(Str(c), "def (X?, Y?=) as dynamic")
-    
+
     var c2 = Callable([x, y], 0, False, Dynamic(), False)
     AssertEqual(Str(c2), "def (X?=, Y?=) as dynamic")
   end
-  
+
   def testCallableTypeWithVarArgs()
     var c = Callable([x], 0, True, Dynamic(), False)
     AssertEqual(Str(c), "def (*X?) as dynamic")
-  
+
     var c2 = Callable([x, y], 1, True, Dynamic(), False)
     AssertEqual(Str(c2), "def (X?, *Y?) as dynamic")
-  
+
     var c3 = Callable([x, y], 0, True, Dynamic(), False)
     AssertEqual(Str(c3), "def (X?=, *Y?) as dynamic")
   end
-  
+
   def testTupleType()
     AssertEqual(Str(TupleType([])), "()")
     AssertEqual(Str(TupleType([x])), "(X?,)")
     AssertEqual(Str(TupleType([x, Dynamic()])), "(X?, dynamic)")
   end
-  
+
   def testIntersection()
     AssertEqual(Str(Intersection(x, y)), "X? /\ Y?")
   end
-  
+
   def testTypeVariableBinding()
     AssertEqual(Str(TypeVarDef("X", 1)), "X")
     AssertEqual(Str(TypeVarDef("X", 1, UnboundType("Y"))), "X is Y?")
   end
-  
+
   def testGenericFunctionType()
     var c = Callable([x, y], 2, False, y, False, nil,
                      TypeVars([TypeVarDef("X", -1)]))
     AssertEqual(Str(c), "def <X> (X?, Y?) as Y?")
-    
+
     var v = TypeVars([TypeVarDef("Y", -1, UnboundType("X")),
                       TypeVarDef("X", -2)])
     var c2 = Callable([], 0, False, Void(nil), False, nil, v)

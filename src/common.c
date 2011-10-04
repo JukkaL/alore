@@ -23,7 +23,7 @@ char *ADupStr(const char *src)
 
     len = strlen(src) + 1;
     new = AAllocStatic(len);
-    
+
     if (new != NULL)
         ACopyMem(new, src, len);
 
@@ -36,7 +36,7 @@ ABool AJoinPath(char *dst, const char *path, const char *add)
     int len = strlen(path);
     if (len + strlen(add) + 1 >= A_MAX_PATH_LEN)
         return FALSE;
-    
+
     if (dst != path)
         strcpy(dst, path);
     if (len > 0 && !A_IS_DIR_SEPARATOR(dst[len - 1]))

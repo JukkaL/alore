@@ -177,7 +177,7 @@ private def ParseDateTime(t as Type, s as Str, f as Str) as
   if si < s.length()
     raise ValueError("Invalid date ({})".format(s))
   end
-  
+
   -- Verify the validity of data and fill in missing values. Return the result.
   if t == Date
     if year == nil

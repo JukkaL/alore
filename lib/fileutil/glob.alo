@@ -10,14 +10,14 @@ private const CaseInsensitive = Platform in ["windows", "mac"]
 -- Expand a pattern into an array of matching paths.
 def Glob(pattern as Str) as Array<Str>
   -- FIX drive names, unc paths
-  
+
   var components = SplitPattern(pattern)
-  
+
   if components != [] and components[-1] == "**"
     components[-1] += Separator
     components.append("*")
   end
-  
+
   return GlobRecurse("", components)
 end
 
@@ -32,7 +32,7 @@ private def SplitPattern(pattern as Str) as Array<Str>
   if pattern == ""
     return []
   end
-  
+
   var components = [] as <Str>
   var i = 0
   while Separator in pattern[i:] or (AltSeparator != nil and
@@ -55,7 +55,7 @@ private def SplitPattern(pattern as Str) as Array<Str>
   if pattern[i:] != ""
     components.append(pattern[i:])
   end
-  
+
   return components
 end
 
@@ -75,20 +75,20 @@ private def GlobRecurse(base as Str, components as Array<Str>,
   if components == []
     return []
   end
-  
+
   var c = components[0]  -- The component to process next
   var isLast = components.length() == 1  -- Last component?
-  
+
   -- Handle components with wildcards differently from simple components.
   if HasWildcards(c)
     -- The next component has wildcards.
-    
+
     var dir = base
     if dir == ""
       dir = "."
     end
     var pattern, sep = RemoveTrailingSeparator(c)
-    
+
     -- Use the pattern to filter the entries. Reuse previously read entries
     -- if they are available.
     var entries as Array<Str>
@@ -112,13 +112,13 @@ private def GlobRecurse(base as Str, components as Array<Str>,
     else
       entries = Filter(dirEntries, pattern)
     end
-    
+
     -- Build an array that has entries which include the base path.
     var entries2 = [nil] * entries.length() as Array<Str>
     for i in 0 to entries.length()
       entries2[i] = base + entries[i]
     end
-    
+
     if isLast
       -- We're done for this recursive call.
       return entries2
@@ -148,12 +148,12 @@ private def GlobRecurse(base as Str, components as Array<Str>,
     end
   else
     -- The next component has no wildcards.
-  
+
     -- Optimize the case where we have already the entries available.
     if isLast and dirEntries != nil and not HasEntry(dirEntries, c)
       return []
     end
-    
+
     var next = Join(base, c)
     if isLast and Exists(next)
       -- The last component exists.

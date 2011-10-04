@@ -1,4 +1,4 @@
--- Test cases for Alore parser, semantic analyser, type checker, runtime type 
+-- Test cases for Alore parser, semantic analyser, type checker, runtime type
 -- checker and source-to-source roundtrip transformation.
 
 import unittest

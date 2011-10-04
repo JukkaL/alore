@@ -116,13 +116,13 @@ static AValue BitopNeg(AThread *t, AValue *frame)
         return AMakeIntFromValue(t, ~AValueToInt(frame[0]));
     else if (AIsLongInt(frame[0])) {
         long i, len;
-        
+
         len = IntLen(frame[0]);
         frame[0] = GetLongIntDigits(t, &frame[0], len);
-        
+
         for (i = 0; i < len; i++)
             DIGIT(frame[0], i) = ~DIGIT(frame[0], i);
-        
+
         return MakeIntFromBinary(t, &frame[0], len);
     } else
         return ARaiseIntExpected(t, frame[0]);
@@ -138,7 +138,7 @@ static AValue BitopShl(AThread *t, AValue *frame)
 {
     long shift, len;
     long digitShift, i;
-    
+
     if (AIsShortInt(frame[1])) {
         shift = AValueToInt(frame[1]);
         if (shift < 0)
@@ -149,7 +149,7 @@ static AValue BitopShl(AThread *t, AValue *frame)
         shift = AGetInt(t, frame[1]);
     } else
         return ARaiseIntExpected(t, frame[1]);
-    
+
     if (AIsShortInt(frame[0]) && !IsShlOverflow(frame[0], shift))
         return frame[0] << shift;
     else if (!AIsInt(frame[0]))
@@ -181,7 +181,7 @@ static AValue BitopShr(AThread *t, AValue *frame)
     long shift, len;
     long digitShift, i;
     ABool isNeg;
-    
+
     if (AIsShortInt(frame[1])) {
         shift = AValueToInt(frame[1]);
         if (shift < 0)
@@ -253,10 +253,10 @@ static AValue GetLongIntDigits(AThread *t, AValue *v, long len)
 {
     AValue dst = AMakeEmptyStr(t, sizeof(ALongIntDigit) * len);
     long i;
-    
+
     if (AIsShortInt(*v)) {
         ASignedValue ii = AValueToInt(*v);
-        
+
         for (i = 0; i < DIGITS_IN_INT; i++)
             DIGIT(dst, i) = (ii >> (i * BITS)) & MASK;
         for (; i < len; i++)
@@ -283,7 +283,7 @@ static AValue MakeIntFromBinary(AThread *t, AValue *v, long len)
     ABool isNeg = FALSE;
     ALongInt *ptr;
     long i;
-    
+
     if (DIGIT(*v, len - 1) & (1UL << (BITS - 1))) {
         /* Negative result. */
         isNeg = TRUE;
@@ -293,12 +293,12 @@ static AValue MakeIntFromBinary(AThread *t, AValue *v, long len)
     ptr = AAlloc(t, AGetBlockSize(AGetLongIntSize(len)));
     if (ptr == NULL)
         ARaiseMemoryError(t);
-    
+
     AInitLongIntBlock(ptr, len, FALSE);
-    
+
     for (i = 0; i < len; i++)
         ptr->digit[i] = DIGIT(*v, i);
-    
+
     return ANormalize(t, ptr, isNeg);
 }
 

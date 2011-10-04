@@ -63,13 +63,13 @@ typedef ASignedWideChar ASignedRegExpOpcode;
 typedef struct {
     AValue header1;
     AValue header2;
-    
+
     AValue code;
     AValue searchTable;
-    
+
     int flags;                    /* ALRE_x flags */
     int minLen;                   /* Minimum length of a match */
-    
+
     int numGroups;                /* Number of parenthesised subexpessions */
 
     int mustStringInd;            /* 0 or index of a "must have" string */

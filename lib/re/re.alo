@@ -22,13 +22,13 @@ end
 class MatchResult
   def group(n as Int) as Str
   end
-  
+
   def start(n as Int) as Int
   end
-  
+
   def stop(n as Int) as Int
   end
-  
+
   def span(n as Int) as Pair<Int, Int>
   end
 end
@@ -50,7 +50,7 @@ const IgnoreCase = __re::IgnoreCase as Constant
 def Subst(str as Str, re as RE, repl as Str) as Str or
          (str as Str, re as RE, repl as def (MatchResult) as Str) as Str
   var a = [] as <Str>
-  
+
   var rr = [] as <(Int, dynamic)>
   if repl is Str and "\" in (repl as Str)
     var repls = (repl as Str)
@@ -69,7 +69,7 @@ def Subst(str as Str, re as RE, repl as Str) as Str or
       end
     end
   end
-  
+
   var i = 0
   while i < str.length()
     var m = Search(re, str, i)
@@ -108,7 +108,7 @@ end
 
 def Split(str as Str, re as RE) as Array<Str>
   var res = [] as <Str>
-  
+
   var i = 0
   var j = 0
   while j < str.length()
@@ -128,7 +128,7 @@ def Split(str as Str, re as RE) as Array<Str>
     end
   end
   res.append(str[i:])
-  
+
   return res
 end
 

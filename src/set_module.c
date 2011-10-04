@@ -92,7 +92,7 @@ static AValue SetCreate(AThread *t, AValue *frame)
             }
         }
     }
-    
+
     return frame[0];
 
 }
@@ -103,14 +103,14 @@ static AValue SetCreate(AThread *t, AValue *frame)
 static AValue SetInitialize(AThread *t, AValue *frame)
 {
     AValue a;
-    
+
     /* NOTE: Assume that the AMakeInt call doesn't cause gc. */
     ASetMemberDirect(t, frame[0], A_SET_SIZE,
                      AMakeInt(t, INITIAL_SET_CAPACITY));
     a = AMakeFixArray(t, INITIAL_SET_CAPACITY * 2, EmptyMarker);
     if (AIsError(a))
         return AError;
-    
+
     ASetMemberDirect(t, frame[0], SET_A, a);
     ASetMemberDirect(t, frame[0], SET_LEN, AZero);
     ASetMemberDirect(t, frame[0], SET_NUM_REMOVED, AZero);
@@ -138,7 +138,7 @@ static AValue SetAdd(AThread *t, AValue *frame)
     hash = AStdHash(t, frame + 3);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], A_SET_SIZE)) - 1;
     i &= size;
@@ -156,12 +156,12 @@ static AValue SetAdd(AThread *t, AValue *frame)
 
     SetFixArray_M(t, frame[3], i * 2, frame + 1);
     SetFixArray_M(t, frame[3], i * 2 + 1, frame + 2);
-    
+
     AValueToInstance(frame[0])->member[SET_LEN] += AIntToValue(1);
-    
+
     if (AValueToInt(AMemberDirect(frame[0], SET_LEN)) * 3 >= size * 2 + 2)
         ResizeSet(t, frame);
-    
+
     return ANil;
 }
 
@@ -190,7 +190,7 @@ static void ResizeSet(AThread *t, AValue *frame)
 
     if (newSize > A_SHORT_INT_MAX)
         ARaiseValueError(t, "Set size overflow");
-    
+
     ASetMemberDirect(t, frame[0], A_SET_SIZE, AMakeInt(t, newSize));
     a = AMakeFixArray(t, 2 * newSize, EmptyMarker);
     if (AIsError(a))
@@ -222,7 +222,7 @@ static AValue Set_in(AThread *t, AValue *frame)
     hash = AStdHash(t, frame + 2);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], A_SET_SIZE)) - 1;
     i &= size;
@@ -259,7 +259,7 @@ static AValue SetRemove(AThread *t, AValue *frame)
     hash = AStdHash(t, frame + 2);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], A_SET_SIZE)) - 1;
     i &= size;
@@ -293,7 +293,7 @@ static AValue Set_str(AThread *t, AValue *frame)
     ABool first = TRUE;
 
     repr = AGlobal(t, "std::Repr");
-    
+
     frame[1] = AMemberDirect(frame[0], SET_A);
     n = AFixArrayLen(frame[1]);
     frame[2] = AMakeArray(t, 0);
@@ -327,7 +327,7 @@ static AValue Set_eq(AThread *t, AValue *frame)
 {
     int status;
     Assize_t len;
-    
+
     if (!AIsValue(t, frame[1], AGlobal(t, "set::Set")))
         return AFalse;
 
@@ -347,7 +347,7 @@ static AValue Set_eq(AThread *t, AValue *frame)
         if (AIsFalse(in) || AIsError(in))
             return in;
     }
-    
+
     return status == 0 ? ATrue : AError;
 }
 
@@ -362,7 +362,7 @@ static AValue Set_hash(AThread *t, AValue *frame)
     hash = 0;
     len = AValueToInt(AMemberDirect(frame[0], A_SET_SIZE)) * 2;
     frame[1] = AMemberDirect(frame[0], SET_A);
-    
+
     for (i = 0; i < len; i += 2) {
         frame[2] = AFixArrayItem(frame[1], i);
         if (frame[2] != EmptyMarker && frame[2] != RemovedMarker) {
@@ -380,7 +380,7 @@ static AValue Set_hash(AThread *t, AValue *frame)
             hash ^= HashToInt(t, frame[2]) * (32768 + 512 + 32 + 1);
         }
     }
-    
+
     return AMakeInt(t, hash);
 }
 
@@ -392,10 +392,10 @@ static AValue SetCopy(AThread *t, AValue *frame)
     Assize_t len;
 
     frame[2] = ACallValue(t, AGlobal(t, "set::Set"), 0, frame + 1);
-    
+
     len = AValueToInt(AMemberDirect(frame[0], A_SET_SIZE)) * 2;
     frame[1] = AMemberDirect(frame[0], SET_A);
-    
+
     for (i = 0; i < len; i += 2) {
         frame[3] = AFixArrayItem(frame[1], i);
         if (frame[3] != EmptyMarker && frame[3] != RemovedMarker) {
@@ -403,7 +403,7 @@ static AValue SetCopy(AThread *t, AValue *frame)
                 return AError;
         }
     }
-        
+
     return frame[2];
 }
 
@@ -442,7 +442,7 @@ static AValue SetIterHasNext(AThread *t, AValue *frame)
             return ATrue;
         }
     }
-    
+
     AValueToInstance(frame[0])->member[ITER_I] = AIntToValue(i);
     return AFalse;
 }
@@ -457,7 +457,7 @@ static AValue SetIterNext(AThread *t, AValue *frame)
     if (i < n - 1) {
         AValue a = AMemberDirect(frame[0], ITER_A);
         AValue obj = AFixArrayItem(a, i);
-        
+
         if (obj == EmptyMarker || obj == RemovedMarker) {
             SetIterHasNext(t, frame);
             return SetIterNext(t, frame);
@@ -500,7 +500,7 @@ A_MODULE(set, "set")
         A_METHOD("copy", 0, 7, SetCopy)
         A_METHOD("iterator", 0, 1, SetIter)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P(A_PRIVATE("SetIter"), 3, &SetIterNum)
         A_METHOD("create", 1, 0, SetIterCreate)
         A_METHOD("hasNext", 0, 0, SetIterHasNext)

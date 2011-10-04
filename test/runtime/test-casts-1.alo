@@ -10,7 +10,7 @@ class CastsSuite is Suite
     AssertEqual(True as Boolean, True)
     AssertRaises(CastError, def (); [] as Boolean; end)
   end
-  
+
   def testCastsWithSpecialTypes()
     AssertEqual(55 as Int, 55)
     AssertEqual(5.5 as Float, 5.5)
@@ -18,7 +18,7 @@ class CastsSuite is Suite
     AssertRaises(CastError, def (); [] as Int; end)
     AssertRaises(CastError, def (); 1 as Boolean; end)
   end
-  
+
   def testCastWithInterface()
     var r = 1 to 5
     var a = [1, 2]
@@ -27,21 +27,21 @@ class CastsSuite is Suite
     AssertRaises(CastError, def (); True as Iterable; end)
     AssertRaises(CastError, def (); 1 as Iterable; end)
   end
-  
+
   def testCastWithSupertype()
     AssertEqual(1 as Object, 1)
     AssertEqual([] as Object, [])
   end
-  
+
   def testCastNil()
     AssertRaises(CastError, def (); nil as Object; end)
   end
-  
+
   def testQualifiedCast()
     AssertEqual(True as std::Boolean, True)
     AssertEqual(self as ::CastsSuite, self)
   end
-  
+
   def testCastErrorMessage()
     AssertRaises(CastError, "Cannot cast Int to Float",
                   def (); 1 as Float; end)
@@ -49,7 +49,7 @@ class CastsSuite is Suite
             "Cannot cast runtime::CastsSuite to unittest::AssertionFailure",
             def (); self as AssertionFailure; end)
   end
-  
+
   def testDynamicCasts()
     AssertEqual(1 as dynamic, 1)
     AssertEqual(True as dynamic, True)

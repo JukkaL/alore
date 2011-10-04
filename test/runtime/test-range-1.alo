@@ -16,18 +16,18 @@ class RangeSuite is Suite
     Assert(not 6 in 1 to 6)
     Assert(not 17 in 1 to 6)
     VerifyNot(1 in 1 to 1)
-    
+
     -- Corner int cases
     Assert(not 1 in 1 to 1)
     Assert(not 0 in 1 to 1)
     Assert(1 in 1 to 2)
     Assert(not 0 in 1 to 2)
     Assert(not 2 in 1 to 2)
-    
+
     Assert(not 1.5 in 1 to 3)
     Assert(not "1" in 1 to 3)
   end
-  
+
   def testCompare()
     var p1 = 1 to 3
     var p2 = 1 to 3
@@ -36,7 +36,7 @@ class RangeSuite is Suite
     var p5 = 1 to 2**100
     var p6 = 2**65 to 3
     var p7 = 2**65 to 3
-    
+
     Assert(p1 == p1)
     Assert(p1 == p2)
     Assert(p1 != p3)
@@ -44,26 +44,26 @@ class RangeSuite is Suite
     Assert(p1 != p5)
     Assert(p1 != p6)
     Assert(p6 == p7)
-  
+
     Assert([p1] == [p1])
     Assert([p1] == [p2])
     Assert([p1] != [p3])
   end
-  
+
   def testErrors()
     AssertRaises(TypeError, def (); 1 to 2.0; end)
     AssertRaises(TypeError, def (); nil to 2; end)
     AssertRaises(TypeError, def (); for i in 1.0 to 2; end; end)
     AssertRaises(TypeError, def (); for i in 1 to 2.0; end; end)
   end
-  
+
   def testMembers()
     var r = 1 to 3
     for m in "start", "stop", "_eq", "_in", "iterator", "_hash", "_str"
       Assert(HasMember(r, m))
     end
     Assert(not HasMember(r, "foo"))
-    
+
     AssertEqual(r.start, 1)
     AssertEqual(r.stop, 3)
     AssertEqual(r._eq(1 to 3), True)
@@ -73,14 +73,14 @@ class RangeSuite is Suite
     AssertEqual(r._in(0), False)
     AssertEqual(r._hash(), Hash(r))
     AssertEqual(r._str(), "1 to 3")
-    
+
     var e = r.iterator()
     AssertEqual(e.next(), 1)
     AssertEqual(e.hasNext(), True)
     AssertEqual(e.next(), 2)
     AssertEqual(e.hasNext(), False)
   end
-  
+
   def testInterfaces()
     Assert((1 to 3) is Iterable)
     Assert((1 to 3).iterator() is Iterator)

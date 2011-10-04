@@ -15,21 +15,21 @@ class Token
   var pre = "" as Str -- Space, comments etc. before token
   var str      as Str -- Token string
   var line     as Int -- Token line number
-  
+
   def create(str as Str, pre = "" as Str)
     self.str = str
     self.pre = pre
   end
-  
+
   def _str() as Str
     var t = ShortType(self)
     return t + "(" + fix(pre) + fix(str) + ")"
   end
-  
+
   def rep as Str
     return self.pre + self.str
   end
-  
+
   private def fix(s as Str) as Str
     return s.replace(LF, "\n")
   end
@@ -121,11 +121,11 @@ private const Keywords = Set([
   "module", "nil", "private", "raise", "repeat", "return",
   "self", "def", "super", "switch", "try", "until", "var",
   "while", "sub", "interface", "implements", "dynamic", "bind"]) as Set<Str>
-  
+
 -- Alphabetical operators (reserved words)
 private const AlphaOperators = Set([
   "div", "mod", "in", "is", "to", "not", "and", "or", "as"]) as Set<Str>
-  
+
 -- List of regular expressions that match non-alphabetical operators
 private const Operators = [RegExp("[+*/<>:.]"),
                            RegExp("-"),
@@ -164,7 +164,7 @@ private class Lexer
 
   var tok = [] as Array<Token>
   var map = [unknownCharacter] * 256 as Array<def ()>
-  
+
   def create() as void
     for seq, method in [("ABCDEFGHIJKLMNOPQRSTUVWXYZ", lexName),
                         ("abcdefghijklmnopqrstuvwxyz_", lexName),
@@ -182,17 +182,17 @@ private class Lexer
       end
     end
   end
-  
+
   -- Lexically analyse a string, storing the tokens at the tok array.
   def lex(s as Str)
     self.s = s
     self.i = 0
     self.line = 1
-    
+
     if s.startsWith("\u00ef\u00bb\u00bf")
       addToken(Bom(s[0:3]))
     end
-    
+
     var map = self.map
     while self.i < s.length()
       var c = Ord(s[self.i])
@@ -200,15 +200,15 @@ private class Lexer
       map[c]()
       self.isPreviousEncoding = self.isEncoding
     end
-    
+
     -- Append a break if one is not at the end of input.
     if self.tok.length() > 0 and not self.tok[-1] is Break
       addToken(Break(""))
     end
-    
+
     addToken(Eof(""))
   end
-  
+
   -- Analyse a token starting with a dot (either the member access operator or
   -- a Float literal).
   def lexNumberOrDot() as void
@@ -218,26 +218,26 @@ private class Lexer
       lexMisc()
     end
   end
-  
+
   const numberExp = RegExp("[0-9]|\.[0-9]") as RegExp  -- Used by isAtNumber
-  
+
   -- Is the current location at a numeric literal?
   def isAtNumber() as Boolean
     return match(self.numberExp) != ""
   end
-  
+
   -- Regexps used by lexNumber
   const numberExp1 = RegExp("[0-9]+") as RegExp
   const numberExp2 =
     RegExp("[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?|[0-9]+[eE][-+]?[0-9]+") as RegExp
   const nameCharExp = RegExp("[a-zA-Z0-9_]") as RegExp
-  
+
   -- Analyse an Int or Float literal. Assume that the current location points
   -- to one of them.
   def lexNumber() as void
     var s1 = match(self.numberExp1)
     var s2 = match(self.numberExp2)
-    
+
     var max = Max(s1.length(), s2.length())
     if Match(nameCharExp, self.s[self.i + max:self.i + max + 1]) != nil
       addToken(LexError(" " * max, NumericLiteralError))
@@ -249,9 +249,9 @@ private class Lexer
       addToken(FloatLit(s2))
     end
   end
-  
+
   const nameExp = RegExp("[a-zA-Z_][a-zA-Z0-9_]*") as RegExp -- Used by lexName
-  
+
   -- Analyse a name (an identifier, a keyword or an alphabetical operator).
   def lexName() as void
     var s = match(self.nameExp)
@@ -278,21 +278,21 @@ private class Lexer
       addToken(Name(s))
     end
   end
-  
+
   -- Regexps representing Str literals
   const strExpSingle = RegExp("'([^'\r\n]|'')*'") as RegExp
   const strExpDouble = RegExp('"([^"\r\n]|"")*"') as RegExp
-  
+
   -- Analyse single-quoted string literal
   def lexStrSingle() as void
     lexStr(self.strExpSingle)
   end
-  
+
   -- Analyse double-quoted string literal
   def lexStrDouble() as void
     lexStr(self.strExpDouble)
   end
-  
+
   -- Analyse a string literal described by a regexp. Assume that the current
   -- location is at a single or double quote.
   def lexStr(re as RegExp)
@@ -306,18 +306,18 @@ private class Lexer
       addToken(LexError(s, UnterminatedStringLiteral))
     end
   end
-  
+
   const commentExp = RegExp("--[^\n\r]*") as RegExp
-  
+
   -- Analyse a comment.
   def lexComment() as void
     var s = match(self.commentExp)
     verifyEncoding(s, CommentContext)
     addPre(s)
   end
-  
+
   const hashBangExp = RegExp("#![^\n\r]*") as RegExp
-  
+
   -- Analyse #! comment (only valid at the start of a file).
   def lexHashBang() as void
     if self.i == 0 and self.s[:2] == "#!"
@@ -327,18 +327,18 @@ private class Lexer
       unknownCharacter()
     end
   end
-  
+
   const spaceExp = RegExp("[ \t]+") as RegExp
-  
+
   -- Analyse a run of whitespace characters.
   def lexSpace() as void
     var s = match(self.spaceExp)
     addPre(s)
     self.isEncoding = self.isPreviousEncoding
   end
-  
+
   const breakExp = RegExp("\r\n|\r|\n|;") as RegExp
-  
+
   -- Analyse a statement break (line break or a semicolon).
   def lexBreak() as void
     var s = match(breakExp)
@@ -351,7 +351,7 @@ private class Lexer
       self.line += 1
     end
   end
-  
+
   -- Analyse something starting with '-' (a comment or the minus operator).
   def lexMinusOrComment() as void
     if i + 1 < self.s.length() and self.s[self.i + 1] == "-"
@@ -360,7 +360,7 @@ private class Lexer
       lexMisc()
     end
   end
-  
+
   -- Analyse a non-alphabetical operator or a punctuator.
   def lexMisc() as void
     var s = ""
@@ -379,17 +379,17 @@ private class Lexer
     end
     addToken(t(s))
   end
-  
+
   -- Report an unknown character as a lexical analysis error.
   def unknownCharacter() as void
     addToken(LexError(self.s[self.i], InvalidCharacter))
   end
-  
-  
+
+
   -- Utility methods
   ------------------
-  
-  
+
+
   -- If the argument regexp is matched at the current location, return the
   -- matched string; otherwise return the empty string.
   private def match(re as RegExp) as Str or
@@ -401,7 +401,7 @@ private class Lexer
       return ""
     end
   end
-  
+
   -- Record string representing whitespace or comment after the previous.
   -- The accumulated whitespace/comments will be associated with the next
   -- token and then it will be cleared.
@@ -409,7 +409,7 @@ private class Lexer
     self.pre += s
     self.i += s.length()
   end
-  
+
   -- Store a token. Update its line number and record preceding whitespace
   -- characters and comments.
   private def addToken(tok as Token)
@@ -423,7 +423,7 @@ private class Lexer
     self.i += tok.str.length()
     self.pre = ""
   end
-  
+
   -- If the next token is a break, can we ignore it?
   private def ignoreBreak() as Boolean
     if tok.length() == 0
@@ -432,7 +432,7 @@ private class Lexer
     var t = TypeOf(tok[-1])
     return t == Break or tok[-1].str in JoinLineTokens
   end
-  
+
   -- Verify that a token (represented by a string) is encoded correctly
   -- according to the file encoding.
   private def verifyEncoding(str as Str, context as Constant)

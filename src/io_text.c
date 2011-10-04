@@ -73,7 +73,7 @@ AValue ATextStreamCreate(AThread *t, AValue *frame)
     /* Store information about strictness in the TextStream instance. */
     if (!isStrict)
         ASetMemberDirect(t, frame[0], AUnstrictMemberNum, ATrue);
-    
+
     /* Prepare for constructing decoder and encoder objects. */
     frame[4] = frame[2];
     if (isStrict)
@@ -145,14 +145,14 @@ AValue ATextStream_Read(AThread *t, AValue *frame)
     if (AIsError(frame[3]))
         return AError;
     AExpectStr(t, frame[3]);
-    
+
     /* If the wrapped stream has some data in the input buffer, read from
        it. */
     if (AStrLen(frame[3]) > 0) {
         /* FIX: Not 64-bit clean */
         unsigned s = AGetIntU(t, frame[1]);
         unsigned s2 = AStrLen(frame[3]);
-        
+
         frame[2] = AMemberDirect(frame[0], AStreamMemberNum);
         frame[3] = AMakeIntU(t, AMin(s, s2));
         frame[3] = ACallMethod(t, "read", 1, frame + 2);
@@ -164,21 +164,21 @@ AValue ATextStream_Read(AThread *t, AValue *frame)
         frame[3] = frame[1];
         frame[3] = ACallMethod(t, "_read", 1, frame + 2);
     }
-    
+
     if (AIsError(frame[3]))
         return AError;
-    
+
     if (AIsNil(frame[3])) {
         /* End of stream encountered. */
-        
+
         /* If the stream is unstrict and there are unprocessed characters at
            the end of the file, return an additional replacement character to
            signify the partial character at the end of the stream. */
-        
+
         frame[3] = AIsUnprocessed(t, frame, frame + 3);
         if (AIsError(frame[3]))
             return AError;
-        
+
         if (AIsTrue(AMemberDirect(frame[0], AUnstrictMemberNum)) &&
             AIsTrue(frame[3])) {
             /* Mark that we have processed the partial character. */
@@ -209,19 +209,19 @@ AValue ATextStreamClose(AThread *t, AValue *frame)
         /* Flush failed. Close the stream anyway below to avoid leaking
            resources. If close raises an exception, that exception is sadly
            lost, but it's probably better than the alternatives. */
-        
+
         /* Record the exception. */
         isError = TRUE;
         frame[2] = t->exception;
     }
-    
+
     frame[1] = AMemberDirect(frame[0], AStreamMemberNum);
     if (ACallMethod(t, "close", 0, frame + 1) == AError) {
         /* Only propagate the exception if flush succeeded. */
         if (!isError)
             return AError;
     }
-    
+
     /* Do we need to reraise an exception? */
     if (isError)
         return ARaiseValue(t, frame[2]);
@@ -240,7 +240,7 @@ AValue ATextStreamFlush(AThread *t, AValue *frame)
     frame[1] = AMemberDirect(frame[0], AStreamMemberNum);
     if (ACallMethod(t, "flush", 0, frame + 1) == AError)
         return AError;
-    
+
     return ANil;
 }
 
@@ -278,7 +278,7 @@ AValue ATextFileCreate(AThread *t, AValue *frame)
     tmp = frame[1];
     frame[1] = frame[2]; /* frame[1] = encoding */
     frame[2] = tmp;      /* frame[2] = path */
-    
+
     open = AGlobal(t, "io::File");
     /* Frame contents: [path, options...] */
     tmp = ACallValue(t, open, nargs - 2, frame + 2);
@@ -294,7 +294,7 @@ AValue ATextFileCreate(AThread *t, AValue *frame)
         frame[3] = AGlobalByNum(AUnstrictNum);
         frame[4] = buffering;
     }
-    
+
     return ATextStreamCreate(t, frame);
 }
 
@@ -367,7 +367,7 @@ static AValue MapCodesetToEncodingType(const char *codeset)
         num = AKoi8RNum;
     else if (strcmp(normCodeset, "KOI8-U") == 0)
         num = AKoi8UNum;
-    
+
     if (num != -1)
         return AGlobalByNum(num);
     else
@@ -398,7 +398,7 @@ AValue AInitDefaultEncoding(AThread *t)
     */
     ASetConstGlobalByNum(t, ADefaultEncodingNum, AGlobalByNum(AUtf8Num));
 #else
-    
+
 #ifdef HAVE_LANGINFO_H
     /* Determine DefaultEncoding based on the current locale setting (LC_CTYPE
        environment variable). */
@@ -410,7 +410,7 @@ AValue AInitDefaultEncoding(AThread *t)
     savedLocale = strdup(savedLocale);
     if (savedLocale == NULL)
         return ARaiseMemoryError(t);
-    
+
     /* Initialize locale based on the environment. */
     setlocale(LC_CTYPE, "");
 
@@ -421,13 +421,13 @@ AValue AInitDefaultEncoding(AThread *t)
         if (!AIsNil(encoding))
             ASetConstGlobalByNum(t, ADefaultEncodingNum, encoding);
     }
-    
+
     /* Restore locale setting. */
     setlocale(LC_CTYPE, savedLocale);
     free(savedLocale);
 #endif
 
 #endif
-    
+
     return ANil;
 }

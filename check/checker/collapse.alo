@@ -25,27 +25,27 @@ private class CollapseTypeVisitor is TypeVisitor<Typ>
   def visitUnboundType(t as UnboundType) as Typ
     return t
   end
-  
+
   def visitErrorType(t as ErrorType) as Typ
     return t
   end
-  
+
   def visitDynamic(t as Dynamic) as Typ
     return t
   end
-  
+
   def visitVoid(t as Void) as Typ
     return t
   end
-  
+
   def visitNilType(t as NilType) as Typ
     return t
   end
-  
+
   def visitTypeVar(t as TypeVar) as Typ
     return t
   end
-  
+
   -- Collapse recursively arguments of instance types, and ignore argument
   -- range tops.
   def visitInstance(t as Instance) as Typ
@@ -55,9 +55,9 @@ private class CollapseTypeVisitor is TypeVisitor<Typ>
     end
     return Instance(t.type, args)
   end
-  
+
   -- Collapse other composite types recursively.
-  
+
   def visitCallable(t as Callable) as Typ
     var argTypes = [] as <Typ>
     for argType in t.argTypes
@@ -66,7 +66,7 @@ private class CollapseTypeVisitor is TypeVisitor<Typ>
     return Callable(argTypes, t.minArgs, t.isVarArg, collapse(t.retType),
                     t.isTypeObj, nil, t.variables)
   end
-  
+
   def visitTupleType(t as TupleType) as Typ
     var items = [] as <Typ>
     for item in t.items
@@ -74,7 +74,7 @@ private class CollapseTypeVisitor is TypeVisitor<Typ>
     end
     return TupleType(items)
   end
-  
+
   def visitIntersection(t as Intersection) as Typ
     return Intersection(collapse(t.item1) as FunctionLike,
                         collapse(t.item2) as FunctionLike)

@@ -18,7 +18,7 @@ def CopyFile(path, target, *flags)
   if IsDir(target) and not FileTarget in flags
     target = Join(target, BaseName(path))
   end
-  
+
   var src = File(path, Unbuffered)
   try
     var dst = File(target, Output, Unbuffered)
@@ -36,7 +36,7 @@ def CopyFile(path, target, *flags)
   finally
     src.close()
   end
-  
+
   CopyStat(path, target, *flags)
 end
 
@@ -48,7 +48,7 @@ def CopyTree(source, target, *flags)
   var names = ListDir(source)
 
   MakeDir(target)
-  
+
   for name in names
     var sourcePath = Join(source, name)
     var targetPath = Join(target, name)
@@ -66,13 +66,13 @@ def CopyTree(source, target, *flags)
       errors.append((sourcePath, targetPath, e))
     end
   end
-  
+
   try
     CopyStat(source, target, *flags)
   except e is IoError
     errors.append((source, target, e))
   end
-  
+
   if errors != []
     raise Error(errors)
   end
@@ -103,7 +103,7 @@ def RemoveTree(path)
   except e is IoError
     errors.append((nil, path, e))
   end
-  
+
   if errors != []
     raise Error(errors)
   end
@@ -114,7 +114,7 @@ end
 -- instances.
 class Error is IoError
   const errors
- 
+
   def create(errors)
     self.errors = errors
     var msg = errors[0][2].message

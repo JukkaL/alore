@@ -19,7 +19,7 @@ private class StrConv is NodeVisitor<Str>
   private def dump(nodes, obj)
     return DumpTagged(nodes, ShortType(obj) + ":" + Str(obj.line))
   end
-  
+
   -- Return an array in a format suitable for dump() that represents the
   -- arguments and the body of a function. The caller can then decorate the
   -- array with information specific to methods, global functions or
@@ -46,11 +46,11 @@ private class StrConv is NodeVisitor<Str>
     end
     return a
   end
-  
-  
+
+
   -- Top-level structures
   -----------------------
-  
+
 
   def visitAloreFile(o)
     var a = [o.defs]
@@ -76,24 +76,24 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a, o)
   end
-  
+
   def visitEncoding(o)
     return "Encoding({})".format(o.id)
   end
-  
+
   def visitHeader(o)
     return "Header(" + o.id + ")"
   end
-  
+
   def visitImport(o)
     return "Import(" + o.id + ")"
   end
-  
-  
+
+
   -- Definitions
   --------------
-  
-  
+
+
   def visitFuncDef(o)
     var a = funcHelper(o)
     a.insertAt(0, o.name)
@@ -108,7 +108,7 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a, o)
   end
-  
+
   def visitTypeDef(o)
     var a = [o.name, o.defs]
     if o.isPrivate
@@ -134,7 +134,7 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a, o)
   end
-  
+
   def visitVarDef(o)
     var a = [o.names]
     if o.init != nil
@@ -151,7 +151,7 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a, o)
   end
-  
+
   def visitVar(o)
     var l = ""
     -- Add :nil line number tag if no line number is specified to remain
@@ -161,39 +161,39 @@ private class StrConv is NodeVisitor<Str>
     end
     return "Var" + l + "(" + o.name + ")"
   end
-  
+
   def visitAnnotation(o)
     return "Type:{}({})".format(o.line, o.type)
   end
-  
-  
+
+
   -- Statements
   -------------
-  
-  
+
+
   def visitBlock(o)
   end
-  
+
   def visitExpressionStmt(o)
     return dump([o.expr], o)
   end
-  
+
   def visitAssignmentStmt(o)
     return dump(["Lvalues" : o.lvalues, o.rvalue], o)
   end
-  
+
   def visitOperatorAssignmentStmt(o)
     return dump([o.op, o.lvalue, o.rvalue], o)
   end
-  
+
   def visitWhileStmt(o)
     return dump([o.expr, "Body" : o.body], o)
   end
-  
+
   def visitRepeatStmt(o)
     return dump([o.expr, "Body" : o.body], o)
   end
-  
+
   def visitForStmt(o)
     var a = [o.index]
     if o.types != [nil] * o.types.length()
@@ -201,36 +201,36 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a + [o.expr, "Body" : o.body], o)
   end
-  
+
   def visitReturnStmt(o)
     return dump([o.expr], o)
   end
-  
+
   def visitIfStmt(o)
     var a = []
     for i in 0 to o.expr.length()
       a.append("If" : [o.expr[i]])
       a.append("Then" : o.body[i])
     end
-  
+
     if o.elseBody == nil
       return dump(a, o)
     else
       return dump([a, "Else" : o.elseBody], o)
     end
   end
-  
+
   def visitBreakStmt(o)
     return dump([], o)
   end
-  
+
   def visitRaiseStmt(o)
     return dump([o.expr], o)
   end
-  
+
   def visitTryExceptStmt(o)
     var a = ["Body" : o.body]
-    
+
     for i in 0 to o.vars.length()
       a.append(o.types[i])
       if o.vars[i] != nil
@@ -238,14 +238,14 @@ private class StrConv is NodeVisitor<Str>
       end
       a.append("Body" : o.handlers[i])
     end
-    
+
     return dump(a, o)
   end
-  
+
   def visitTryFinallyStmt(o)
     return dump([o.body, o.finallyBody], o)
   end
-  
+
   def visitSwitchStmt(o)
     var a = [o.expr]
     for i in 0 to o.cases.length()
@@ -257,36 +257,36 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a, o)
   end
-  
-  
+
+
   -- Expressions
   --------------
-  
-  
+
+
   -- Lvalue expressions
-  
+
   def visitNameLvalue(o)
     return visitNameExpr(o)
   end
-  
+
   def visitMemberLvalue(o)
     return dump([o.expr, o.name], o)
   end
-  
+
   def visitIndexLvalue(o)
     return dump([o.base, o.index], o)
   end
-  
+
   def visitSuperLvalue(o)
     return dump([o.name], o)
   end
-  
+
   -- This is called before and in addition to one of the following methods.
   def visitExpression(o)
   end
-  
+
   -- Simple expressions
-  
+
   def visitIntExpr(o)
     return "IntExpr({})".format(o.value)
   end
@@ -302,11 +302,11 @@ private class StrConv is NodeVisitor<Str>
   def visitSelfExpr(o)
     return "SelfExpr()"
   end
-  
+
   def visitParenExpr(o)
     return dump([o.expr], o)
   end
-  
+
   def visitNameExpr(o)
     var n = o.name
     if o.kind == Gdef or (o.fullName != o.name and
@@ -322,11 +322,11 @@ private class StrConv is NodeVisitor<Str>
     end
     return ShortType(o) + "(" + n + ")"
   end
-  
+
   def visitMemberExpr(o)
     return dump([o.expr, o.name], o)
   end
-  
+
   def visitCallExpr(o)
     var a = [o.callee, "Args" : o.args]
     if o.isVarArg
@@ -334,48 +334,48 @@ private class StrConv is NodeVisitor<Str>
     end
     return dump(a, o)
   end
-  
+
   def visitOpExpr(o)
     return dump([o.op, o.left, o.right], o)
   end
-  
+
   def visitCastExpr(o)
     return dump([o.expr, o.typeName], o)
   end
-  
+
   def visitUnaryExpr(o)
     return dump([o.op, o.expr], o)
   end
-  
+
   def visitArrayExpr(o)
     return dump(o.items, o)
   end
-  
+
   def visitTupleExpr(o)
     return dump(o.items, o)
   end
-  
+
   def visitIndexExpr(o)
     return dump([o.base, o.index], o)
   end
-  
+
   def visitSuperExpr(o)
     return dump([o.name], o)
   end
-  
+
   def visitTypeApplication(o)
     return dump([o.expr, "Types" : o.types], o)
   end
-  
+
   def visitFuncExpr(o)
     var a = funcHelper(o)
     return dump(a, o)
   end
-  
+
   def visitCoerceExpr(o)
     return dump([o.expr, "Types" : [o.targetType, o.sourceType]], o)
   end
-  
+
   def visitTypeExpr(o)
     return dump([Str(o.type)], o)
   end

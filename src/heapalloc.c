@@ -69,16 +69,16 @@
      chunk. Return a pointer to the new chunk, and store the actual size in
      *realGrow (this may by larger than the requested size). Do not initialize
      the contents of the chunk in any way.
-     
+
    void AFreeHeapBlock_xxx(AHeapBlock *block);
 
      Free a heap chunk.
-   
+
    void *AGrowNursery_xxx(void *oldNursery, Asize_t oldSize, Asize_t newSize);
      Grow the nursery. If oldNursery != NULL, try to grow the old nursery.
      oldSize specifies the current size of the nursery, and newSize specifies
      the new size (both in bytes); it should be larger than the old size.
-                          
+
    void AFreeNursery_xxx(void *nursery, Asize_t size);
      Free the nursery. The size argument should be equal to the size of the
      nursery.
@@ -98,7 +98,7 @@ void *AMoreHeap_mmap(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow)
 
     growSize = (growSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     *realGrow = growSize;
-    
+
     if (block == NULL)
         preferred = A_PREFERRED_OLD_GEN_OFFSET;
     else
@@ -123,7 +123,7 @@ void AFreeHeapBlock_munmap(AHeapBlock *block)
 void *AGrowNursery_mremap(void *oldNursery, Asize_t oldSize, Asize_t newSize)
 {
     void *new;
-    
+
     if (oldNursery == 0)
         new = mmap(A_PREFERRED_NEW_GEN_OFFSET, newSize,
                    PROT_EXEC | PROT_READ | PROT_WRITE,
@@ -160,13 +160,13 @@ static void *ReserveEnd;
 static void *ReserveVirtual(void *start, Asize_t size)
 {
     void *ptr;
-    
+
     if (start >= ReserveStart && APtrAdd(start, size) <= ReserveEnd)
         return start;
 
     if (size < MINIMUM_RESERVE)
         size = MINIMUM_RESERVE;
-    
+
     ptr = VirtualAlloc(start, size, MEM_RESERVE, PAGE_READWRITE);
     if (ptr == NULL && start != NULL)
         ptr = VirtualAlloc(NULL, size, MEM_RESERVE, PAGE_READWRITE);
@@ -174,7 +174,7 @@ static void *ReserveVirtual(void *start, Asize_t size)
         ReserveStart = ptr;
         ReserveEnd = APtrAdd(ptr, size);
     }
-    
+
     return ptr;
 }
 
@@ -199,7 +199,7 @@ void *AMoreHeap_VirtualAlloc(struct AHeapBlock_ *block, Asize_t growSize,
 
     growSize = (growSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     *realGrow = growSize;
-    
+
     if (block == NULL)
         preferred = A_PREFERRED_OLD_GEN_OFFSET;
     else
@@ -264,7 +264,7 @@ void *MoreHeap_sbrk(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow)
     AHeapBlock *new;
 
     *realGrow = growSize;
-    
+
     new = sbrk(growSize);
 
     if (new == (void *)-1 || !IsValidAddressRange(new, growSize))
@@ -282,7 +282,7 @@ static void *Align(char *ptr)
 
     if (ptr == NULL)
         return NULL;
-    
+
     padding = (AValue)ptr & (A_ALLOC_UNIT - 1);
     delta = A_ALLOC_UNIT - padding;
     ptr[delta - 1] = delta;
@@ -294,7 +294,7 @@ static void *Unalign(void *ptr)
 {
     if (ptr == NULL)
         return NULL;
-    
+
     return APtrAdd(ptr, -((char *)ptr)[-1]);
 }
 
@@ -305,9 +305,9 @@ void *AMoreHeap_malloc(AHeapBlock *block, Asize_t growSize, Asize_t *realGrow)
 
     growSize = (growSize + MIN_HEAP_INCREMENT - 1) & ~(MIN_HEAP_INCREMENT - 1);
     *realGrow = growSize;
-    
+
     new = Align(malloc(growSize + A_ALLOC_UNIT));
-    
+
     if (new != NULL && !IsValidAddressRange(new, growSize)) {
         free(Unalign(new));
         return NULL;

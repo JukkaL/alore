@@ -67,47 +67,47 @@ class DateTime implements IDateTime, Comparable<DateTime>,
       raise ValueError("Invalid number of arguments")
     end
   end
-  
+
   def _str() as Str
     return format("YYYY-MM-DD hh:mm:ss")
   end
-  
+
   def format(f as Str) as Str
     return FormatDateTime(DateTime, self, f)
   end
-  
+
   def year as Int
     return date.year
   end
-  
+
   def month as Int
     return date.month
   end
-  
+
   def day as Int
     return date.day
   end
-  
+
   def hour as Int
     return time.hour
   end
-  
+
   def minute as Int
     return time.minute
   end
-  
+
   def second as Float
     return time.second
   end
-  
+
   def weekday as Int
     return date.weekday
   end
-  
+
   def week(rule = FirstFourDayWeek as Constant) as Int
     return date.week(rule)
   end
-  
+
   def _eq(x as Object) as Boolean
     if x is DateTime
       var dt = (x as DateTime)
@@ -118,17 +118,17 @@ class DateTime implements IDateTime, Comparable<DateTime>,
       return False
     end
   end
-  
+
   def _lt(x as DateTime) as Boolean
     return (year, month, day, hour, minute, second) <
            (x.year, x.month, x.day, x.hour, x.minute, x.second)
   end
-  
+
   def _gt(x as DateTime) as Boolean
     return (year, month, day, hour, minute, second) >
            (x.year, x.month, x.day, x.hour, x.minute, x.second)
   end
-  
+
   def _add(x as Time) as DateTime
     if not x is DateTime
       return DateTime(year, month, day + x.day, hour + x.hour,
@@ -137,7 +137,7 @@ class DateTime implements IDateTime, Comparable<DateTime>,
       raise TypeError("Time value expected")
     end
   end
-  
+
   def _sub(x as DateTime) as Time or
           (x as Time) as DateTime
     if x is DateTime
@@ -148,11 +148,11 @@ class DateTime implements IDateTime, Comparable<DateTime>,
       return self + -(x as Time) as dynamic
     end
   end
-  
+
   def _hash() as Int
     return Hash((date, time))
   end
-  
+
   private const date as Date
   private const time as Time
 end

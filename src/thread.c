@@ -49,7 +49,7 @@ AThread *ACreateMainThread(void)
 
     for (i = 0; i < A_THREAD_ARG_BUFFER_SIZE * 3; i++)
         AThreadArgBuffer[i] = AZero;
-    
+
     ANumThreads = 1;
     Threads = NULL;
 
@@ -70,13 +70,13 @@ AThread *ACreateThread(AValue *temp)
     ptr = AllocateGCListBlock();
     if (ptr == NULL)
         return NULL;
-    
+
     temp[0] = ANonPointerBlockToValue(ptr);
-    
+
     ptr = AllocateGCListBlock();
     if (ptr == NULL)
         return NULL;
-    
+
     temp[1] = ANonPointerBlockToValue(ptr);
 
     ptr = AllocateGCListBlock();
@@ -84,7 +84,7 @@ AThread *ACreateThread(AValue *temp)
         return NULL;
 
     temp[2] = ANonPointerBlockToValue(ptr);
-    
+
     t = AAllocStatic(sizeof(AThread));
     if (t == NULL)
         return NULL;
@@ -117,7 +117,7 @@ AThread *ACreateThread(AValue *temp)
     t->stackTop = APtrAdd(t->stack, A_ALORE_STACK_SIZE);
     t->stackPtr = t->stackTop; /* FIX ok? */
     t->stackSize = A_ALORE_STACK_SIZE;
-    
+
     for (i = 0; i < A_NUM_FIXED_THREAD_TEMPS; i++)
         t->tempStack[i] = AZero;
     t->tempStackPtr = t->tempStack + A_NUM_FIXED_THREAD_TEMPS;
@@ -132,7 +132,7 @@ AThread *ACreateThread(AValue *temp)
     t->newRefEnd = t->newRefPtr + A_GC_LIST_BLOCK_LENGTH;
 
     t->curNewRefValues = t->newRefValues;
-    
+
     t->untraced = AValueToPtr(temp[2]);
     t->untracedPtr = t->untraced->data.val;
     t->untracedEnd = t->untracedPtr + A_GC_LIST_BLOCK_LENGTH;
@@ -213,7 +213,7 @@ ABool AAdvanceUntracedList(AThread *t)
     if (t->untracedPtr == t->untracedEnd) {
         AGetGCListBlock(t->untracedEnd)->size = A_GC_LIST_BLOCK_LENGTH;
         AGetGCListBlock(t->untracedEnd)->next = untraced;
-        
+
         t->untracedPtr = untraced->data.val;
         t->untracedEnd = untraced->data.val + A_GC_LIST_BLOCK_LENGTH;
     }
@@ -251,6 +251,6 @@ ABool AAdvanceNewRefList(AThread *t)
         t->newRefPtr = newRef->data.valPtr;
         t->newRefEnd = newRef->data.valPtr + A_GC_LIST_BLOCK_LENGTH;
     }
-    
+
     return TRUE;
 }

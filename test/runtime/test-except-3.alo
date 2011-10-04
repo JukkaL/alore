@@ -10,7 +10,7 @@ import __testc
 class ExceptSuite3 is Suite
   def testT1()
     var i = 0
-  
+
     try
       while True
         break
@@ -20,9 +20,9 @@ class ExceptSuite3 is Suite
     finally
       i += 1
     end
-  
+
     Assert(i == 2)
-  
+
     while True
       i = 0
       try
@@ -39,9 +39,9 @@ class ExceptSuite3 is Suite
       end
       Fail()
     end
-  
+
     Assert(i == 3)
-  
+
     while True
       i = 0
       try
@@ -61,28 +61,28 @@ class ExceptSuite3 is Suite
         Fail()
       end
     end
-  
+
     Assert(i == 2)
-  
+
     Ok()
   end
-  
+
   -- Finally statement and return with a return value
   def testT3()
     var depth = ContextDepth()
     var i = FuncRetVal()
     Assert(i == 13)
-  
+
     Assert(g3 == 4)
     Assert(ContextDepth() == depth)
-  
+
     Ok()
   end
-  
+
   -- Several try..except..finally statements in the same function
   def testT4()
     var i = 0
-  
+
     try
       i += 1
       try
@@ -104,7 +104,7 @@ class ExceptSuite3 is Suite
         finally
           i += 1
         end
-  
+
         try
           i += 1
           raise A()
@@ -120,7 +120,7 @@ class ExceptSuite3 is Suite
         finally
           i += 1
         end
-  
+
         Fail()
         try
           try
@@ -134,7 +134,7 @@ class ExceptSuite3 is Suite
       finally
         i += 1
       end
-  
+
       Fail()
       try
         try
@@ -148,16 +148,16 @@ class ExceptSuite3 is Suite
     except A
       i += 1
     end
-  
+
     Assert(i == 9)
-  
+
     Ok()
   end
-  
+
   -- Test finally (and except) statements within finally statement.
   def testT5()
     var i = 0
-   
+
     try
       i += 1
       try
@@ -183,9 +183,9 @@ class ExceptSuite3 is Suite
     except A
       i +=1
     end
-  
+
     Assert(i == 7)
-  
+
     i = 0
     try
       i += 1
@@ -213,9 +213,9 @@ class ExceptSuite3 is Suite
     except B
       i +=1
     end
-  
+
     Assert(i == 6)
-  
+
     i = 0
     while True
       try
@@ -252,17 +252,17 @@ class ExceptSuite3 is Suite
       end
       Fail()
     end
-  
+
     Assert(i == 7)
-  
+
     Ok()
   end
-  
+
   -- Test except statements within except statements.
   def testT6()
     var depth = ContextDepth()
     var i = 0
-  
+
     try
       try
         try
@@ -304,17 +304,17 @@ class ExceptSuite3 is Suite
     except B
       i += 1
     end
-  
+
     Assert(i == 5)
     Assert(ContextDepth() == depth)
-  
+
     Ok()
   end
-  
+
   -- Test break from within except-statement, no finally.
   def testT7()
     var i = 0
-  
+
     while True
       try
         while True
@@ -341,20 +341,20 @@ class ExceptSuite3 is Suite
       end
       Fail()
     end
-  
+
     Ok()
   end
-  
+
   -- Test return from within except-statement, no finally.
   def testT8()
     AssertEqual(nil, FuncRetExceptNoRetVal())
-    
+
     var i = FuncRetExceptRetVal()
     Assert(i == 17)
-  
+
     Ok()
   end
-  
+
   -- Test break within two try statements, the outermost having a finally
   -- statement.
   def testBreakInTwoDeepTry()
@@ -375,7 +375,7 @@ class ExceptSuite3 is Suite
     end
     Assert(i == 1)
   end
-  
+
   -- Test return within two try statements, the outermost having a finally
   -- statement.
   def testReturnInTwoDeepTry()
@@ -385,7 +385,7 @@ class ExceptSuite3 is Suite
     returnFromFinally2(a)
     Assert(a[0] == 2)
   end
-  
+
   -- Helper method for testReturnInTwoDeepTry.
   def returnFromFinally(a)
     0 + 0 + 0 -- Put some stuff in the stack
@@ -404,7 +404,7 @@ class ExceptSuite3 is Suite
     end
     Fail()
   end
-  
+
   -- Helper method for testReturnInTwoDeepTry.
   def returnFromFinally2(a)
     0 + 0 + 0 -- Put some stuff in the stack
@@ -428,7 +428,7 @@ end
 
 private var g2 = 0
 private var g3 = 0
-  
+
 
 private def FuncNoRetVal()
   try

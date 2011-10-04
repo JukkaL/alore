@@ -17,12 +17,12 @@ class ErrnoSuite is Suite
     for c in ErrnoConsts
       AssertType(Constant, c)
     end
-    
+
     AssertEqual(Str(EPERM), "errno::EPERM")
     AssertEqual(Str(ENOENT), "errno::ENOENT")
     AssertEqual(Str(E2BIG), "errno::E2BIG")
   end
-  
+
   def testCodeToErrnoAndCode()
     for c in ErrnoConsts
       AssertType(Int, CodeToErrno(c))
@@ -30,54 +30,54 @@ class ErrnoSuite is Suite
       AssertEqual(ErrnoToCode(CodeToErrno(c)), c)
     end
   end
-  
+
   def testInvalidErrno()
     AssertRaises(ValueError, def (); ErrnoToCode(234234234); end)
     AssertRaises(ValueError, def (); ErrnoToCode(-1); end)
     AssertRaises(ValueError, def (); ErrnoToCode(0); end)
   end
-  
+
   def testInvalidCode()
     AssertRaises(ValueError, def (); CodeToErrno(DummyErrno); end)
   end
-  
+
   def testErrorStr()
     AssertEqual(ErrorStr(ENOENT), "No such file or directory")
     AssertEqual(ErrorStr(EPERM), "Operation not permitted")
     AssertEqual(ErrorStr(DummyErrno), nil)
     AssertRaises(TypeError, def (); ErrorStr(2); end)
   end
-  
+
   def testIoError()
     -- Construct with errno argument.
     var e = IoError("foo", CodeToErrno(ENOENT))
     AssertEqual(e.errno, CodeToErrno(ENOENT))
     AssertEqual(e.code, ENOENT)
-    
+
     -- Construct with code argument.
     e = IoError("foo", ENOENT)
     AssertEqual(e.errno, CodeToErrno(ENOENT))
     AssertEqual(e.code, ENOENT)
-    
+
     --- Default arguments.
     e = IoError()
     AssertEqual(e.message, nil)
     AssertEqual(e.errno, 0)
     AssertEqual(e.code, nil)
-    
+
     -- Error cases.
     AssertRaises(TypeError, def (); IoError("x", 1.1); end)
   end
-  
+
   def testUnknownIoErrorValue()
     var e = IoError("x", DummyErrno)
     AssertEqual(e.code, DummyErrno)
     AssertEqual(e.errno, 0)
-    
+
     e = IoError(nil, 1234567)
     AssertEqual(e.code, nil)
     AssertEqual(e.errno, 1234567)
-    
+
     e = IoError(nil, 0)
     AssertEqual(e.code, nil)
     AssertEqual(e.errno, 0)

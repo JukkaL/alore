@@ -16,7 +16,7 @@ private def InferFunctionTypeArguments(
                 isVarArg as Boolean, basic as BasicTypes) as Array<(Typ, Typ)>
   -- Infer constraints.
   var constraints = InferConstraintsForCallable(calleeType, argTypes, isVarArg)
-  
+
   -- Solve constraints.
   var typeVars = calleeType.typeVarIds()
   return SolveConstraints(typeVars, constraints, basic)
@@ -40,13 +40,13 @@ private def InferRangeCallableTypeArguments(
   var callable = (callee.callable as Callable)
   -- Infer constraints for all type variables (both type and function).
   var constraints = InferConstraintsForCallable(callable, argTypes, isVarArg)
-  
+
   -- Add constraints from the RangeCallable.
   for i in 0 to callee.numTypeVars()
     constraints.append(Constraint(i + 1, SupertypeOf, callee.bottoms[i]))
     constraints.append(Constraint(i + 1, SubtypeOf, callee.tops[i]))
   end
-  
+
   var typeVars = callee.typeVarIds() + callable.typeVarIds()
   return SolveConstraints(typeVars, constraints, basic)
 end

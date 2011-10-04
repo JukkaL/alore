@@ -12,7 +12,7 @@ def Main(args)
     Print('Usage: primes.alo N')
     Exit(1)
   end
-  
+
   Primes(Int(args[0]))
 end
 
@@ -29,7 +29,7 @@ def Primes(n)
       end
     end
   end
-  
+
   -- Display a list of primes.
   var r = []
   for i in 2 to n + 1

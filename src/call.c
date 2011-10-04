@@ -39,7 +39,7 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
 
     stack = t->stackPtr;
     numArgs = fullNumArgs & ~A_VAR_ARG_FLAG;
-    
+
     if (AIsGlobalFunction(funcVal)) {
         AFunction *func;
         AValue *newStack;
@@ -47,7 +47,7 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
         AValue *sp;
 
       TheCall:
-        
+
         func = AValueToFunction(funcVal);
 
         stackFrameSize = func->stackFrameSize;
@@ -59,7 +59,7 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
         newStack[2] = A_COMPILED_FRAME_FLAG;
         newStack[1] = funcVal;
         newStack[0] = stackFrameSize;
-        
+
         /* Clear temporaries. */
         for (sp = newStack + 3 + func->minArgs;
              (void *)sp < ANextFrame(newStack, stackFrameSize); sp++)
@@ -74,7 +74,7 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
 
             if (numArgs >= A_ARG_IND_LENGTH) {
                 AOpcode *ind;
-                
+
                 /* AllocStatic() is safe since there can be no direct
                    exceptions before FreeStatic(). */
                 ind = AAllocStatic(numArgs * sizeof(AOpcode));
@@ -106,10 +106,10 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
 
         /* Record stack pointer. */
         t->stackPtr = newStack;
-            
+
         if (AIsCompiledFunction(func)) {
             AValue retVal;
-            
+
             /* Call the function */
             retVal = func->code.cfunc(t, newStack + 3);
 
@@ -138,7 +138,7 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
             if (instance == NULL)
                 return AError;
         }
-        
+
         AInitInstanceBlock(&instance->type, type);
         AInitInstanceData(instance, type);
 
@@ -196,7 +196,7 @@ AValue ACallMethodByNum(AThread *t, int member, int numArgs, AValue *args)
         if (AIsError(self))
             return AError;
     }
-    
+
     inst = AValueToInstance(self);
     type = AGetInstanceType(inst);
 
@@ -220,7 +220,7 @@ AValue ACallMethodByNum(AThread *t, int member, int numArgs, AValue *args)
                        CallFunction). */
                     for (i = 1; i <= numArgs; i++)
                         args[i - 1] = args[i];
-                    
+
                     return ACallValue(t, funcVal, numArgs, args);
                 } else
                     return ARaiseMethodCallExceptionND(t, member, args,
@@ -234,7 +234,7 @@ AValue ACallMethodByNum(AThread *t, int member, int numArgs, AValue *args)
         } else
             node = node->next;
     }
-    
+
     funcVal = AGlobalByNum(node->item);
     return ACallValue(t, funcVal, numArgs + 1, args);
 }
@@ -250,14 +250,14 @@ AValue ACallIndirect(struct AThread_ *t, AValue funcVal,
     if (newStack != NULL) {
         AValue *stack;
         AFunction *func;
-        
+
         stack = t->stackPtr;
         t->stackPtr = newStack;
         func = AValueToFunction(newStack[1]);
-        
+
         if (AIsCompiledFunction(func)) {
             AValue retVal;
-            
+
             /* Call the function */
             retVal = func->code.cfunc(t, newStack + 3);
 
@@ -290,7 +290,7 @@ AValue ACallMethodIndirect(AThread *t, int member, int numArgs,
         if (AIsError(self))
             return AError;
     }
-    
+
     inst = AValueToInstance(self);
     type = AGetInstanceType(inst);
 
@@ -319,20 +319,20 @@ AValue ACallMethodIndirect(AThread *t, int member, int numArgs,
         } else
             node = node->next;
     }
-    
+
     funcVal = AGlobalByNum(node->item);
     newStack = ASetupMethodFrame(t, funcVal, self, numArgs, argInd + 1);
     if (newStack != NULL) {
         AValue *stack;
         AFunction *func;
-        
+
         stack = t->stackPtr;
         t->stackPtr = newStack;;
         func = AValueToFunction(newStack[1]);
-        
+
         if (AIsCompiledFunction(func)) {
             AValue retVal;
-            
+
             /* Call the function */
             retVal = func->code.cfunc(t, newStack + 3);
 
@@ -361,7 +361,7 @@ AValue *ASetupFrame(AThread *t, AValue funcVal, int fullNumArgs,
 
     stack = t->stackPtr;
     numArgs = fullNumArgs & ~A_VAR_ARG_FLAG;
-    
+
     if (AIsGlobalFunction(funcVal)) {
         AFunction *func;
         AValue *newStack;
@@ -381,7 +381,7 @@ AValue *ASetupFrame(AThread *t, AValue funcVal, int fullNumArgs,
         newStack[2] = A_COMPILED_FRAME_FLAG;
         newStack[1] = funcVal;
         newStack[0] = stackFrameSize;
-        
+
         /* Clear temporaries. */
         for (sp = newStack + 3 + func->minArgs;
              (void *)sp < ANextFrame(newStack, stackFrameSize); sp++)
@@ -418,7 +418,7 @@ AValue *ASetupFrame(AThread *t, AValue funcVal, int fullNumArgs,
             if (instance == NULL)
                 return NULL;
         }
-        
+
         AInitInstanceBlock(&instance->type, type);
         AInitInstanceData(instance, type);
 
@@ -466,7 +466,7 @@ AValue *ASetupMethodFrame(AThread *t, AValue funcVal, AValue instance,
 
     stack = t->stackPtr;
     numArgs = fullNumArgs & ~A_VAR_ARG_FLAG;
-    
+
     func = AValueToFunction(funcVal);
 
     stackFrameSize = func->stackFrameSize;
@@ -480,15 +480,15 @@ AValue *ASetupMethodFrame(AThread *t, AValue funcVal, AValue instance,
     newStack[2] = A_COMPILED_FRAME_FLAG;
     newStack[1] = funcVal;
     newStack[0] = stackFrameSize;
-    
+
     /* Clear temporaries. */
     for (sp = newStack + 3 + func->minArgs;
          (void *)sp < ANextFrame(newStack, stackFrameSize); sp++)
         *sp = AZero;
-    
+
     /* Store self. */
     newStack[3] = AInstanceToValue(instance);
-    
+
     /* Check and store arguments. */
     if (fullNumArgs != func->maxArgs - 1 || numArgs != fullNumArgs) {
         t->stackPtr = newStack;
@@ -548,7 +548,7 @@ ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
         maxArgsCnt = maxArgs;
         if (maxArgs & A_VAR_ARG_FLAG)
             maxArgsCnt = (maxArgs - 1) & ~A_VAR_ARG_FLAG;
-        
+
         if (i < minArgs) {
             if (i + arrayArgs < minArgs) {
                 argc += arrayArgs;
@@ -610,7 +610,7 @@ ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
                 ASetArrayItemNewGen(a, i, AArrayOrTupleItem(srcA, srcInd));
                 i++;
             }
-            
+
             dst[maxArgsCnt] = a;
         } else if (argc + arrayArgs >
                    maxArgsCnt /* FIX: could be simpler? */) {
@@ -631,7 +631,7 @@ ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
     maxArgsCnt = maxArgs;
     if (maxArgs & A_VAR_ARG_FLAG)
         maxArgsCnt = (maxArgs - 1) & ~A_VAR_ARG_FLAG;
-    
+
     for ( ; i < argc && i < maxArgsCnt; i++)
         dst[i] = src[ip[i]];
 
@@ -642,9 +642,9 @@ ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
     if (maxArgs != maxArgsCnt) {
         AValue a = AZero;
         int aLen;
-        
+
         /* Extra arguments go into an array. */
-        
+
         aLen = (argc > maxArgsCnt ? argc - maxArgsCnt : 0);
 
         /* Initialiaze the value of the vararg argument so that the gc won't
@@ -665,7 +665,7 @@ ABool ASetupArguments(AThread *t, AValue *src, const AOpcode *ip, int argc,
         dst[maxArgsCnt] = a;
     } else if (argc > maxArgs)
         goto WrongNumberOfArgs;
-    
+
     return TRUE;
 
   WrongNumberOfArgs:

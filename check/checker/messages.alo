@@ -72,7 +72,7 @@ class MessageBuilder
   -- Report errors using this instance. It knows about the current file and
   -- import context.
   private const errors as Errors
-  
+
   def create(errors as Errors)
     self.errors = errors
   end
@@ -102,7 +102,7 @@ class MessageBuilder
       return "object"
     end
   end
-  
+
   -- Convert simple types to string that is suitable for error messages,
   -- otherwise return "". Try to keep the length of the result relatively
   -- short to avoid overly long error messages.
@@ -166,11 +166,11 @@ class MessageBuilder
 
   -- Specific operations
   ----------------------
-  
+
   -- The following operations are for genering specific error messages. They
   -- get some information as arguments, and they build an error message based
   -- on them.
-  
+
   -- Report a missing or non-accessible member.
   -- The type argument is the base type. If member corresponds to an operator,
   -- use the corresponding operator name in the messages. Return type Dynamic.
@@ -221,7 +221,7 @@ class MessageBuilder
     end
     return Dynamic()
   end
-  
+
   -- Report unsupported operand types for a binary operation.
   -- Types can be Typ objects or strings.
   def unsupportedOperandTypes(op as Str, leftType as dynamic,
@@ -231,42 +231,42 @@ class MessageBuilder
       checkVoid(rightType, context)
       return
     end
-    
+
     var leftStr as Str
     if leftType is Str
       leftStr = leftType
     else
       leftStr = format(leftType)
     end
-    
+
     var rightStr as Str
     if rightType is Str
       rightStr = rightType
     else
       rightStr = format(rightType)
     end
-    
+
     var msg = "Unsupported operand types for {} ({} and {})".format(
                 op, leftStr, rightStr)
     fail(msg, context)
   end
-  
+
   def unsupportedLeftOperand(op as Str, type as Typ, context as Context)
     if not checkVoid(type, context)
       fail("Unsupported left operand type for {} ({})".format(
              op, format(type)), context)
     end
   end
-  
+
   def typeExpectedAsRightOperandOfIs(context as Context)
     fail("Type expected as right operand of ""is""", context)
   end
-  
+
   def notCallable(type as Typ, context as Context) as Typ
     fail("{} not callable".format(format(type)), context)
     return Dynamic()
   end
-  
+
   -- Report an error about an incompatible type argType for argument n when
   -- calling a value with type callee. If the callee represents a method that
   -- corresponds to an operator, use the corresponding operator name in the
@@ -280,7 +280,7 @@ class MessageBuilder
     if callee.name != nil
       var name = callee.name
       var base = ExtractType(name)
-      
+
       if inversion == Inverted
         if name.startsWith("method ""_lt"" of")
           unsupportedOperandTypes(">=", base, argType, context)
@@ -290,7 +290,7 @@ class MessageBuilder
           return
         end
       end
-      
+
       for op, method in OpMethods
         if name.startsWith("method ""{}"" of".format(method)) and
            op != "<=" and op != ">="
@@ -302,12 +302,12 @@ class MessageBuilder
           return
         end
       end
-      
+
       if name.startsWith("method ""_get"" of")
         invalidIndexType(argType, base, context)
         return
       end
-      
+
       if name.startsWith("method ""_set"" of")
         if n == 1
           invalidIndexType(argType, base, context)
@@ -316,7 +316,7 @@ class MessageBuilder
         end
         return
       end
-      
+
       if name.startsWith("method ""create"" of ")
         name = base
       end
@@ -327,7 +327,7 @@ class MessageBuilder
                 n, target, formatSimple(argType))
     fail(msg, context)
   end
-  
+
   def invalidIndexType(indexType as Typ, baseStr as Str, context as Context)
     fail("Invalid index type {} for {}".format(format(indexType),
                                                baseStr), context)
@@ -341,7 +341,7 @@ class MessageBuilder
       tooManyArguments(callee, context)
     end
   end
-  
+
   def tooFewArguments(callee as Callable, context as Context)
     var msg = "Too few arguments"
     if callee.name != nil
@@ -349,7 +349,7 @@ class MessageBuilder
     end
     fail(msg, context)
   end
-  
+
   def tooManyArguments(callee as Callable, context as Context)
     var msg = "Too many arguments"
     if callee.name != nil
@@ -357,7 +357,7 @@ class MessageBuilder
     end
     fail(msg, context)
   end
-  
+
   -- Report an error about a void type in a non-void context. The first
   -- argument must be a void type. If the void type has a source in it, report
   -- it in the error message. This allows giving messages such as "Foo does not
@@ -370,7 +370,7 @@ class MessageBuilder
              Capitalize((voidType as Void).source)), context)
     end
   end
-  
+
   def noVariantMatchesArguments(intersection as Intersection,
                                 context as Context)
     if intersection.name != nil
@@ -380,24 +380,24 @@ class MessageBuilder
       fail("No function variant matches argument types", context)
     end
   end
-  
+
   def functionVariantsOverlap(n1 as Int, n2 as Int, context as Context)
     fail("Function signature variants {} and {} overlap".format(n1 + 1,
                                                                 n2 + 1),
          context)
   end
-  
+
   def invalidCast(targetType as Typ, sourceType as Typ, context as Context)
     if not checkVoid(sourceType, context)
       fail("Cannot cast from {} to {}".format(
              format(sourceType), format(targetType)), context)
     end
   end
-  
+
   def incompatibleOperatorAssignment(op as Str, context as Context)
     fail("Result type of {} incompatible in assignment".format(op), context)
   end
-  
+
   def incompatibleValueCountInAssignment(
           lvalueCount as Int, rvalueCount as Int, context as Context)
     if rvalueCount < lvalueCount
@@ -406,42 +406,42 @@ class MessageBuilder
       fail("Too many values to assign", context)
     end
   end
-  
+
   def typeIncompatibleWithSupertype(name as Str, supertype as TypeInfo,
                                     context as Context)
     fail("Type of ""{}"" incompatible with supertype ""{}""".format(
          name, supertype.name), context)
   end
-  
+
   def signatureIncompatibleWithSupertype(name as Str, supertype as Str,
                                          context as Context)
     fail("Signature of ""{}"" incompatible with supertype ""{}""".format(
            name, supertype), context)
   end
-  
+
   def argumentIncompatibleWithSupertype(argNum as Int, name as Str,
                                         supertype as Str, context as Context)
     fail("Argument {} of ""{}"" incompatible with supertype ""{}""".
          format(argNum, name, supertype), context)
   end
-  
+
   def returnTypeIncompatibleWithSupertype(name as Str, supertype as Str,
                                           context as Context)
     fail("Return type of ""{}"" incompatible with supertype ""{}""".
          format(name, supertype), context)
   end
-  
+
   def methodExpectedAsOperatorImplementation(type as Typ, member as Str,
                                              context as Context)
     fail("Expected operator method ""{}"" in {}".format(
       member, format(type)), context)
   end
-  
+
   def booleanReturnValueExpected(method as Str, context as Context)
     fail("Boolean return value expected for method ""{}""".format(method),
          context)
   end
-  
+
   def incompatibleTypeApplication(expectedArgCount as Int,
                                   actualArgCount as Int, context as Context)
     if expectedArgCount == 0
@@ -454,12 +454,12 @@ class MessageBuilder
              format(expectedArgCount), context)
     end
   end
-  
+
   def incompatibleArrayItemType(type as Typ, index as Int, context as Context)
     fail("Array item {} has incompatible type {}".format(index, format(type)),
          context)
   end
-  
+
   def couldNotInferTypeArguments(calleeType as Callable, n as Int,
                                  context as Context)
     if calleeType.name != nil and n > 0
@@ -469,16 +469,16 @@ class MessageBuilder
       fail("Cannot infer function type argument", context)
     end
   end
-  
+
   def invalidVarArg(type as Typ, context as Context)
     fail("Array or tuple expected as variable arguments", context)
   end
-  
+
   def genericTypeInheritsNonGeneric(basetype as TypeInfo, context as Context)
     fail("Generic type inherits non-generic type ""{}""".format(basetype.name),
          context)
   end
-  
+
   def typeVariableIsNotMappedToSupertype(typevar as Str, basetype as TypeInfo,
                                          context as Context)
     fail("Type variable ""{}"" is not mapped to a type variable of ""{}""".
@@ -486,12 +486,12 @@ class MessageBuilder
     fail("(Non-trivial subtypes cannot introduce new " +
          "independent type variables.)", context)
   end
-  
+
   def incompleteTypeVarMatch(member as Str, context as Context)
     fail("""{}"" has incomplete match to supertype type variable".format(
            member), context)
   end
-  
+
   -- If type is void, report an error such as ".. does not return a value"
   -- and return True. Otherwise, return False.
   private def checkVoid(type as Typ, context as Context) as Boolean

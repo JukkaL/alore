@@ -18,7 +18,7 @@ class SymbolSuite is Suite
     Assert(not HasMember(f, "x"))
     AssertRaises(TypeError, HasMember, (f, True))
   end
-  
+
   def testGetMember()
     var f = FooClass()
     Assert(GetMember(f, "variable") == f.variable)
@@ -29,7 +29,7 @@ class SymbolSuite is Suite
     Assert(GetMember(f, "overriden")() == f.overriden())
     Assert(GetMember(f, "baseVar") == f.baseVar)
     AssertRaises(ValueError, GetMember, [f, "create"])
-    
+
     var nerr = 0
     try
       GetMember(f, "Variable")
@@ -37,14 +37,14 @@ class SymbolSuite is Suite
       nerr += 1
     end
     Assert(nerr == 1)
-    
+
     try
       GetMember(f, 12)
     except TypeError
       nerr += 1
     end
     Assert(nerr == 2)
-    
+
     try
       GetMember(12, "variable")
     except MemberError
@@ -52,20 +52,20 @@ class SymbolSuite is Suite
     end
     Assert(nerr == 3)
   end
-  
+
   def testTestSetMember()
     var f = FooClass()
-    
+
     SetMember(f, "variable", 2)
     Assert(f.variable == 2)
-    
+
     Assert(f.settable == 3)
     SetMember(f, "setter", 7)
     Assert(f.settable == 8)
-    
+
     SetMember(f, "baseVar", 57)
     Assert(f.baseVar == 57)
-    
+
     var nerr = 0
     try
       SetMember(f, "Variable", 0)
@@ -73,14 +73,14 @@ class SymbolSuite is Suite
       nerr += 1
     end
     Assert(nerr == 1)
-    
+
     try
       SetMember(f, "constant", 0)
     except MemberError
       nerr += 1
     end
     Assert(nerr == 2)
-    
+
     try
       SetMember(f, "method", 0)
     except MemberError
@@ -93,11 +93,11 @@ end
 
 private class BaseClass
   var baseVar = 55
-  
+
   def baseMethod()
     return 66
   end
-  
+
   def overriden()
     return 33
   end
@@ -110,11 +110,11 @@ private class FooClass is BaseClass
 
   var variable = 12
   const constant = 13
-  
+
   def property
     return 14
   end
-  
+
   var settable = 3
   def setter
     return settable
@@ -126,7 +126,7 @@ private class FooClass is BaseClass
   def method()
     return 15
   end
-  
+
   def overriden()
     return 44
   end

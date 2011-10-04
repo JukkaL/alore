@@ -10,30 +10,30 @@ class ArgparseParseSuite is Suite
   def testTrivial()
     assertParse([], [], [], [])
   end
-  
+
   def testSimple()
     assertParse(["-a"], ["-a"],
                 [("-a", nil)], [])
     assertParse(["a"], ["-a"],
                 [], ["a"])
   end
-  
+
   def testInvalidOption()
     assertOptError(["-b"], ["-a"], "invalid option -b")
   end
-  
+
   -- Multiple aliases for an argument
   def testAliases()
     assertParse(["-a", "-b"], ["-a -b"],
                 [("-a", nil), ("-a", nil)], [])
   end
-  
+
   -- Long argument --foo-bar
   def testLongArgument()
     assertParse(["--foo", "--x-y"], ["-f --foo", "--x-y"],
                 [("-f", nil), ("--x-y", nil)], [])
   end
-  
+
   -- Shortening long argument --foo-b
   def testShorteningLongArg()
     assertParse(["--foo-ba", "--fo"], ["-f --foo-bar", "--far"],
@@ -41,7 +41,7 @@ class ArgparseParseSuite is Suite
     assertOptError(["--f"],
                    ["--foo-bar -f", "--far"], "ambiguous option --f")
   end
-  
+
   -- Option with string argument
   --   -a x    -ax   --foo x  --foo=x
   def testOptionArgument()
@@ -59,7 +59,7 @@ class ArgparseParseSuite is Suite
     assertOptError(["--fa=x"],
                    ["--fa"], "option --fa doesn't allow an argument")
   end
-  
+
   -- Combining multiple short arguments -axv
   def testCombiningArguments()
     assertParse(["-axy"], ["--aa -a", "-x", "-y"],
@@ -68,32 +68,32 @@ class ArgparseParseSuite is Suite
                    ["-f", "-a X"],
                    "option -a requires an argument")
   end
-  
+
   -- Combining multiple short arguments with an invalid argument name
   def testCombiningInvalidArgument()
     assertOptError(["-faw"],
                    ["-f", "-a"],
                    "invalid option -w")
   end
-  
+
   -- "--" signals the end of options
   def testDashDash()
     assertParse(["-a", "--", "x", "y"], ["-a"],
                 [("-a", nil)], ["x", "y"])
   end
-  
+
   -- "-" is accepted as a positional argument (it often means stdin)
   def testDash()
     assertParse(["-a", "-", "-x", "y"], ["-a"],
                 [("-a", nil)], ["-", "-x", "y"])
   end
-  
+
   -- Test ignoring spaces in option descriptions.
   def testExtraSpacesInDescriptions()
     assertParse(["-a", "foo", "--aa=foo", "z"], ["  -a   --aa   X  "],
                 [("-a", "foo"), ("-a", "foo")], ["z"])
   end
-  
+
   -- Test invalid option descriptions.
   def testInvalidOptionDescription()
     -- IDEA: .parse() should not be required below
@@ -104,7 +104,7 @@ class ArgparseParseSuite is Suite
                                ArgumentParser("").parse([])
                              end)
   end
-  
+
   def testInvalidPositionalArguments()
     for args in ["[x"],
                 ["x", "[x"],
@@ -122,7 +122,7 @@ class ArgparseParseSuite is Suite
                                end)
     end
   end
-  
+
   def testRestrictedPositionalArguments()
     assertParse(["x"],
                 ["foo"],
@@ -131,7 +131,7 @@ class ArgparseParseSuite is Suite
                 ["foo", "bar"],
                 [], ["x", "y"])
   end
-  
+
   def testRestrictedPositionalArgumentsWithOptionals()
     assertParse(["x"],
                 ["[foo]"],
@@ -152,7 +152,7 @@ class ArgparseParseSuite is Suite
                 ["foo", "[bar]"],
                 [], ["x", "y"])
   end
-  
+
   def testRestrictedPositionalArgumentsWithVarArgs()
     -- Test "foo..." and "[foo]..." forms.
     assertParse([],
@@ -176,7 +176,7 @@ class ArgparseParseSuite is Suite
     assertParse(["x", "xx", "xxx", "x4"],
                 ["x", "[foo]...", "[y]"],
                 [], ["x", "xx", "xxx", "x4"])
-    
+
     -- Test "..." form.
     assertParse([],
                 ["..."],
@@ -190,9 +190,9 @@ class ArgparseParseSuite is Suite
     assertParse(["x", "y"],
                 ["foo", "..."],
                 [], ["x", "y"])
-                
+
   end
-  
+
   def testInvalidNumberOfPositionalArguments()
     assertOptError(["x", "y"],
                    ["foo"],
@@ -201,7 +201,7 @@ class ArgparseParseSuite is Suite
                    ["foo", "bar"],
                    "too few positional arguments")
   end
-  
+
   def testInvalidNumberOfPositionalArgumentsWithOptionals()
     assertOptError(["x", "y", "z"],
                    ["bar", "[foo]"],
@@ -210,7 +210,7 @@ class ArgparseParseSuite is Suite
                    ["bar", "[foo]"],
                    "too few positional arguments")
   end
-  
+
   def testInvalidNumberOfPositionalArgumentsWithVarArgs()
     assertOptError([],
                    ["bar", "[foo] ..."],
@@ -225,32 +225,32 @@ class ArgparseParseSuite is Suite
                    ["bar", "zar", "..."],
                    "too few positional arguments")
   end
-  
+
   def testOptionValueStartingWithDash()
     assertParse(["-a", "-a", "x"], ["-a X"], [("-a", "-a")], ["x"])
   end
-  
+
   def testShortOptionWithEquals()
     assertParse(["-a=x", "y"], ["-a X"], [("-a", "=x")], ["y"])
   end
-  
+
   -- creating usage text
-  
+
   private def assertParse(args, descriptions, results, finalArgs)
     var arg = ArgumentParser(*descriptions).parse(args)
     AssertEqual(arg.items(), results)
     AssertEqual(arg.rest, finalArgs)
   end
-  
+
   private def assertOptError(args, descriptions, msg)
     try
       var parser = ArgumentParser(*descriptions)
-      
+
       -- Override normal error reporting.
       parser.fail = def (message)
                       raise MyArgError(message)
                     end
-    
+
       parser.parse(args)
       Assert(False, "No exception raised")
     except e is MyArgError

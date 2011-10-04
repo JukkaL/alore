@@ -19,7 +19,7 @@ class CallSuite7 is Suite
     Assert(Flag == 1)
     AssertEqual(nil, Call(VarArg, [1, 2]))
   end
-  
+
   def testCallFunctionFromCDifferentStackBlock()
     -- Allocate enough stack variables that the current stack block will
     -- overflow.
@@ -42,7 +42,7 @@ class CallSuite7 is Suite
     var a17
     Assert(Call(Sum2, [3, 4]) == 7)
   end
-  
+
   def testStackOverflow()
     AssertRaises(RuntimeError, StackOverflowMessage, InfiniteRecursion, [0])
     var o = RecursionClass()
@@ -51,7 +51,7 @@ class CallSuite7 is Suite
     var o2 = RecursionClassC()
     AssertRaises(RuntimeError, StackOverflowMessage, o2.infiniteRecursion, [])
   end
-  
+
   def testStackOverflowTraceback()
     var e, tb = CallTrace(InfiniteRecursion, 0)
     tb = tb[0:]
@@ -59,15 +59,15 @@ class CallSuite7 is Suite
     AssertEqual(tb.length(), tb2.length())
     Assert(e != e2)
   end
-  
+
   def testCallMethodFromC()
     -- FIX implement
   end
-  
+
   def testCallClassFromC()
     -- FIX implement
   end
-  
+
   -- FIX test a long chain of c->alore->c calls
   -- FIX test changing stack blocks and returning stuff and raising ReturnError
 end

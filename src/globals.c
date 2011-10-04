@@ -63,7 +63,7 @@ ABool AInitializeGlobals(void)
     /* NOTE: Errors don't have to checked, since we can assume that initially
              enough free memory is available in the heap for the required data
              structures. */
-    
+
     AFirstDynamicModule = 0;
 
     AFreeGlobalBlock = -1;
@@ -85,7 +85,7 @@ ABool AInitializeGlobals(void)
     ADefault = AGlobalByNum(GL_DEFAULT_ARG);
     AError = AGlobalByNum(GL_ERROR);
     /* ATrue and AFalse are initialized in std::Main. */
-    
+
     /* FIX: perhaps use some function.. */
 #ifdef A_NEWLINE_CHAR2
     s = AAlloc(ACompilerThread, sizeof(AValue) + 2);
@@ -97,7 +97,7 @@ ABool AInitializeGlobals(void)
 #endif
     s->elem[0] = A_NEWLINE_CHAR1;
     ASetConstGlobalValue(ACompilerThread, GL_NEWLINE, AStrToValue(s));
-    
+
     AAllocateModuleGlobals(&AFirstMainGlobalVariable, &i);
 
     ANumMainGlobals = 0;
@@ -112,11 +112,11 @@ ABool AAllocateModuleGlobals(int *firstVar, int *firstConst)
 {
     int globalVar;
     int globalConst;
-    
+
     globalVar = AllocGlobalBlock();
     if (globalVar == -1)
         return FALSE;
-    
+
     globalConst = AllocGlobalBlock();
     if (globalConst == -1)
         return FALSE;
@@ -162,7 +162,7 @@ static ABool GrowGlobalVarList(void)
         /* FIX: This is somewhat ugly...  */
         if (!ACollectNewGen(FALSE))
             return FALSE;
-        
+
         newLen = 2 * AGlobalListLength;
     }
 
@@ -178,15 +178,15 @@ static ABool GrowGlobalVarList(void)
         return FALSE;
 
     AGlobalVars = new;
-    
+
     for (i = newLen - A_GLOBAL_BUCKET_SIZE;
          i >= AGlobalListLength; i -= A_GLOBAL_BUCKET_SIZE)
         AddFreeGlobalBlock(i);
-    
+
     AGlobalListLength = newLen;
 
     ADebugCompilerMsg(("End grow global variable list"));
-    
+
     return TRUE;
 }
 
@@ -212,7 +212,7 @@ static int AllocGlobalBlock(void)
 {
     int result;
     int i;
-    
+
     if (AFreeGlobalBlock == -1) {
         if (!GrowGlobalVarList())
             return -1;
@@ -223,7 +223,7 @@ static int AllocGlobalBlock(void)
 
     for (i = 0; i < A_GLOBAL_BUCKET_SIZE; i++)
         AGlobalVars[result + i] = AZero;
-    
+
     return result;
 }
 
@@ -238,7 +238,7 @@ int AAddGlobalValue(AValue v)
     int num;
 
     num = GlobalVarIndex;
-    
+
     if (IsOutOfBucket(num)) {
         int newBlock;
         int curBucket;
@@ -246,9 +246,9 @@ int AAddGlobalValue(AValue v)
         *ACompilerThread->tempStack = v;
         newBlock = AllocGlobalBlock();
         v = *ACompilerThread->tempStack;
-        
+
         curBucket = GetBucketBegin(num - 1);
-        
+
         if (newBlock == -1)
             return -1;
 
@@ -259,7 +259,7 @@ int AAddGlobalValue(AValue v)
     }
 
     AGlobalVars[num] = v;
-    
+
     GlobalVarIndex++;
 
     return num;
@@ -283,7 +283,7 @@ int AAddConstGlobalValue(AValue v)
         *ACompilerThread->tempStack = v;
         newBlock = AllocGlobalBlock();
         v = *ACompilerThread->tempStack;
-        
+
         curBucket = GetBucketBegin(num - 1);
 
         if (newBlock == -1)

@@ -135,11 +135,11 @@ AValue AFileCreate(AThread *t, AValue *frame)
         frame[1] = frame[0];
         if (AIsError(AStreamCreate(t, frame + 1)))
             return AError;
-        
+
         inst = AValueToInstance(frame[0]);
 
         fileMode = 0666;
-        
+
         if (inst->member[A_STREAM_MODE] & A_MODE_INPUT) {
             if (inst->member[A_STREAM_MODE] & A_MODE_OUTPUT)
                 fileFlags = O_RDWR | O_CREAT;
@@ -147,24 +147,24 @@ AValue AFileCreate(AThread *t, AValue *frame)
                 fileFlags = O_RDONLY;
         } else
             fileFlags = O_WRONLY | O_CREAT | O_TRUNC;
-        
+
         if (isAppend) {
             fileFlags |= O_APPEND;
             fileFlags &= ~O_TRUNC;
         }
-        
+
         if (isProtected) {
             fileFlags |= O_EXCL;
             fileMode = 0600;
         }
-        
+
         AAllowBlocking();
         fileNum = open(path, fileFlags, fileMode);
         AEndBlocking();
-        
+
         if (fileNum == -1)
             return ARaiseErrnoIoError(t, path);
-        
+
         inst = AValueToInstance(frame[0]);
         inst->member[A_FILE_ID] = AIntToValue(fileNum);
     }
@@ -175,12 +175,12 @@ AValue AFileCreate(AThread *t, AValue *frame)
         char mode[4];
         FILE *file;
         AValue buf;
-        
+
         /* Call superclass (Stream) constructor. */
         frame[1] = frame[0];
         if (AIsError(AStreamCreate(t, frame + 1)))
             return AError;
-        
+
         inst = AValueToInstance(frame[0]);
         if (inst->member[A_STREAM_MODE] & A_MODE_INPUT) {
             if (inst->member[A_STREAM_MODE] & A_MODE_OUTPUT) {
@@ -198,7 +198,7 @@ AValue AFileCreate(AThread *t, AValue *frame)
         AAllowBlocking();
         file = fopen(path, mode);
         AEndBlocking();
-        
+
         if (file == NULL)
             return ARaiseErrnoIoError(t, path);
 
@@ -208,7 +208,7 @@ AValue AFileCreate(AThread *t, AValue *frame)
         if (AIsError(buf))
             return AError;
         ASetMemberDirect(t, frame[0], A_FILE_ID, buf);
-        
+
         inst = AValueToInstance(frame[0]);
         ACopyMem(AValueToStr(inst->member[A_FILE_ID])->elem, &file,
                  sizeof(file));
@@ -238,7 +238,7 @@ AValue AFileClose(AThread *t, AValue *frame)
     /* Is the stream kept in a global list of open streams? */
     isListed = (AMemberDirect(frame[0], A_STREAM_MODE) & A_MODE_OUTPUT)
         && AMemberDirect(frame[0], A_STREAM_BUF_MODE) != A_BUFMODE_UNBUFFERED;
-    
+
     ret = AFileCloseWithMethod(t, frame, A_FILE_METHOD);
 
     if (isListed && !RemoveOutputStreamList(t, frame))
@@ -257,12 +257,12 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
     /* If already closed, do nothing. */
     if (AMemberDirect(frame[0], A_STREAM_MODE) == AZero)
         return ANil;
-    
+
     if (AMemberDirect(frame[0], A_STREAM_MODE) & A_MODE_OUTPUT) {
         if (ACallMethodByNum(t, AM_FLUSH, 0, frame) == AError)
             return AError;
     }
-    
+
     ASetMemberDirect(t, frame[0], A_STREAM_MODE, AZero);
 
 #if defined(A_HAVE_WINDOWS) && defined(A_HAVE_SOCKET_MODULE)
@@ -271,7 +271,7 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
         AAllowBlocking();
         retVal = closesocket(AGetInt(t, AMemberDirect(frame[0], A_FILE_ID)));
         AEndBlocking();
-        
+
         if (retVal == SOCKET_ERROR)
             return ARaiseIoError(t,
                                  AGetWinsockErrorMessage(WSAGetLastError()));
@@ -285,7 +285,7 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
         AAllowBlocking();
         retVal = close(AGetInt(t, AMemberDirect(frame[0], A_FILE_ID)));
         AEndBlocking();
-        
+
         if (retVal < 0)
             return ARaiseErrnoIoError(t, NULL);
         else
@@ -299,7 +299,7 @@ AValue AFileCloseWithMethod(AThread *t, AValue *frame, int method)
             retVal = fclose(file);
             AEndBlocking();
         }
-        
+
         if (retVal != 0)
             return ARaiseErrnoIoError(t, NULL);
         else
@@ -342,7 +342,7 @@ AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
         int bufInd;
 
         bufInd = 0;
-        
+
         for (i = 0; i < aLen; i++) {
             unsigned char *s;
             int len;
@@ -363,7 +363,7 @@ AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
                 ss = AValueToSubStr(frame[2]);
                 if (AIsWideStr(ss->str))
                     goto WideStr;
-                
+
                 s = AValueToStr(ss->str)->elem;
                 len = AValueToInt(ss->len);
                 ind = AValueToInt(ss->ind);
@@ -388,9 +388,9 @@ AValue AFile_WriteWithMethod(AThread *t, AValue *frame, int method)
 
                 if (!WriteBlock(t, frame[0], buf, WRITE_BUF_SIZE, method))
                     return AError;
-                
+
                 bufInd = 0;
-                
+
                 if (AIsNarrowStr(frame[2]))
                     s = AValueToStr(frame[2])->elem;
                 else
@@ -414,12 +414,12 @@ AValue AFile_Read(AThread *t, AValue *frame)
 {
     /* Flush all output buffers. This is done mainly so that any data written
        to StdOut is automatically flushed before reading from StdIn.
-       
+
        IDEA: This seems very inefficient. Only flush StdOut and perhaps only
              if reading from StdIn? */
     if (AIsError(AFlushOutputBuffers(t, frame + 2)))
         return AError;
-    
+
     return AFile_ReadWithMethod(t, frame, A_FILE_METHOD);
 }
 
@@ -437,17 +437,17 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
 
     if (!AIsShortInt(frame[1]))
         return ARaiseTypeErrorND(t, NULL);
-    
+
     if ((AMemberDirect(frame[0], A_STREAM_MODE) & A_MODE_INPUT) == 0)
         return ARaiseByNum(t, AStdIoErrorNum, AMsgWriteOnly);
-    
+
     readLen = AValueToInt(frame[1]);
     if (readLen > MAX_READ)
         readLen = MAX_READ;
 
     /* IDEA: Optimize if a very small read request? The speedup might be
              insignificant, though. */
-    
+
     block = AAllocLocked(t, sizeof(AValue) + readLen);
     if (block == NULL)
         return AError;
@@ -455,7 +455,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
     str = (AString *)block;
     AInitNonPointerBlock(&str->header, readLen);
     frame[1] = AStrToValue(str);
-    
+
     inst = AValueToInstance(frame[0]);
     fileNum = AValueToInt(inst->member[A_FILE_ID]);
 
@@ -467,7 +467,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
         AAllowBlocking();
         numRead = recv(fileNum, block + sizeof(AValue), readLen, 0);
         AEndBlocking();
-        
+
         if (numRead == SOCKET_ERROR)
             return ARaiseIoError(t,
                                  AGetWinsockErrorMessage(WSAGetLastError()));
@@ -479,7 +479,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
         AAllowBlocking();
         numRead = read(fileNum, block + sizeof(AValue), readLen);
         AEndBlocking();
-        
+
         if (numRead == -1) {
             if (errno == EINTR) {
                 if (AIsInterrupt && AHandleInterrupt(t))
@@ -494,11 +494,11 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
         {
             FILE *file;
             GetFILE(frame[0], &file);
-            
+
             AAllowBlocking();
             numRead = fread(block + sizeof(AValue), 1, readLen, file);
             AEndBlocking();
-            
+
             if (numRead < readLen && ferror(file)) {
                 if (errno == EINTR) {
                     if (AIsInterrupt && AHandleInterrupt(t))
@@ -525,7 +525,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
                 Sleep(1);
                 if (AIsInterrupt && AHandleInterrupt(t))
                     return AError;
-                
+
                 /* The sleep probably was not long enough, or something else
                    strange happened. Perhaps we should try to sleep in a loop
                    for a few iterations? */
@@ -541,7 +541,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
     /* IDEA: Truncate the block so that we do not waste memory if only a
              small portion of a large request can be satisfied. Alternatively,
              make MAX_READ smaller, but this might hurt performance. */
-    
+
     return ASubStr(t, frame[1], 0, numRead);
 }
 
@@ -556,24 +556,24 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
     if (method == A_SOCKET_METHOD) {
         /* Windows socket implementation */
         int socket = AValueToInt(AValueToInstance(file)->member[A_FILE_ID]);
-        
+
         do {
             int numWritten;
-            
+
             AAllowBlocking();
             /* FIX: If larger than maximum request size, do multiple calls. */
             numWritten = send(socket, buf, len, 0);
             AEndBlocking();
-            
+
             if (numWritten == SOCKET_ERROR) {
                 ARaiseIoError(t, AGetWinsockErrorMessage(WSAGetLastError()));
                 return FALSE;
             }
-            
+
             buf += numWritten;
             len -= numWritten;
         } while (len > 0);
-        
+
         return TRUE;
     } else
 #endif
@@ -581,7 +581,7 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
 #ifdef A_HAVE_POSIX
         /* Posix implementation */
         int fileNum = AValueToInt(AValueToInstance(file)->member[A_FILE_ID]);
-        
+
         do {
             ssize_t numWritten;
 
@@ -592,7 +592,7 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
             /* Check for keyboard interrupts. */
             if (AIsInterrupt && AHandleInterrupt(t))
                 return FALSE;
-            
+
             if (numWritten == -1) {
                 if (errno == EINTR)
                     numWritten = 0;
@@ -601,28 +601,28 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
                     return FALSE;
                 }
             }
-            
+
             buf += numWritten;
             len -= numWritten;
         } while (len > 0);
-        
+
         return TRUE;
 #else
         /* Generic portable implementation (for files only) */
         FILE *f;
-        
+
         GetFILE(file, &f);
-        
+
         do {
             size_t numWritten;
-            
+
             AAllowBlocking();
             numWritten = fwrite(buf, 1, len, f);
             AEndBlocking();
-            
+
             if (AIsInterrupt && AHandleInterrupt(t))
                 return FALSE;
-                    
+
             if (numWritten < len && ferror(f)) {
                 if (errno == EINTR)
                     numWritten = 0;
@@ -631,11 +631,11 @@ static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
                     return FALSE;
                 }
             }
-            
+
             buf += numWritten;
             len -= numWritten;
         } while (len > 0);
-        
+
         return TRUE;
 #endif
     }
@@ -647,15 +647,15 @@ AValue AFileSeek(AThread *t, AValue *frame)
 {
     AInt64 offset;
     AInstance *inst;
-    
+
     offset = AGetInt64(t, frame[1]);
-    
+
     /* Flush if output stream. */
     if (AValueToInstance(frame[0])->member[A_STREAM_MODE] & A_MODE_OUTPUT) {
         if (AIsError(AStreamFlush(t, frame)))
             return AError;
     }
-    
+
     inst = AValueToInstance(frame[0]);
 
     /* Discard input buffer if input stream. */
@@ -667,7 +667,7 @@ AValue AFileSeek(AThread *t, AValue *frame)
 #ifdef A_HAVE_POSIX
     {
         int fileNum = AValueToInt(inst->member[A_FILE_ID]);
-        
+
         if (lseek(fileNum, offset, SEEK_SET) == (off_t)-1)
             return ARaiseErrnoIoError(t, NULL);
     }
@@ -699,7 +699,7 @@ AValue AFileSeek(AThread *t, AValue *frame)
     inst->member[A_STREAM_INPUT_BUF_END] = AZero;
     inst->member[A_STREAM_OUTPUT_BUF] = AZero;
     inst->member[A_STREAM_OUTPUT_BUF_IND] = AZero;
-    
+
     return ANil;
 }
 
@@ -708,7 +708,7 @@ AValue AFileSeek(AThread *t, AValue *frame)
 AValue AFilePos(AThread *t, AValue *frame)
 {
     int delta = 0;
-    
+
     /* Flush if output stream. */
     if (AValueToInstance(frame[0])->member[A_STREAM_MODE] & A_MODE_OUTPUT) {
         if (AIsError(AStreamFlush(t, frame)))
@@ -721,28 +721,28 @@ AValue AFilePos(AThread *t, AValue *frame)
     if (AMemberDirect(frame[0], A_STREAM_INPUT_BUF) != AZero)
         delta = AValueToInt(AMemberDirect(frame[0], A_STREAM_INPUT_BUF_IND) -
                             AMemberDirect(frame[0], A_STREAM_INPUT_BUF_END));
-    
+
 #ifdef A_HAVE_POSIX
     {
         int fileNum = AValueToInt(AMemberDirect(frame[0], A_FILE_ID));
         off_t pos;
-        
+
         pos = lseek(fileNum, 0, SEEK_CUR);
         if (pos == (off_t)-1)
             return ARaiseErrnoIoError(t, NULL);
-        
+
         return AMakeInt64(t, pos + delta);
     }
 #else
     {
         FILE *file;
         AInt64 pos;
-        
+
         GetFILE(frame[0], &file);
         pos = ftell(file);
         if (pos < 0)
             return ARaiseErrnoIoError(t, NULL);
-        
+
         return AMakeInt64(t, pos + delta);
     }
 #endif
@@ -757,7 +757,7 @@ AValue AFileSize(AThread *t, AValue *frame)
         if (AIsError(AStreamFlush(t, frame)))
             return AError;
     }
-    
+
 #ifdef A_HAVE_POSIX
     {
         int fileNum = AValueToInt(AMemberDirect(frame[0], A_FILE_ID));
@@ -768,7 +768,7 @@ AValue AFileSize(AThread *t, AValue *frame)
 
         if (!S_ISREG(buf.st_mode))
             return ARaiseByNum(t, AStdIoErrorNum, NULL); /* IDEA: Msg */
-        
+
         return AMakeInt64(t, buf.st_size);
     }
 #else
@@ -776,7 +776,7 @@ AValue AFileSize(AThread *t, AValue *frame)
         FILE *file;
         AInt64 pos;
         AInt64 len;
-        
+
         GetFILE(frame[0], &file);
 
         /* Record the current location, seek to the end of the file, get the
@@ -830,15 +830,15 @@ static ABool CreateTextStreamWrapper(AThread *t, int wrapperNum, int origNum,
     temp[0] = AGlobalByNum(origNum);
     temp[1] = AGlobalByNum(AUnstrictNum);
     temp[2] = AGlobalByNum(bufMode);
-    
+
     temp[0] = ACall(t, "io::TextStream", 3, temp);
     if (AIsError(temp[0]))
         return FALSE;
 
     ASetConstGlobalByNum(t, wrapperNum, temp[0]);
-    
+
     AFreeTemps(t, 4);
-    
+
     return TRUE;
 }
 
@@ -854,7 +854,7 @@ AValue AIoMain(AThread *t, AValue *frame)
 
     for (i = 2; i <= 4; i++)
         frame[i] = ADefault;
-    
+
     frame[1] = AGlobalByNum(AInputNum);
     frame[2] = AGlobalByNum(ANarrowNum);
 
@@ -930,12 +930,12 @@ AValue AIoMain(AThread *t, AValue *frame)
         sigprocmask(SIG_BLOCK, &set, NULL);
     }
 #endif
-    
+
     ASetConstGlobalByNum(t, ARawStdErrNum, v);
 
     if (AIsError(AInitDefaultEncoding(t)))
         return AError;
-    
+
     /* Create StdIn, StdOut and StdErr objects. */
     if (!CreateTextStreamWrapper(t, AStdInNum, ARawStdInNum, stdinBuf)
         || !CreateTextStreamWrapper(t, AStdOutNum, ARawStdOutNum, stdoutBuf)
@@ -949,9 +949,9 @@ AValue AIoMain(AThread *t, AValue *frame)
         return AError;
     if (!AddOutputStreamList(t, &AGlobalVars[AStdOutNum]))
         return AError;
-    
+
     ASetConstGlobalByNum(t, ABomNum, AMakeStrW(t, bom));
-    
+
     frame[0] = AGlobalByNum(AFlushOutputBuffersNum);
     return AAddExitHandler(t, frame);
 }
@@ -962,7 +962,7 @@ static AValue CreateFileObject(AThread *t, AValue *frame, int fileNum)
 {
     frame[0] = AMakeUninitializedObject(t, AGlobalByNum(AFileClassNum));
     ASetMemberDirect(t, frame[0], A_FILE_ID, AIntToValue(fileNum));
-    
+
     if (AIsError(AStreamCreate(t, frame)))
         return AError;
 
@@ -973,7 +973,7 @@ static AValue CreateFileObject(AThread *t, AValue *frame, FILE *file)
 {
     /* IDEA: Use AMakeUninitializedObject! */
     AInstance *inst;
-    
+
     /* Allocate the block that holds the FILE * value. The block is implemented
        as a string (i.e. non-pointer) block. */
     frame[0] = ACreateString(t, (char *)&file, sizeof(FILE *));
@@ -981,7 +981,7 @@ static AValue CreateFileObject(AThread *t, AValue *frame, FILE *file)
         frame[0] = AZero;
         return AError;
     }
-    
+
     inst = AAlloc(t, (A_NUM_FILE_MEMBER_VARS + 1) * sizeof(AValue));
     if (inst == NULL)
         return AError;
@@ -991,7 +991,7 @@ static AValue CreateFileObject(AThread *t, AValue *frame, FILE *file)
     inst->member[A_FILE_ID] = frame[0];
 
     frame[0] = AInstanceToValue(inst);
-    
+
     if (AIsError(AStreamCreate(t, frame)))
         return AError;
 
@@ -1005,7 +1005,7 @@ static AValue CreateFileObject(AThread *t, AValue *frame, FILE *file)
 static ABool AddOutputStreamList(AThread *t, AValue *file)
 {
     ALockStreams();
-    
+
     if (!ASetMemberDirectND(t, *file, A_STREAM_LIST_NEXT,
                          AGlobalByNum(GL_OUTPUT_STREAMS)))
         goto Fail;
@@ -1016,7 +1016,7 @@ static ABool AddOutputStreamList(AThread *t, AValue *file)
     }
     if (!ASetConstGlobalValue(t, GL_OUTPUT_STREAMS, *file))
         goto Fail;
-    
+
     AUnlockStreams();
     return TRUE;
 
@@ -1033,7 +1033,7 @@ static ABool RemoveOutputStreamList(AThread *t, AValue *file)
     AValue f;
 
     ALockStreams();
-    
+
     if ((f = AMemberDirect(*file, A_STREAM_LIST_NEXT)) != AZero) {
         if (!ASetMemberDirectND(t, f, A_STREAM_LIST_PREV,
                              AMemberDirect(*file, A_STREAM_LIST_PREV)))
@@ -1063,11 +1063,11 @@ static ABool RemoveOutputStreamList(AThread *t, AValue *file)
 static ABool FileExists(const char *path)
 {
     FILE *f;
-    
+
     AAllowBlocking();
     f = fopen(path, "r");
     AEndBlocking();
-    
+
     if (f != NULL) {
         fclose(f);
         return TRUE;

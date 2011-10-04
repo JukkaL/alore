@@ -49,7 +49,7 @@ AValue AAllocMemFixed(AThread *t, Asize_t size)
 AValue AReallocMem(AThread *t, AValue mem, Asize_t newSize)
 {
     /* IDEA: Try to grow or shrink the current block. This is not optimized. */
-    
+
     unsigned long size = MemSize(mem);
     if (newSize <= size)
         return mem;
@@ -61,12 +61,12 @@ AValue AReallocMem(AThread *t, AValue mem, Asize_t newSize)
             new = AAllocMem(t, newSize);
         else
             new = AAllocMemFixed(t, newSize);
-        
+
         memcpy(AMemPtr(new), AMemPtr(*temp), size);
         AFreeTemp(t);
         return new;
     }
-    
+
 }
 
 
@@ -88,17 +88,17 @@ static AValue AAllocBufInternal(AThread *t, unsigned long initReserve,
     AValue *temp = AAllocTemps(t, 1);
     AValue mem;
     AValue ret;
-    
+
     *temp = AMakeUninitializedObject(t, AGlobalByNum(AStdBufNum));
-    
+
     if (isFixed)
         mem = AAllocMemFixed(t, initReserve);
     else
         mem = AAllocMem(t, initReserve);
-    
+
     ASetMemberDirect(t, *temp, BUF_MEM, mem);
     ASetMemberDirect(t, *temp, BUF_INDEX, AZero);
-    
+
     ret = *temp;
     AFreeTemps(t, 1);
 
@@ -135,16 +135,16 @@ void *AReserveBuf(AThread *t, AValue buf, Asize_t len)
     if (index + len > size) {
         AValue *temp = AAllocTemp(t, buf);
         AValue new;
-        
+
         if (size <= 16)
             size = 32;
         else
             size = AMax(index + len, size * 2);
-        
+
         new = AReallocMem(t, AMemberDirect(buf, BUF_MEM), size);
         ASetMemberDirect(t, *temp, BUF_MEM, new);
         buf = *temp;
-        
+
         AFreeTemp(t);
     }
 

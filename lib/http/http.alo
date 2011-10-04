@@ -49,12 +49,12 @@ class Http
     self.host = host
     self.port = port
   end
-  
+
   def auth(username as Str, password as Str)
     self.username = username
     self.password = password
   end
-  
+
   def request(method as Str, url as Str,
               headers = [] as Array<Pair<Str, Str>>,
               body = "" as Str)
@@ -65,11 +65,11 @@ class Http
     if url == "" or url == nil
       raise HttpError("Empty or missing request URL")
     end
-    
+
     socket.write("{} {} HTTP/1.1".format(method, url), CR+LF)
-    
+
     -- Generate the host header.
-    
+
     var hosth = host
     var porth = port
     -- If using a proxy, we need to extract the host name from the requested
@@ -84,7 +84,7 @@ class Http
       hosth = "{}:{}".format(hosth, porth)
     end
     socket.write("Host: ", hosth, CR+LF)
-    
+
     for hv in headers
       socket.write("{}: {}".format(hv.left, hv.right), CR+LF)
     end
@@ -98,24 +98,24 @@ class Http
     socket.write(CR+LF)
     socket.write(body)
     socket.flush()
-    
+
     numRequests += 1
     numPendingRequests += 1
   end
-  
+
   def response() as HttpResponse
     if numPendingRequests == 0
       raise HttpError("No active requests")
     end
-  
+
     var version, status, reason, headers = readHead()
-    
+
     -- When using HTTP 1.0, only a single request can be passed unless
     -- the non-standard Keep-Alive header is present (ignored currently).
     if version == "1.0" --and not headers.hasKey("keep-alive")
       open = False
     end
-    
+
     -- HTTP 1.1 (and later) may use the "Connection: close" header to deny
     -- additional requests.
     if version != "1.0" and version >= "1" and
@@ -123,15 +123,15 @@ class Http
        headers["connection"].lower().find("close") >= 0
       open = False
     end
-    
+
     numPendingRequests -= 1
-    
+
     return HttpResponse(version, status, reason, headers, socket)
   end
 
   private def readHead() as (Str, Int, Str, HttpHeaders)
     var a, m as (Array<Str>, MatchResult)
-  
+
     repeat
       a = []
       var status = socket.readLn()
@@ -148,19 +148,19 @@ class Http
       end
     until m.group(2)[0] != "1"
     -- Ignore any responses with 1xx status codes.
-    
+
     return m.group(1), Int(m.group(2)), m.group(3).strip(), HttpHeaders(a)
   end
-  
+
   def close() as void
     socket.close()
   end
-  
+
   def isOpen() as Boolean
     if numRequests > 0 and numPendingRequests == numRequests
       raise HttpError("No responses read")
     end
-    
+
     return open
   end
 end
@@ -171,11 +171,11 @@ class HttpResponse is Stream
   const status as Int
   const reason as Str
   const headers as HttpHeaders
-  
+
   private const socket as Socket
   private var len as Int
   private var chunked = False as Boolean
-  
+
   def create(version as Str, status as Int, reason as Str,
              headers as HttpHeaders, socket as Socket)
     super.create(Input, Narrow, Buffered)
@@ -184,19 +184,19 @@ class HttpResponse is Stream
     self.reason = reason
     self.headers = headers
     self.socket = socket
-    
+
     if headers.hasKey("transfer-encoding")
       if headers["transfer-encoding"].lower() == "chunked"
         chunked = True
         len = readChunkLen()
       end
     end
-    
+
     if headers.hasKey("content-length") and not chunked
       len = Int(headers["content-length"])
     end
   end
-  
+
   def _read(n as Int) as Str
     if len != nil
       n = Min(n, len)
@@ -204,7 +204,7 @@ class HttpResponse is Stream
         return nil
       end
     end
-    
+
     var result as Str
     var p = socket.peek()
     if p != ""
@@ -224,13 +224,13 @@ class HttpResponse is Stream
     end
     return result
   end
-  
+
   def close() as void
     if not eof()
       read()
     end
   end
-  
+
   private def readChunkLen() as Int
     var s = socket.readLn()
     s = s.split(";")[0]
@@ -284,7 +284,7 @@ class HttpHeaders is Map<Str, Str>
       i += 1
     end
   end
-  
+
   def _get(name as Str) as Str
     if name is Str
       var item = super._get(altMap[name.lower()])
@@ -294,15 +294,15 @@ class HttpHeaders is Map<Str, Str>
     end
     raise TypeError("Str expected")
   end
-  
+
   def _set(name as Str, value as Str)
     raise ValueError("Object immutable")
   end
-  
+
   def remove(name as Str)
     raise ValueError("Object immutable")
   end
-  
+
   def hasKey(name as Object) as Boolean
     if name is Str
       return altMap.hasKey((name as Str).lower())
@@ -310,7 +310,7 @@ class HttpHeaders is Map<Str, Str>
       raise TypeError("Str expected")
     end
   end
-  
+
   private var altMap = Map() as Map<Str, Str>
 end
 

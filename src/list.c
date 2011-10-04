@@ -19,7 +19,7 @@
 AList *AAddList(AList *list, void *data)
 {
     AList *node = ACAlloc(sizeof(AList));
-    
+
     if (node == NULL) {
         ADisposeList(list);
         AGenerateOutOfMemoryError();
@@ -46,7 +46,7 @@ AList *AAddListEnd(AList *list, void *data)
 
     node->next = NULL;
     node->data = data;
-    
+
     if (list == NULL)
         return node;
 
@@ -63,7 +63,7 @@ AList *AAddListEnd(AList *list, void *data)
 AList *ARemoveList(AList *list)
 {
     AList *newList = list->next;
-    
+
     ACFree(list, sizeof(AList));
 
     return newList;
@@ -78,7 +78,7 @@ void ADisposeList(AList *list)
     while (list != NULL) {
         prev = list;
         list = list->next;
-        
+
         ACFree(prev, sizeof(AList));
     }
 }
@@ -88,7 +88,7 @@ void ADisposeList(AList *list)
 AIntList *AAddIntList(AIntList *list, int data)
 {
     AIntList *node = ACAlloc(sizeof(AList));
-    
+
     if (node == NULL) {
         AFreeIntList(list);
         AGenerateOutOfMemoryError();
@@ -116,7 +116,7 @@ AIntList *AAddIntListEnd(AIntList *list, int data)
 
     node->next = NULL;
     node->data = data;
-    
+
     if (list == NULL)
         return node;
 

@@ -9,103 +9,103 @@ class InterfacesSuite is Suite
   def testEmptyInterface()
     AssertType(Type, If1)
   end
-  
+
   def testImplementingEmptyInterface()
     AssertType(Cif1, Cif1())
     Assert(Cif1() is If1)
     Assert(not Cif1() is If2)
   end
-  
+
   def testInheritingInterfaceFromSuperclass()
     AssertType(Cif2, Cif2())
     Assert(Cif2() is Cif1)
     Assert(Cif2() is If1)
     Assert(not Cif2() is If2)
   end
-  
+
   def testImplementingEmptyInterfaceAndExtending()
     AssertType(Cif3, Cif3())
     Assert(Cif3() is Cif1)
     Assert(Cif3() is If1)
     Assert(Cif3() is If2)
   end
-  
+
   def testImplementingMultipleEmptyInterfaces()
     AssertType(Cif4, Cif4())
     Assert(Cif4() is If1)
     Assert(Cif4() is If2)
   end
-  
+
   def testImplementingWithQualifiedNames()
     AssertType(Cif5, Cif5())
     Assert(Cif5() is If1)
     Assert(Cif5() is HelperInterface)
   end
-  
+
   def testDuplicateImplementsTarget()
     AssertType(Cif6, Cif6())
     Assert(Cif6() is If2)
     Assert(Cif6() is HelperInterface)
   end
-  
+
   def testExtendingEmptyInterface()
     AssertType(Cif7, Cif7())
     Assert(Cif7() is If3)
     Assert(Cif7() is If1)
   end
-  
+
   def testInterfaceSupertype()
     AssertEqual(If1.supertype(), nil)
     AssertEqual(If3.supertype(), If1)
   end
-  
+
   def testCallingInterface()
     AssertRaises(ValueError, def (); If1(); end)
     AssertRaises(ValueError, def (); IfCreate(1, 2); end)
     AssertRaises(ValueError, def (); IfCreate(*[1, 2]); end)
   end
-  
+
   def testCallingInterfaceViaApi()
     AssertRaises(ValueError, def (); ACallValue(IfCreate, 1); end)
   end
-  
+
   def testCheckingTypeOfNil()
     Assert(not nil is If1)
     Assert(not nil is If3)
   end
-  
+
   def testSimpleBinding()
     Assert(CBind1() is Bind1)
     Assert(not Object() is Bind1)
     Assert(not CBind2() is Bind1)
   end
-  
+
   def testTwoBindings()
     Assert(CBind1() is Bind2)
     Assert(CBind2() is Bind2)
     Assert(not Object() is Bind1)
   end
-  
+
   def testBindingCType()
     Assert(RuntimeError() is Bind3)
   end
-  
+
   def testMultipleBinding()
     Assert(CBind4() is Bind4)
   end
-  
+
   def testBindingBuiltInTypes()
     Assert(1 is BindBuiltIns)
     Assert('x' is BindBuiltIns)
     Assert(not 1.1 is BindBuiltIns)
   end
-  
+
   -- Test querying the interfaces when using interface binding using
   -- Type interfaces().
   def testQueryingInterfaces()
     AssertEqual(CBind2.interfaces(), [Bind2])
     AssertEqual(Int.interfaces(), [Comparable, BindBuiltIns])
-    
+
     -- Return both the directly implemented interface and the superinterface.
     AssertEqual(Cif7.interfaces(), [If3, If1])
   end

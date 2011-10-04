@@ -72,7 +72,7 @@ AValue AOsRename(AThread *t, AValue *frame)
 {
     char source[A_MAX_PATH_LEN], target[A_MAX_PATH_LEN];
     int status;
-    
+
     /* IDEA: Maybe return a special error if cannot rename because destination
        on a different file system. */
 
@@ -116,7 +116,7 @@ AValue AOsChangeDir(AThread *t, AValue *frame)
 AValue AOsCurrentDir(AThread *t, AValue *frame)
 {
     char buf[A_MAX_PATH_LEN];
-    
+
     if (getcwd(buf, A_MAX_PATH_LEN) == NULL)
         return ARaiseErrnoIoError(t, NULL);
     else
@@ -130,10 +130,10 @@ AValue AOsMakeSymLink(AThread *t, AValue *frame)
 {
     char target[A_MAX_PATH_LEN], path[A_MAX_PATH_LEN];
     int status;
-    
+
     AGetStr(t, frame[0], target, sizeof(target));
     AGetStr(t, frame[1], path, sizeof(path));
-    
+
     BLOCKING(status = symlink(target, path));
     return CheckStatus(t, status, NULL);
 }
@@ -175,12 +175,12 @@ AValue AOsSystem(AThread *t, AValue *frame)
 {
     /* IDEA: Can we analyze the return code and raise an exception or
              something -- but perhaps we'd better not. */
-    
+
     char cmd[1024]; /* IDEA: Use a constant for the size */
     int status;
     AGetStr(t, frame[0], cmd, sizeof(cmd));
     BLOCKING(status = system(cmd));
-    
+
     /* Translate the exit status. */
     if (WIFEXITED(status)) {
         /* Normal exit. The status is the exit status or return value from
@@ -196,7 +196,7 @@ AValue AOsSystem(AThread *t, AValue *frame)
                  status values? */
         status = -1;
     }
-    
+
     return AMakeInt(t, status);
 }
 
@@ -217,7 +217,7 @@ AValue AOsExists(AThread *t, AValue *frame)
             return AFalse;
         return ARaiseErrnoIoError(t, path);
     }
-    
+
     return ATrue;
 }
 
@@ -238,7 +238,7 @@ AValue AOsIsFile(AThread *t, AValue *frame)
             return AFalse;
         return ARaiseErrnoIoError(t, path);
     }
-    
+
     return S_ISREG(buf.st_mode) ? ATrue : AFalse;
 }
 
@@ -307,9 +307,9 @@ AValue AStatCreate(AThread *t, AValue *frame)
     int status;
 
     AGetStr(t, frame[1], path, A_MAX_PATH_LEN);
-    
+
     BLOCKING(status = lstat(path, &buf));
-    
+
     if (status < 0)
         return ARaiseErrnoIoError(t, path);
 
@@ -336,7 +336,7 @@ AValue AStatCreate(AThread *t, AValue *frame)
 
     *(time_t *)ADataPtr(frame[0], 0) = buf.st_mtime;
     *(time_t *)ADataPtr(frame[0], sizeof(time_t)) = buf.st_atime;
-    
+
     return frame[0];
 }
 
@@ -365,7 +365,7 @@ static AValue MakeDateTime(AThread *t, AValue *frame, time_t t1)
     char buf[30];
 
     localtime_r(&t1, &t2);
-    
+
     sprintf(buf, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d",
             t2.tm_year + 1900,
             t2.tm_mon + 1,
@@ -384,11 +384,11 @@ AValue AStatIsReadable(AThread *t, AValue *frame)
     AValue pathVal = AMemberDirect(frame[0], STAT_PATH);
     char path[A_MAX_PATH_LEN];
     int status;
-    
+
     AGetStr(t, pathVal, path, A_MAX_PATH_LEN);
 
     BLOCKING(status = access(path, R_OK));
-    
+
     return status == 0 ? ATrue : AFalse;
 }
 
@@ -399,11 +399,11 @@ AValue AStatIsWritable(AThread *t, AValue *frame)
     AValue pathVal = AMemberDirect(frame[0], STAT_PATH);
     char path[A_MAX_PATH_LEN];
     int status;
-    
+
     AGetStr(t, pathVal, path, A_MAX_PATH_LEN);
 
     BLOCKING(status = access(path, W_OK));
-    
+
     return status == 0 ? ATrue : AFalse;
 }
 
@@ -413,7 +413,7 @@ static AValue UidToStr(AThread *t, int uid)
 {
     /* IDEA: Perhaps there should some way of caching these results, since the
              getpwuid_r() call might be slow. */
-    
+
     struct passwd pwbuf;
     char buf[2048];
 
@@ -432,7 +432,7 @@ static AValue UidToStr(AThread *t, int uid)
     if (getpwuid_r(uid, &pwbuf, buf, sizeof(buf)) == NULL)
         return ARaiseErrnoIoError(t, NULL);
 #endif
-    
+
     return AMakeStr(t, pwbuf.pw_name);
 }
 
@@ -553,7 +553,7 @@ AValue AOsListDir(AThread *t, AValue *frame)
     tmp = AAllocTemps(t, 2);
 
     BLOCKING(d = opendir(path));
-    
+
     if (d == NULL) {
         AFreeTemps(t, 2);
         return ARaiseErrnoIoError(t, path);
@@ -563,7 +563,7 @@ AValue AOsListDir(AThread *t, AValue *frame)
         BLOCKING(closedir(d));
         return AError;
     }
-    
+
     tmp[1] = AZero; /* IDEA: Is this superfluous? */
     tmp[0] = AMakeArray(t, 0);
 
@@ -571,12 +571,12 @@ AValue AOsListDir(AThread *t, AValue *frame)
         const char *n;
 
         BLOCKING(entry = readdir(d));
-        
+
         if (entry == NULL)
             break;
-        
+
         n = entry->d_name;
-        
+
         if (!(n[0] == '.' && (strcmp(n, ".") == 0 || strcmp(n, "..") == 0))) {
             if (mask_p == NULL
                 || MatchName(n, mask_p)) {
@@ -609,10 +609,10 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
     strcat(path, rel);
 
     BLOCKING(d = opendir(path));
-    
+
     if (d == NULL)
         return ARaiseErrnoIoError(t, path);
-    
+
     if (ATry(t)) {
         BLOCKING(closedir(d));
         return AError;
@@ -623,12 +623,12 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
         int status;
 
         BLOCKING(entry = readdir(d));
-        
+
         if (entry == NULL)
             break;
-        
+
         n = entry->d_name;
-        
+
         if (n[0] == '.' && (strcmp(n, ".") == 0 || strcmp(n, "..") == 0))
             continue;
 
@@ -639,7 +639,7 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
         strcat(path, n);
 
         BLOCKING(status = stat(path, &buf));
-        
+
         if (status == -1) {
             BLOCKING(closedir(d));
             return ARaiseErrnoIoError(t, path);
@@ -650,12 +650,12 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
         if (*path != '\0')
             strcat(path, A_DIR_SEPARATOR_STRING);
         strcat(path, n);
-        
+
         if (mask == NULL || MatchName(n, mask)) {
             data[1] = AMakeStr(t, path);
             AAppendArray(t, data[0], data[1]);
         }
-        
+
         /* Descent into non-link directories. */
         if (S_ISDIR(buf.st_mode) && !S_ISLNK(buf.st_mode)) {
             if (AIsError(WalkDirRecursive(t, data, base, path, mask))) {
@@ -668,7 +668,7 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
     AEndTry(t);
 
     BLOCKING(closedir(d));
-    
+
     return data[0];
 }
 
@@ -780,11 +780,11 @@ AValue AOsSetPerm(AThread *t, AValue *frame)
         groupPerm = PermBits(t, permStr);
     } else
         groupPerm = otherPerm;
-    
+
     mode = (userPerm << 6) | (groupPerm << 3) | otherPerm;
 
     BLOCKING(status = chmod(path, mode));
-    
+
     if (status == -1)
         return ARaiseErrnoIoError(t, path);
 
@@ -937,7 +937,7 @@ AValue AOsGetpwnam(AThread *t, AValue *frame)
     int s;
 
     AGetStr(t, frame[0], user, sizeof(user));
-    
+
     bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
     if (bufsize == -1)
         bufsize = 16384;
@@ -960,25 +960,25 @@ AValue AOsGetpwnam(AThread *t, AValue *frame)
     }
 
     frame[1] = AMakeTuple(t, 7);
-    
+
     frame[2] = AMakeStr(t, pwd.pw_name);
     AInitTupleItem(t, frame[1], 0, frame[2]);
-    
+
     frame[2] = AMakeStr(t, pwd.pw_passwd);
     AInitTupleItem(t, frame[1], 1, frame[2]);
-    
+
     frame[2] = AMakeInt(t, pwd.pw_uid);
     AInitTupleItem(t, frame[1], 2, frame[2]);
-    
+
     frame[2] = AMakeInt(t, pwd.pw_gid);
     AInitTupleItem(t, frame[1], 3, frame[2]);
-    
+
     frame[2] = AMakeStr(t, pwd.pw_gecos);
     AInitTupleItem(t, frame[1], 4, frame[2]);
-    
+
     frame[2] = AMakeStr(t, pwd.pw_dir);
     AInitTupleItem(t, frame[1], 5, frame[2]);
-    
+
     frame[2] = AMakeStr(t, pwd.pw_shell);
     AInitTupleItem(t, frame[1], 6, frame[2]);
 

@@ -172,7 +172,7 @@ static char *GetOpcodeStr(OpcodeInfo *info, AOpcode opcode)
             return info->format;
         info++;
     }
-    
+
     return NULL;
 }
 
@@ -206,7 +206,7 @@ void ADisplayCode(void)
                 strcpy(funcName, "");
                 if (AppendNameOfGlobalDef(funcName, i))
                     Append(funcName, " (%d)", i);
-                
+
                 printf("\ndef %s at %p (%d..%d%s args, frame-size %d)\n",
                        funcName,
                        func,
@@ -219,9 +219,9 @@ void ADisplayCode(void)
                 j = 0;
                 while (j < func->codeLen) {
                     char *fmt = GetOpcodeStr(Opcodes, func->code.opc[j]);
-                    
+
                     printf("%p %2d: ", func->code.opc + j, j);
-                    
+
                     if (fmt != NULL) {
                         char buf[4096];
                         j++;
@@ -324,7 +324,7 @@ static ABool AppendNameOfGlobalDef(char *buf, int num)
     AValue val = AGlobalByNum(num);
     ASymbolInfo *sym = NULL;
     ABool foundName = FALSE;
-                
+
     if (AIsGlobalFunction(val)) {
         AFunction *f = AValueToFunction(val);
         sym = f->sym;
@@ -333,12 +333,12 @@ static ABool AppendNameOfGlobalDef(char *buf, int num)
         ATypeInfo *t = AValueToType(val);
         sym = t->sym;
     }
-    
+
     if (sym != NULL && sym->num == num) {
         AppendMessage(buf, "%q", sym);
         foundName = TRUE;
     }
-                
+
     if (!foundName)
         Append(buf, "g%d", num);
 
@@ -363,7 +363,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
         else {
             /* A formatting sequence %X */
             int flags = 0;
-            
+
             fmt++;
 
             /* The '-' flag results in displaying a sequence but not advancing
@@ -373,7 +373,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 flags |= 1;
                 fmt++;
             }
-            
+
             switch (*fmt) {
             case 'a': {
                 /* Arguments of a function call */
@@ -388,15 +388,15 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                     if (argc > 0)
                         Append(buf, ", ");
                 }
-                
+
                 break;
             }
-            
+
             case 'b':
                 if (AIsComparisonOpcode(code[i + 2]))
                     Append(buf, "if ");
                 break;
-                
+
             case 'd':
                 /* Direct member variable access using self, possibly through
                    an accessor method */
@@ -422,7 +422,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 }
                 i += 2;
                 break;
-                
+
             case 'f':
                 /* Direct method call using self */
                 Append(buf, "self.f%d", code[i++]);
@@ -440,19 +440,19 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 AppendNameOfGlobalDef(buf, num);
                 break;
             }
-                
+
             case 'i':
                 /* Integer value (shifted) */
                 Append(buf, "%d", (int)AValueToInt(code[i++]));
                 break;
-                
+
             case 'l':
                 /* Local variable */
                 Append(buf, "l%d", code[i]);
                 if (!(flags & 1))
                     i++;
                 break;
-                
+
             case 'n':
                 /* Local variable 1 opcode later, do not consume opcode */
                 Append(buf, "l%d", code[i + 1]);
@@ -464,25 +464,25 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 if (!(flags & 1))
                     i++;
                 break;
-                
+
             case 'm':
                 /* Member of a local variable */
                 AppendMessage(buf, "l%d.%M", code[i], code[i + 1]);
                 i += 2;
                 break;
-                
+
             case 'M':
                 /* Member of a local variable */
                 AppendMessage(buf, ".%M", code[i]);
                 i++;
                 break;
-                
+
             case 'o':
                 /* Code offset */
                 Append(buf, "%d", i + (int)code[i] - A_DISPLACEMENT_SHIFT);
                 i++;
                 break;
-                
+
             case 'p':
                 /* Operator id */
                 Append(buf, "%s", GetOpcodeStr(Operators, code[i + 1]));
@@ -494,17 +494,17 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                     Append(buf, "-> l%d", code[i]);
                 i += 1;
                 break;
-                
+
             case 's':
                 /* Skip an opcode. */
                 i++;
                 break;
-                
+
             case 'u':
                 /* Integer */
                 Append(buf, "%d", code[i++]);
                 break;
-                
+
             case 'v':
                 /* Access a slot via self. */
                 Append(buf, "self.v%d", code[i++]);
@@ -524,7 +524,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
 
                 break;
             }
-                
+
             default:
                 /* Unknown formatting sequence */
                 Append(buf, "ERR");

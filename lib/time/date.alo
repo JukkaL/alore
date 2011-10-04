@@ -48,19 +48,19 @@ class Date implements Comparable<Date>, Addable<Int, Date>
       raise ValueError("Year must be at least 1 (given {})".format(year))
     end
   end
-  
+
   def _str() as Str
     return "{0000}-{00}-{00}".format(year, month, day)
   end
-  
+
   def format(f as Str) as Str
     return FormatDateTime(Date, DateFormatWrapper(self), f)
   end
-  
+
   const day as Int
   const month as Int
   const year as Int
-  
+
   def weekday as Int
     var y = year
     var n = y * 365 + day + (y - 1) div 4 - (y - 1) div 100 + (y - 1) div 400
@@ -69,7 +69,7 @@ class Date implements Comparable<Date>, Addable<Int, Date>
     end
     return (n - 2) mod 7 + 1
   end
-  
+
   def week(rule = FirstFourDayWeek as Constant) as Int
     var d = Date(year, 1, 1)
     var wday = d.weekday
@@ -109,11 +109,11 @@ class Date implements Comparable<Date>, Addable<Int, Date>
     end
     return w
   end
-  
+
   def _add(x as Int) as Date
     return Date(year, month, day + x)
   end
-  
+
   def _sub(x as Date) as Int or
           (x as Int) as Date
     if x is Int
@@ -136,7 +136,7 @@ class Date implements Comparable<Date>, Addable<Int, Date>
       return n + dd.day - d.day as dynamic
     end
   end
-  
+
   --def _eq(x as Object) as Boolean
   def _eq(x)
     if x is Date
@@ -146,17 +146,17 @@ class Date implements Comparable<Date>, Addable<Int, Date>
       return False
     end
   end
-  
+
   def _lt(d as Date) as Boolean
     return year < d.year or (year == d.year and
       (month < d.month or (month == d.month and day < d.day)))
   end
-  
+
   def _gt(d as Date) as Boolean
     return year > d.year or (year == d.year and
       (month > d.month or (month == d.month and day > d.day)))
   end
-  
+
   def _hash() as Int
     return Hash((year, month, day))
   end
@@ -165,7 +165,7 @@ end
 
 private const MonthShortNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as Array<Str>
-  
+
 private const MonthNames = ["January", "February", "March", "April", "May",
   "June", "July", "August", "September", "October", "November",
   "December"] as Array<Str>
@@ -231,31 +231,31 @@ end
 
 private class DateFormatWrapper implements IDateTime
   const date as Date
-  
+
   def year as Int
     return self.date.year
   end
-  
+
   def month as Int
     return self.date.month
   end
-  
+
   def weekday as Int
     return self.date.weekday
   end
-  
+
   def day as Int
     return self.date.day
   end
-  
+
   def hour as Int
     raise ValueError()
   end
-  
+
   def minute as Int
     raise ValueError()
   end
-  
+
   def second as Float
     raise ValueError()
   end

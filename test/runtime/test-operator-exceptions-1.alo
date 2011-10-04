@@ -22,7 +22,7 @@ class OperatorExceptionsSuite is Suite
         TestOperatorException(CallVarArgOp, f, 1, TypeError)
       end
     end
-    
+
     -- Test invalid variable arguments.
     for a in ObjList
       if not a is Array
@@ -31,21 +31,21 @@ class OperatorExceptionsSuite is Suite
       end
     end
   end
-  
+
   -- Test basic exceptions with the indexing operator [].
   def testIndexExceptions()
    -- Test type errors.
     for x in ObjList
       for y in ObjList
         var e = TypeError
-        
+
         if x == nil or y == nil or ((not (x is Str or x is Array)) or
                                     (not (y is Int or y is Range)))
           TestOperatorException(IndexOp, x, y, e)
         end
       end
     end
-    
+
     -- Test array index overflow.
     TestOperatorException(IndexOp, [], 0, IndexError)
     TestOperatorException(IndexOp, [], 1, IndexError)
@@ -54,7 +54,7 @@ class OperatorExceptionsSuite is Suite
     TestOperatorException(IndexOp, (1, 2, 3), 4, IndexError)
     TestOperatorException(IndexOp, (1, 2, 3), -4, IndexError)
   end
-  
+
   -- Test string index overflow.
   def testStringIndexOverflow()
     for w in 1 to 3
@@ -68,7 +68,7 @@ class OperatorExceptionsSuite is Suite
     TestOperatorException(IndexOp, "", 1, IndexError)
     TestOperatorException(IndexOp, "", -1, IndexError)
   end
-  
+
   --- Test exceptions with the add operator +.
   def testAddExceptions()
     for x in ObjList
@@ -83,20 +83,20 @@ class OperatorExceptionsSuite is Suite
       end
     end
   end
-  
+
   -- Test exceptions with the subtraction operator -.
   def testSubExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-  
+
         if not (IsNumeric(x) and IsNumeric(y))
           TestOperatorException(SubOp, x, y, e)
         end
       end
     end
   end
-  
+
   -- Test exceptions with the multiplication operator *.
   def testMulExceptions()
     for x in ObjList
@@ -113,13 +113,13 @@ class OperatorExceptionsSuite is Suite
       end
     end
   end
-  
+
   -- Test exceptions with the division operator /.
   def testDivExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-  
+
         if not (IsNumeric(x) and IsNumeric(y))
           TestOperatorException(DivOp, x, y, e)
         end
@@ -130,13 +130,13 @@ class OperatorExceptionsSuite is Suite
     TestOperatorException(DivOp, 1, 0.0, ArithmeticError)
     TestOperatorException(DivOp, 1.0, 0.0, ArithmeticError)
   end
-  
+
   -- Test exceptions with the integer division operator div.
   def testIntDivExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-  
+
         if not (IsNumeric(x) and IsNumeric(y))
           TestOperatorException(IntDivOp, x, y, e)
         end
@@ -147,13 +147,13 @@ class OperatorExceptionsSuite is Suite
     TestOperatorException(IntDivOp, 1, 0.0, ArithmeticError)
     TestOperatorException(IntDivOp, 1.0, 0.0, ArithmeticError)
   end
-  
+
   -- Test exceptions with the modulus operator mod.
   def testModExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-  
+
         if not (IsNumeric(x) and IsNumeric(y))
           TestOperatorException(ModOp, x, y, e)
         end
@@ -164,26 +164,26 @@ class OperatorExceptionsSuite is Suite
     TestOperatorException(ModOp, 1, 0.0, ArithmeticError)
     TestOperatorException(ModOp, 1.0, 0.0, ArithmeticError)
   end
-  
+
   -- Test exceptions with the power operator **.
   def testPowExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-  
+
         if not (IsNumeric(x) and IsNumeric(y))
           TestOperatorException(PowOp, x, y, e)
         end
       end
     end
   end
-  
+
   -- Test exceptions with the in operator.
   def testInExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-        
+
         if not (y is Array or y is Range or
                 (x is Str and y is Str))
           TestOperatorException(InOp, x, y, e)
@@ -191,13 +191,13 @@ class OperatorExceptionsSuite is Suite
       end
     end
   end
-  
+
   -- Test exceptions with the comparison operators <, <=, >, >=.
   def testComparisonExceptions()
     for x in ObjList
       for y in ObjList
         var e = TypeError
-  
+
         if not ((IsNumeric(x) and IsNumeric(y)) or
                 (x is Str and y is Str) or
                 (x is Array and y is Array))
@@ -318,15 +318,15 @@ private const OpMap = Map(
 
 private def TestOperatorException(op, arg1, arg2, type = TypeError)
   -- IDEA: Allow testing exception messages.
-  
+
   var e = nil
-  
+
   try
     OpMap[op](arg1, arg2)
   except ee is Exception
     e = ee
   end
-  
+
   Assert(e != nil)
   if not e is type
     WriteLn("Types: ", TypeOf(arg1), ", ", TypeOf(arg2))

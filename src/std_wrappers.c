@@ -187,9 +187,9 @@ AValue AStrWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
     AValue v;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     args = AAllocTemp(t, A_UNWRAP(frame[0]));
     v = AStdStr(t, args);
     AFreeTemp(t);
@@ -203,9 +203,9 @@ AValue AHashWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
     AValue v;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     args = AAllocTemps(t, 3);
     args[0] = A_UNWRAP(frame[0]);
     v = AStdHash(t, args);
@@ -220,9 +220,9 @@ AValue AReprWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
     AValue v;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     args = AAllocTemp(t, A_UNWRAP(frame[0]));
     v = AStdRepr(t, args);
     AFreeTemp(t);
@@ -244,9 +244,9 @@ AValue AIntWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
     AValue v;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     args = AAllocTemps(t, 2);
     args[0] = A_UNWRAP(frame[0]);
     args[1] = ADefault;
@@ -262,9 +262,9 @@ AValue AFloatWrapper(AThread *t, AValue *frame)
 {
     AValue *args;
     AValue v;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     args = AAllocTemp(t, A_UNWRAP(frame[0]));
     v = AStdFloat(t, args);
     AFreeTemp(t);

@@ -418,11 +418,11 @@ A_APIVAR extern ATypeInfo *ATupleClass;
     (*AGetFixArrayItemPtr(a, intVal))
 #define AGetFixArrayLen(a) \
     (((a)->header & ~A_NEW_GEN_FLAG) >> 3)
-    
+
 #else
-    
+
 #error not supported
-    
+
 #endif
 
 #define AFixArrayLen(v) AGetFixArrayLen(AValueToFixArray(v))

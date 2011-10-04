@@ -6,34 +6,34 @@ module types
 class TypeVisitor<T>
   def visitUnboundType(t as UnboundType) as T
   end
-  
+
   def visitErrorType(t as ErrorType) as T
   end
-  
+
   def visitDynamic(t as Dynamic) as T
   end
-  
+
   def visitVoid(t as Void) as T
   end
-  
+
   def visitNilType(t as NilType) as T
   end
-  
+
   def visitTypeVar(t as TypeVar) as T
   end
-  
+
   def visitInstance(t as Instance) as T
   end
-  
+
   def visitCallable(t as Callable) as T
   end
-  
+
   def visitTupleType(t as TupleType) as T
   end
-  
+
   def visitIntersection(t as Intersection) as T
   end
-  
+
   def visitRuntimeTypeVar(t as RuntimeTypeVar) as T
   end
 end

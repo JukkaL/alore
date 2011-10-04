@@ -8,11 +8,11 @@ class TestMessageSuite is Suite
   def testTypeErrorMessages()
     -- FIX: Implement.
   end
-  
+
   def testOperationTypeErrorMessages()
     -- FIX: Implement.
   end
-  
+
   def testInvalidArgCountMessages()
     AssertErrorMsg(call, NoArgsFunc, 1, ValueError,
                    "runtime::NoArgsFunc expects no arguments (1 given)")
@@ -21,7 +21,7 @@ class TestMessageSuite is Suite
     AssertErrorMsg(call, OnePlusArgsFunc, ValueError,
                    "runtime::OnePlusArgsFunc expects at least 1 argument" +
                    " (0 given)")
-    
+
     var i = MessageClass()
     try
       i.bar()
@@ -29,15 +29,15 @@ class TestMessageSuite is Suite
       Assert(e.message == "bar of runtime::MessageClass expects " +
              "1 argument (0 given)")
     end
-      
+
     AssertErrorMsg(call, MessageClass().bar, ValueError,
                "bar of runtime::MessageClass expects 1 argument " +
                "(0 given)")
-    
+
     AssertErrorMsg(call, MessageClass, 1, ValueError,
                    "class runtime::MessageClass expects no arguments (1 given)")
   end
-  
+
   def testMemberErrorMessages()
     AssertErrorMsg(getMember, nil, "foo", MemberError,
                 "nil has no member ""foo""")
@@ -52,11 +52,11 @@ class TestMessageSuite is Suite
       Assert(e.message == "runtime::MessageClass has no member ""foo""")
     end
   end
-  
+
   private def getMember(o, attr)
     return GetMember(o, attr)
   end
-  
+
   private def call(f, *args)
     return f(*args)
   end

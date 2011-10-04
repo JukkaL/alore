@@ -24,29 +24,29 @@ class PackerBase
       raise PackError("Byte out of range")
     end
   end
-  
+
   def unpackByte(s as Str) as Int
     if s.length() != 1
       raise PackError()
     end
     return Ord(s)
   end
-  
+
   def packBytes(a as Array<Int>) as Str
     return PackMulti(a, self.packByte)
   end
-  
+
   def unpackBytes(s as Str) as Array<Int>
     return UnpackMulti(s, 1, self.unpackByte)
   end
-  
+
   def packInt8(i as Int) as Str
     if i > 127 or i < -128
       raise PackError()
     end
     return Chr(And(i, 255))
   end
-  
+
   def unpackInt8(s as Str) as Int
     if s.length() != 1
       raise PackError()
@@ -57,7 +57,7 @@ class PackerBase
     end
     return x
   end
-  
+
   def packStr(s as Str, n as Int) as Str
     if s.length() < n
       return s + (n - s.length()) * " "
@@ -67,83 +67,83 @@ class PackerBase
       raise PackError()
     end
   end
-  
+
   def unpackStr(s as Str) as Str
     return s
   end
-  
+
   def packInts8(a as Array<Int>) as Str
     return PackMulti(a, self.packInt8)
   end
-  
+
   def unpackInts8(s as Str) as Array<Int>
     return UnpackMulti(s, 1, self.unpackInt8)
   end
-  
+
   def packWords16(a as Array<Int>) as Str
     return PackMulti(a, self.packWord16)
   end
-  
+
   def unpackWords16(s as Str) as Array<Int>
     return UnpackMulti(s, 2, self.unpackWord16)
   end
-  
+
   def packInts16(a as Array<Int>) as Str
     return PackMulti(a, self.packInt16)
   end
-  
+
   def unpackInts16(s as Str) as Array<Int>
     return UnpackMulti(s, 2, self.unpackInt16)
   end
-  
+
   def packWords32(a as Array<Int>) as Str
     return PackMulti(a, self.packWord32)
   end
-  
+
   def unpackWords32(s as Str) as Array<Int>
     return UnpackMulti(s, 4, self.unpackWord32)
   end
-  
+
   def packInts32(a as Array<Int>) as Str
     return PackMulti(a, self.packInt32)
   end
-  
+
   def unpackInts32(s as Str) as Array<Int>
     return UnpackMulti(s, 4, self.unpackInt32)
   end
-  
+
   def packWords64(a as Array<Int>) as Str
     return PackMulti(a, self.packWord64)
   end
-  
+
   def unpackWords64(s as Str) as Array<Int>
     return UnpackMulti(s, 8, self.unpackWord64)
   end
-  
+
   def packInts64(a as Array<Int>) as Str
     return PackMulti(a, self.packInt64)
   end
-  
+
   def unpackInts64(s as Str) as Array<Int>
     return UnpackMulti(s, 8, self.unpackInt64)
   end
-  
+
   def packFloats32(a as Array<Float>) as Str
     return PackMulti(a, self.packFloat32)
   end
-  
+
   def unpackFloats32(s as Str) as Array<Float>
     return UnpackMulti(s, 4, self.unpackFloat32)
   end
-  
+
   def packFloats64(a as Array<Float>) as Str
     return PackMulti(a, self.packFloat64)
   end
-  
+
   def unpackFloats64(s as Str) as Array<Float>
     return UnpackMulti(s, 8, self.unpackFloat64)
   end
-  
+
   def packStrs(a as Array<Str>, n as Int) as Str
     var r = [] as <Str>
     for s in a
@@ -151,58 +151,58 @@ class PackerBase
     end
     return "".join(r)
   end
-  
+
   def unpackStrs(s as Str, n as Int) as Array<Str>
     return UnpackMulti(s, n, unpackStr)
   end
-  
+
   -- Abstract methods (IDEA: mark them as abstract?)
-  
+
   def packWord16(i as Int) as Str
   end
-  
+
   def unpackWord16(s as Str) as Int
   end
-  
+
   def packInt16(i as Int) as Str
   end
-  
+
   def unpackInt16(s as Str) as Int
   end
-  
+
   def packWord32(i as Int) as Str
   end
-  
+
   def unpackWord32(s as Str) as Int
   end
-  
+
   def packInt32(i as Int) as Str
   end
-  
+
   def unpackInt32(s as Str) as Int
   end
-  
+
   def packWord64(i as Int) as Str
   end
-  
+
   def unpackWord64(s as Str) as Int
   end
-  
+
   def packInt64(i as Int) as Str
   end
-  
+
   def unpackInt64(s as Str) as Int
   end
-  
+
   def packFloat32(f as Float) as Str
   end
-  
+
   def unpackFloat32(s as Str) as Float
   end
-  
+
   def packFloat64(f as Float) as Str
   end
-  
+
   def unpackFloat64(s as Str) as Float
   end
 end
@@ -212,15 +212,15 @@ class Packer is PackerBase
   def packWord16(i as Int) as Str
     return PackHalfword(i, False)
   end
-  
+
   def unpackWord16(s as Str) as Int
     return UnpackHalfword(s, False)
   end
-  
+
   def packInt16(i as Int) as Str
     return PackHalfword(i, True)
   end
-  
+
   def unpackInt16(s as Str) as Int
     return UnpackHalfword(s, True)
   end
@@ -232,15 +232,15 @@ class Packer is PackerBase
   def unpackWord32(s as Str) as Int
     return UnpackWord(s, False)
   end
-  
+
   def packInt32(i as Int) as Str
     return PackWord(i, True)
   end
-  
+
   def unpackInt32(s as Str) as Int
     return UnpackWord(s, True)
   end
-  
+
   def packWord64(i as Int) as Str
     return PackDword(i, False)
   end
@@ -248,7 +248,7 @@ class Packer is PackerBase
   def unpackWord64(s as Str) as Int
     return UnpackDword(s, False)
   end
-  
+
   def packInt64(i as Int) as Str
     return PackDword(i, True)
   end
@@ -256,22 +256,22 @@ class Packer is PackerBase
   def unpackInt64(s as Str) as Int
     return UnpackDword(s, True)
   end
-  
+
   def packFloat32(f as Float) as Str
     return Reverse(PackFloat32_LE(f))
   end
-  
+
   def unpackFloat32(s as Str) as Float
     if s.length() != 4
       raise PackError()
     end
     return UnpackFloat32_LE(Reverse(s))
   end
-  
+
   def packFloat64(f as Float) as Str
     return Reverse(PackFloat64_LE(f))
   end
-  
+
   def unpackFloat64(s as Str) as Float
     if s.length() != 8
       raise PackError()
@@ -285,15 +285,15 @@ class LittleEndianPacker is PackerBase
   def packWord16(i as Int) as Str
     return Reverse(PackHalfword(i, False))
   end
-  
+
   def unpackWord16(s as Str) as Int
     return UnpackHalfword(Reverse(s), False)
   end
-  
+
   def packInt16(i as Int) as Str
     return Reverse(PackHalfword(i, True))
   end
-  
+
   def unpackInt16(s as Str) as Int
     return UnpackHalfword(Reverse(s), True)
   end
@@ -305,15 +305,15 @@ class LittleEndianPacker is PackerBase
   def unpackWord32(s as Str) as Int
     return UnpackWord(Reverse(s), False)
   end
-  
+
   def packInt32(i as Int) as Str
     return Reverse(PackWord(i, True))
   end
-  
+
   def unpackInt32(s as Str) as Int
     return UnpackWord(Reverse(s), True)
   end
-  
+
   def packWord64(i as Int) as Str
     return Reverse(PackDword(i, False))
   end
@@ -321,7 +321,7 @@ class LittleEndianPacker is PackerBase
   def unpackWord64(s as Str) as Int
     return UnpackDword(Reverse(s), False)
   end
-  
+
   def packInt64(i as Int) as Str
     return Reverse(PackDword(i, True))
   end
@@ -329,22 +329,22 @@ class LittleEndianPacker is PackerBase
   def unpackInt64(s as Str) as Int
     return UnpackDword(Reverse(s), True)
   end
-  
+
   def packFloat32(f as Float) as Str
     return PackFloat32_LE(f)
   end
-  
+
   def unpackFloat32(s as Str) as Float
     if s.length() != 4
       raise PackError()
     end
     return UnpackFloat32_LE(s)
   end
-  
+
   def packFloat64(f as Float) as Str
     return PackFloat64_LE(f)
   end
-  
+
   def unpackFloat64(s as Str) as Float
     if s.length() != 8
       raise PackError()

@@ -30,7 +30,7 @@ class IOSuite2 is Suite
     TestBasicOperations(LineBuffered)
     TestBasicOperations(Unbuffered)
   end
-  
+
   -- Test writing to file (buffered, unbuffered).
   --   * writing several objects at a time
   --   * writing and converting objects
@@ -47,25 +47,25 @@ class IOSuite2 is Suite
       end
     end
   end
-  
+
   def testWritingSeveralStringsAtAAtime()
     -- Test writing several strings at a time.
     TestFileWrite((GetStr(1), GetStr(2), GetStr(3), GetStr(4), GetStr(5)))
     var a = ["abc"] * 1000
     TestFileWrite(a)
   end
-  
+
   def testFileWriteSpecialCases()
     -- Test writing exactly the same size as the buffer.
     TestFileWrite((LongNarrowStr()[0:LineBufferSize], "a"))
     TestFileWrite((LongNarrowStr()[0:BufferSize], "a"))
-    
+
     -- Test writing a narrow substring of a wide string.
     --TestFileWrite(("foo bar zar", "x"))
     TestFileWrite((WSS("foo bar zar"), "x"))
     --TestFileWriteLine(("foo bar zar", "x"))
     TestFileWriteLine((WSS("foo bar zar"), "x"))
-    
+
     TestFileWrite([StrObj(WSS("foo bar zar"))])
   end
 
@@ -76,7 +76,7 @@ class IOSuite2 is Suite
         TestFileRead(GetStr(i), GetStr(j))
       end
     end
-    
+
     -- Read from empty file.
     var f = File("TMP", Output)
     f.close()
@@ -85,7 +85,7 @@ class IOSuite2 is Suite
       AssertEqual(f.read(1), "")
       f.close()
     end
-    
+
     -- Read from binary file.
     var s = ""
     for i in 0 to 256
@@ -93,20 +93,20 @@ class IOSuite2 is Suite
     end
     TestFileRead(s)
   end
-  
+
   -- Test reading all the contents of a file.
   def testFileReadAll()
     for i in 1 to NumNarrowRealStr + 1
       TestFileReadAll(GetStr(i))
     end
-  
+
     -- Read binary file.
     var s = ""
     for i in 0 to 256
       s += Chr(i)
     end
     TestFileReadAll(s)
-    
+
     -- Read all at end of file.
     var f = File("TMP", Output)
     f.write("abcdef")
@@ -118,7 +118,7 @@ class IOSuite2 is Suite
       f.close()
     end
   end
-  
+
   -- Test reading a file a line at a time.
   def testFileReadLine()
     -- Basic operations (different line lengths).
@@ -127,9 +127,9 @@ class IOSuite2 is Suite
         TestFileReadLine(GetStr(i), GetStr(j))
       end
     end
-    
+
     TestFileReadLine("")
-    
+
     -- Line terminator missing at the end of the file.
     var f = File("TMP", Output)
     f.write("a")
@@ -138,7 +138,7 @@ class IOSuite2 is Suite
     Assert(f.readLn() == "a")
     Assert(f.eof())
     f.close()
-    
+
     -- Read a line with all possible character codes.
     var s = ""
     for r in 0 to 10, 11 to 13, 14 to 256
@@ -147,7 +147,7 @@ class IOSuite2 is Suite
       end
     end
     TestFileReadLine(s)
-  
+
     -- Reading after end of file.
     for isContent in False, True
       f = File("TMP", Output)
@@ -171,23 +171,23 @@ class IOSuite2 is Suite
       end
     end
   end
-  
+
   -- Test iterating an empty file.
   def testIterEmptyFile()
     var f = File("TMP", Output)
     f.close()
-    
+
     f = File("TMP")
     var l = []
     for s in f
       l.append(s)
     end
-    
+
     f.close()
-    
+
     Assert(l == [])
   end
-  
+
   -- Test iterating the lines in a file.
   def testIterFile()
     var f = File("TMP", Output)
@@ -195,17 +195,17 @@ class IOSuite2 is Suite
     f.writeLn("second line")
     f.writeLn("third line")
     f.close()
-    
+
     var l = []
     f = File("TMP")
     for s in f
       l.append(s)
     end
     f.close()
-    
+
     Assert(l == ("first line", "second line", "third line"))
   end
-  
+
   -- Test the readLines() method with an empty file.
   def testReadLinesWithEmptyFile()
     var f = File("TMP", Output)
@@ -216,7 +216,7 @@ class IOSuite2 is Suite
     -- It's still possible to call close.
     f.close()
   end
-  
+
   -- Test the readLines() method.
   def testReadLines()
     var f = File("TMP", Output)
@@ -224,7 +224,7 @@ class IOSuite2 is Suite
       f.writeLn("Line ", i)
     end
     f.close()
-    
+
     var a = File("TMP").readLines()
     Assert(a is Array)
     Assert(a.length() == 10000)
@@ -232,15 +232,15 @@ class IOSuite2 is Suite
       Assert(a[i] == "Line " + Str(i))
     end
   end
-  
+
   -- Test reading after seeking in a file.
   def testSeekAndRead()
     var f = File("TMP", Output)
     f.write("12345foobar67890")
     f.close()
-    
+
     f = File("TMP")
-    
+
     f.seek(5 + 3)
     Assert(f.read(3) == "bar")
     f.seek(5)
@@ -249,10 +249,10 @@ class IOSuite2 is Suite
     Assert(f.read(1) == "1")
     f.seek(5 + 6 + 3)
     Assert(f.read(500) == "90")
-    
+
     f.close()
   end
-  
+
   -- Test writing after seeking in a file.
   def testSeekAndWrite()
     var f = File("TMP", Output)
@@ -264,12 +264,12 @@ class IOSuite2 is Suite
     f.seek(5 + 6 + 5) -- End of file
     f.write("xyz")
     f.close()
-    
+
     f = File("TMP")
     Assert(f.read() == "!2345FOOBAR67890xyz")
     f.close()
   end
-  
+
   -- Test mixed read/write operations with seeking.
   def testSeekWithReadAndWrite()
     var f = File("TMP", Output, Input)
@@ -281,17 +281,17 @@ class IOSuite2 is Suite
     f.write("FOOBAR")
     f.seek(5)
     Assert(f.read(9) == "FOOBAR678")
-    
+
     f.seek(5)
     f.write("ZAP")
     f.write("HAP")
     f.seek(5)
     Assert(f.read(3) == "ZAP")
     Assert(f.read(3) == "HAP")
-    
+
     f.close()
   end
-  
+
   -- Test seeking before the start of a file.
   def testSeekUnderflow()
     var f = File("TMP", Output)
@@ -302,12 +302,12 @@ class IOSuite2 is Suite
     AssertRaises(IoError, f.seek, [-2**32])
     f.close()
   end
-  
+
   -- Test creating a File object with the cosntructor.
   --def testFileStreamConstructor()
   --  AssertRaises(ValueError, FileStream, [])
   --end
-  
+
   -- Test querying end-of-file with an output stream.
   def testEofWithWrite()
     var f = File("TMP", Output)
@@ -329,7 +329,7 @@ class IOSuite2 is Suite
       f.close()
     end
   end
-  
+
   -- Test appending at the end of an existing file.
   def testAppendToExistingFile()
     for mode in Unbuffered, LineBuffered, Buffered
@@ -344,7 +344,7 @@ class IOSuite2 is Suite
       f.close()
     end
   end
-  
+
   -- Test performing both write and writeLn method calls for the same file.
   def testMixingWriteAndWriteLine()
     for mode in Unbuffered, LineBuffered, Buffered
@@ -358,7 +358,7 @@ class IOSuite2 is Suite
       Assert(File("TMP").readLines() == ("foobar", "abc"))
     end
   end
-  
+
   -- Test reading from a stream causes output streams to be flushed.
   def testWritingNewlineWithLineBuffering()
     var f = File("TMP", LineBuffered, Output)
@@ -367,7 +367,7 @@ class IOSuite2 is Suite
     Assert(File("TMP").readLines() == ("foobar", "line 2tsuppa du"))
     f.close()
   end
-  
+
   -- Test read and readln method calls in sequence.
   def testMixingReadAndReadLine()
     var f = File("TMP", Output)
@@ -385,7 +385,7 @@ class IOSuite2 is Suite
     Assert(f.readLn() == "fourth")
     f.close()
   end
-  
+
   -- Test that most operations raise exceptions if applied on a closed file
   -- stream. The close operation is an exception to this rule.
   def testOperationsAfterClose()
@@ -401,7 +401,7 @@ class IOSuite2 is Suite
     -- Calling close again is ok.
     f.close()
   end
-  
+
   -- Test the size method.
   def testSize()
     var f = File("TMP", Output)
@@ -416,12 +416,12 @@ class IOSuite2 is Suite
     f.write("bar")
     AssertEqual(f.size(), 8)
     f.close()
-    
+
     f = File("TMP", Input)
     AssertEqual(f.size(), 8)
     f.close()
   end
-  
+
   def testPos()
     var f = File("TMP", Output)
     AssertEqual(f.pos(), 0)
@@ -437,7 +437,7 @@ class IOSuite2 is Suite
     f.flush()
     AssertEqual(f.pos(), 8)
     f.close()
-    
+
     for mode in [Input], [Input, Output]
       f = File("TMP", *mode)
       AssertEqual(f.pos(), 0)
@@ -454,13 +454,13 @@ class IOSuite2 is Suite
       f.close()
     end
   end
-  
+
   def testPeek()
     var f = File("TMP", Output)
     f.write("hello there")
     AssertRaises(IoError, f.peek, [])
     f.close()
-    
+
     f = File("TMP")
     AssertEqual(f.peek(), "")
     AssertEqual(f.read(5), "hello")
@@ -470,7 +470,7 @@ class IOSuite2 is Suite
     AssertEqual(f.read(5), "there")
     AssertEqual(f.peek(), "")
     f.close()
-    
+
     f = File("TMP", Unbuffered)
     AssertEqual(f.peek(), "")
     AssertEqual(f.read(5), "hello")
@@ -479,7 +479,7 @@ class IOSuite2 is Suite
     AssertEqual(f.peek(), "")
     f.close()
   end
-  
+
   def testStandardRawStreams()
     AssertType(File, RawStdIn)
     AssertType(File, RawStdOut)
@@ -487,10 +487,10 @@ class IOSuite2 is Suite
     Assert(RawStdOut != RawStdErr)
     Assert(RawStdOut != RawStdIn)
     Assert(RawStdIn != RawStdErr)
-    
+
     -- FIX: More test cases.
   end
-  
+
   def testStandardTextStreams()
     AssertType(TextStream, StdIn)
     AssertType(TextStream, StdOut)
@@ -504,17 +504,17 @@ class IOSuite2 is Suite
     if IsFile("TMP")
       Remove("TMP")
     end
-    
+
     var f = File("TMP", Output, Protected)
     f.close()
 
     if Platform != "windows"
       AssertEqual(Stat("TMP").otherPerm, "")
-    
+
       -- The file must not exist before creating a protected file.
       AssertRaises(IoError, File, ["TMP", Output, Protected])
     end
-    
+
     f = File("TMP", Output)
     f.write("hello")
     f.close()
@@ -522,22 +522,22 @@ class IOSuite2 is Suite
     if Platform != "windows"
       AssertEqual(Stat("TMP").otherPerm, "")
     end
-    
+
     Remove("TMP")
 
     if Platform != "windows"
       f = File("TMP", Output)
       f.write("hello")
       f.close()
-    
+
       Assert(Stat("TMP").otherPerm != "")
-    
+
       Remove("TMP")
     end
-    
+
     AssertRaises(ValueError, File, ["TMP", Append, Protected])
     AssertRaises(ValueError, File, ["TMP", Input, Protected])
-    
+
     f = File("TMP", Protected, Output, LineBuffered, Input)
     f.write("hello")
     f.seek(0)
@@ -548,7 +548,7 @@ class IOSuite2 is Suite
       AssertEqual(Stat("TMP").otherPerm, "")
     end
   end
-  
+
   def testCombinedOptions()
     var f = File("TMP", Append, LineBuffered)
     f.write("hello")
@@ -574,7 +574,7 @@ class IOSuite2 is Suite
     AssertEqual(f.read(), "xoo")
     f.close()
   end
-  
+
   def testHandle()
     if IsFile("TMP")
       Remove("TMP")
@@ -584,105 +584,105 @@ class IOSuite2 is Suite
     Assert(f.__handle() > 2)
     f.close()
   end
-  
+
   def testTextStream()
     var f = File("TMP", Output)
     var t = TextStream(f, Utf8)
     t.writeLn("hääyö")
     t.close()
-    
+
     f = File("TMP")
     t = TextStream(f, Utf8)
     AssertEqual(t.readLn(), "hääyö")
     AssertEqual(t.eof(), True)
     t.close()
-    
+
     f = File("TMP", Output)
     f.write("\u0080ab\u00c2");
     f.close()
-    
+
     f = File("TMP")
     t = TextStream(f, Utf8)
     AssertRaises(DecodeError, t.readLn, [])
     t.close()
-    
+
     f = File("TMP")
     t = TextStream(f, Utf8, Strict)
     AssertRaises(DecodeError, t.readLn, [])
     t.close()
-    
+
     f = File("TMP")
     t = TextStream(f, Utf8, Unstrict)
     AssertEqual(t.readLn(), "\ufffdab\ufffd")
     t.close()
-    
+
     -- Default encoding.
     f = File("TMP")
     t = TextStream(f, LineBuffered, Unstrict)
     AssertType(Str, t.readLn())
     t.close()
   end
-  
+
   def testTextStreamBuffering()
     var f = File("TMP", Output)
     var e = TextStream(f, Utf8, Unbuffered)
     e.write("foobar")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), ["foobar"])
-    
+
     f = File("TMP", Output)
     e = TextStream(f, Utf8, Buffered)
     e.writeLn("foobar")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), [])
-    
+
     f = File("TMP", Output)
     e = TextStream(f, Utf8, LineBuffered)
     e.writeLn("foobar")
     e.write("foo")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), ["foobar"])
-    
+
     f = File("TMP", Output)
     e = TextStream(f, Utf8)
     e.writeLn("foobar")
     e.write("foo")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), [])
   end
-  
+
   -- Test that DefaultEncoding really is an encoding.
   def testDefaultEncoding()
     Assert(DefaultEncoding is Encoding)
     var e = DefaultEncoding.encoder()
     AssertType(Str, e.encode("foo"))
   end
-  
+
   def testTextFile()
     var f = TextFile("TMP", Utf8, Output)
     f.writeLn("ahääyö")
     f.close()
-    
+
     f = TextFile("TMP", Utf8)
     AssertEqual(f.readLn(), "ahääyö")
     AssertEqual(f.eof(), True)
     f.close()
-    
+
     if DefaultEncoding == Utf8
       -- Test UTF-8 default encoding with TextFile.
       f = TextFile("TMP", Output)
       f.writeLn("ahääyö")
       f.close()
-    
+
       f = TextFile("TMP")
       AssertEqual(f.readLn(), "ahääyö")
       AssertEqual(f.eof(), True)
       f.close()
-    
+
       f = TextFile("TMP", Utf8)
       AssertEqual(f.readLn(), "ahääyö")
       AssertEqual(f.eof(), True)
@@ -693,89 +693,89 @@ class IOSuite2 is Suite
       f = TextFile("TMP", Output)
       f.writeLn("foo bar")
       f.close()
-      
+
       f = TextFile("TMP")
       AssertEqual(f.readLn(), "foo bar")
       AssertEqual(f.eof(), True)
       f.close()
     end
-    
+
     f = File("TMP", Output)
     f.write("\u0080ab\u00c2");
     f.close()
-    
+
     f = TextFile("TMP", Utf8)
     AssertRaises(DecodeError, f.readLn, [])
     f.close()
-    
+
     f = TextFile("TMP", Utf8, Strict)
     AssertRaises(DecodeError, f.readLn, [])
     f.close()
-    
+
     f = TextFile("TMP", Utf8, Unstrict)
     AssertEqual(f.readLn(), "\ufffdab\ufffd")
     f.close()
-    
+
     f = TextFile("TMP", Utf8, Output)
     f.writeLn("hääyö")
     f.close()
     f = TextFile("TMP", Utf8, Append)
     f.writeLn("café")
     f.close()
-    
+
     f = TextFile("TMP", Utf8)
     AssertEqual(f.readLines(), ["hääyö", "café"])
   end
-  
+
   def testTextFileClose()
     var f = TextFile("TMP", Utf8, Output)
     f.writeLn("ahääyö")
     f.close()
     f.close()
   end
-    
+
   def testOpenTextBuffering()
     -- IDEA: Read contents of TMP before closing the file.
-    
+
     var f = TextFile("TMP", Utf8, Unbuffered, Output)
     f.write("foobar")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), ["foobar"])
-    
+
     f = TextFile("TMP", Utf8, Output, Buffered)
     f.writeLn("foobar")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), ["foobar"])
-    
+
     f = TextFile("TMP", Utf8, LineBuffered, Output)
     f.writeLn("foobar")
     f.write("foo")
     f.close()
-    
+
     AssertEqual(File("TMP").readLines(), ["foobar", "foo"])
-    
+
     -- TextFile with no buffering.
     f = TextFile("TMP", Utf8, Unbuffered, Output)
     f.writeLn("hääyö")
     f.close()
-    
+
     f = TextFile("TMP", Utf8, Unbuffered)
     AssertEqual(f.readLines(), ["hääyö"])
   end
-  
+
   def testAccessingBothTextStreamAndWrappedStream()
     -- Write data to a file.
     var of = TextFile("TMP", Utf8, Output)
     of.writeLn("hääyö")
     of.writeLn("€€€€")
     of.close()
-    
+
     -- Read the first line using a raw stream.
     var f = File("TMP")
     AssertEqual(f.readLn(), Encode("hääyö", Utf8))
-    
+
     -- Read the second line using a TextStream. The streams should be
     -- synchronized (i.e. the TextStream can access the buffer of the
     -- wrapped stream).
@@ -784,35 +784,35 @@ class IOSuite2 is Suite
     -- from the wrapped stream) is not supported.
     var f2 = TextStream(f, Utf8)
     AssertEqual(f2.readLn(), "€€€€")
-    
+
     Assert(f2.eof())
     Assert(f.eof())
-    
+
     -- This closes both the streams.
     f2.close()
     f2.close()
   end
-  
+
   def testUnprocessedCharacterHandling()
     -- Write a file with a UTF-8 sequence at a buffer boundary (hopefully).
     var f = TextFile("TMP", Utf8, Output)
     f.write("a" * 32767)
     f.write("ä")
     f.close()
-    
+
     var f2 = TextFile("TMP", Utf8)
     AssertEqual(f2.read(32767), "a" * 32767)
     f2.close()
-    
+
     var f3 = TextFile("TMP", Utf8)
     AssertEqual(f3.read(32768), "a" * 32767 + "ä")
     f3.close()
   end
-  
+
   def testBom()
     AssertEqual(Bom, "\ufeff")
   end
-  
+
   -- Test a codec whose decode() always returns "".
   def testBlackHoleCodec()
     for b in Buffered, Unbuffered
@@ -823,7 +823,7 @@ class IOSuite2 is Suite
       f.close()
     end
   end
-    
+
   -- Test a codec which raises an exception.
   def testCodecException()
     for b in Buffered, Unbuffered
@@ -833,20 +833,20 @@ class IOSuite2 is Suite
       f.close()
     end
   end
-    
+
   -- Test a codec of a wrong type.
   def testInvalidCodec()
     for b in Buffered, Unbuffered
       -- nil as codec.
       AssertRaises(ValueError, TextFile, ["TMP", nil, b])
-      
+
       writeFile("TMP", "foo bar")
-      
+
       -- Empty class as codec.
       var f = TextFile("TMP", EmptyCodec(), b)
       AssertRaises(MemberError, f.readLn, [])
       f.close()
-      
+
       f = File("TMP", Output)
       var f2 = TextStream(f, EmptyCodec(), b, Output)
       AssertRaises(MemberError, def ()
@@ -855,28 +855,28 @@ class IOSuite2 is Suite
                                end)
       --AssertRaises(MemberError, def (); f2.close(); end)
       f.close()
-      
+
       -- Bogus codec.
       -- FIX: This leaves an unclosed open file object hanging around.
       --AssertRaises(MemberError, def (); TextFile("TMP", 1, b); end)
     end
   end
-  
+
   -- Test long unbuffered readLn calls.
   def testLongUnbufferedReadLine()
     var s = "\u1234\u4567\u9874" * 7954
-   
+
     for sep in CR, LF, CR+LF
       var f = TextFile("TMP", Utf8, Output)
       f.write(s, sep)
       f.close()
-    
+
       f = TextFile("TMP", Utf8, Unbuffered)
       AssertEqual(f.readLn(), s)
       f.close()
     end
   end
-  
+
   private def writeFile(fnam, data)
     var f = File(fnam, Output)
     f.write(data)
@@ -963,7 +963,7 @@ private def TestFileRead(*a)
     f.write(x)
   end
   f.close()
-  
+
   -- Read strings.
   for m in InputModes
     f = File("TMP", *m)
@@ -977,7 +977,7 @@ private def TestFileRead(*a)
     Assert(f.eof())
     f.close()
   end
-  
+
   -- Read more than is available in the file, read at eof.
   for m in InputModes
     f = File("TMP", *m)
@@ -991,7 +991,7 @@ private def TestFileRead(*a)
     AssertEqual(f.read(100000), "")
     f.close()
   end
-  
+
   -- Read at eof.
   for m in InputModes
     f = File("TMP", *m)
@@ -1014,7 +1014,7 @@ private def TestFileReadAll(*a)
     acc += x
   end
   f.close()
-  
+
   -- Read the whole contents of the file using different read modes.
   for m in InputModes
     f = File("TMP", *m)
@@ -1068,7 +1068,7 @@ end
 
 private class StrObj
   const str
-  
+
   def _str()
     return str
   end
@@ -1079,7 +1079,7 @@ private class BlackHoleCodec
   def decoder()
     return self
   end
-  
+
   def encoder()
     return self
   end
@@ -1087,7 +1087,7 @@ private class BlackHoleCodec
   def decode(s)
     return ""
   end
-  
+
   def unprocessed()
     return ""
   end
@@ -1098,7 +1098,7 @@ private class ExceptionCodec
   def decoder()
     return self
   end
-  
+
   def encoder()
     return self
   end
@@ -1106,7 +1106,7 @@ private class ExceptionCodec
   def decode(s)
     raise TypeError("foo")
   end
-  
+
   def unprocessed()
     raise TypeError("foo")
   end

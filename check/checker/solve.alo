@@ -16,14 +16,14 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
     a.append(c)
     cmap[c.typeVar] = a
   end
-  
+
   var res = [] as <(Typ, Typ)>
-  
+
   -- Solve each type variable separately.
   for tvar in vars
     var bottom = nil as Typ
     var top = nil    as Typ
-    
+
     -- Process each contraint separely, and calculate the lower and upper
     -- bounds based on constraints. Note that we assume that the contraint
     -- targets do not have contraint references.
@@ -42,7 +42,7 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
         end
       end
     end
-    
+
     if top == nil
       if bottom is Void
         top = Void()
@@ -50,7 +50,7 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
         top = basic.object
       end
     end
-      
+
     if bottom == nil
       if top is Void
         bottom = Void()
@@ -58,12 +58,12 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
         bottom = NilType()
       end
     end
-    
+
     if top is Dynamic or bottom is Dynamic
       top = Dynamic()
       bottom = Dynamic()
     end
-    
+
     -- Pick the most specific type if it satisfies the constraints.
     if (top == nil or bottom == nil or IsSubtype(bottom, top)) and
        not top is ErrorType and not bottom is ErrorType
@@ -72,6 +72,6 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
       res.append(nil)
     end
   end
-  
+
   return res
 end

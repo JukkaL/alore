@@ -5,7 +5,7 @@
    Alore is licensed under the terms of the MIT license.  See the file
    LICENSE.txt in the distribution.
 */
-   
+
 #include "alore.h"
 
 
@@ -21,13 +21,13 @@ static AValue PackFloat32(AThread *t, AValue *frame)
         unsigned char s[4];
     } floatUnion;
     int i;
-        
+
     floatUnion.f = AGetFloat(t, frame[0]);
     frame[0] = AMakeEmptyStr(t, 4);
-        
+
     for (i = 0; i < 4; i++)
         ASetStrItem(frame[0], i, floatUnion.s[i]);
-            
+
     return frame[0];
 }
 
@@ -40,13 +40,13 @@ static AValue PackFloat64(AThread *t, AValue *frame)
         unsigned char s[8];
     } floatUnion;
     int i;
-        
+
     floatUnion.f = AGetFloat(t, frame[0]);
     frame[0] = AMakeEmptyStr(t, 8);
-        
+
     for (i = 0; i < 8; i++)
         ASetStrItem(frame[0], i, floatUnion.s[i]);
-            
+
     return frame[0];
 }
 
@@ -59,7 +59,7 @@ static AValue UnpackFloat32(AThread *t, AValue *frame)
         unsigned char s[4];
     } floatUnion;
     int i;
-    
+
     AExpectStr(t, frame[0]);
     if (AStrLen(frame[0]) != 4)
         return ARaiseValueError(t, "Str of length 4 expected");
@@ -77,7 +77,7 @@ static AValue UnpackFloat64(AThread *t, AValue *frame)
         unsigned char s[8];
     } floatUnion;
     int i;
-    
+
     AExpectStr(t, frame[0]);
     if (AStrLen(frame[0]) != 8)
         return ARaiseValueError(t, "Str of length 4 expected");

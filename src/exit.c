@@ -33,20 +33,20 @@ AValue AAddExitHandler(AThread *t, AValue *args)
     /* FIX: finish gc.. */
     /* FIX: perhaps use a global variable to hold this. a much cleaner
             approach.. */
-    
+
     if (AExitBlockInd == ExitBlockSize) {
         AValue *newBuf = AGrowStatic(
             AExitHandlers,
             (ExitBlockSize + EXIT_BLOCK_SIZE_INCREMENT) * sizeof(AValue));
         if (newBuf == NULL)
             return ARaiseMemoryErrorND(t);
-        
+
         AExitHandlers = newBuf;
         ExitBlockSize += EXIT_BLOCK_SIZE_INCREMENT;
     }
-    
+
     AExitHandlers[AExitBlockInd++] = args[0];
-    
+
     return ANil;
 }
 
@@ -55,7 +55,7 @@ AValue AAddExitHandler(AThread *t, AValue *args)
    exception.
 
    FIX: Add a lock?
-   
+
    IDEA: Exceptions could be handled better. Currently only minimal
          information is given to the user. */
 ABool AExecuteExitHandlers(AThread *t)
@@ -69,10 +69,10 @@ ABool AExecuteExitHandlers(AThread *t)
 
         if (ATry(t))
             status = FALSE;
-            
+
         if (ACallValue(t, AExitHandlers[i], 0, t->tempStack) == AError)
             status = FALSE;
-        
+
         AEndTry(t);
     }
 

@@ -18,7 +18,7 @@ class FormatSuite is Suite
     Assert("{{".format() == "{")
     Assert("}".format() == "}")
     Assert("}}".format() == "}")
-    
+
     for f in SandSSFunc(1) + SandSSFunc(2)
       Assert(f("abcdE Fegh").format() == f("abcdE Fegh"))
       Assert(f("ab{{cdE Fe}}gh").format() == f("ab{cdE Fe}gh"))
@@ -33,18 +33,18 @@ class FormatSuite is Suite
     Assert("{}".format(FormatConst) == "libs::FormatConst")
     Assert("-{}-".format(Set([1])) == "-Set(1)-")
     Assert("{}{}{}{}{}".format(1, 22, 333, 44, 5) == "122333445")
-    
+
     for f in StrFuncs
       Assert(f("x{}Abc{}y").format(f("A12345678"), "123") ==
              f("xA12345678Abc123y"))
     end
   end
-  
+
   -- Test left/right alignment with different field widths.
   def testAlignment()
     Assert("{4:}".format("ab") == "  ab")
     Assert("{-4:}".format("ab") == "ab  ")
-    
+
     for f1 in StrFuncs
       for f2 in StrFuncs
         Assert(f1("Abcdefghi{11:}Defghijkl").format(f2("AbcDefghi")) ==
@@ -58,7 +58,7 @@ class FormatSuite is Suite
       end
     end
   end
-  
+
   -- Test formatting Int objects.
   def testInt()
     Assert("{0}".format(0) == "0")
@@ -70,7 +70,7 @@ class FormatSuite is Suite
     Assert("{000}".format(-1234) == "-1234")
     Assert("{4:00}".format(1) == "  01")
   end
-  
+
   -- Test formatting Float and Int objects as fractions without exponents.
   def testFraction()
     -- Float as integer
@@ -83,7 +83,7 @@ class FormatSuite is Suite
     Assert("{00}".format(-6.7) == "-07")
     Assert("{00}".format(6.0) == "06")
     Assert("{00}".format(6123.2) == "6123")
-    
+
     -- Fixed fraction
     Assert("{0.0}".format(12.06) == "12.1")
     Assert("{0.0}".format(12.04) == "12.0")
@@ -93,18 +93,18 @@ class FormatSuite is Suite
     Assert("{0.00}".format(-12.304) == "-12.30")
     Assert("{0.00}".format(0.304) == "0.30")
     Assert("{0.00}".format(0.0) == "0.00")
-    
+
     -- Hard coded zeroes at the front
     Assert("{00.0}".format(1.2) == "01.2")
     Assert("{00.0}".format(123.2) == "123.2")
-    
+
     -- Int as fraction
     Assert("{0.0}".format(1) == "1.0")
     Assert("{00.0}".format(1) == "01.0")
     Assert("{0.0}".format(3456) == "3456.0")
     Assert("{0.0}".format(1234567890123456789) == "1234567890123456789.0")
   end
-  
+
   -- Test formatting Float and Int objects in the scientific format with an
   -- exponent.
   def testScientific()
@@ -113,16 +113,16 @@ class FormatSuite is Suite
     Assert("{0e0}".format(1.5) == "2e0")
     Assert("{0E0}".format(34.5) == "3E1")
     Assert("{0e0}".format(0.32) == "3e-1")
-    
+
     -- Short fraction
     Assert("{0.0e0}".format(155) == "1.6e2")
     Assert("{0.0e0}".format(-995) == "-1.0e3")
-    
+
     -- Longer fraction
     Assert("{0.0000000e0}".format(1.234e50) == "1.2340000e50")
     Assert("{0.0000000e0}".format(1.234e-50) == "1.2340000e-50")
     Assert("{0.000e0}".format(0.0) == "0.000e0")
-    
+
     -- Special exponents
     Assert("{0.00e00}".format(1.23) == "1.23e00")
     Assert("{0.00e00}".format(0.123) == "1.23e-01")
@@ -130,32 +130,32 @@ class FormatSuite is Suite
     Assert("{0.00e00}".format(1.23e-100) == "1.23e-100")
     Assert("{0.00e+00}".format(1.23) == "1.23e+00")
     Assert("{0.00e+00}".format(0.123) == "1.23e-01")
-    
+
     -- Integer as a fraction
     Assert("{0.00e0}".format(1) == "1.00e0")
     Assert("{0.00e0}".format(3456) == "3.46e3")
     Assert("{0.00e0}".format(12345678901234567890) == "1.23e19")
   end
-  
+
   -- Test formatting floating point infinities and NaNs.
   def testInfinitiesAndNaNs()
     AssertEqual("{}".format(NaN()), "nan")
     AssertEqual("{}".format(Inf()), "inf")
     AssertEqual("{}".format(-Inf()), "-inf")
-    
+
     AssertEqual("{0.0}".format(NaN()), "nan")
     AssertEqual("{0.0}".format(Inf()), "inf")
     AssertEqual("{0.0}".format(-Inf()), "-inf")
-    
+
     AssertEqual("{0.00e0}".format(NaN()), "nan")
     AssertEqual("{0.00e0}".format(Inf()), "inf")
     AssertEqual("{0.00e0}".format(-Inf()), "-inf")
-    
+
     AssertEqual("{5:0.0}".format(NaN()), "  nan")
     AssertEqual("{5:0.0}".format(Inf()), "  inf")
     AssertEqual("{-5:0.0}".format(-Inf()), "-inf ")
   end
-  
+
   -- Test format with classes.
   def testClasses()
     AssertEqual("{0}".format(MyFormatObj()), "<0>")
@@ -165,7 +165,7 @@ class FormatSuite is Suite
     Assert("1{ABC}23{xyz}456".format(MyFormatObj(), MyFormatObj2()) ==
            "1<abc>23(XYZ)456")
   end
-  
+
   -- Test formatting Int and Float fractions with trailing zeroes removed.
   def testFractionsWithoutTrailingZeroes()
     -- Remove all trailing zeroes.
@@ -173,16 +173,16 @@ class FormatSuite is Suite
     Assert("{0.##}".format(12.34) == "12.34")
     Assert("{0.##}".format(12.3) == "12.3")
     Assert("{0.##}".format(12) == "12")
-    
+
     -- Remove only some trailing zeroes.
     Assert("{0.0##}".format(12) == "12.0")
     Assert("{0.0##}".format(12.3456) == "12.346")
-    
+
     -- Integers
     Assert("{0.0##}".format(123456) == "123456.0")
     Assert("{0.##}".format(123456) == "123456")
   end
-  
+
   -- Test formatting Int and Float objects in the scientific format with
   -- trailing zeroes removed.
   def testScientificWithoutTrailingZeroes()
@@ -191,18 +191,18 @@ class FormatSuite is Suite
     Assert("{0.##e0}".format(1.23) == "1.23e0")
     Assert("{0.##e0}".format(1.2) == "1.2e0")
     Assert("{0.##e0}".format(2) == "2e0")
-    
+
     -- Remove only some trailing zeroes.
     Assert("{0.0##e0}".format(3) == "3.0e0")
     Assert("{0.0##e0}".format(12.3456) == "1.235e1")
-    
+
     -- Integers
     Assert("{0.0##e0}".format(1) == "1.0e0")
     Assert("{0.0##e0}".format(123) == "1.23e2")
     Assert("{0.##e0}".format(1) == "1e0")
     Assert("{0.##e0}".format(1234) == "1.23e3")
   end
-  
+
   -- Test formatting very long fractions.
   def testLargeFraction()
     var s = "{0.0}".format(1e50)
@@ -212,20 +212,20 @@ class FormatSuite is Suite
     for i in 0 to 51
       Assert(IsDigit(s[i]))
     end
-    
+
     Assert("{0.0}".format(2.3e200) == "2.3e+200")
     Assert("{0.0}".format(-2.3e200) == "-2.3e+200")
-    
+
     s = ("{0." + "0" * 40 + "}").format(1.2345)
     Assert(s.startsWith("1.23450000000") or s.startsWith("1.2344999999999"))
     Assert(s.length() == 42)
     for i in 2 to 42
       Assert(IsDigit(s[i]))
     end
-    
+
     AssertRaises(ValueError, ("{0." + "0" * 400 + "}").format, [1.2345])
   end
-  
+
   -- Test formatting very long scientific numbers.
   def testLargeScientific()
     var s = ("{0." + "0" * 100 + "}").format(2e50)
@@ -235,40 +235,40 @@ class FormatSuite is Suite
     for i in 2 to 102
       Assert(IsDigit(s[i]))
     end
-    
+
     AssertRaises(ValueError, ("{0." + "0" * 2000 + "}").format, [2e50])
   end
-  
+
   -- Test a few complex format strings.
   def testComplexFormats()
     Assert("The {0}th player '{}' had a score of {0.###} or {0.00}%".format(
                   4, "John", 1.2, 36.3) ==
                   "The 4th player 'John' had a score of 1.2 or 36.30%")
-                  
+
     Assert("{00} {-10:} {8:0.00}".format(2, "John", 1.234) ==
            "02 John           1.23")
   end
-  
+
   def testInvalidFormats()
     AssertRaises(ValueError, "{0".format, [1])
     AssertRaises(ValueError, "{x}".format, [1])
     AssertRaises(ValueError, "{} {}".format, [1])
     AssertRaises(ValueError, "{} {}".format, [1, 2, 3])
-    
+
     -- FIX: Add test cases for more invalid formats.
   end
-  
+
   -- Test 0-characters in format strings and arguments.
   def testNullCharacter()
     Assert("a\u0000b".format() == "a\u0000b")
     Assert("a{}b".format("\u0000") == "a\u0000b")
-    
+
     Assert("\u1000\u0000b".format() == "\u1000\u0000b")
     Assert("\u1000{}b".format("\u0000") == "\u1000\u0000b")
-    
+
     Assert("a{}b".format("\u0000\u1000") == "a\u0000\u1000b")
   end
-  
+
   -- Test long format strings and arguments.
   def testLongStrings()
     Assert(("abc" * 2000).format() == "abc" * 2000)
@@ -278,8 +278,8 @@ class FormatSuite is Suite
     Assert("a{}b".format("\u1000bc" * 2000) == "a" + "\u1000bc" * 2000 + "b")
   end
 end
-  
-  
+
+
 const StrFuncs = SandSSFunc(1) + SandSSFunc(2)
 
 

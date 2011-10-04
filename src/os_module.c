@@ -184,7 +184,7 @@ static AValue OsJoin(AThread *t, AValue *frame)
         pathInd += AGetStr(t, AArrayItem(frame[1], i), path + pathInd,
                            A_MAX_PATH_LEN - pathInd);
     }
-    
+
     return AMakeStr(t, path);
 }
 
@@ -220,7 +220,7 @@ static AValue OSMain(AThread *t, AValue *frame)
     ASetConstGlobalByNum(t, AbsPathNum, AGlobal(t, "__os::AbsPath"));
     ASetConstGlobalByNum(t, ExpandUserNum, AGlobal(t, "__os::ExpandUser"));
     ASetConstGlobalByNum(t, MakeDirsNum, AGlobal(t, "__os::MakeDirs"));
-    
+
     return ANil;
 }
 

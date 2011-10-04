@@ -10,29 +10,29 @@ class NodeVisitor<T>
 
   def visitAloreFile(o as AloreFile) as T
   end
-  
+
   def visitEncoding(o as Encoding) as T
   end
   def visitHeader(o as Header) as T
   end
   def visitImport(o as Import) as T
   end
-  
+
   -- Definitions
-  
+
   def visitFuncDef(o as FuncDef) as T
   end
   def visitTypeDef(o as TypeDef) as T
   end
   def visitVarDef(o as VarDef) as T
   end
-  
+
   def visitVar(o as Var) as T
   end
-  
+
   def visitAnnotation(o as Annotation) as T
   end
-  
+
   -- Statements
 
   -- Visit a block. Unlike other methods, this does not correspond to a
@@ -41,7 +41,7 @@ class NodeVisitor<T>
   -- instead of iterating over them directly.
   def visitBlock(o as Array<Node>) as T
   end
-  
+
   def visitExpressionStmt(o as ExpressionStmt) as T
   end
   def visitAssignmentStmt(o as AssignmentStmt) as T
@@ -68,9 +68,9 @@ class NodeVisitor<T>
   end
   def visitSwitchStmt(o as SwitchStmt) as T
   end
-  
+
   -- Expressions
-  
+
   -- Lvalue expressions.
   def visitNameLvalue(o as NameLvalue) as T
   end
@@ -80,11 +80,11 @@ class NodeVisitor<T>
   end
   def visitSuperLvalue(o as SuperLvalue) as T
   end
-  
+
   -- This is called before and in addition to one of the following methods.
   def visitExpression(o as Node) as T
   end
-  
+
   def visitIntExpr(o as IntExpr) as T
   end
   def visitStrExpr(o as StrExpr) as T
@@ -121,7 +121,7 @@ class NodeVisitor<T>
   end
   def visitFuncExpr(o as FuncExpr) as T
   end
-  
+
   def visitCoerceExpr(o as CoerceExpr) as T
   end
   def visitTypeExpr(o as TypeExpr) as T

@@ -91,7 +91,7 @@ AValue AConstantToErrno(AThread *t, AValue value)
 {
     int i;
     int errnoId;
-    
+
     if (!AIsConstant(value))
         return ARaiseTypeError(t, "Constant expected");
 
@@ -114,7 +114,7 @@ AValue AConstantToErrno(AThread *t, AValue value)
         if (AErrnoTable[i].errnoId == errnoId)
             return AMakeInt(t, AErrnoTable[i].errnoValue);
     }
-    
+
     return AZero;
 }
 
@@ -135,7 +135,7 @@ static int LookupErrnoTable(int errnoValue)
 
     if (errnoValue == 0)
         return -1;
-    
+
     for (i = 0; AErrnoTable[i].errnoId != 0; i++) {
         if (AErrnoTable[i].errnoValue == errnoValue)
             return i;
@@ -150,7 +150,7 @@ static int LookupErrnoTable(int errnoValue)
    The path (if != NULL) is included in the message.
 
    The format of the message can be one of the following:
-   
+
      Permission denied [EACCESS]
      dir/file.ext: Permission denied [EACCESS]
      [Errno 56]                                      (if unknown errno)
@@ -174,9 +174,9 @@ AValue ARaiseErrnoExceptionByNum(AThread *t, int classNum, const char *path)
     if (i >= 0) {
         /* The errno was recognized; it is included in AErrnoTable. */
         int num;
-        
+
         msgBase = AErrnoTable[i].message;
-        
+
         num = ErrnoNums[AErrnoTable[i].errnoId];
         sym = AValueToConstant(AGlobalByNum(num))->sym;
     }

@@ -16,7 +16,7 @@ class CodeGenRegressionsSuite is Suite
   def testComplexDefaultArgumentExpression()
     AssertEqual(f(1, "x"), "x")
   end
-  
+
   private def f(x, y = x.z.z)
     return y
   end

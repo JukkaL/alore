@@ -52,13 +52,13 @@ AValue AOsRemove(AThread *t, AValue *frame)
     AAllowBlocking();
     status = remove(path);
     AEndBlocking();
-    
+
     if (status < 0) {
         if (errno == EACCES || errno == ENOENT) {
             AAllowBlocking();
             status = RemoveDirectory(path);
             AEndBlocking();
-            
+
             if (!status) {
                 errno = EACCES;
                 return ARaiseErrnoIoError(t, path);
@@ -76,7 +76,7 @@ AValue AOsRename(AThread *t, AValue *frame)
 {
     char source[A_MAX_PATH_LEN], target[A_MAX_PATH_LEN];
     int status;
-    
+
     /* IDEA: Maybe return a special error if cannot rename because destination
        on a different file system. */
 
@@ -89,7 +89,7 @@ AValue AOsRename(AThread *t, AValue *frame)
     AAllowBlocking();
     status = rename(source, target);
     AEndBlocking();
-    
+
     if (status < 0)
         return ARaiseErrnoIoError(t, NULL);
     else
@@ -104,13 +104,13 @@ AValue AOsMakeDir(AThread *t, AValue *frame)
     int status;
 
     AGetStr(t, frame[0], path, sizeof(path));
-    
+
     /* IDEA: Create the directories beneath the destination directory as
        needed. */
     AAllowBlocking();
     status = mkdir(path);
     AEndBlocking();
-    
+
     if (status < 0)
         return ARaiseErrnoIoError(t, path);
     else
@@ -125,11 +125,11 @@ AValue AOsChangeDir(AThread *t, AValue *frame)
     int status;
 
     AGetStr(t, frame[0], path, sizeof(path));
-    
+
     AAllowBlocking();
     status = chdir(path);
     AEndBlocking();
-    
+
     if (status < 0)
         return ARaiseErrnoIoError(t, path);
     else
@@ -188,11 +188,11 @@ AValue AOsSystem(AThread *t, AValue *frame)
     int error;
 
     AGetStr(t, frame[0], cmd, sizeof(cmd));
-    
+
     AAllowBlocking();
     error = system(cmd);
     AEndBlocking();
-    
+
     return AIntToValue(error);
 }
 
@@ -205,12 +205,12 @@ static int MyStat(const char *path, struct stat *buf)
     int fixed;
     int len = strlen(path);
     ABool trailing = FALSE;
-    
+
     if (len >= A_MAX_PATH_LEN)
         return -1;
-    
+
     strcpy(path2, path);
-    
+
     /* Strip trailing dir separators, as otherwise the stat call may
        fail. Keep the initial dir separator. */
     fixed = A_IS_DRIVE_PATH(path2) ? 3 : 1;
@@ -219,23 +219,23 @@ static int MyStat(const char *path, struct stat *buf)
         trailing = TRUE;
     }
     path2[len] = '\0';
-    
+
     /* stat() of path of form "x:" will fail. Translate it to "x:." instead,
        which is equivalent and works. */
     if (len == 2 && A_IS_DRIVE_PATH(path2))
         strcat(path2, ".");
-    
+
     AAllowBlocking();
     status = stat(path2, buf);
     AEndBlocking();
-    
+
     /* If there was a trailing separator but the name does not refer to a
        directory, we must return an error. */
     if (status >= 0 && trailing && !S_ISDIR(buf->st_mode)) {
         errno = ENOTDIR;
         return -1;
     }
-    
+
     return status;
 }
 
@@ -255,7 +255,7 @@ AValue AOsExists(AThread *t, AValue *frame)
             return AFalse;
         return ARaiseErrnoIoError(t, path);
     }
-    
+
     return ATrue;
 }
 
@@ -275,7 +275,7 @@ AValue AOsIsFile(AThread *t, AValue *frame)
             return AFalse;
         return ARaiseErrnoIoError(t, path);
     }
-    
+
     return S_ISREG(buf.st_mode) ? ATrue : AFalse;
 }
 
@@ -354,7 +354,7 @@ AValue AStatCreate(AThread *t, AValue *frame)
 
     *(time_t *)ADataPtr(frame[0], 0) = buf.st_mtime;
     *(time_t *)ADataPtr(frame[0], sizeof(time_t)) = buf.st_atime;
-    
+
     return frame[0];
 }
 
@@ -383,7 +383,7 @@ static AValue MakeDateTime(AThread *t, AValue *frame, time_t t1)
     char buf[30];
 
     t2 = *localtime(&t1);
-    
+
     sprintf(buf, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d",
             t2.tm_year + 1900,
             t2.tm_mon + 1,
@@ -402,13 +402,13 @@ AValue AStatIsReadable(AThread *t, AValue *frame)
     AValue pathVal = AMemberDirect(frame[0], 0);
     char path[A_MAX_PATH_LEN];
     int status;
-    
+
     AGetStr(t, pathVal, path, A_MAX_PATH_LEN);
 
     AAllowBlocking();
     status = access(path, R_OK);
     AEndBlocking();
-        
+
     return status == 0 ? ATrue : AFalse;
 }
 
@@ -419,13 +419,13 @@ AValue AStatIsWritable(AThread *t, AValue *frame)
     AValue pathVal = AMemberDirect(frame[0], 0);
     char path[A_MAX_PATH_LEN];
     int status;
-    
+
     AGetStr(t, pathVal, path, A_MAX_PATH_LEN);
 
     AAllowBlocking();
     status = access(path, W_OK);
     AEndBlocking();
-    
+
     return status == 0 ? ATrue : AFalse;
 }
 
@@ -445,7 +445,7 @@ AValue AStatOwnerPerm(AThread *t, AValue *frame)
     return ANil;
 }
 
-    
+
 /* Stat otherPerm (getter) */
 AValue AStatOtherPerm(AThread *t, AValue *frame)
 {
@@ -453,7 +453,7 @@ AValue AStatOtherPerm(AThread *t, AValue *frame)
     return ANil;
 }
 
-    
+
 /* Stat groupPerm (getter)
    Always return nil; this does not really make sense in Windows. */
 AValue AStatGroupPerm(AThread *t, AValue *frame)
@@ -524,19 +524,19 @@ AValue AOsListDir(AThread *t, AValue *frame)
     AAllowBlocking();
     d = opendir(path);
     AEndBlocking();
-    
+
     if (d == NULL) {
         AFreeTemps(t, 2);
         return ARaiseErrnoIoError(t, path);
     }
-    
+
     if (ATry(t)) {
         AAllowBlocking();
         closedir(d);
         AEndBlocking();
         return AError;
     }
-    
+
     tmp[1] = AZero; /* IDEA: Is this superfluous? */
     tmp[0] = AMakeArray(t, 0);
 
@@ -546,12 +546,12 @@ AValue AOsListDir(AThread *t, AValue *frame)
         AAllowBlocking();
         entry = readdir(d);
         AEndBlocking();
-        
+
         if (entry == NULL)
             break;
-        
+
         n = entry->d_name;
-        
+
         if (!(n[0] == '.' && (strcmp(n, ".") == 0 || strcmp(n, "..") == 0))) {
             if (mask_p == NULL
                 || MatchName(n, mask_p)) {
@@ -590,10 +590,10 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
     AAllowBlocking();
     d = opendir(path);
     AEndBlocking();
-    
+
     if (d == NULL)
         return ARaiseErrnoIoError(t, path);
-    
+
     if (ATry(t)) {
         AAllowBlocking();
         closedir(d);
@@ -610,7 +610,7 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
 
         if (entry == NULL)
             break;
-        
+
         n = entry->d_name;
 
         if (n[0] == '.' && (strcmp(n, ".") == 0 || strcmp(n, "..") == 0))
@@ -632,12 +632,12 @@ static AValue WalkDirRecursive(AThread *t, AValue *data, const char *base,
         if (*path != '\0')
             strcat(path, A_DIR_SEPARATOR_STRING);
         strcat(path, n);
-        
+
         if (mask == NULL || MatchName(n, mask)) {
             data[1] = AMakeStr(t, path);
             AAppendArray(t, data[0], data[1]);
         }
-        
+
         /* Descent into subdirectories. */
         if (S_ISDIR(buf.st_mode)) {
             if (AIsError(WalkDirRecursive(t, data, base, path, mask))) {
@@ -709,7 +709,7 @@ AValue AOsGetEnv(AThread *t, AValue *frame)
             strcpy(value, "");
         }
     }
-    
+
     return AMakeStr(t, value);
 }
 
@@ -720,7 +720,7 @@ AValue AOsSetEnv(AThread *t, AValue *frame)
     char name[256];
 
     AGetStr(t, frame[0], name, sizeof(name));
-    
+
     if (!AIsNil(frame[1])) {
         char value[MAX_ENV_VALUE_LEN];
         AGetStr(t, frame[1], value, sizeof(value));
@@ -796,7 +796,7 @@ static AValue ASetFileTime(AThread *t, AValue *frame, ABool isAccess)
     s = AGetFloat(t, v);
     sysTime.wSecond = s;
     sysTime.wMilliseconds = (s - (int)s) * 1000;
-    
+
     if (!SystemTimeToFileTime(&sysTime, &localFileTime))
         return ARaiseValueError(t, NULL);
 
@@ -808,7 +808,7 @@ static AValue ASetFileTime(AThread *t, AValue *frame, ABool isAccess)
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, 0, NULL);
     AEndBlocking();
-    
+
     if (handle == INVALID_HANDLE_VALUE)
         return ARaiseWin32Exception(t, AStdIoErrorNum);
 
@@ -907,7 +907,7 @@ AValue AOsUser(AThread *t, AValue *frame)
     len = sizeof(buf);
     if (WNetGetUser(NULL, buf, &len) != NO_ERROR)
         return ARaiseIoError(t, NULL);
-    
+
     return AMakeStr(t, buf);
 }
 
@@ -929,13 +929,13 @@ AValue AOsGetFullPathName(AThread *t, AValue *frame)
     char out[A_MAX_PATH_LEN];
     char *outp;
     DWORD status;
-    
+
     AGetStr(t, frame[0], file, sizeof(file));
-    
+
     status = GetFullPathName(file, sizeof(out), out, &outp);
     if (status < 0 || status >= sizeof(out))
         return ARaiseWin32Exception(t, AStdIoErrorNum);
-        
+
     return AMakeStr(t, out);
 }
 

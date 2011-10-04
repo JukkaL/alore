@@ -90,23 +90,23 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
         while (*src != '\n' && *src != '\r')
             src++;
     }
-    
+
     /* This variable is TRUE if the previous symbol was "encoding". */
     isPreviousSymbolEncoding = FALSE;
-    
+
     for (;;) {
         tok->lineNumber = lineNumber;
-        
+
         switch (*src++) {
         case '\r':
             if (src != srcEnd && *src == '\n')
                 src++;
-            
+
             /* Fall through */
-            
+
         case '\n':
             lineNumber++;
-            
+
             if (IgnoreNewLine[tok[-1].type]) {
                 tok->lineNumber = lineNumber;
                 if (src == srcEnd) {
@@ -120,22 +120,22 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
                     tok = AdvanceNewToken(tok);
                     if (tok == NULL)
                         return FALSE;
-                    
+
                     tok->lineNumber = lineNumber;
                     *tokPtr = tok;
                     return TRUE;
                 }
             }
-            
+
             break;
-            
+
         case ';':
             if (tok[-1].type == TT_NEWLINE)
                 continue;
-            
+
             tok->type = TT_NEWLINE;
             break;
-            
+
         case ' ':
         case '\t':
             continue;
@@ -143,7 +143,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
         case '(':
             tok->type = TT_LPAREN;
             break;
-            
+
         case ')':
             tok->type = TT_RPAREN;
             break;
@@ -186,7 +186,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
                 } else if (encoding == AENC_UTF8) {
                     /* Check that the comment does not include invalid UTF-8
                        sequences. */
-                    
+
                     do {
                         if (*src > 127 && IsInvalidUtf8Sequence(src)) {
                             isInvalid = TRUE;
@@ -294,7 +294,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
         case '5': case '6': case '7': case '8': case '9':
         {
             /* Numeric literal */
-            
+
             const unsigned char *numBeg = src - 1;
             AValue num;
 
@@ -307,7 +307,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
 
                 src = AStrToInt(ACompilerThread, numBeg, srcEnd, &num);
                 /* FIX: what if out of memory.. */
-                
+
                 if (!IsIdChar[*src] && (*src != '.' || !AIsDigit(src[1]))) {
                     if (AIsShortInt(num) && num < 32767 /* FIX: neg,
                                                           opcsize.. */) {
@@ -372,7 +372,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
                     p += 5;
                 } else if (p[0] >= 128) {
                     /* Non-7-bit character code */
-                    
+
                     if (encoding == AENC_ASCII) {
                         /* Invalid character (non-ascii). */
                         isInvalid = TRUE;
@@ -404,7 +404,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
                 src = p + 1;
             } else
                 tok->type = TT_ERR_STRING_UNTERMINATED;
-            
+
             break;
         }
 
@@ -422,7 +422,7 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
         case 'Z':
         case '_': {
             /* Identifier / keyword */
-            
+
             const unsigned char *idBeg;
             unsigned hashValue;
             unsigned idLen;
@@ -447,10 +447,10 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
 
                     if (i == idLen) {
                         /* Found a match in the symbol table. */
-                        
+
                         tok->type = sym->type;
                         tok->info.sym = sym;
-                        
+
                         /* Check if we should change the encoding? Note that
                            this does not check for errors and may sometimes
                            produce non-obvious results. This should be rare
@@ -466,12 +466,12 @@ ABool ATokenize(const unsigned char *src, const unsigned char *srcEnd,
                             if (encodingPtr != NULL)
                                 *encodingPtr = encoding;
                         }
-                        
+
                         isPreviousSymbolEncoding = (tok->type == TT_ENCODING);
                         goto Found;
                     }
                 }
-                
+
                 sym = sym->next;
             }
 
@@ -564,7 +564,7 @@ unsigned AGetSymbolHashValue(ASymbol *sym)
     unsigned len = sym->len;
     unsigned hashValue = str[0];
     unsigned i;
-    
+
     for (i = 1; i < len; i++)
         hashValue += hashValue * 32 + str[i];
 
@@ -575,24 +575,24 @@ unsigned AGetSymbolHashValue(ASymbol *sym)
 static AToken *AdvanceNewToken(AToken *tok)
 {
     tok++;
-    
+
     if (tok->type == TT_LAST_TOKEN) {
         /* Create new token block. */
         if (!CreateTokenBlock(&tok->info.nextBlock))
             return FALSE;
-        
+
         /* Mark end of block. */
         tok->type = TT_EOB;
-        
+
         /* Duplicate the last token of the previous block at the beginning
            of the new block to allow always a single lookahead token. */
         *tok->info.nextBlock = tok[-1];
-        
+
         tok = tok->info.nextBlock + 1;
     }
 
     tok->lineNumber = tok[-1].lineNumber;
-    
+
     return tok;
 }
 
@@ -647,12 +647,12 @@ static int CreateStringLiteral(const unsigned char *p,
         /* Pure ascii literal or Latin-1 literal, potentially with \u sequences
            with character values less than 255. */
         AString *str;
-        
+
         str = AAlloc(ACompilerThread, sizeof(AValue) + (end - p) - numQuotes -
                     5 * numUnicodeSequences);
         if (str == NULL)
             return -1;
-        
+
         i = 0;
         while (p < end) {
             if (p[0] == quote)
@@ -663,9 +663,9 @@ static int CreateStringLiteral(const unsigned char *p,
             } else
                 str->elem[i++] = *p++;
         }
-        
+
         AInitNonPointerBlock(&str->header, i);
-        
+
         return AAddConstGlobalValue(AStrToValue(str));
     } else if (encoding == AENC_UTF8) {
         /* Wide UTF-8 string literal (in this context this means that there
@@ -682,7 +682,7 @@ static int CreateStringLiteral(const unsigned char *p,
         }
         /* Correct the length value. */
         len -= numQuotes - 5 * numUnicodeSequences;
-        
+
         /* Allocate space for string. */
         str = AAlloc(ACompilerThread, sizeof(AValue) +
                      len * sizeof(AWideChar));
@@ -701,7 +701,7 @@ static int CreateStringLiteral(const unsigned char *p,
             } else {
                 unsigned char ch1 = p[0];
                 AWideChar result;
-                
+
                 if (ch1 <= 0x7f) {
                     result = ch1;
                     p++;
@@ -720,25 +720,25 @@ static int CreateStringLiteral(const unsigned char *p,
                     result = ((ch1 & 0xf) << 12) | ((ch2 & 0x3f) << 6)
                         | (ch3 & 0x3f);
                 }
-                
+
                 str->elem[i++] = result;
             }
         }
 
         AInitNonPointerBlock(&str->header, i * sizeof(AWideChar));
-        
+
         return AAddConstGlobalValue(AWideStrToValue(str));
     } else {
         /* ASCII or Latin 1 wide string literal */
-        
+
         AWideString *str;
         unsigned len = (end - p) - numQuotes - 5 * numUnicodeSequences;
-        
+
         str = AAlloc(ACompilerThread, sizeof(AValue) +
                      len * sizeof(AWideChar));
         if (str == NULL)
             return -1;
-        
+
         i = 0;
         while (p < end) {
             if (p[0] == quote)
@@ -749,9 +749,9 @@ static int CreateStringLiteral(const unsigned char *p,
             } else
                 str->elem[i++] = *p++;
         }
-        
+
         AInitNonPointerBlock(&str->header, i * sizeof(AWideChar));
-        
+
         return AAddConstGlobalValue(AWideStrToValue(str));
     }
 }
@@ -760,7 +760,7 @@ static int CreateStringLiteral(const unsigned char *p,
 static ABool IsInvalidUtf8Sequence(const unsigned char *s)
 {
     unsigned char ch1 = s[0];
-    
+
     if (ch1 < 0xc2)
         return TRUE;
     else if (ch1 < 0xe0) {
@@ -795,10 +795,10 @@ ABool ATokenizeStr(const char *str, AToken **tok)
     char buf[A_TOKENIZE_BUF_LENGTH + 1];
 
     *tok = NULL;
-    
+
     if (strlen(str) > sizeof(buf) - 1)
         return FALSE;
-    
+
     strcpy(buf, str);
     strcat(buf, "\n");
 

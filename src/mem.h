@@ -101,7 +101,7 @@
 #define AGetMixedBlockSize(valPtr) \
     AGetBlockSize(AGetMixedBlockDataLength(valPtr))
 
-    
+
 /* Is the block at valPtr a class instance block? */
 #define AIsInstanceBlock(valPtr) \
     ((*(valPtr) & A_BLOCK_TYPE_TAG_MASK) == A_INSTANCE_BLOCK_TAG)
@@ -187,7 +187,7 @@
 
 extern char *ANurseryBegin;
 extern char *ANurseryEnd;
-    
+
 
 /* FIX */
 #define A_EMPTY_THREAD_HEAP_PTR NULL

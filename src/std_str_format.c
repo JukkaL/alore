@@ -129,7 +129,7 @@ static void NumberToStr(FormatOutput *output, AValue num, int intLen,
     if (AIsInt(num)) {
         /* Int */
         int sign;
-        
+
         output->str[1] = num;
         output->str[1] = AStdStr(output->t, output->str + 1);
         if (output->str[1] == AError)
@@ -175,7 +175,7 @@ static void NumberToStr(FormatOutput *output, AValue num, int intLen,
 
         if (fractionLen + 50 + 5 > NUM_BUF_SIZE)
             ARaiseValueError(output->t, "Formatted Float is too long");
-        
+
         si = sprintf(s, "%.*f", fractionLen, AGetFloat(output->t, num));
 
         if (s[0] == '-') {
@@ -215,7 +215,7 @@ static void NumberToScientific(FormatOutput *output, AValue num, int numFrac,
                                 optFrac)
 {
     /* FIX: Use sprintf for the conversion for better accuracy. */
-    
+
     double f = AGetFloat(output->t, num);
     int exp = 0;
     ABool sign = f < 0.0;
@@ -295,14 +295,14 @@ AValue AFormat(AThread *t, AValue *frame)
     int ai;      /* Argument index */
     int fmtLen;  /* Format string length */
     FormatOutput output;
-    
+
     AExpectStr(t, frame[0]);
 
     output.t = t;
     output.index = 0;
     output.len = FORMAT_BUF_SIZE;
     output.str = &frame[2];
-    
+
     fmtLen = AStrLen(frame[0]);
     ai = 0;
 
@@ -324,7 +324,7 @@ AValue AFormat(AThread *t, AValue *frame)
                 int oldInd;
                 int oldOutInd;
                 AValue arg;
-                
+
                 fi++;
                 oldInd = fi;
 
@@ -432,10 +432,10 @@ AValue AFormat(AThread *t, AValue *frame)
                 align -= (output.index & ~WIDE_BUF_FLAG) - oldOutInd;
                 if (align > 0) {
                     int i;
-                    
+
                     for (i = 0; i < align; i++)
                         Append(&output, ' ');
-                        
+
                     if (!negAlign) {
                         if (output.index < FORMAT_BUF_SIZE) {
                             AMoveMem(output.buf + oldOutInd + align,

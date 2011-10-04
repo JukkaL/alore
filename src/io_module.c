@@ -57,10 +57,10 @@ AValue AStreamCreate(AThread *t, AValue *frame)
     int i;
 
     /* IDEA: Check all error conditions. */
-    
+
     mode = 0;
     bufMode = A_BUFMODE_BUFFERED;
-    
+
     for (i = 1; i <= 4; i++) {
         if (frame[i] == AGlobalByNum(ABufferedNum))
             bufMode = A_BUFMODE_BUFFERED;
@@ -93,7 +93,7 @@ AValue AStreamCreate(AThread *t, AValue *frame)
     inst->member[A_STREAM_INPUT_BUF_END] = AZero;
     inst->member[A_STREAM_OUTPUT_BUF] = AZero;
     inst->member[A_STREAM_OUTPUT_BUF_IND] = AZero;
-    
+
     return frame[0];
 }
 
@@ -134,12 +134,12 @@ AValue AStreamWrite(AThread *t, AValue *frame)
         bufLen = AGetStrLen(buf);
         bufInd = AValueToInt(inst->member[A_STREAM_OUTPUT_BUF_IND]);
         origBufInd = bufInd;
-        
+
         for (i = 0; i < aLen; i++) {
             unsigned char *s;
             unsigned len;
             unsigned ind;
-            
+
             frame[2] = AArrayItem(frame[1], i);
 
             for (;;) {
@@ -147,11 +147,11 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                     s = AValueToStr(frame[2])->elem;
                     len = AGetStrLen(AValueToStr(frame[2]));
                     ind = 0;
-                    
+
                     /* Do we have to expand narrow string to wide buffer? */
                     if (AIsWideStr(inst->member[A_STREAM_OUTPUT_BUF]))
                         goto NarrowToWide;
-                    
+
                     break;
                 } else if (AIsSubStr(frame[2])) {
                     ASubString *ss;
@@ -160,11 +160,11 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                     s = AValueToStr(ss->str)->elem;
                     ind = AValueToInt(ss->ind);
                     len = AValueToInt(ss->len);
-                    
+
                     if (AIsWideStr(ss->str)) {
                         if (inst->member[A_STREAM_MODE] & A_MODE_NARROW)
                             goto WideToNarrow;
-                        
+
                         frame[2] = ss->str;
                         s = (unsigned char *)AValueToWideStr(ss->str)->elem;
                         ind *= sizeof(AWideChar);
@@ -183,22 +183,22 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                     if (inst->member[A_STREAM_MODE] & A_MODE_NARROW) {
 
                       WideToNarrow:
-                        
+
                         frame[2] = AWideStringToNarrow(t, frame[2], NULL);
                         if (AIsError(frame[2]))
                             return AError;
                         inst = AValueToInstance(frame[0]);
                         buf = AValueToStr(inst->member[A_STREAM_OUTPUT_BUF]);
-                        
+
                         continue;
                     }
-                    
+
                     s = AValueToStr(frame[2])->elem;
                     len = AGetStrLen(AValueToStr(frame[2]));
                     ind = 0;
 
                   CheckBufferExpand:
-                    
+
                     /* Do we have to expand the buffer to wide chars? */
                     if (!AIsWideStr(inst->member[A_STREAM_OUTPUT_BUF])) {
                         if (bufInd > bufLen / 2) {
@@ -215,7 +215,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                             buf = AValueToStr(
                                 inst->member[A_STREAM_OUTPUT_BUF]);
                             s = AValueToStr(frame[2])->elem;
-                            
+
                             bufInd = 0;
                             origBufInd = 0;
 
@@ -248,11 +248,11 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                     /* Update values that could have been moved by gc. */
                     inst = AValueToInstance(frame[0]);
                     buf = AValueToStr(inst->member[A_STREAM_OUTPUT_BUF]);
-                    
+
                     frame[2] = v;
                 }
             }
-            
+
             while (bufInd + len > bufLen) {
                 /* Fill the rest of the buffer by copying from the source
                    string. */
@@ -269,7 +269,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                 inst = AValueToInstance(frame[0]);
                 buf = AValueToStr(inst->member[A_STREAM_OUTPUT_BUF]);
                 s = AValueToStr(frame[2])->elem;
-                
+
                 bufInd = 0;
                 origBufInd = 0;
             }
@@ -287,7 +287,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                 AWideString *wbuf;
 
                 wbuf = (AWideString *)buf;
-                
+
                 while (bufInd + sizeof(AWideChar) * len > bufLen) {
                     /* Fill the rest of the buffer. */
                     len -= (bufLen - bufInd) / sizeof(AWideChar);
@@ -308,7 +308,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                     buf = AValueToStr(inst->member[A_STREAM_OUTPUT_BUF]);
                     wbuf = (AWideString *)buf;
                     s = AValueToStr(frame[2])->elem;
-                    
+
                     bufInd = 0;
                     origBufInd = 0;
                 }
@@ -345,7 +345,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                 buf->elem[bufInd] = A_NEWLINE_CHAR1;
                 bufInd++;
             }
-            
+
 #ifdef A_NEWLINE_CHAR2
             /* Make sure we aren't at the end of buffer. */
             if (bufInd == bufLen) {
@@ -368,12 +368,12 @@ AValue AStreamWrite(AThread *t, AValue *frame)
                 bufInd++;
             }
 #endif
-            
+
             /* Flush if the stream is line buffered. */
             if (inst->member[A_STREAM_BUF_MODE] == A_BUFMODE_LINE_BUFFERED) {
 
               Flush:
-                
+
                 inst->member[A_STREAM_OUTPUT_BUF_IND] = AIntToValue(bufInd);
                 if (AIsError(AStreamFlush(t, frame)))
                     return AError;
@@ -402,7 +402,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
         return ARaiseByNum(t, AStdIoErrorNum, AMsgReadOnly);
     else if (inst->member[A_STREAM_BUF_MODE] == A_BUFMODE_UNBUFFERED) {
         /* Unbuffered write */
-        
+
         int aLen;
         AValue dstA;
         int i;
@@ -410,28 +410,28 @@ AValue AStreamWrite(AThread *t, AValue *frame)
         ABool result;
 
         aLen = AArrayLen(frame[1]);
-        
+
         if (inst->member[A_STREAM_MODE] & A_MODE_WRITELINE) {
             dstA = AZero;
-            
+
             /* Create a new array for arguments that will contain an
                additional item for newline. */
             AMakeUninitArray_M(t, aLen + 1, dstA, result);
             if (!result)
                 return AError;
-            
+
             /* Initialize the array to zero. */
             for (i = 0; i < aLen + 1; i++)
                 ASetArrayItemNewGen(dstA, i, AZero);
 
             frame[2] = dstA;
-            
+
             isNewLine = TRUE;
         } else {
             frame[2] = frame[1];
             isNewLine = FALSE;
         }
-            
+
         /* Convert all arguments to strings. */
         for (i = 0; i < aLen; i++) {
             AValue item = AArrayItem(frame[1], i);
@@ -459,7 +459,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
         }
 
         frame[1] = frame[2];
-        
+
         /* Perform the write. */
         return ACallMethodByNum(t, AM__WRITE, 1 | A_VAR_ARG_FLAG, frame);
     } else {
@@ -468,7 +468,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
             return AError;
         return AStreamWrite(t, frame);
     }
-    
+
     return ANil;
 }
 
@@ -479,7 +479,7 @@ AValue AStreamWriteLn(AThread *t, AValue *frame)
             writeLn is active? The flag causes it behave like a writeLn
             call... */
     AValueToInstance(frame[0])->member[A_STREAM_MODE] |= A_MODE_WRITELINE;
-    
+
     if (AIsError(AStreamWrite(t, frame))) {
         AValueToInstance(frame[0])->member[A_STREAM_MODE] &= ~A_MODE_WRITELINE;
         return AError;
@@ -524,7 +524,7 @@ static AValue StreamRead(AThread *t, AValue *frame)
 
         /* IDEA: This is terribly slow when doing long reads. Maybe we
                  should optimize. */
-        
+
         if (inst->member[A_STREAM_INPUT_BUF] != AZero) {
             v = inst->member[A_STREAM_INPUT_BUF];
             ind = AValueToInt(inst->member[A_STREAM_INPUT_BUF_IND]);
@@ -598,11 +598,11 @@ static AValue StreamRead(AThread *t, AValue *frame)
             if (AIsError(v))
                 return AError;
         }
-        
+
         frame[2] = v;
 
         inst = AValueToInstance(frame[0]);
-        
+
         /* Mark the input buffer empty if it's fully consumed. */
         if (lenWanted >= len) {
             inst->member[A_STREAM_INPUT_BUF] = AZero;
@@ -613,7 +613,7 @@ static AValue StreamRead(AThread *t, AValue *frame)
         /* Have we read enough? */
         if (lenWanted <= len) {
             /* We have read enough. */
-            
+
             /* Update the buffer index (this is ok even if there is no
                buffer). */
             inst->member[A_STREAM_INPUT_BUF_IND] = AIntToValue(ind +
@@ -629,7 +629,7 @@ static AValue StreamRead(AThread *t, AValue *frame)
         if (ACheckInterrupt(t))
             return AError; /* Interrupted */
     }
-    
+
     /* Not reached */
 }
 
@@ -645,7 +645,7 @@ static AValue StreamReadAll(AThread *t, AValue *frame)
     frame[2] = AMakeArray(t, 0);
 
     inst = AValueToInstance(frame[0]);
-    
+
     /* First get all data available in the input buffer. */
     if (inst->member[A_STREAM_INPUT_BUF] != AZero) {
         AValue init;
@@ -659,7 +659,7 @@ static AValue StreamReadAll(AThread *t, AValue *frame)
         inst = AValueToInstance(frame[0]);
     } else if ((inst->member[A_STREAM_MODE] & A_MODE_INPUT) == 0)
         return ARaiseByNum(t, AStdIoErrorNum, AMsgWriteOnly);
-    
+
     /* IDEA: Check if the target is a File object and then try to preallocate
        a string object with the correct size. Obviously another process might
        append to the file while we are reading it, so we would need to be
@@ -687,7 +687,7 @@ static AValue StreamReadAll(AThread *t, AValue *frame)
         }
 
         AAppendArray(t, frame[2], v);
-        
+
         if (ACheckInterrupt(t))
             return AError; /* Interrupted */
     }
@@ -700,7 +700,7 @@ static AValue StreamReadAll(AThread *t, AValue *frame)
     /* Finally close the stream for convenience. */
     if (AIsError(ACallMethodByNum(t, AM_CLOSE, 0, frame)))
         return AError;
-    
+
     return frame[2];
 }
 
@@ -730,7 +730,7 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
                     inst->member[A_STREAM_INPUT_BUF_IND]);
                 bufEnd = AStrPtrW(inst->member[A_STREAM_INPUT_BUF]) +
                     AValueToInt(inst->member[A_STREAM_INPUT_BUF_END]);
-                
+
                 /* Scan the buffer and try to find a newline. */
                 do {
                     if (*buf == '\n' || *buf == '\r') {
@@ -752,7 +752,7 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
                     AValueToInt(inst->member[A_STREAM_INPUT_BUF_IND]);
                 bufEnd = AStrPtr(inst->member[A_STREAM_INPUT_BUF]) +
                     AValueToInt(inst->member[A_STREAM_INPUT_BUF_END]);
-                
+
                 /* Scan the buffer and try to find a newline. */
                 do {
                     if (*buf == '\n' || *buf == '\r') {
@@ -770,7 +770,7 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
                                AValueToInt(
                                    inst->member[A_STREAM_INPUT_BUF_IND]),
                                bufInd);
-            
+
             if (frame[2] != AZero) {
                 if (!AIsArray(frame[2])) {
                     frame[3] = ss;
@@ -782,19 +782,19 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
                     AAppendArray(t, frame[2], ss);
             } else
                 frame[2] = ss;
-            
+
             inst = AValueToInstance(frame[0]);
 
             if (bufInd == AValueToInt(inst->member[A_STREAM_INPUT_BUF_END])) {
                 /* End of buffer reached. */
                 AValue fillRes;
-                
+
                 fillRes = StreamFillInputBuffer(t, frame);
                 if (AIsError(fillRes))
                     return AError;
                 if (AIsNil(fillRes))
                     break;
-                
+
                 inst = AValueToInstance(frame[0]);
             } else {
                 /* End of line reached within the buffer. */
@@ -803,13 +803,13 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
                     if (bufInd + 1
                         == AValueToInt(inst->member[A_STREAM_INPUT_BUF_END])) {
                         AValue fillRes;
-                        
+
                         fillRes = StreamFillInputBuffer(t, frame);
                         if (AIsError(fillRes))
                             return AError;
                         if (AIsNil(fillRes))
                             break;
-                        
+
                         inst = AValueToInstance(frame[0]);
                         bufInd = AValueToInt(
                             inst->member[A_STREAM_INPUT_BUF_IND]) - 1;
@@ -832,7 +832,7 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
                 } else
                     inst->member[A_STREAM_INPUT_BUF_IND] =
                         AIntToValue(bufInd + 1);
-                
+
                 break;
             }
         } /* for */
@@ -844,7 +844,7 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
            to know the next character before we can decide whether the line
            terminator is CR or CR+LF. So we'll allocate a small input buffer
            for this operation only. */
-        
+
         AValue fillRes;
 
         fillRes = StreamFillInputBuffer(t, frame);
@@ -867,7 +867,7 @@ AValue AStreamReadLn(AThread *t, AValue *frame)
 static AValue StreamReadLines(AThread *t, AValue *frame)
 {
     AValue v;
-    
+
     frame[1] = AMakeArray(t, 0);
 
     for (;;) {
@@ -910,29 +910,29 @@ AValue AStreamFlush(AThread *t, AValue *frame)
 
     if (inst->member[A_STREAM_OUTPUT_BUF] != AZero) {
         /* Write the contents of the output buffer. */
-        
+
         len = AValueToInt(inst->member[A_STREAM_OUTPUT_BUF_IND]);
         if (AIsWideStr(inst->member[A_STREAM_OUTPUT_BUF]))
             len /= sizeof(AWideChar);
-        
+
         if (!AAllocTempStack(t, 3))
             return AError;
-        
+
         t->tempStackPtr[-3] = frame[0];
         t->tempStackPtr[-2] = AZero;
         t->tempStackPtr[-1] = AZero; /* IDEA: Why this 3rd one -- 2 enough? */
 
         ss = ASubStr(t, inst->member[A_STREAM_OUTPUT_BUF], 0, len);
         t->tempStackPtr[-2] = ss;
-        
+
         if (ACallMethodByNum(t, AM__WRITE, 1,
                        t->tempStackPtr - 3) == AError) {
             t->tempStackPtr -= 3;
             return AError;
         }
-        
+
         t->tempStackPtr -= 3;
-        
+
         if (AGetInstanceType(&AValueToInstance(frame[0])->type)
             != AValueToType(AGlobalByNum(AFileClassNum)))
             return CreateBuffer(t, frame[0]);
@@ -985,12 +985,12 @@ static AValue StreamClose(AThread *t, AValue *frame)
     /* Calling close() on a closed stream is a no-op. */
     if (AMemberDirect(frame[0], A_STREAM_MODE) == AZero)
         return ANil;
-    
+
     if (AMemberDirect(frame[0], A_STREAM_MODE) & A_MODE_OUTPUT) {
         if (ACallMethodByNum(t, AM_FLUSH, 0, frame) == AError)
             return AError;
     }
-    
+
     ASetMemberDirect(t, frame[0], A_STREAM_MODE, AZero);
     ASetMemberDirect(t, frame[0], A_STREAM_OUTPUT_BUF, AZero);
     ASetMemberDirect(t, frame[0], A_STREAM_INPUT_BUF, AZero);
@@ -1002,10 +1002,10 @@ static AValue StreamClose(AThread *t, AValue *frame)
 static AValue StreamPeek(AThread *t, AValue *frame)
 {
     AValue buf;
-    
+
     if ((AMemberDirect(frame[0], A_STREAM_MODE) & A_MODE_INPUT) == AZero)
         return ARaiseByNum(t, AStdIoErrorNum, NULL); /* IDEA: Error msg */
-    
+
     buf = AMemberDirect(frame[0], A_STREAM_INPUT_BUF);
     if (buf != AZero) {
         int ind = AValueToInt(AMemberDirect(frame[0], A_STREAM_INPUT_BUF_IND));
@@ -1027,7 +1027,7 @@ static AValue StreamIter(AThread *t, AValue *frame)
     }
 
     ASetMemberDirect(t, frame[1], 0, frame[0]);
-    
+
     return frame[1];
 }
 
@@ -1035,7 +1035,7 @@ static AValue StreamIter(AThread *t, AValue *frame)
 static AValue StreamIterHasNext(AThread *t, AValue *frame)
 {
     AValue v;
-    
+
     frame[1] = AMemberDirect(frame[0], 0);
     v = StreamEof(t, frame + 1);
     if (AIsTrue(v)) {
@@ -1080,13 +1080,13 @@ static AValue CreateBuffer(AThread *t, AValue inst)
         *t->tempStack = AWideStrToValue(buf);
     } else
         *t->tempStack = AStrToValue(buf);
-    
+
     if (!ASetInstanceMember(t, AValueToInstance(inst), A_STREAM_OUTPUT_BUF,
                            t->tempStack))
         return AError;
 
     AValueToInstance(inst)->member[A_STREAM_OUTPUT_BUF_IND] = AZero;
-    
+
     return ANil;
 }
 
@@ -1128,7 +1128,7 @@ static AValue StreamFillInputBuffer(AThread *t, AValue *frame)
         /* Clear the previous buffer string. */
         inst->member[A_STREAM_INPUT_BUF] = AZero;
         inst->member[A_STREAM_INPUT_BUF_END] = AZero;
-        
+
         /* Read data from the stream. */
         v = ACallMethodByNum(t, AM__READ, 1, frame);
         if (AIsError(v))
@@ -1147,11 +1147,11 @@ static AValue StreamFillInputBuffer(AThread *t, AValue *frame)
             /* Get indexes of a substring object and make v refer to the
                Str buffer referenced by the substring. */
             ASubString *ss;
-            
+
             ss = AValueToSubStr(v);
             begInd = AValueToInt(ss->ind);
             endInd = begInd + AValueToInt(ss->len);
-            
+
             v = ss->str;
         } else if (AIsNil(v))
             return ANil; /* End of file */
@@ -1160,11 +1160,11 @@ static AValue StreamFillInputBuffer(AThread *t, AValue *frame)
 
         if (ACheckInterrupt(t))
             return AError; /* Interrupted */
-        
+
         /* If endInd == 0, an empty string was returned (begInd cannot be 0
            if the string is empty). In this case, repeat the _read call until
            something else is returned.
-           
+
            This condition can happen, for example, when reading the first
            character of an UTF-8 sequence from an unbuffered TextStream. The
            first read does not return anything, since only a partial UTF-8
@@ -1173,7 +1173,7 @@ static AValue StreamFillInputBuffer(AThread *t, AValue *frame)
 
     /* Now v is a non-substring Str value that holds the buffered data, and
        begInd and endInd define the range of data within v that was read. */
-    
+
     /* Set stream buffer indices directly, since they are assumed to be short
        ints. FIX: What if they are not small enough? */
     inst = AValueToInstance(frame[0]);
@@ -1182,7 +1182,7 @@ static AValue StreamFillInputBuffer(AThread *t, AValue *frame)
 
     /* Store the Str value that holds the stream buffer. */
     ASetMemberDirect(t, frame[0], A_STREAM_INPUT_BUF, v);
-    
+
     return AZero; /* Success */
 }
 
@@ -1222,7 +1222,7 @@ AValue ARaiseErrnoIoError(AThread *t, const char *path)
 
 A_MODULE(io, "io")
     A_DEF("Main", 0, 5, AIoMain)
-    
+
     A_DEF_P("__FlushOutputBuffers", 0, 1, AFlushOutputBuffers,
             &AFlushOutputBuffersNum)
 
@@ -1234,11 +1234,11 @@ A_MODULE(io, "io")
     A_SYMBOLIC_CONST_P("Append", &AAppendNum)
     A_SYMBOLIC_CONST_P("Narrow", &ANarrowNum)
     A_SYMBOLIC_CONST_P("Protected", &AProtectedNum)
-    
+
     A_EMPTY_CONST_P("RawStdIn", &ARawStdInNum)
     A_EMPTY_CONST_P("RawStdOut", &ARawStdOutNum)
     A_EMPTY_CONST_P("RawStdErr", &ARawStdErrNum)
-    
+
     A_EMPTY_CONST_P("StdIn", &AStdInNum)
     A_EMPTY_CONST_P("StdOut", &AStdOutNum)
     A_EMPTY_CONST_P("StdErr", &AStdErrNum)
@@ -1263,13 +1263,13 @@ A_MODULE(io, "io")
         A_METHOD("iterator", 0, 1, StreamIter)
         A_METHOD("#i", 0, 0, AStreamInitialize)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P("__StreamIter", 1, &StreamIterClassNum)
         A_IMPLEMENT("std::Iterator")
         A_METHOD("hasNext", 0, 2, StreamIterHasNext)
         A_METHOD("next", 0, 5, StreamIterNext)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P("File", 1, &AFileClassNum)
         A_INHERIT("::Stream")
         A_METHOD_OPT("create", 1, 5, 0, AFileCreate)
@@ -1285,9 +1285,9 @@ A_MODULE(io, "io")
     A_END_CLASS()
 
     A_EMPTY_CONST_P("DefaultEncoding", &ADefaultEncodingNum)
-    
+
     A_EMPTY_CONST_P("Bom", &ABomNum)
-    
+
     A_CLASS("TextStream")
       A_INHERIT("::Stream")
       A_METHOD_OPT("create", 1, 4, 2, ATextStreamCreate)

@@ -17,7 +17,7 @@ class AnonFuncSuite is Suite
     f()
     AssertEqual(nil, f())
   end
-  
+
   def testBasicFunction()
     def ()
       Gfunc(7)
@@ -25,14 +25,14 @@ class AnonFuncSuite is Suite
     end()
     AssertEqual(G1, 18)
   end
-  
+
   def testReturnValue()
     var x = def ()
       return 5 + 18
     end
     AssertEqual(x(), 23)
   end
-  
+
   def testIf()
     G1 = 55
     var f = def ()
@@ -45,7 +45,7 @@ class AnonFuncSuite is Suite
     f()
     AssertEqual(G1, 56)
   end
-  
+
   def testSwitch()
     G1 = 55
     var f = def ()
@@ -63,7 +63,7 @@ class AnonFuncSuite is Suite
     f()
     AssertEqual(G1, 101)
   end
-  
+
   def testWhile()
     var f = def ()
       G1 = 10
@@ -74,7 +74,7 @@ class AnonFuncSuite is Suite
     f()
     AssertEqual(G1, 2)
   end
-  
+
   def testRepeatAndBreak()
     var f = def ()
       G1 = 10
@@ -92,7 +92,7 @@ class AnonFuncSuite is Suite
     AssertEqual(G1, 25)
     AssertEqual(G2, 14)
   end
-  
+
   -- Test function definition within while loop + break after definition.
   def testFunctionWithinLoop()
     G1 = 0
@@ -126,7 +126,7 @@ class AnonFuncSuite is Suite
     end
     AssertEqual(G1, 2100)
   end
-  
+
   -- Test local variables outside function definition.
   def testLocalsOutsideFunction()
     var v1 = 20
@@ -140,7 +140,7 @@ class AnonFuncSuite is Suite
     AssertEqual(v2, 31)
     AssertEqual(f(), 44)
   end
-  
+
   -- Test function as a function parameter.
   def testFunctionAsParameter()
     var x = CallFunc(5 + 8, def ()
@@ -148,7 +148,7 @@ class AnonFuncSuite is Suite
                             end, 2 * 3)
     AssertEqual(x, 4 * 6 - 1 - 2 + (5 + 8) - 2 * 3)
   end
-  
+
   def testLocalVars()
     var z = 55
     var f = def ()
@@ -176,7 +176,7 @@ class AnonFuncSuite is Suite
       Assert(not pp)
     end
   end
-  
+
   def testFor()
     G1 = 0
     for i in 1 to 6
@@ -192,7 +192,7 @@ class AnonFuncSuite is Suite
     end
     AssertEqual(G1, 35)
   end
-  
+
   def testArrayLiteral()
     var a = [6, 7, def ()
                      return [1+2]
@@ -202,7 +202,7 @@ class AnonFuncSuite is Suite
     AssertEqual(a[3], 8)
     AssertEqual(a[2](), [3])
   end
-  
+
   def testTry()
     var ef = def ()
       try
@@ -214,7 +214,7 @@ class AnonFuncSuite is Suite
       return 7
     end
     AssertEqual(ef(), 6)
-    
+
     var ff = def ()
       G1 = 5
       try
@@ -251,25 +251,25 @@ class AnonFuncSuite is Suite
     end
     AssertEqual(G1, 1 + 2 + 4 + 8)
   end
-  
+
   def testBasicArguments()
     var f = def (x)
       return x + 1
     end
     AssertEqual(f(5), 6)
-    
+
     f = def (x, y, z)
       if x == 3
         return x * y - z
       end
     end
     AssertEqual(f(3, 4, 5), 3 * 4 - 5)
-    
+
     var x = 5
     var y = x + 1
     AssertEqual(y, 6)
   end
-  
+
   def testOptionalArguments()
     var f = def (x, y = x + 1, z = 4 * 4)
       return x * y + z
@@ -278,7 +278,7 @@ class AnonFuncSuite is Suite
     AssertEqual(f(4, 2), 4 * 2 + 16)
     AssertEqual(f(4, 2, 3), 4 * 2 + 3)
   end
-  
+
   def testVarArgs()
     var f = def (*a)
       return a + a
@@ -286,7 +286,7 @@ class AnonFuncSuite is Suite
     AssertEqual(f(), [])
     AssertEqual(f(1), [1, 1])
     AssertEqual(f(1, 5), [1, 5, 1, 5])
-    
+
     f = def (x, y = 5, *a)
       return x + y, a
     end
@@ -294,32 +294,32 @@ class AnonFuncSuite is Suite
     AssertEqual(f(1, 2), [1 + 2, []])
     AssertEqual(f(1, 2, 3, 4), [1 + 2, [3, 4]])
   end
-  
+
   def testInvalidArgCount()
     var f = def ()
     end
     AssertRaises(ValueError, f, [1])
-    
+
     f = def (x)
       return x + 1
     end
     AssertRaises(ValueError, f, [])
   end
-  
+
   def testStrConversion()
     var f = def ()
     end
     AssertEqual(Str(f), "anonymous function")
     AssertEqual(Repr(f), "anonymous function")
   end
-  
+
   def testTypeCheck()
     var f = def()
     end
     Assert(f is Function)
     AssertType(Function, f)
   end
-  
+
   -- Test trivial nested anonymous functions that do not access local
   -- variables defined in outer scopes.
   def testNestedAnonymousFunctions()
@@ -331,7 +331,7 @@ class AnonFuncSuite is Suite
     end
     AssertEqual(f()(), 33)
   end
-  
+
   -- Test multiple nested anonymous functions that do not access local
   -- variables defined in outer scopes.
   def testMultipleNestedAnonymousFunctions()
@@ -355,7 +355,7 @@ class AnonFuncSuite is Suite
     end
     AssertEqual(f1(), 1 + 2 + 3 + 4 + 5 + 6)
   end
-  
+
   -- Test calling an anonymous function many times.
   def testMultipleCalls()
     var body = def ()

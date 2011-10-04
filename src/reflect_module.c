@@ -56,13 +56,13 @@ static int GetMemberKeyByValue(AThread *t, AValue val)
     key = symInfo->num;
 
     AUnlockInterpreter();
-    
+
     AFreeCStrFromString(id);
-    
+
     return key;
 
   MemoryFailure:
-    
+
     AUnlockInterpreter();
     AFreeCStrFromString(id);
     ARaiseMemoryError(t);
@@ -103,7 +103,7 @@ AValue ASetMemberHelper(AThread *t, AValue *frame, int key)
     AMemberHashTable *table;
     AMemberNode *node;
     AValue funcVal;
-    
+
     if (!AIsInstance(frame[0])) {
         frame[0] = AWrapObject(t, frame[0]);
         if (AIsError(frame[0]))
@@ -114,7 +114,7 @@ AValue ASetMemberHelper(AThread *t, AValue *frame, int key)
     type = AGetInstanceType(inst);
     table = AGetMemberTable(type, MT_VAR_SET_PUBLIC);
     node = &table->item[key & table->size];
-    
+
     /* Search the setter hash table. */
     while (node->key != key) {
         if (node->next == NULL) {
@@ -128,7 +128,7 @@ AValue ASetMemberHelper(AThread *t, AValue *frame, int key)
         } else
             node = node->next;
     }
-    
+
     if (node->item >= A_VAR_METHOD) {
         /* Call setter method. */
         funcVal = AGlobalByNum(node->item & ~A_VAR_METHOD);
@@ -137,7 +137,7 @@ AValue ASetMemberHelper(AThread *t, AValue *frame, int key)
     } else {
         unsigned member = node->item;
         ABool result;
-        
+
         AModifyObject_M(t, &inst->type, inst->member + member,
                        frame + 1, result);
         if (!result)

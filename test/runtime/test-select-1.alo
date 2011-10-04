@@ -16,7 +16,7 @@ class SwitchSuite is Suite
     end
     Assert(ok)
   end
-  
+
   def testSwitchWithElse()
     var ok = False
     switch 5
@@ -29,7 +29,7 @@ class SwitchSuite is Suite
     end
     Assert(ok)
   end
-  
+
   def testSwitchWithMultipleCase()
     var count1 = 0
     var count2 = 0
@@ -44,7 +44,7 @@ class SwitchSuite is Suite
     Assert(count1 == 3)
     Assert(count2 == 2)
   end
-  
+
   def testSwitchOrder()
     var ok = False
     switch 5
@@ -63,7 +63,7 @@ class SwitchSuite is Suite
     end
     Assert(ok)
   end
-  
+
   def testSwitchWithComplexCaseExpressions()
     var two = 2
     var three = 3
@@ -76,7 +76,7 @@ class SwitchSuite is Suite
     end
     Assert(ok)
   end
-  
+
   def testSwitchWithDifferentTypes()
     var ok = False
     switch "foo"
@@ -91,7 +91,7 @@ class SwitchSuite is Suite
     end
     Assert(ok)
   end
-  
+
   private def inc(i)
     return i + 1
   end

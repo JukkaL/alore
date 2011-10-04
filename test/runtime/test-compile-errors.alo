@@ -16,7 +16,7 @@ class CompileErrorSuite is Suite
     var l = File(path).readLines()
     var p = ParseTestData(l)
     var out = []
-    
+
     var i = 0
     while i < p.length()
       if p[i].id == "case" and p[i + 1].id == "out"
@@ -45,14 +45,14 @@ class CompileErrorTestCase is TestCase
     self.output = output
     self.file = file
     self.line = line
-    
+
     tempFiles = []
   end
 
   def run()
     -- Store input in a temporary file.
     addTempFile(InputFileName, input)
-    
+
     try
       try
         -- Compile temporary file.
@@ -75,7 +75,7 @@ class CompileErrorTestCase is TestCase
       end
     end
   end
-  
+
   private def addTempFile(name, data)
     tempFiles.append(name)
     var f = File(name, Output)

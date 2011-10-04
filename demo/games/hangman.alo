@@ -14,9 +14,9 @@ def Main()
   var word = RandomWord()
   var needed = Set(word).length()
   var failures = 0
-  
+
   WriteLn('--- Hangman ---')
-  
+
   while failures < NumParts
     DrawWord(word, correct)
     var letter = AskLetter()
@@ -25,7 +25,7 @@ def Main()
     elif letter in word
       correct += letter
       if correct.length() == needed
-        WriteLn(Newline, 
+        WriteLn(Newline,
              '*** Congratulations, you won! The word is {}. ***'.format(word))
         Exit(1)
       end
@@ -33,9 +33,9 @@ def Main()
       failures += 1
       DrawHangman(failures)
       WriteLn(Newline, 'Wrong guess!')
-    end    
+    end
   end
-  
+
   DrawHangman(failures)
   WriteLn(Newline, '*** Sorry, you lost! The word was {}. ***'.format(word))
 end
@@ -78,7 +78,7 @@ def DrawHangman(n)
   if n == 0
     return
   end
-  
+
   WriteLn()
   for y in 0 to Image.length()
     Write('  ')

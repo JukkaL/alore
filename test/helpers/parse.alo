@@ -20,20 +20,20 @@ end
 -- Parse a list of lines that represent a sequence of test items.
 def ParseTestData(l)
   var ret = []
-  
+
   var id = nil
   var arg = nil
   var data = []
-  
+
   var i = 0
   while i < l.length()
     var s = l[i].strip()
-  
+
     if s.startsWith("[") and s.endsWith("]")
       if id != nil
         ret.append(TestItem(id, arg, StripList(data), i))
       end
-    
+
       id = s[1:-1]
       arg = nil
       if " " in id
@@ -48,11 +48,11 @@ def ParseTestData(l)
     end
     i += 1
   end
-  
+
   if id != nil
     ret.append(TestItem(id, arg, StripList(data), i))
   end
-  
+
   return ret
 end
 

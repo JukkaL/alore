@@ -29,9 +29,9 @@ end
 
 def GetLinkOpts(isDebug)
   var linkOpts
-  
+
   -- IDEA: Use HAVE_LIBM to decide whether -lm is needed.
-  
+
   switch Platform
     case "linux"
       linkOpts = ["-export-dynamic", "-lalorec", "-lm", "-pthread"]
@@ -45,23 +45,23 @@ def GetLinkOpts(isDebug)
       -- These default linker options might work...
       linkOpts = ["-export-dynamic", "-lalorec", "-lm", "-pthread"]
   end
-  
+
   if __ConfigOpt("HAVE_LIBDL")
     linkOpts.append("-ldl")
   end
-  
+
   if __ConfigOpt("HAVE_LIBSOCKET")
     linkOpts.append("-lsocket")
   end
-  
+
   if __ConfigOpt("HAVE_LIBNSL")
     linkOpts.append("-lnsl")
   end
-  
+
   if isDebug
     linkOpts.append("-g")
   end
-  
+
   if Platform == "mac"
     -- Mac OS X: Create an export list and use it when linking.
     var p = MyMakeTempFile("tmp######.lst")
@@ -72,7 +72,7 @@ def GetLinkOpts(isDebug)
     f.close()
     linkOpts.append("-Wl,-exported_symbols_list,{}".format(p))
   end
-  
+
   return linkOpts
 end
 
@@ -98,7 +98,7 @@ def GetCOpts(isDebug)
     end
   else
     -- Generic C options.
-    
+
     if IsStandalone
       if p.endsWith("/bin")
         copts.append('"-I{}"'.format(Join(DirName(p), "include/alore")))
@@ -114,11 +114,11 @@ def GetCOpts(isDebug)
       end
     end
   end
-  
+
   if isDebug
     copts.append("-g")
   end
-  
+
   return copts
 end
 
@@ -145,7 +145,7 @@ private def GetBaseModuleSearchPaths()
       moduleSearchPaths = ModuleSearchPath.split(ModuleSearchPathSeparator)
     end
   end
-  
+
   -- When run as standalone, we need to manually process the ALOREPATH
   -- environment variable.
   if IsStandalone
@@ -156,7 +156,7 @@ private def GetBaseModuleSearchPaths()
       end
     end
   end
-  
+
   return moduleSearchPaths
 end
 
@@ -177,7 +177,7 @@ end
 def FindMainLibPath()
   var paths = []
   var p = DirName(ProgramPath)
-  
+
   if Platform == "windows"
     if IsStandalone
       -- Translate * -> */lib
@@ -202,7 +202,7 @@ def FindMainLibPath()
       end
     end
   end
-  
+
   return FindFile(paths, "libalorec.a")
 end
 

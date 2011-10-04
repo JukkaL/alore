@@ -20,7 +20,7 @@ class Arguments
   private const optionNormMap  as Map<Str, Str>
   -- Map from normalized option name to a list of values.
   private const optMap = Map() as Map<Str, Array<Str>>
-  
+
   const rest as Array<Str>     -- The positional arguments.
 
   -- Construct an instance.
@@ -28,7 +28,7 @@ class Arguments
              rest as Array<Str>, descriptions as Array<Str>)
     self.parser = parser
     self.rest = rest.copy()
-    
+
     -- Build a map for normalizing option names.
     self.optionNormMap = OptionNormalizeMap(descriptions)
 
@@ -37,7 +37,7 @@ class Arguments
     for opt, value in opts
       self.opts.append((normalize(opt), value))
     end
-    
+
     -- Create an option map that collects all values for each option in an
     -- array.
     for arg, value in self.opts
@@ -56,23 +56,23 @@ class Arguments
       return self[name]
     end
   end
-  
+
   -- Was the named argument given in the command line?
   def hasKey(name as Str) as Boolean
     return self.optMap.hasKey(normalize(name))
   end
-  
+
   -- Return an iterator that iterates over the options. Each item is a tuple
   -- (normalized option name, value).
   def iterator() as Iterator<(Str, Str)>
     return self.opts.iterator()
   end
-  
+
   -- Return the number of options in the map.
   def length() as Int
     return self.opts.length()
   end
-  
+
   -- Return all the options that were provided, e.g. ['-x', '--long']. The
   -- results are normalized.
   def keys() as Array<Str>
@@ -84,7 +84,7 @@ class Arguments
     end
     return a
   end
-  
+
   -- Return the values of all the options that were provided. This preserves
   -- the order of the options. If an option has no value, return []. Also
   -- include nil values.
@@ -106,13 +106,13 @@ class Arguments
       self[name] -- Fail.
     end
   end
-  
+
   -- Like Map items, but preserve the order of the options. The option names
   -- are normalized.
   def items() as Array<(Str, Str)>
     return self.opts.copy()
   end
-  
+
   -- Look up the argument for an option, or raise KeyError. Return nil if the
   -- option is present, but it does not take an argument.
   def _get(name as Str) as Str
@@ -126,7 +126,7 @@ class Arguments
       return val[-1]
     end
   end
-  
+
   -- Return a representation of the arguments as
   -- "Arguments(array-of-named-args, rest)".
   def _str() as Str
@@ -146,7 +146,7 @@ class Arguments
     end
     return "Arguments({}, {})".format(a, rest)
   end
-  
+
   -- Find the "normative" name for an option (i.e. the first alternative name).
   -- If the argument is not a valid option, return it unmodified.
   private def normalize(opt as Str) as Str

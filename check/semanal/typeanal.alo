@@ -64,51 +64,51 @@ class TypeAnalyser is TypeVisitor<Typ>
       return t
     end
   end
-  
+
   def visitDynamic(t as Dynamic) as Typ
     return t
   end
-  
+
   def visitVoid(t as Void) as Typ
     return t
   end
-  
+
   def visitInstance(t as Instance) as Typ
     raise RuntimeError("Instance is already analysed")
   end
-  
+
   def visitTypeVar(t as TypeVar) as Typ
     raise RuntimeError("TypeVar is already analysed")
   end
-  
+
   def visitCallable(t as Callable) as Typ
     var items = t.variables.items
     for i in 0 to items.length()
       pushVar(items[i].name, -i - 1)
     end
-    
+
     var res = Callable(analArray(t.argTypes), t.minArgs, t.isVarArg,
                        t.retType.accept(self), t.isTypeObj, t.name,
                        analVarDefs(t.variables), analBoundVars(t.boundVars),
                        t.line, t.repr)
-    
+
     for v in t.variables.items
       popVar()
     end
-    
+
     return res
   end
-  
+
   def visitTupleType(t as TupleType) as Typ
     return TupleType(analArray(t.items), t.line, t.repr)
   end
-  
+
   def visitIntersection(t as Intersection) as Typ
     return Intersection(t.item1.accept(self) as FunctionLike,
                         t.item2.accept(self) as FunctionLike,
                         t.name, t.line, t.repr)
   end
-  
+
   private def analArray(a as Array<Typ>) as Array<Typ>
     var res = [] as <Typ>
     for t in a
@@ -116,7 +116,7 @@ class TypeAnalyser is TypeVisitor<Typ>
     end
     return res
   end
-  
+
   private def analBoundVars(a as Array<(Int, Typ)>) as Array<(Int, Typ)>
     var res = [] as <(Int, Typ)>
     for id, t in a
@@ -124,7 +124,7 @@ class TypeAnalyser is TypeVisitor<Typ>
     end
     return res
   end
-  
+
   private def analVarDefs(varDefs as TypeVars) as TypeVars
     var a = [] as <TypeVarDef>
     for vd in varDefs.items

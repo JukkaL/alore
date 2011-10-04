@@ -41,7 +41,7 @@ class RangeCallable is Typ
   const rangeIds  as Array<Int>   -- Ids of range types (or nil if collapse).
   -- The callable/intersection type the above apply to.
   const callable  as FunctionLike
-  
+
   def create(bottoms as Array<Typ>, tops as Array<Typ>, rangeIds as Array<Int>,
              callable as FunctionLike)
     self.bottoms = bottoms
@@ -49,11 +49,11 @@ class RangeCallable is Typ
     self.rangeIds = rangeIds
     self.callable = callable
   end
-  
+
   def typeVarIds()
     return Array(1 to numTypeVars() + 1)
   end
-  
+
   def numTypeVars()
     return self.bottoms.length()
   end

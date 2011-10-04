@@ -39,7 +39,7 @@ private class NormVisitor is NodeVisitor
       end
     end
   end
-  
+
   def visitAloreFile(file)
     var defs = file.defs
     var i = 0
@@ -55,7 +55,7 @@ private class NormVisitor is NodeVisitor
       i += 1
     end
   end
-  
+
   def visitClassDef(cdef)
     var defs = cdef.defs
     var i = 0
@@ -67,9 +67,9 @@ private class NormVisitor is NodeVisitor
       i += 1
     end
   end
-  
+
   -- IDEA: Use visitor to set line number of all nodes more simply
-  
+
   private def normForStmt(block, i)
     var forStmt = block[i]
     if forStmt is ForStmt
@@ -94,7 +94,7 @@ private class NormVisitor is NodeVisitor
       raise ValueError("For statement expected")
     end
   end
-  
+
   private def normVarDefWithInit(block, i)
     var varStmt = block[i]
     if varStmt is VarDef
@@ -111,7 +111,7 @@ private class NormVisitor is NodeVisitor
       raise ValueError("Invalid statement")
     end
   end
-  
+
   private def normOperatorAssignmentStmt(block, i)
     var opAss = block[i]
     if opAss is OperatorAssignmentStmt

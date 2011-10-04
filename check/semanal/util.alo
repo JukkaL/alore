@@ -15,7 +15,7 @@ interface Context
   bind Typ
   bind Node
   bind TypeVarDef
-  
+
   def line as Int
 end
 
@@ -69,12 +69,12 @@ def MatchingNames(name as Str, symtable as SymbolTable, imports as Set<Str>,
                   curModId as Str) as Array<SymbolTableNode>
   if not ":" in name
     -- An unqualified name.
-    
+
     -- Verify that the name is defined in the symbol table.
     if not symtable.hasKey(name)
       return []
     end
-    
+
     var syms = symtable[name]
     -- First priority: local or member references.
     for sym in Reversed(syms)
@@ -99,7 +99,7 @@ def MatchingNames(name as Str, symtable as SymbolTable, imports as Set<Str>,
   else
     -- A fully or partially qualified name.
     var globalsPartial = [] as <SymbolTableNode>
-    
+
     var comp = name.split("::")
     var last = comp[-1]
     var prefix = comp[:-1]
@@ -190,7 +190,7 @@ def InvalidArgcMessage(callExpr as CallExpr, funcDef as FuncDef) as Str
   end
 end
 
-  
+
 -- Create the implicit create method than initializes member variables
 -- without explicit initializers. Note that the returned method still has
 -- to be semantically analysed elsewhere.
@@ -234,7 +234,7 @@ def UninitializedMemberVars(defn as TypeDef) as Array<Var>
   return vars
 end
 
-  
+
 -- Infer and set the type signature of the implicit create method of type.
 def InferImplicitCreateSignature(type as TypeInfo, method as FuncDef)
   var argTypes = [] as <Typ>

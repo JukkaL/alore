@@ -17,14 +17,14 @@ class RandomSuite is Suite
       Assert(r < 10)
     end
   end
-  
+
   -- Test invalid arguments for the Random function.
   def testRandomErrors()
     AssertRaises(ValueError, Random, [0])
     AssertRaises(ValueError, Random, [-1])
     AssertRaises(TypeError, Random, [2.0])
   end
-  
+
   -- Test the RandomFloat function.
   -- NOTE: The distribution of the return values is not tested for randomness.
   def testRandomFloat()
@@ -35,7 +35,7 @@ class RandomSuite is Suite
       Assert(r < 1)
     end
   end
-  
+
   -- Test the Seed function.
   def testSeed()
     Seed()
@@ -50,6 +50,6 @@ class RandomSuite is Suite
       Assert(a[i] == RandomFloat())
     end
   end
-  
+
   -- IDEA: Test Random with very large ranges.
 end

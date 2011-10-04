@@ -34,7 +34,7 @@ class Url
   const path as Str
   const query as Str
   const fragment as Str
-  
+
   -- Call as:
   --  (Str) or
   --  ((scheme, netLocation, path, query, fragment))
@@ -49,7 +49,7 @@ class Url
                 "([-_.!~*'()a-zA-Z0-9%:@&=+$,/;]*)" +
                 "(\?[-_.!~*'()a-zA-Z0-9%+&=;/?:@,$]*)?" +
                 "(#[-_.!~*'()a-zA-Z0-9%+&=;/?:@,$]*)?$", url)
-                
+
       if m == nil
         raise ValueError("Invalid URL")
       end
@@ -112,7 +112,7 @@ class Url
       end
     end
   end
-  
+
   def netLocation as Str
     var loc = userpass()
     loc += self.host
@@ -121,7 +121,7 @@ class Url
     end
     return loc
   end
-  
+
   private def userpass() as Str
     var up = ""
     if username != ""
@@ -133,7 +133,7 @@ class Url
     end
     return up
   end
-  
+
   def url() as Str
     var s = ""
     if self.host != ""
@@ -152,17 +152,17 @@ class Url
     end
     return s
   end
-  
+
   def _str() as Str
     return "Url({})".format(Repr(url()))
   end
-  
+
   def _repr() as Str
     return "Url(scheme={}, netLocation={}, path={}, query={}, fragment={})".
       format(Repr(scheme), Repr(netLocation), Repr(path), Repr(query),
              Repr(fragment))
   end
-  
+
   private def str(s as Str, suffix = "" as Str) as Str
     if s == ""
       return ""

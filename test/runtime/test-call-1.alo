@@ -14,7 +14,7 @@ class CallSuite1 is Suite
     CheckVarArgsFunc(F0v)
     Ok()
   end
-  
+
   -- Test functions that take a fixed number of arguments
   def testT2()
     TestFixedArgsFunc0(F0)
@@ -25,7 +25,7 @@ class CallSuite1 is Suite
     TestFixedArgsFunc7(F7)
     Ok()
   end
-  
+
   -- Test functions that take default arguments
   def testT3()
     TestDefArgsFunc01(F01)
@@ -35,7 +35,7 @@ class CallSuite1 is Suite
     TestDefArgsFunc34(F34)
     Ok()
   end
-  
+
   -- Test functions that take variable number of arguments
   def testT4()
     TestVarArgFunc01(F01v)
@@ -49,7 +49,7 @@ end
 
 
 -- Functions to test
- 
+
 private def F0()
   return []
 end

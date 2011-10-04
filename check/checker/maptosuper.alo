@@ -26,14 +26,14 @@ def MapTypeToSupertype(type as Typ, subtype as TypeInfo,
   if subtype.typeVars == []
     return type
   end
-  
+
   -- Repeatedly map the type to the immediate supertype until reaching our
   -- target.
   while subtype != supertype
     type = type.accept(SupertypeMapper(subtype))
     subtype = subtype.base
   end
-  
+
   return type
 end
 
@@ -65,7 +65,7 @@ class SupertypeMapper is TypeTranslator
       end
     end
   end
-  
+
   def visitTypeVar(t as TypeVar) as Typ
     -- If we reach here, the instance must map directly to a supertype
     -- variable.
@@ -77,7 +77,7 @@ class SupertypeMapper is TypeTranslator
       raise SupertypeMapError('Unmatched TypeVar')
     end
   end
-  
+
   -- Find an instance of a type in the arguments of a generic supertype, and
   -- return a supertype TypeVar reference that refers to this type argument.
   --

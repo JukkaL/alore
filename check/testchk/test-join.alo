@@ -9,17 +9,17 @@ import checker
 
 class JoinSuite is Suite
   private var fx
-  
+
   def setUp()
     self.fx = TypeFixture()
   end
-  
+
   def testTrivialCases()
     for simple in fx.void, fx.a, fx.o, fx.b
       assertJoin(simple, simple, simple)
     end
   end
-  
+
   def testClassSubtyping()
     assertJoin(fx.a, fx.o, fx.o)
     assertJoin(fx.b, fx.o, fx.o)
@@ -27,34 +27,34 @@ class JoinSuite is Suite
     assertJoin(fx.b, fx.c, fx.a)
     assertJoin(fx.b, fx.d, fx.o)
   end
-  
+
   def testTuples()
     assertJoin(tuple(), tuple(), tuple())
     assertJoin(tuple(fx.a), tuple(fx.a), tuple(fx.a))
     assertJoin(tuple(fx.b, fx.c), tuple(fx.a, fx.d), tuple(fx.a, fx.o))
-    
+
     assertJoin(tuple(fx.a, fx.a), fx.stdTuple, fx.o)
     assertJoin(tuple(fx.a), tuple(fx.a, fx.a), fx.o)
   end
-  
+
   def testFunctionTypes()
     assertJoin(callable(fx.a, fx.b), callable(fx.a, fx.b),
                callable(fx.a, fx.b))
-               
+
     assertJoin(callable(fx.a, fx.b), callable(fx.b, fx.b), fx.o)
     assertJoin(callable(fx.a, fx.b), callable(fx.a, fx.a), fx.o)
   end
-  
+
   def testTypeVars()
     assertJoin(fx.t, fx.t, fx.t)
     assertJoin(fx.s, fx.s, fx.s)
     assertJoin(fx.t, fx.s, fx.o)
   end
-  
+
   def testVoid()
     assertJoin(fx.void, fx.void, fx.void)
     assertJoin(fx.void, fx.dyn, fx.dyn)
-    
+
     -- Join of any other type against void results in ErrorType, since there
     -- is no other meaningful result.
     for t in fx.a, fx.o, NilType(), UnboundType("x"), fx.t, tuple(),
@@ -62,7 +62,7 @@ class JoinSuite is Suite
       assertJoin(t, fx.void, fx.err)
     end
   end
-  
+
   def testNil()
     -- Any type t joined with nil results in t.
     for t in NilType(), fx.a, fx.o, UnboundType("x"), fx.t, tuple(),
@@ -70,11 +70,11 @@ class JoinSuite is Suite
       assertJoin(t, NilType(), t)
     end
   end
-  
+
   def testUnboundType()
     assertJoin(UnboundType("x"), UnboundType("x"), fx.dyn)
     assertJoin(UnboundType("x"), UnboundType("y"), fx.dyn)
-    
+
     -- Any type t joined with an unbound type results in dynamic. Unbound type
     -- means that there is an error somewhere in the program, so this does not
     -- affect type safety (whatever the result).
@@ -82,7 +82,7 @@ class JoinSuite is Suite
       assertJoin(t, UnboundType("X"), fx.dyn)
     end
   end
-  
+
   def testDynamicType()
     -- Join against dynamic type always results in dynamic.
     for t in fx.dyn, fx.a, fx.o, NilType(), UnboundType("x"), fx.void, fx.t,
@@ -90,7 +90,7 @@ class JoinSuite is Suite
       assertJoin(t, fx.dyn, fx.dyn)
     end
   end
-  
+
   def testOtherMixedTypes()
     -- In general, joining unrelated types produces std::Object.
     for t1 in fx.a, fx.t, tuple(), callable(fx.a, fx.b)
@@ -101,78 +101,78 @@ class JoinSuite is Suite
       end
     end
   end
-  
+
   def testErrorType()
     assertJoin(fx.err, fx.dyn, fx.dyn)
-  
+
     -- Meet against any type except dynamic results in ErrorType.
     for t in fx.a, fx.o, NilType(), UnboundType("x"), fx.void, fx.t,
              tuple(), callable(fx.a, fx.b)
       assertJoin(t, fx.err, fx.err)
     end
   end
-  
+
   def testSimpleGenerics()
     assertJoin(fx.ga, fx.ga, fx.ga)
     assertJoin(fx.ga, fx.gb, fx.o)
     assertJoin(fx.ga, fx.g2a, fx.o)
-    
+
     assertJoin(fx.ga, fx.nilt, fx.ga)
     assertJoin(fx.ga, fx.dyn, fx.dyn)
-    
+
     for t in fx.a, fx.o, fx.t, tuple(), callable(fx.a, fx.b)
       assertJoin(t, fx.ga, fx.o)
     end
   end
-  
+
   def testGenericsWithMultipleArgs()
     assertJoin(fx.hab, fx.hab, fx.hab)
     assertJoin(fx.hab, fx.haa, fx.o)
     assertJoin(fx.hab, fx.hbb, fx.o)
   end
-  
+
   def testGenericsWithRanges()
     assertJoin(fx.gaa, fx.gaa, fx.gaa)
     assertJoin(fx.gaa, fx.gbb, fx.o)
-    
+
     assertJoin(fx.gba, fx.gaa, fx.gaa)
     assertJoin(fx.gao, fx.gaa, fx.gaa)
     assertJoin(fx.gbo, fx.gaa, fx.gaa)
-    
+
     assertJoin(fx.gba, fx.gba, fx.gba)
     assertJoin(fx.gbo, fx.gba, fx.gba)
     assertJoin(fx.gao, fx.gba, fx.gaa)
-    
+
     assertJoin(fx.gbo, fx.gao, fx.gao)
     assertJoin(fx.gao, fx.gao, fx.gao)
-    
+
     assertJoin(fx.ga, fx.gao, fx.gaa)
     assertJoin(fx.ga, fx.gba, fx.gaa)
     assertJoin(fx.ga, fx.gbo, fx.gaa)
     assertJoin(fx.gb, fx.gao, fx.o)
-    
+
     assertJoin(fx.gbb, fx.gao, fx.o)
-    
+
     -- FIX other bound meet/join cases
   end
-  
+
   def testGenericsWithInheritance()
     assertJoin(fx.gsab, fx.gb, fx.gb)
     assertJoin(fx.gsba, fx.gb, fx.o)
   end
-  
+
   def testGenericsWithInheritanceAndSharedSupertype()
     assertJoin(fx.gsba, fx.gs2a, fx.ga)
     assertJoin(fx.gsab, fx.gs2a, fx.o)
   end
-  
+
   def testGenericsWithInheritanceAndRanges()
     assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                fx.gba, fx.gaa)
     assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                fx.gbb, fx.o)
   end
-  
+
   def testGenericsWithInheritanceAndSharedSupertypeAndRanges()
     assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                Instance(fx.gs2i, [fx.b], [fx.a]),
@@ -181,28 +181,28 @@ class JoinSuite is Suite
                Instance(fx.gs2i, [fx.b], [fx.b]),
                fx.o)
   end
-  
+
   def testNestedRanges()
     assertJoin(Instance(fx.gi, [fx.gba]),
                Instance(fx.gi, [fx.gao]),
                Instance(fx.gi, [fx.gaa]))
   end
-  
+
   def testGenericTypesAndDynamic()
     assertJoin(fx.gdyn, fx.ga, fx.gdyn)
   end
-  
+
   def testGenericTypesAndDynamicAndRanges()
     assertJoin(fx.gdyn, fx.gba, fx.gdyndyn)
     assertJoin(fx.gdyndyn, fx.gba, fx.gdyndyn)
   end
-  
+
   def testCallablesWithDynamic()
     assertJoin(callable(fx.a, fx.a,   fx.dyn, fx.a),
                callable(fx.a, fx.dyn, fx.a,   fx.dyn),
                callable(fx.a, fx.dyn, fx.dyn, fx.dyn))
   end
-  
+
   def testIntersectionTypes()
     -- Support for joins between intersection types is partial.
     var c1 = callable(fx.a, fx.a)
@@ -212,109 +212,109 @@ class JoinSuite is Suite
     var i1 = Intersection(c1, c2)
     var i2 = Intersection(c2, c1)
     var i3 = Intersection(c2, c3)
-    
+
     assertJoin(i1, i1, i1)
     assertJoin(i2, i2, i2)
     assertJoin(i3, i3, i3)
-    
+
     assertJoin(i1, i2, fx.o)
     assertJoin(i1, i3, fx.o)
     assertJoin(i1, c4, fx.o)
-    
+
     assertJoin(i1, fx.dyn, fx.dyn)
     assertJoin(i1, fx.void, fx.err)
   end
-  
+
   def testJoinInterfaceTypes()
     assertJoin(fx.f, fx.f, fx.f)
     assertJoin(fx.f, fx.f2, fx.o)
     assertJoin(fx.f, fx.f3, fx.f)
   end
-  
+
   def testJoinInterfaceAndClassTypes()
     assertJoin(fx.o, fx.f, fx.o)
     assertJoin(fx.a, fx.f, fx.o)
-    
+
     assertJoin(fx.e, fx.f, fx.f)
   end
-  
+
   def testJoinClassTypesWithInterfaceResult()
     -- Unique result
     assertJoin(fx.e, fx.e2, fx.f)
-    
+
     -- Ambiguous result
     assertJoin(fx.e2, fx.e3, fx.err)
   end
-  
+
   def testGenericInterfaces()
     var fx = InterfaceTypeFixture()
-    
+
     assertJoin(fx.gfa, fx.gfa, fx.gfa)
     assertJoin(fx.gfa, fx.gfb, fx.o)
-    
+
     assertJoin(fx.m2, fx.gfb, fx.gfb)
-    
+
     assertJoin(fx.m1, fx.m2, fx.gfa)
-    
+
     assertJoin(fx.m2, fx.m3, fx.err)
   end
-  
+
   def testSimpleTypeObjects()
     var t1 = typeCallable(fx.a, fx.a)
     var t2 = typeCallable(fx.b, fx.b)
-    
+
     assertJoin(t1, t1, t1)
     Assert(JoinTypes(t1, t1, fx.basic).isTypeObj)
-    
+
     assertJoin(t1, t2, fx.stdType)
     assertJoin(t1, fx.stdType, fx.stdType)
     assertJoin(fx.stdType, fx.stdType, fx.stdType)
   end
-  
+
   def testIntersectionTypeObjects()
     var t1 = typeCallable(fx.a, fx.a)
     var t2 = typeCallable(fx.b, fx.b)
     var i = Intersection(t1, t2)
-    
+
     assertJoin(i, i, i)
     Assert(JoinTypes(i, i, fx.basic).isTypeObj)
-    
+
     assertJoin(t1, i, fx.stdType)
     assertJoin(i, fx.stdType, fx.stdType)
   end
-  
+
   def testMixedIntersectionTypeObjects()
     var t1 = typeCallable(fx.a, fx.a)
     var t2 = typeCallable(fx.b, fx.b)
     var ti = Intersection(t1, t2)
-    
+
     var c1 = callable(fx.a, fx.a)
     var c2 = callable(fx.b, fx.b)
     var ci = Intersection(c1, c2)
-    
+
     assertJoin(ti, ci, fx.o)
     assertJoin(t1, c1, fx.o) -- IDEA: Maybe c1 would be more logical?
     --Assert(not JoinTypes(t1, c1, fx.basic).isTypeObj)
     --Assert(not JoinTypes(c1, t1, fx.basic).isTypeObj)
-    
+
     assertJoin(c1, fx.stdType, fx.o)
     assertJoin(ci, fx.stdType, fx.o)
   end
-  
+
   -- There are additional test cases in check-inference.test.
-  
+
   -- FIX interfaces with different paths
-  
+
   -- FIX generic interfaces + inheritance
   -- FIX generic interfaces + ranges
-  
+
   -- FIX function types + varargs and default args
-  
+
   private def assertJoin(s, t, join)
     assertSimpleJoin(s, t, join)
     assertSimpleJoin(t, s, join)
   end
-  
+
   private def assertSimpleJoin(s, t, join)
     var result = JoinTypes(s, t, fx.basic)
     var actual = Str(result)
@@ -328,17 +328,17 @@ class JoinSuite is Suite
       Assert(IsSubtype(t, result), "{} not subtype of {}".format(t, result))
     end
   end
-  
+
   private def tuple(*a)
     return TupleType(a)
   end
-  
+
   -- callable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r.
   private def callable(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], False)
   end
-  
+
   -- typeCallable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r, and which represents a type.
   private def typeCallable(*a)

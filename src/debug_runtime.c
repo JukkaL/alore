@@ -109,7 +109,7 @@ void ADebugError_F(char *format, ...)
     char buf[4096];
 
     fprintf(stderr, A_ERR_HEADER);
-    
+
     va_start(args, format);
     AFormatMessageVa(buf, 4096, format, args);
     fprintf(stderr, "%s", buf);
@@ -127,7 +127,7 @@ void ADebug_Trace(AValue *stack, AOpcode *ip)
 {
     char buf[4096];
     AFunction *func;
-    
+
     ADebugPrint_F("(%d) ", (int)ADebugInstructionCounter);
 
     func = AValueToFunction(stack[1]);

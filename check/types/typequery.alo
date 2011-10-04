@@ -14,7 +14,7 @@ const AnyTypeStrategy,  -- Return True if one of the results is True.
 class TypeQuery is TypeVisitor<Boolean>
   private const default as Boolean   -- Default result
   private const strategy as Constant -- Strategy for combining multiple values
-  
+
   -- Construct a query visitor with the given default result and strategy for
   -- combining multiple results. The strategy must be either AnyTypeStrategy or
   -- AllTypesStrategy.
@@ -26,40 +26,40 @@ class TypeQuery is TypeVisitor<Boolean>
   def visitUnboundType(t as UnboundType) as Boolean
     return self.default
   end
-  
+
   def visitErrorType(t as ErrorType) as Boolean
     return self.default
   end
-  
+
   def visitDynamic(t as Dynamic) as Boolean
     return self.default
   end
-  
+
   def visitVoid(t as Void) as Boolean
     return self.default
   end
-  
+
   def visitNilType(t as NilType) as Boolean
     return self.default
   end
-  
+
   def visitTypeVar(t as TypeVar) as Boolean
     return self.default
   end
-  
+
   def visitInstance(t as Instance) as Boolean
     return queryTypes(t.args)
   end
-  
+
   def visitCallable(t as Callable) as Boolean
     -- FIX generics
     return queryTypes(t.argTypes + [t.retType])
   end
-  
+
   def visitTupleType(t as TupleType) as Boolean
     return queryTypes(t.items)
   end
-  
+
   def visitIntersection(t as Intersection) as Boolean
     if self.strategy == AnyTypeStrategy
       return t.item1.accept(self) or t.item2.accept(self)
@@ -67,11 +67,11 @@ class TypeQuery is TypeVisitor<Boolean>
       return t.item1.accept(self) and t.item2.accept(self)
     end
   end
-  
+
   def visitRuntimeTypeVar(t as RuntimeTypeVar) as Boolean
     return self.default
   end
-  
+
   -- Perform a query for a list of types. Use the strategy constant to combine
   -- the results.
   def queryTypes(types as Array<Typ>) as Boolean

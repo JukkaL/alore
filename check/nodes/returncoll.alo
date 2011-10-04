@@ -7,11 +7,11 @@ module nodes
 --       expressions.
 class ReturnCollector is TraverserVisitor
   var rets = []
-  
+
   def visitReturnStmt(s)
     self.rets.append(s)
   end
-  
+
   def visitFuncExpr(o)
     -- Ignore return statements within anonymous functions by not visiting
     -- contents of function expressions.

@@ -51,17 +51,17 @@ AFreeListNode AHeapTerminator = { -1UL, NULL, NULL, NULL };
 
 /* Allocate a block from the global heap. The size must be rounded up by the
    caller to a valid internal block size. Return NULL if failed.
-   
+
    If AGCState is A_GC_MARK_EXE, never perform garbage collection (since
    garbage collection is already active).
    IDEA: The previous case might be bproblematic, as it might cause garbage
    collection to fail in some (rare) cases.
-   
+
    NOTE: The heap must be locked. */
 void *AGlobalAlloc(unsigned long size)
 {
     static ABool alreadyTried = FALSE;
-    
+
     AFreeListNode *node;
     AFreeListNode *result;
     unsigned listNum;
@@ -75,11 +75,11 @@ void *AGlobalAlloc(unsigned long size)
     } else {
         if (AIsInsideLastBlock(ACurFreeBlock))
             ALastBlock = ACurFreeBlock;
-        
+
         if (ACurFreeBlockSize > 0)
             AAddFreeBlockNoFill(ACurFreeBlock, ACurFreeBlockSize);
         ACurFreeBlockSize = 0;
-        
+
         listNum = AGetFreeListNum(size);
 
         if (AFreeList[listNum] != &AListTerminator) {
@@ -133,10 +133,10 @@ void *AGlobalAlloc(unsigned long size)
                 result = NULL;
         } else {
             unsigned long blockSize;
-            
+
             blockSize = AGetFreeListBlockSize(&node->header);
             ACurFreeBlockSize = blockSize - size;
-            
+
 #ifdef A_DEBUG
             if (ACurFreeBlockSize > 0
                     && AGetBlockSize(ACurFreeBlockSize) != ACurFreeBlockSize)
@@ -156,7 +156,7 @@ void *AGlobalAlloc(unsigned long size)
                     node->next->prev = node->prev;
                 } else
                     AFreeList[listNum] = node->next;
-        
+
                 result = node;
             }
 
@@ -192,7 +192,7 @@ void AAddFreeBlock_Debug(void *block, unsigned long size, ABool isFill)
     if (isFill) {
         AValue *ptr = block;
         int i;
-        
+
         for (i = 0; i < size / sizeof(AValue); i++)
             ptr[i] = 0xdeadbeef;
     }
@@ -202,7 +202,7 @@ void AAddFreeBlock_Debug(void *block, unsigned long size, ABool isFill)
 
     header = (size - sizeof(AValue)) | A_FREE_BLOCK_FLAG;
     node->header = header;
-    
+
     if (size < A_SMALLEST_NONUNIFORM_LIST_SIZE) {
         listNum = size >> ALog2(A_ALLOC_UNIT);
 
@@ -253,7 +253,7 @@ ABool AInitializeHeap(unsigned long minSize)
 
     if (!GrowHeap(minSize))
         return FALSE;
-    
+
     return TRUE;
 }
 
@@ -295,7 +295,7 @@ ABool GrowHeap(unsigned long reqSize)
         ADebugStatusMsg(("Heap max size check failed\n"));
         return FALSE;
     }
-    
+
     /* Round requested size up to reduce the number of needed MoreHeap()
        calls. */
 #ifdef A_MIN_HEAP_GROW_FACTOR
@@ -308,7 +308,7 @@ ABool GrowHeap(unsigned long reqSize)
 
     /* Do not grow the heap past the maximum heap size. */
     reqSize = AMin(reqSize, AMaxHeapSize - HeapSize);
-    
+
     new = AMoreHeap(AHeap, reqSize, &size);
     if (new == NULL)
         return FALSE;
@@ -319,7 +319,7 @@ ABool GrowHeap(unsigned long reqSize)
 #ifdef A_DEBUG_SHOW_HEAP_POINTERS
     printf("DEBUG: Heap block at %p\n", new);
 #endif
-    
+
 #ifdef A_DEBUG
     /* Check that the new heap block is within the supported address range. */
     if ((void *)new < A_MEM_START || (void *)new >= A_MEM_END
@@ -327,12 +327,12 @@ ABool GrowHeap(unsigned long reqSize)
         ADebugError(("AMoreHeap result out of valid memory area: %p "
                      "(%d bytes)\n", new, (int)size));
 #endif
-    
+
     /* Can we grow the last heap block? */
     if (AHeap != NULL && new == AGetHeapBlockEnd(AHeap)) {
         Asize_t oldBitInd;
         Asize_t oldBitSize;
-        
+
         oldBitInd  = AGetBitFieldIndex(AHeap->size);
         oldBitSize = AGetBitFieldSize(AHeap->size);
 
@@ -345,7 +345,7 @@ ABool GrowHeap(unsigned long reqSize)
         AMoveMem(APtrAdd(AHeap, bitInd), APtrAdd(AHeap, oldBitInd),
                  oldBitSize);
         AClearMem(APtrAdd(AHeap, bitInd + oldBitSize), bitSize - oldBitSize);
-        
+
         AInactivateCurFreeBlock();
 
         /* If the last block in the original heap block is free and it can
@@ -420,7 +420,7 @@ void ARemoveBlockFromFreeList(void *ptr)
         ADebugError(("Tried to remove non-free-block from free list (%p)\n",
                     ptr));
 #endif
-    
+
     if (node->next != NULL) {
         if (node->header >= 64 - sizeof(AValue)/*FIX*/
                 && node->child != NULL) {

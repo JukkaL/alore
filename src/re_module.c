@@ -35,7 +35,7 @@ static AValue ReDump(AThread *t, AValue *frame)
 {
     AValue reVal;
     ARegExp *re;
-    
+
     if (!AIsStr(frame[0]))
         return ARaiseTypeErrorND(t, NULL);
 
@@ -45,7 +45,7 @@ static AValue ReDump(AThread *t, AValue *frame)
 
     re = AValueToPtr(reVal);
     ADisplayRegExp(re);
-    
+
     return ANil;
 }
 #endif
@@ -119,7 +119,7 @@ static ABool GetArguments(AThread *t, AValue *frame, int *pos)
     }
 
     AExpectStr(t, frame[0]);
-    
+
     frame[2] = ACompileRegExp(t, frame[0], 0);
     if (AIsError(frame[2]))
         return FALSE;
@@ -140,7 +140,7 @@ static AValue MatchResultGroup(AThread *t, AValue *frame)
 
     if (ind > (AArrayLen(a) >> 1) - 1)
         return ARaiseValueErrorND(t, NULL);
-    
+
     i1 = AValueToInt(AArrayItem(a, 2 * ind));
     i2 = AValueToInt(AArrayItem(a, 2 * ind + 1));
 
@@ -199,7 +199,7 @@ static AValue MatchResultSpan(AThread *t, AValue *frame)
     lo = AArrayItem(a, 2 * ind);
     if ((ASignedValue)lo < 0)
         return ANil;
-        
+
     return AMakePair(t, lo, AArrayItem(a, 2 * ind + 1));
 }
 
@@ -241,7 +241,7 @@ static AValue BuildMatchObject(AThread *t, AValue *frame,
 static AValue RegExpCreate(AThread *t, AValue *frame)
 {
     int flags = 0;
-    
+
     AExpectStr(t, frame[1]);
 
     if (!AIsDefault(frame[2])) {
@@ -276,7 +276,7 @@ A_MODULE(__re, "__re")
     A_IMPORT("re")
 
     A_DEF(A_PRIVATE("Main"), 0, 0, ReMain)
-    
+
     A_DEF_OPT("Match", 2, 3, 2, ReMatch)
     A_DEF_OPT("Search", 2, 3, 2, ReSearch)
 

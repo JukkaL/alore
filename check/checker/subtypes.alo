@@ -21,34 +21,34 @@ end
 
 private class SubtypeVisitor is TypeVisitor<Boolean>
   var right as Typ
-  
+
   def create(right as Typ)
     self.right = right
   end
-  
+
   -- visitX(left) means: is left (which is an instance of X) a subtype of
   -- right?
 
   def visitUnboundType(left as UnboundType) as Boolean
     return True
   end
-  
+
   def visitErrorType(left as ErrorType) as Boolean
     return False
   end
-  
+
   def visitDynamic(left as Dynamic) as Boolean
     return True
   end
-  
+
   def visitVoid(left as Void) as Boolean
     return right is Void
   end
-  
+
   def visitNilType(left as NilType) as Boolean
     return not right is Void
   end
-  
+
   def visitInstance(left as Instance) as Boolean
     if right is Instance
       var iright = (right as Instance)
@@ -56,7 +56,7 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
          iright.type.fullName != "std::Object"
         return False
       end
-      
+
       -- Map left type to corresponding right instances. It's sufficient that
       -- one of these is equivalent to right.
       for t in MapInstanceToSupertypes(left, iright.type)
@@ -75,14 +75,14 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
           return IsEquivalentArgRanges(t, iright)
         end
       end
-      
+
       -- None of the alternatives matched.
       return False
     else
       return False
     end
   end
-  
+
   def visitTypeVar(left as TypeVar) as Boolean
     if right is TypeVar
       return left.name == (right as TypeVar).name
@@ -90,7 +90,7 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
       return IsNamedInstance(right, "std::Object")
     end
   end
-  
+
   def visitCallable(left as Callable) as Boolean
     if right is Callable
       return IsCallableSubtype(left, right as Callable)
@@ -102,7 +102,7 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
       return False
     end
   end
-  
+
   def visitTupleType(left as TupleType) as Boolean
     if right is Instance and (IsNamedInstance(right, "std::Object") or
                               IsNamedInstance(right, "std::Tuple"))
@@ -122,7 +122,7 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
       return False
     end
   end
-  
+
   def visitIntersection(left as Intersection) as Boolean
     if IsNamedInstance(right, "std::Object")
       return True
@@ -148,7 +148,7 @@ private def IsCallableSubtype(left as Callable, right as Callable) as Boolean
      right.variables.items != []
     return False
   end
-  
+
   -- Non-type cannot be a subtype of type.
   if right.isTypeObj and not left.isTypeObj
     return False
@@ -158,7 +158,7 @@ private def IsCallableSubtype(left as Callable, right as Callable) as Boolean
   if not IsSubtype(left.retType, right.retType)
     return False
   end
-  
+
   if left.argTypes.length() < right.argTypes.length()
     return False
   end
@@ -170,16 +170,16 @@ private def IsCallableSubtype(left as Callable, right as Callable) as Boolean
       return False
     end
   end
-  
+
   if right.isVarArg and not left.isVarArg
     return False
   end
-  
+
   if left.isVarArg and not right.isVarArg and
      left.argTypes.length() <= right.argTypes.length()
     return False
   end
-  
+
   return True
 end
 
@@ -200,15 +200,15 @@ private def MapInstanceToSupertypes(instance as Instance,
   if supertype.typeVars == []
     return [Instance(supertype, [])]
   end
-  
+
   if supertype.isInterface
     return MapInstanceToInterfaceSupertypes(instance, supertype)
   end
-  
+
   repeat
     instance = MapInstanceToDirectSupertype(instance, instance.type.base)
   until instance.type == supertype
-  
+
   return [instance]
 end
 
@@ -216,7 +216,7 @@ end
 private def MapInstanceToDirectSupertype(instance as Instance,
                                          supertype as TypeInfo) as Instance
   var type = instance.type
-  
+
   for b in type.bases
     -- The cast below cannot fail since we require that semantic analysis
     -- was successful, so bases cannot contain unbound types.
@@ -226,7 +226,7 @@ private def MapInstanceToDirectSupertype(instance as Instance,
       return ExpandType(b, map, tops) as Instance
     end
   end
-  
+
   -- Relationship with the supertype not specified explicitly. Use dynamic
   -- type arguments implicitly.
   return Instance(type.base, [Dynamic()] * type.base.typeVars.length())
@@ -281,14 +281,14 @@ private def InterfaceImplementationPaths(
     -- Direct supertype.
     result.append([supertype])
   end
-  
+
   -- Try constructing a path via superclass.
   if type.base != nil
     for path in InterfaceImplementationPaths(type.base, supertype)
       result.append([type.base] + path)
     end
   end
-  
+
   -- Try constructing a path via each superinterface.
   if type.interfaces != nil
     for iface in type.interfaces
@@ -297,7 +297,7 @@ private def InterfaceImplementationPaths(
       end
     end
   end
-  
+
   return result
 end
 
@@ -306,7 +306,7 @@ private def MapInstanceToDirectSupertypes(
                 instance as Instance, supertype as TypeInfo) as Array<Instance>
   var type = instance.type
   var result = [] as <Instance>
-  
+
   for b in type.bases
     -- The cast below cannot fail since we require that semantic analysis
     -- was successful, so bases cannot contain unbound types.
@@ -316,7 +316,7 @@ private def MapInstanceToDirectSupertypes(
       result.append(ExpandType(b, map) as Instance)
     end
   end
-  
+
   if result != []
     return result
   else

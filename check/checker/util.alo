@@ -7,7 +7,7 @@ import nodes
 -- Type for reporting parsing context in error messages.
 interface Context
   bind Node
-  
+
   def line as Int
 end
 
@@ -63,7 +63,7 @@ private def ExpandCallerVarArgs(argTypes as Array<Typ>, fixedArgc as Int) as
     else
       return nil, nil
     end
-    
+
     if argTypes.length() > fixedArgc
       return argTypes[:-1], itemType
     else

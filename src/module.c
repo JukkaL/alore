@@ -64,7 +64,7 @@ static ABool HasFinalizerMethod(AModuleDef *def);
 ABool AInitializeCModules(void)
 {
     CModulesSize = INITIAL_CMODULES_SIZE;
-    
+
     CModules = AAllocStatic(sizeof(AModuleDef *) * CModulesSize);
     if (CModules == NULL)
         return FALSE;
@@ -78,7 +78,7 @@ ABool AInitializeCModules(void)
 static AToken *ParseModuleName(AToken *tok, AModuleId *mod)
 {
     mod->numParts = 0;
-    
+
     /* Parse components of module name separated by quotes. */
     for (;;) {
         mod->id[mod->numParts] = (ASymbolInfo *)tok->info.sym;
@@ -203,7 +203,7 @@ ABool ACreateModule(AModuleDef *module, ABool existsAlready)
 
     /* Mark the module as a C module with a specific index. */
     modId.id[modId.numParts - 1]->info.module.cModule = num | 1024;
-    
+
     return TRUE;
 }
 
@@ -218,7 +218,7 @@ ABool ARealizeModule(ASymbolInfo *module)
     ABool status;
 
     ADebugCompilerMsg(("Realize '%i'", module));
-    
+
     modDef = CModules[module->info.module.cModule & ~1024];
 
     if (AIsDynamicCompile && !AAllocateModuleGlobals(&firstVar, &firstConst))
@@ -228,7 +228,7 @@ ABool ARealizeModule(ASymbolInfo *module)
         return FALSE;
 
     /* FIX: What if EndDynamicModuleCompilation fails? */
-    
+
     if (AIsDynamicCompile && !AEndDynamicModuleCompilation(firstVar,
                                                            firstConst))
         return FALSE;
@@ -255,10 +255,10 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
 {
     int num;
     AUnresolvedNameList *imports = NULL;
-    
+
     if (AIsDynamicCompile)
         ABeginDynamicModuleCompilation();
-    
+
     ACurModule = module;
 
     for (; modDef->type == MD_IMPORT; modDef++)
@@ -271,16 +271,16 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
                 AReportModuleError(module, "Could not create %s", modDef->str);
                 goto Fail;
             }
-            
+
             /* FIX: Handle error? */
             if (strcmp(modDef->str, "Main") == 0
                 || strcmp(modDef->str, "-Main") == 0)
                 AInitFunctions = AAddIntListEnd(AInitFunctions, num);
-            
+
             if (modDef->numPtr != NULL)
                 *modDef->numPtr = num;
             break;
-            
+
         case MD_VAR:
         case MD_CONST:
         case MD_EMPTY_CONST: {
@@ -292,22 +292,22 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
 
             if (!AGetSymbol(str, strlen(str), &sym))
                 goto Fail;
-            
+
             type = modDef->type == MD_VAR ? ID_GLOBAL : ID_GLOBAL_CONST;
             symInfo = AAddGlobalVariable(sym, module, type, isPrivate);
             if (symInfo == NULL)
                 goto Fail;
-            
+
             /* FIX: check return value of both CreateConstant and SetConst.. */
             if (modDef->type == MD_CONST)
                 ASetConstGlobalValue(ACompilerThread, symInfo->num,
                                      ACreateConstant(symInfo));
-            
+
             if (modDef->numPtr != NULL)
                 *modDef->numPtr = symInfo->num;
             break;
         }
-            
+
         case MD_CLASS:
         case MD_INTERFACE: {
             AModuleDef *orig = modDef;
@@ -329,7 +329,7 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
     /* Mark the C module as active. Note that it is fully initialized only
        after all the realization passes have been finished. */
     module->info.module.cModule = A_CM_ACTIVE;
-    
+
     AFreeUnresolvedNameList(imports);
     return TRUE;
 
@@ -343,7 +343,7 @@ static ABool RealizeFirstPass(AModuleDef *modDef, ASymbolInfo *module)
 static ABool RealizeSecondPass(AModuleDef *modDef, ASymbolInfo *module)
 {
     ACurModule = module;
-    
+
     for (; modDef->type != MD_END_MODULE; modDef++) {
         switch (modDef->type) {
         case MD_DEF:
@@ -352,7 +352,7 @@ static ABool RealizeSecondPass(AModuleDef *modDef, ASymbolInfo *module)
         case MD_EMPTY_CONST:
             /* Nothing to do. */
             break;
-            
+
         case MD_CLASS:
         case MD_INTERFACE:
             modDef = FinishCType(modDef);
@@ -395,7 +395,7 @@ static ABool CreateCFunction(AModuleDef *fnDef, int *num)
 
     if (num != NULL)
         *num = symInfo->num;
-    
+
     symInfo->info.global.minArgs = MinArgs(fnDef);
     symInfo->info.global.maxArgs = MaxArgs(fnDef);
 
@@ -415,7 +415,7 @@ static ABool CreateCFunctionObject(unsigned num, ASymbolInfo *sym,
                                    AModuleDef *fnDef)
 {
     AFunction *func;
-    
+
     func = AAllocUnmovable(sizeof(AFunction));
     if (func == NULL)
         return FALSE;
@@ -454,7 +454,7 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
     str = ModDefName(clDef);
     isPrivate = IsPrivateModDef(clDef);
     isInterface = clDef->type == MD_INTERFACE;
-    
+
     if (!AGetSymbol(str, strlen(str), &sym))
         return NULL;
 
@@ -463,18 +463,18 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
                                  ID_GLOBAL_CLASS, isPrivate);
     if (symInfo == NULL)
         return NULL;
-    
+
     type = ACreateTypeInfo(ACompilerThread, symInfo, isInterface);
     if (type == NULL)
         return NULL;
-    
+
     type->numVars = clDef->num1;
-        
+
     /* Find supertype. */
     def = ProcessAndStoreSupertypes(clDef, type, imports);
     if (def == NULL)
         return NULL;
-    
+
     if (!isInterface) {
         /* Find constructor. */
         if (!ProcessConstructor(def, type)) {
@@ -508,7 +508,7 @@ static AModuleDef *CreateCType(AModuleDef *clDef, AUnresolvedNameList *imports)
     /* The type is ready to be used, unless we ran out of memory at some
        point. */
     type->isValid = !AIsOutOfMemoryError;
-    
+
     ADebugVerifyMemory();
     ADebugCompilerMsg(("End type"));
 
@@ -526,7 +526,7 @@ static AModuleDef *ProcessAndStoreSupertypes(AModuleDef *clDef,
     AModuleDef *def;
 
     def = clDef + 1;
-    
+
     if (clDef->numPtr == &AStdObjectNum)
         super = NULL; /* std::Object has no superclass. */
     else {
@@ -552,7 +552,7 @@ static AModuleDef *ProcessAndStoreSupertypes(AModuleDef *clDef,
     if (super != NULL || interfaces != NULL) {
         AStoreInheritanceInfo(type, imports, super, interfaces);
         /* FIX: check return value */
-        
+
         if (numInterfaces > 0) {
             if (!AAllocateInterfacesInTypeInfo(type, numInterfaces))
                 return NULL;
@@ -567,17 +567,17 @@ static ABool ProcessConstructor(AModuleDef *def, ATypeInfo *type)
 {
     AModuleDef *create = def;
     ASymbolInfo *symInfo = type->sym;
-    
+
     while (create->type != MD_END_TYPE &&
            (create->type != MD_METHOD ||
             strcmp(create->str, "create") != 0))
         create++;
-    
+
     if (create->type != MD_END_TYPE) {
         /* Explicit create; update argument counts. */
         symInfo->info.global.minArgs = create->num1 - 1;
         symInfo->info.global.maxArgs = create->num2 - 1;
-        
+
         if (!CreateCMethod(symInfo, create, &type->create))
             return FALSE;
         AAddMember(MT_METHOD_PUBLIC, AM_CREATE, type->create);
@@ -597,10 +597,10 @@ static AModuleDef *AddCTypeDefs(AModuleDef *def, ASymbolInfo *symInfo,
 {
     for (; def->type != MD_END_TYPE; def++) {
         const char *str = ModDefName(def);
-        
+
         if (IsPrivateModDef(def) && def->type != MD_VAR)
             return NULL;
-        
+
         switch (def->type) {
         case MD_METHOD:
             if (strcmp(def->str, "create") != 0) {
@@ -608,22 +608,22 @@ static AModuleDef *AddCTypeDefs(AModuleDef *def, ASymbolInfo *symInfo,
                     return NULL;
             }
             break;
-            
+
         case MD_GETTER:
             if (!AddMethod(symInfo, def, MT_VAR_GET_PUBLIC, A_VAR_METHOD))
                 return NULL;
             break;
-            
+
         case MD_SETTER:
             if (!AddMethod(symInfo, def, MT_VAR_SET_PUBLIC, A_VAR_METHOD))
                 return NULL;
             break;
-            
+
         case MD_VAR:
             if (!AddMemberVar(type, str, TRUE, IsPrivateModDef(def)))
                 return NULL;
             break;
-            
+
         case MD_EMPTY_CONST:
             if (!AddMemberVar(type, def->str, FALSE, FALSE))
                 return NULL;
@@ -717,7 +717,7 @@ static AModuleDef *FinishCType(AModuleDef *clDef)
             break;
         }
     }
-    
+
     ACalculateInstanceSize(type);
 
     return def;
@@ -734,7 +734,7 @@ static AModuleDef *FinishCTypeDefs(AModuleDef *def, ATypeInfo *type)
                 *def->numPtr = type->totalNumVars;
             type->totalNumVars++;
             break;
-            
+
         case MD_EXTERNAL_DATA:
             type->extDataMember = type->totalNumVars++;
             break;
@@ -748,21 +748,21 @@ static ABool AddMethod(ASymbolInfo *class_, AModuleDef *method,
                        AMemberTableType tableType, unsigned flag)
 {
     /* FIX: error checking sucks */
-    
+
     ASymbol *sym;
     ASymbolInfo *symInfo;
     unsigned memberNum;
     unsigned globalNum;
-    
+
     if (method->str[0] != '#') {
         if (!AGetSymbol(method->str, strlen(method->str),
                        &sym))
             return FALSE;
-        
+
         symInfo = AGetMemberSymbol(sym);
         if (symInfo == NULL)
             return FALSE;
-        
+
         memberNum = symInfo->num;
     } else {
         if (method->str[1] == 'i')
@@ -770,10 +770,10 @@ static ABool AddMethod(ASymbolInfo *class_, AModuleDef *method,
         else
             memberNum = AM_FINALIZER;
     }
-    
+
     if (!CreateCMethod(class_, method, &globalNum))
         return FALSE;
-    
+
     AAddMember(tableType, memberNum, globalNum | flag);
 
     return TRUE;
@@ -788,17 +788,17 @@ static ABool AddMemberVar(ATypeInfo *type, const char *name, ABool isWritable,
     ASymbolInfo *symInfo;
     unsigned key;
     unsigned item;
-    
+
     if (!AGetSymbol(name, strlen(name), &sym))
         return FALSE;
-    
+
     symInfo = AGetMemberSymbol(sym);
     if (symInfo == NULL)
         return FALSE;
-    
+
     key = symInfo->num;
     item = type->numVars++;
-    
+
     AAddMember(isPrivate ? MT_VAR_GET_PRIVATE : MT_VAR_GET_PUBLIC, key, item);
     if (isWritable)
         AAddMember(isPrivate ? MT_VAR_SET_PRIVATE : MT_VAR_SET_PUBLIC, key,
@@ -821,7 +821,7 @@ static ABool AddCModule(AModuleDef *mod, int *num)
 
     *num = NumCModules;
     CModules[NumCModules] = mod;
-    
+
     NumCModules++;
 
     return TRUE;
@@ -871,13 +871,13 @@ ABool AInitializeModule(char *name, ABool isAutoImport)
             s = s->sym;
         } while (s != NULL);
     }
-    
+
     if (!ARealizeModule(sym))
         return FALSE;
 
     if (isAutoImport)
         sym->info.module.cModule = A_CM_AUTO_IMPORT;
-    
+
     return TRUE;
 }
 
@@ -896,22 +896,22 @@ AToken *AImportModule(AToken *tok, ABool isFromC)
     AModuleId impMod;
     ABool isCompiled;
     ASymbolInfo *sym;
-    
+
     tok = AFindModule(tok, &impMod, &isCompiled);
     if (tok == NULL)
         return NULL;
-    
+
     sym = impMod.id[impMod.numParts - 1];
-    
+
     if (isCompiled)
         goto SkipUntilNewlineOrComma;
-    
+
     if (!isFromC) {
         /* Record the line number of the import statement so that
            it is available to be displayed in error messages. */
         ALineNums[ANumActiveFiles - 1] = tok->lineNumber;
     }
-    
+
     if (sym->info.module.cModule == A_CM_NON_C) {
         /* Try to compile the module. */
         if (!ACompileModule(&impMod))
@@ -921,7 +921,7 @@ AToken *AImportModule(AToken *tok, ABool isFromC)
         if (!ARealizeModule(sym))
             return NULL;
     }
-    
+
     if (tok->type != TT_NEWLINE && tok->type != TT_COMMA)
         goto SkipUntilNewlineOrComma;
 
@@ -953,7 +953,7 @@ void AReportModuleError(ASymbolInfo *module, const char *format, ...)
 {
     char buf[1024], buf2[1024];
     va_list args;
-    
+
     va_start(args, format);
     AFormatMessageVa(buf, sizeof(buf), format, args);
     va_end(args);
@@ -961,6 +961,6 @@ void AReportModuleError(ASymbolInfo *module, const char *format, ...)
     AFormatMessage(buf2, sizeof(buf2),
                    "Error initializing module \"%q\":\n    %s",
                    module, buf);
-    
+
     fprintf(stderr, "%s\n", buf2);
 }

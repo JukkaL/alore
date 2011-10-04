@@ -13,14 +13,14 @@ class MemoryStreamSuite is Suite
     var s = MemoryStream()
     AssertEqual(s.contents(), "")
   end
-  
+
   -- Test writing a simple character.
   def testSimpleWrite()
     var s = MemoryStream()
     s.write("x")
     AssertEqual(s.contents(), "x")
   end
-  
+
   -- Test multiple writes.
   def testMultipleWrites()
     var s = MemoryStream()
@@ -28,7 +28,7 @@ class MemoryStreamSuite is Suite
     s.write("hello")
     AssertEqual(s.contents(), "foo bar" + Newline + "hello")
   end
-  
+
   -- Test flush.
   def testFlush()
     var s = MemoryStream()
@@ -39,7 +39,7 @@ class MemoryStreamSuite is Suite
     s.write("hello")
     AssertEqual(s.contents(), "foo bar" + Newline + "hello")
   end
-  
+
   -- Test writing after querying contents.
   def testWritesAfterContents()
     var s = MemoryStream()
@@ -48,7 +48,7 @@ class MemoryStreamSuite is Suite
     s.write("hello")
     AssertEqual(s.contents(), "foo bar" + Newline + "hello")
   end
-  
+
   -- Test writing a Unicode string.
   def testUnicode()
     var s = MemoryStream()
@@ -57,7 +57,7 @@ class MemoryStreamSuite is Suite
     s.write("x")
     AssertEqual(s.contents(), "\u1234x")
   end
-  
+
   -- Test creating a large MemoryStream.
   def testAppendLarge()
     var s = MemoryStream()
@@ -68,7 +68,7 @@ class MemoryStreamSuite is Suite
     end
     AssertEqual(s.contents(), "1234567abcd" * n)
   end
-  
+
   -- Test closing a MemoryStream.
   def testClose()
     var s = MemoryStream()
@@ -84,7 +84,7 @@ class MemoryStreamSuite is Suite
     -- Multiple calls to close are allowed.
     s.close()
   end
-  
+
   -- Test reading from an initialized MemoryStream.
   def testRead()
     var s = MemoryStream("foo")
@@ -93,7 +93,7 @@ class MemoryStreamSuite is Suite
     var s2 = MemoryStream("foo")
     AssertEqual(s2.read(4), "foo")
   end
-  
+
   -- Test reading a line at a time.
   def testReadLn()
     var s = MemoryStream("foo" + CR + LF + "bar" + LF + "x")
@@ -103,7 +103,7 @@ class MemoryStreamSuite is Suite
     var s2 = MemoryStream("foo")
     AssertEqual(s2.readLn(), "foo")
   end
-  
+
   -- Test read().
   def testReadAll()
     var data = "1234567abcd" * 12345
@@ -117,7 +117,7 @@ class MemoryStreamSuite is Suite
     -- read() closes the stream.
     AssertRaises(IoError, def (); s.eof(); end)
   end
-  
+
   -- Test checking for the end of stream.
   def testEof()
     var s = MemoryStream("foo")
@@ -129,14 +129,14 @@ class MemoryStreamSuite is Suite
     s2.write("foo")
     Assert(s2.eof())
   end
-  
+
   -- Test reading at the end of stream.
   def testReadAtEof()
     var s = MemoryStream()
     s.write("foo")
     AssertRaises(IoError, def (); s.readLn(); end)
   end
-  
+
   -- Test seeking and reading after writing.
   def testWriteSeekAndRead()
     var s = MemoryStream()
@@ -146,7 +146,7 @@ class MemoryStreamSuite is Suite
     s.seek(0)
     AssertEqual(s.read(), "foo hello")
   end
-  
+
   -- Test seeking within the stream.
   def testSeek()
     var s = MemoryStream()
@@ -158,7 +158,7 @@ class MemoryStreamSuite is Suite
     s.seek(514)
     AssertEqual(s.read(), "x")
   end
-  
+
   -- Test querying the size of the stream after appending.
   def testSize()
     var s = MemoryStream()
@@ -170,7 +170,7 @@ class MemoryStreamSuite is Suite
     s.contents()
     AssertEqual(s.size(), 6)
   end
-  
+
   -- Test overwriting initialized stream contents.
   def testInitAndWrite()
     var s = MemoryStream("fooz")
@@ -179,7 +179,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s.contents(), "barz")
     AssertEqual(s.size(), 4)
   end
-  
+
   -- Test overwriting initialized stream contents and appending.
   def testInitAndWrite2()
     var s = MemoryStream("fooz")
@@ -194,7 +194,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s.contents(), "baryz")
     AssertEqual(s.size(), 5)
   end
-  
+
   -- Test writing multiple blocks at once in random access mode.
   def testInitAndWrite3()
     var d = "abcde" * 1024
@@ -205,7 +205,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s.contents(), "b" + 1024 * "A" + d[1025:])
     AssertEqual(s.size(), d.length())
   end
-  
+
   -- Test growing the size of stream in random access mode and verifying the
   -- size afterwards.
   def testInitAndWrite4()
@@ -217,7 +217,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s.contents(), "x" * 511 + "A" * (512 + 512 + 511))
     AssertEqual(s.contents().length(), s.size())
   end
-  
+
   -- Test querying the position in the stream.
   def testPos()
     var d = MemoryStream("hello")
@@ -229,7 +229,7 @@ class MemoryStreamSuite is Suite
     d.write(250 * "abcd")
     AssertEqual(d.pos(), 1002)
   end
-  
+
   -- Test reading in different contexts related to block boundaries.
   def testReadComplex()
     var d = ("ab" + 510 * "x") + ("." + 510 * "y" + ".") + "fg" * 10
@@ -250,7 +250,7 @@ class MemoryStreamSuite is Suite
     s.seek(0)
     AssertEqual(s.read(1024), d[:1024])
   end
-  
+
   def testSeekErrors()
     var s = MemoryStream("foobar")
     s.seek(6)
@@ -258,12 +258,12 @@ class MemoryStreamSuite is Suite
     AssertRaises(IoError, def (); s.seek(7); end)
     AssertRaises(IoError, def (); s.seek(2**100); end)
   end
-  
+
   def testReadErrors()
     var s = MemoryStream("foobar")
     AssertRaises(IoError, def (); s._read(-1); end)
   end
-  
+
   def testSpecialCases()
     var d = "foobar" * 1000
     var s = MemoryStream()
@@ -274,7 +274,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s.contents(), d)
     AssertEqual(s.size(), 6000)
     AssertEqual(s.pos(), 6000)
-    
+
     var s2 = MemoryStream(d)
     s2._write("")
     AssertEqual(s2.pos(), 0)
@@ -283,7 +283,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s2.contents(), d)
     AssertEqual(s2.pos(), 0)
   end
-  
+
   def testMixedReadAndWrite()
     var d = "1234567890"
     var s = MemoryStream(d)
@@ -291,7 +291,7 @@ class MemoryStreamSuite is Suite
     AssertEqual(s.read(4), "4567")
     s.write("d")
     AssertEqual(s.contents(), "abc4567d90")
-    
+
     var s2 = MemoryStream(d)
     s2.write("abc")
     AssertEqual(s2.pos(), 3)
@@ -301,6 +301,6 @@ class MemoryStreamSuite is Suite
     AssertEqual(s2.pos(), 8)
     AssertEqual(s2.contents(), "abc4567d90")
   end
-  
+
   -- TODO add testSubStrings
 end

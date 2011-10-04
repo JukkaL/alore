@@ -144,10 +144,10 @@ int AMatchRegExp(AValue *reValue, AValue *strValue, int len, int pos,
     if ((flags & (A_ALRE_MUSTLITERAL | A_ALRE_ANCHORED)) ==
             A_ALRE_MUSTLITERAL) {
         AReOpcode *startChar = re->startChar;
-        
+
         do {
             unsigned char *beg;
-            
+
             if (tryEnd - info.strBeg <= re->mustStringBack)
                 uStr = info.strBeg;
             else
@@ -166,7 +166,7 @@ int AMatchRegExp(AValue *reValue, AValue *strValue, int len, int pos,
 #endif
 
     isNarrow = AIsNarrowStr(*strValue) || AIsNarrowSubStr(*strValue);
-        
+
     if (isNarrow) {
         unsigned char *str = (unsigned char *)info.strBeg + pos;
         AReOpcode *startChar = re->startChar;
@@ -238,17 +238,17 @@ int AMatchRegExp(AValue *reValue, AValue *strValue, int len, int pos,
                 goto Match;
         }
     }
-                
+
     /* Couldn't find a match. Free allocated data and return. */
-       
+
     if (info.stackBase != stack)
         AFreeStatic(info.stackBase);
-        
+
     if (info.subExpBeg != subExpBeg)
         AFreeStatic(info.subExpBeg);
 
     TRACE(("Failed: No matching position"));
-    
+
     return 0;
 
   Match:
@@ -270,15 +270,15 @@ int AMatchRegExp(AValue *reValue, AValue *strValue, int len, int pos,
         if (maxNumSubExps > 0)
             FindSubExpressions(&info, subExp, maxNumSubExps, isNarrow);
     }
-    
+
     if (info.stackBase != stack)
         AFreeStatic(info.stackBase);
 
     if (info.subExpBeg != subExpBeg)
         AFreeStatic(info.subExpBeg);
-    
+
     TRACE(("Matched"));
-        
+
     return 1;
 }
 
@@ -297,10 +297,10 @@ ABool AIsInWideSet2(AReOpcode *ip, AWideChar ch)
        the set and ip[1] encodes character set flags. The ranges follow,
        each of them being encoded as two integers (lower and higher bounds,
        inclusive). */
-    
+
     /* Is this a completement set [^...]? */
     complement = (ip[1] & A_WS_COMPLEMENT) != 0;
-    
+
     if (ip[1] & A_WS_IGNORE_CASE) {
         /* Case insensitive matching */
         AWideChar lower = ALower(ch);
@@ -325,7 +325,7 @@ ABool AIsInWideSet2(AReOpcode *ip, AWideChar ch)
             || ((ip[1] & A_WS_NOT_WORD_CHAR) && !AIsWordChar(ch)))
             return 1 ^ complement;
     }
-    
+
     return 0 ^ complement;
 }
 
@@ -405,7 +405,7 @@ static void FindSubExpressions(MatchInfo *info, AReRange *subExp,
 
     for (i = 1; i <= numSubExps; i++)
         subExp[i].beg = subExp[i].end = -1;
-    
+
     stEnd = info->stack;
     for (st = info->stackBase + 1; st <= stEnd; st++) {
         int backRef = st->repeat - PAREN_MIN;

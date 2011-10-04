@@ -47,16 +47,16 @@ end
 class Request is Map<Str, Str>
   def create() as void
     super.create()
-    
+
     var opts as Map<Str, Str>
-  
+
     method = GetEnv("REQUEST_METHOD")
     pathInfo = GetEnv("PATH_INFO")
     remoteAddr = GetEnv("REMOTE_ADDR")
     remoteHost = GetEnv("REMOTE_HOST")
     contentType, opts = ParseHeader(GetEnv("CONTENT_TYPE"))
     userAgent = GetEnv("HTTP_USER_AGENT")
-    
+
     var cl = GetEnv("CONTENT_LENGTH")
     if cl != nil
       contentLength = Int(cl)
@@ -64,10 +64,10 @@ class Request is Map<Str, Str>
         raise RuntimeError("Maximum post size exceeded")
       end
     end
-    
+
     multiMap = Map()
     uploadMap = Map()
-    
+
     -- Handle query (GET, POST and HEAD are supported).
     var q = nil as Str
     if method == "POST"
@@ -85,7 +85,7 @@ class Request is Map<Str, Str>
       end
     end
   end
-  
+
   def valueList(name as Str) as Array<Str>
     if multiMap.hasKey(name)
       return [self[name]] + multiMap[name]
@@ -95,18 +95,18 @@ class Request is Map<Str, Str>
       return []
     end
   end
-  
+
   def hasUpload(name as Str) as Boolean
     return uploadMap.hasKey(name) and uploadMap[name] != []
   end
-  
+
   def uploadList(name as Str) as Array<UploadInfo>
     if not uploadMap.hasKey(name)
       return []
     end
     return uploadMap[name].copy()
   end
-  
+
   def uploads() as Array<Str>
     var res = [] as <Str>
     for n in uploadMap.keys()
@@ -116,7 +116,7 @@ class Request is Map<Str, Str>
     end
     return res
   end
-  
+
   const method as Str
   const contentType as Str
   const contentLength as Int
@@ -124,10 +124,10 @@ class Request is Map<Str, Str>
   const remoteAddr as Str
   const remoteHost as Str
   const userAgent as Str
-  
+
   private var multiMap as Map<Str, Array<Str>>
   private var uploadMap as Map<Str, Array<UploadInfo>>
-  
+
   private def addFormParam(name as Str, value as Str)
     if not hasKey(name)
       self[name] = value
@@ -138,7 +138,7 @@ class Request is Map<Str, Str>
       multiMap[name].append(value)
     end
   end
-  
+
   private def parseMultipart(boundary as Str, len as Int)
     var s = RawStdIn.read(len)
     for part in ParseParts(s, boundary)

@@ -85,7 +85,7 @@ static AValue ServerSocketCreate(AThread *t, AValue *frame)
         if (inet_pton(AF_INET, buf, &address.sin_addr) <= 0)
             return ARaiseValueError(t, "Invalid address");
     }
-    
+
     AAllowBlocking();
 
     /* Create socket. */
@@ -104,7 +104,7 @@ static AValue ServerSocketCreate(AThread *t, AValue *frame)
         close(handle);
         return AError;
     }
-    
+
     /* Bind the socket. */
     if (bind(handle, (struct sockaddr *)&address, sizeof(address)) < 0) {
         AEndBlocking();
@@ -182,7 +182,7 @@ static AValue ServerSocketAccept(AThread *t, AValue *frame)
 #endif
         break;
     }
-    
+
     if (conn < 0)
         return RaiseSocketError(t);
 
@@ -199,7 +199,7 @@ static AValue ServerSocketAccept(AThread *t, AValue *frame)
 
     frame[2] = AMakeInt(t, conn);
     ASetMemberDirect(t, frame[1], A_FILE_ID, frame[2]);
-    
+
     return frame[1];
 }
 
@@ -235,7 +235,7 @@ static AValue RaiseSocketError(AThread *t)
 #endif
 }
 
-    
+
 A_MODULE(serversocket, "serversocket")
     A_IMPORT("io")
     A_IMPORT("socket")

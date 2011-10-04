@@ -9,7 +9,7 @@ def MeetTypes(s as Typ, t as Typ, basic as BasicTypes) as Typ
   if s is Dynamic
     return s
   end
-  
+
   return t.accept(TypeMeetVisitor(s, basic))
 end
 
@@ -17,7 +17,7 @@ end
 private class TypeMeetVisitor is TypeVisitor<Typ>
   private const s as Typ
   private const basic as BasicTypes
-  
+
   def create(s as Typ, basic as BasicTypes)
     self.s = s
     self.basic = basic
@@ -32,15 +32,15 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return Dynamic()
     end
   end
-  
+
   def visitErrorType(t as ErrorType) as Typ
     return t
   end
-  
+
   def visitDynamic(t as Dynamic) as Typ
     return t
   end
-  
+
   def visitVoid(t as Void) as Typ
     if s is Void
       return t
@@ -48,7 +48,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return ErrorType()
     end
   end
-  
+
   def visitNilType(t as NilType) as Typ
     if not s is Void and not s is ErrorType
       return t
@@ -56,7 +56,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return ErrorType()
     end
   end
-  
+
   def visitTypeVar(t as TypeVar) as Typ
     if s is TypeVar and (s as TypeVar).id == t.id
       return s
@@ -64,7 +64,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitInstance(t as Instance) as Typ
     if s is Instance
       var si = (s as Instance)
@@ -104,7 +104,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitCallable(t as Callable) as Typ
     if s is Callable and IsSimilarCallables(t, s as Callable)
       return CombineSimilarCallables(t, s as Callable, self.basic)
@@ -112,7 +112,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitTupleType(t as TupleType) as Typ
     if s is TupleType and (s as TupleType).length() == t.length()
       var items = [] as <Typ>
@@ -124,7 +124,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitIntersection(t)
     -- Only support very rudimentary meets between intersection types.
     if IsSameType(s, t)
@@ -133,11 +133,11 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   private def meet(s, t)
     return MeetTypes(s, t, basic)
   end
-  
+
   private def default(type)
     if type is UnboundType
       return Dynamic()

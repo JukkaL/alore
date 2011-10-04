@@ -24,8 +24,8 @@ class TestCSuite is Suite
        "new2",
        "property"))
   end
-  
-  
+
+
 end
 
 
@@ -36,28 +36,28 @@ end
 private class MemberTest
   var variable
   const constant
-  
+
   def method()
   end
-  
+
   def create()
   end
-  
+
   def property
   end
-  
+
   def property = n
   end
-  
+
   private var priv1
   private const priv2
-  
+
   private def priv3()
   end
-  
+
   private def priv4
   end
-  
+
   private def priv4 = n
   end
 end
@@ -66,10 +66,10 @@ end
 private class Inherit is MemberTest
   def method()
   end
-  
+
   def new1()
   end
-  
+
   def new2()
   end
 end

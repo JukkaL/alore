@@ -9,11 +9,11 @@ def JoinTypes(s as Typ, t as Typ, basic as BasicTypes) as Typ
   if s is Dynamic
     return s
   end
-  
+
   if s is NilType and not t is Void
     return t
   end
-  
+
   return t.accept(TypeJoinVisitor(s, basic))
 end
 
@@ -21,7 +21,7 @@ end
 private class TypeJoinVisitor is TypeVisitor<Typ>
   private const s     as Typ
   private const basic as BasicTypes
-  
+
   def create(s as Typ, basic as BasicTypes)
     self.s = s
     self.basic = basic
@@ -30,7 +30,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
   private def object as Instance
     return self.basic.object
   end
-  
+
   def visitUnboundType(t as UnboundType) as Typ
     if s is Void or s is ErrorType
       return ErrorType()
@@ -38,15 +38,15 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return Dynamic()
     end
   end
-  
+
   def visitErrorType(t as ErrorType) as Typ
     return t
   end
-  
+
   def visitDynamic(t as Dynamic) as Typ
     return t
   end
-  
+
   def visitVoid(t as Void) as Typ
     if s is Void
       return t
@@ -54,7 +54,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return ErrorType()
     end
   end
-  
+
   def visitNilType(t as NilType) as Typ
     if not s is Void
       return s
@@ -62,7 +62,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitTypeVar(t as TypeVar) as Typ
     if s is TypeVar and (s as TypeVar).id == t.id
       return s
@@ -70,7 +70,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitInstance(t as Instance) as Typ
     if s is Instance
       return JoinInstances(t, s as Instance, True, self.basic)
@@ -80,7 +80,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitCallable(t as Callable) as Typ
     if s is Callable and IsSimilarCallables(t, s as Callable)
       return CombineSimilarCallables(t, s as Callable, self.basic)
@@ -93,7 +93,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitTupleType(t as TupleType) as Typ
     if s is TupleType and (s as TupleType).length() == t.length()
       var items = [] as <Typ>
@@ -105,7 +105,7 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   def visitIntersection(t as Intersection) as Typ
     -- Only support very rudimentary joins between intersection types.
     if IsSameType(s, t)
@@ -116,11 +116,11 @@ private class TypeJoinVisitor is TypeVisitor<Typ>
       return default(s)
     end
   end
-  
+
   private def join(s as Typ, t as Typ) as Typ
     return JoinTypes(s, t, self.basic)
   end
-  
+
   private def default(type as Typ) as Typ
     if type is UnboundType
       return Dynamic()
@@ -204,9 +204,9 @@ private def JoinInstancesAsInterface(t as Instance, s as Instance,
                                      basic as BasicTypes) as Typ
   var tIfaces = ImplementedInterfaces(t)
   var sIfaces = ImplementedInterfaces(s)
-  
+
   var res = [] as <Instance>
-  
+
   for ti in tIfaces
     for si in sIfaces
       -- Join of two interface types is always an Instance type (either
@@ -217,7 +217,7 @@ private def JoinInstancesAsInterface(t as Instance, s as Instance,
       end
     end
   end
-  
+
   if res.length() == 1
     -- Unambiguous, non-trivial result.
     return res[0]
@@ -226,7 +226,7 @@ private def JoinInstancesAsInterface(t as Instance, s as Instance,
     return basic.object
   else
     -- Two or more potential candidate results.
-    
+
     -- Calculate the join of the results. If it is Object, the result is
     -- ambigous (ErrorType).
     var j = res[0]
@@ -251,19 +251,19 @@ private def ImplementedInterfaces(t as Instance) as Array<Typ>
     return [t]
   else
     var res = [] as <Typ>
-    
+
     for iface in t.type.interfaces
       for tt in MapInstanceToSupertypes(t, iface)
         res.append(tt)
       end
     end
-    
+
     if t.type.base != nil
       -- The result is always unique for valid programs.
       var tt = MapInstanceToSupertypes(t, t.type.base)[0]
       res.extend(ImplementedInterfaces(tt))
     end
-    
+
     return res
   end
 end
@@ -272,14 +272,14 @@ end
 private def CombineGenericInstances(
               t as Instance, s as Instance,
               default as Instance, basic as BasicTypes) as Instance or
-              
+
              (t as Instance, s as Instance,
               default as NilType, basic as BasicTypes) as Typ
   if t.type != s.type
     -- FIX generic inheritance
     return default
   end
-  
+
   -- Add upper bounds if they are missing.
   if t.argTops == nil
     t = Instance(t.type, t.args, t.args)
@@ -287,7 +287,7 @@ private def CombineGenericInstances(
   if s.argTops == nil
     s = Instance(s.type, s.args, s.args)
   end
-  
+
   -- Combine type argument ranges.
   var args = [] as <Typ>
   var tops = [] as <Typ>
@@ -300,7 +300,7 @@ private def CombineGenericInstances(
     args.append(arg)
     tops.append(top)
   end
-  
+
   return Instance(t.type, args, tops)
 end
 

@@ -44,7 +44,7 @@ ABool ASetKeyboardInterruptHandler(void)
 
     if (sigaction(SIGINT, &act, NULL) < 0)
         return FALSE;
-    
+
     return TRUE;
 }
 

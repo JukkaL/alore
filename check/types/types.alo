@@ -7,16 +7,16 @@ import nodes
 class Typ
   const line as Int
   const repr as dynamic
-  
+
   def create(line = -1, repr = nil)
     self.line = line
     self.repr = repr
   end
-  
+
   def accept<T>(visitor as TypeVisitor<T>) as T
     raise RuntimeError("Not implemented")
   end
-  
+
   def _str() as Str
     return accept(TypeStrVisitor())
   end
@@ -27,7 +27,7 @@ end
 class UnboundType is Typ
   const name as Str
   const args as Array<Typ>
-  
+
   def create(name as Str,
              args = [] as Array<Typ>,
              line = -1 as Int,
@@ -36,7 +36,7 @@ class UnboundType is Typ
     self.args = args
     super.create(line, repr)
   end
-  
+
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitUnboundType(self)
   end
@@ -64,7 +64,7 @@ end
 -- callable type and as the result type of calling such callable.
 class Void is Typ
   const source as Str   -- May be nil; function that generated this value
-  
+
   def create(source = nil as Str, line = -1 as Int, repr = nil)
     self.source = source
     super.create(line, repr)
@@ -73,7 +73,7 @@ class Void is Typ
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitVoid(self)
   end
-  
+
   def withSource(source as Str) as Void
     return Void(source, self.line, self.repr)
   end
@@ -103,7 +103,7 @@ class Instance is Typ
   const args as Array<Typ>     -- Lower bounds
   const argTops as Array<Typ>  -- Upper bounds (or nil if collapsed)
   const rangeIds as Array<Int> -- Range ids (or nil if collapsed)
-  
+
   def create(type as TypeInfo,
              args as Array<Typ>,
              argTops = nil as Array<Typ>,
@@ -116,7 +116,7 @@ class Instance is Typ
     self.rangeIds = rangeIds
     super.create(line, repr)
   end
-  
+
   def top(i as Int) as Typ
     if self.argTops != nil
       return self.argTops[i]
@@ -124,7 +124,7 @@ class Instance is Typ
       return self.args[i]
     end
   end
-  
+
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitInstance(self)
   end
@@ -136,13 +136,13 @@ end
 class TypeVar is Typ
   const name as Str -- Name of the type variable (for messages and debugging)
   const id   as Int -- 1, 2, ... for type-related, -1, ... for function-related
-  
+
   -- True if refers to the value of the type variable stored in a generic
   -- instance wrapper. This is only relevant for generic class wrappers. If
   -- False (default), this refers to the type variable value(s) given as the
   -- implicit type variable argument.
   const isWrapperVar as Boolean
-  
+
   def create(name as Str, id as Int, isWrapperVar = False as Boolean,
              line = -1 as Int, repr = nil)
     self.name = name
@@ -161,10 +161,10 @@ end
 class FunctionLike is Typ
   def isTypeObj as Boolean -- Abstract
   end
-  
+
   def items() as Array<Callable> -- Abstract
   end
-  
+
   def withName(name as Str) as Typ -- Abstract
   end
 end
@@ -178,7 +178,7 @@ class Callable is FunctionLike
   const retType   as Typ        -- Return value type
   const name      as Str        -- Name (may be nil; for error messages)
   const variables as TypeVars   -- Type variables for a generic function
-  
+
   -- Implicit bound values of type variables. These can be either for
   -- class/interfaces type variables or for generic function type variables.
   -- For example, the method 'append' of Array<Int> has implicit value Int for
@@ -192,9 +192,9 @@ class Callable is FunctionLike
   --
   -- Stored as tuples (id, type).
   const boundVars as Array<(Int, Typ)>
-  
+
   private const _isTypeObj as Boolean -- Does this represent a type object?
-  
+
   def create(argTypes   as Array<Typ>,
              minArgs    as Int,
              isVarArg   as Boolean,
@@ -215,15 +215,15 @@ class Callable is FunctionLike
     self.boundVars = boundVars
     super.create(line, repr)
   end
-  
+
   def isTypeObj as Boolean
     return self._isTypeObj
   end
-  
+
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitCallable(self)
   end
-  
+
   -- Return a copy of this type with the specified name.
   def withName(name as Str) as Callable
     var ret = self.retType
@@ -234,7 +234,7 @@ class Callable is FunctionLike
                     self.isTypeObj, name, self.variables, self.boundVars,
                     self.line, self.repr)
   end
-  
+
   def maxFixedArgs as Int
     var n = self.argTypes.length()
     if isVarArg
@@ -242,15 +242,15 @@ class Callable is FunctionLike
     end
     return n
   end
-  
+
   def items() as Array<Callable>
     return [self]
   end
-  
+
   def isGeneric() as Boolean
     return self.variables.items != []
   end
-  
+
   def typeVarIds() as Array<Int>
     var a = [] as <Int>
     for tv in self.variables.items
@@ -264,16 +264,16 @@ end
 -- The tuple type (T1, ..., Tn).
 class TupleType is Typ
   const items as Array<Typ>
-  
+
   def create(items as Array<Typ>, line = -1 as Int, repr = nil)
     self.items = items
     super.create(line, repr)
   end
-  
+
   def length() as Int
     return self.items.length()
   end
-  
+
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitTupleType(self)
   end
@@ -292,7 +292,7 @@ class Intersection is FunctionLike
   const item1 as FunctionLike
   const item2 as FunctionLike
   const name as Str  -- May be nil
-  
+
   def create(item1 as FunctionLike,
              item2 as FunctionLike,
              name = nil as Str,
@@ -303,7 +303,7 @@ class Intersection is FunctionLike
     self.name = name
     super.create(line, repr)
   end
-  
+
   def items() as Array<Callable>
     var a = [] as <Callable>
     for item in [self.item1, self.item2]
@@ -315,17 +315,17 @@ class Intersection is FunctionLike
     end
     return a
   end
-  
+
   def isTypeObj as Boolean
     -- Both items must have the type object status, so it's sufficient to
     -- query only one of them.
     return self.item1.isTypeObj
   end
-  
+
   def withName(name as Str) as Intersection
     return Intersection(self.item1, self.item2, name, self.line, self.repr)
   end
-  
+
   def accept<T>(visitor as TypeVisitor<T>) as T
     return visitor.visitIntersection(self)
   end
@@ -337,12 +337,12 @@ end
 class TypeVars
   const items as Array<TypeVarDef>
   const repr
-  
+
   def create(items as Array<TypeVarDef>, repr = nil)
     self.items = items
     self.repr = repr
   end
-  
+
   def _str() as Str
     if self.items == []
       return ""
@@ -364,7 +364,7 @@ class TypeVarDef
   const bound as Typ  -- May be nil
   const line  as Int
   const repr
-  
+
   def create(name as Str, id as Int, bound = nil as Typ, line = -1 as Int,
              repr = nil)
     self.name = name
@@ -373,7 +373,7 @@ class TypeVarDef
     self.line = line
     self.repr = repr
   end
-  
+
   def _str() as Str
     if self.bound == nil
       return Str(self.name)
@@ -390,7 +390,7 @@ end
 -- IndexExpr mainly).
 class RuntimeTypeVar is Typ
   const node as Node
-  
+
   def create(node as Node)
     self.node = node
     super.create(-1, nil)

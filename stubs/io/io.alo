@@ -21,31 +21,31 @@ const DefaultEncoding = nil as Encoding
 class Stream implements Iterable<Str>
   def create(*args as Constant)
   end
-  
+
   def write(*args as Object)
   end
-  
+
   def writeLn(*args as Object)
   end
-  
+
   def read(size = -1 as Int) as Str
   end
-  
+
   def readLn() as Str
   end
-  
+
   def readLines() as Array<Str>
   end
-  
+
   def flush() as void
   end
-  
+
   def eof() as Boolean
   end
-  
+
   def close() as void
   end
-  
+
   def peek() as Str
   end
 
@@ -57,19 +57,19 @@ end
 class File is Stream
   def create(path as Str, *args as Constant)
   end
-  
+
   def seek(offset as Int)
   end
-  
+
   def pos() as Int
   end
-  
+
   def size() as Int
   end
-  
+
   def _write(*args as Object)
   end
-  
+
   def _read(size as Int) as  Str
   end
 end

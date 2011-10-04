@@ -13,14 +13,14 @@ class EmailSuite is Suite
     AssertEqual(m.keys(), [])
     AssertEqual(m.body, nil)
   end
-  
+
   def testSimpleMessage()
     var m = Message("To: foo@bar.com" + BR + BR + "the body")
     AssertEqual(m.keys(), ["To"])
     AssertEqual(m["To"], "foo@bar.com")
     AssertEqual(m.body, "the body")
   end
-  
+
   def testMultipleHeaders()
     var m = Message("To: foo@bar.com" + BR + "From:a@b.c" + BR + BR +
                     "the body" + BR + BR + "more...")
@@ -29,7 +29,7 @@ class EmailSuite is Suite
     AssertEqual(m["from"], "a@b.c")
     AssertEqual(m.body, "the body" + BR + BR + "more...")
   end
-  
+
   -- FIX line continuation
   -- FIX modifying headers
 end

@@ -87,7 +87,7 @@ char *ANurseryEnd;
 /* List of "large" blocks allocated in the ordinary heap in new generation
    (i.e. blocks outside the nursery). All blocks of at least MIN_BIG_BLOCK_SIZE
    bytes are allocated outside nursery.
-   
+
    Note: The list may also contain small blocks that should not be moved by
          gc. */
 static ANewGenNode *NewGenBigBlocks;
@@ -217,11 +217,11 @@ void *AAlloc(AThread *t, unsigned long size)
                 return NULL;
             }
         }
-        
+
         /* Is the block small enough to be allocated from the nursery? */
         if (size < A_MIN_BIG_BLOCK_SIZE) {
             unsigned long allocSize;
-        
+
             /* Is there not enough space in nursery? */
             if (ANurseryEnd - NurseryPtr < size) {
                 /* After a successful gc we are known to have enough space. */
@@ -242,7 +242,7 @@ void *AAlloc(AThread *t, unsigned long size)
             t->heapEnd = NurseryPtr;
 
             AGCStat.allocCount += allocSize;
-            
+
             AAllocAmount += allocSize;
             AllocCounter += allocSize;
         } else {
@@ -255,7 +255,7 @@ void *AAlloc(AThread *t, unsigned long size)
                 return NULL;
             }
         }
-        
+
         AReleaseHeap();
     }
 
@@ -270,7 +270,7 @@ void *AAlloc(AThread *t, unsigned long size)
                      "(%d bytes)\n",
                      ptr, (int)size));
 #endif
-    
+
     return ptr;
 }
 
@@ -282,7 +282,7 @@ void *AAlloc(AThread *t, unsigned long size)
 void *AAllocLocked(AThread *t, unsigned long size)
 {
     void *ptr;
-    
+
     size = AGetBlockSize(size);
 
     ALockHeap();
@@ -294,7 +294,7 @@ void *AAllocLocked(AThread *t, unsigned long size)
             return NULL;
         }
     }
-    
+
     ptr = AllocNewGenBlockFromHeap(t, size);
     if (ptr == NULL) {
         /* Out of memory. */
@@ -318,28 +318,28 @@ static void *AllocNewGenBlockFromHeap(AThread *t, unsigned long size)
     ANewGenNode *node;
     void *ptr;
     unsigned long allocSize;
-    
+
     /* Is it time for gc? */
     if (AIsItTimeForNewGenGC()) {
         if (!ACollectGarbage())
             return NULL;
     }
-    
+
     /* The block is put into a linked list of new generation blocks.
        Allocate enough space for the block plus some extra for the
        linked list node. */
     allocSize = size + A_NEW_GEN_NODE_HEADER_SIZE;
     node = AGlobalAlloc(allocSize);
-    
+
     /* Was the allocation successful? */
     if (node != NULL) {
         ptr = AGetBigBlockData(node);
-        
+
         CreateNewGenBigBlock(node, size);
-        
+
         if (size > ANewGenLargestBlockSize) {
             ANewGenLargestBlockSize = size;
-            
+
             /* We know that the live data size is at least the size of
                the largest single block allocated + some overhead. */
             if (size + A_MIN_LIVE_DATA_SIZE > ALiveDataSize)
@@ -347,9 +347,9 @@ static void *AllocNewGenBlockFromHeap(AThread *t, unsigned long size)
         }
     } else
         ptr = NULL;
-    
+
     AGCStat.allocCount += allocSize;
-    
+
     AAllocAmount += allocSize;
     AllocCounter += allocSize;
 
@@ -363,13 +363,13 @@ static void *AllocNewGenBlockFromHeap(AThread *t, unsigned long size)
 ABool ADisallowOldGenGC(void)
 {
     ABool result;
-    
+
     ADebugStatusMsg(("Disallow old gen gc\n"));
-    
+
     ALockHeap();
 
     result = TRUE;
-    
+
     /* Allow DisallowOldGenGC() to be called even if gc is already disallowed.
        In that case, nothing is done. */
     if (OldGenGCDisallowCount == 0) {
@@ -382,7 +382,7 @@ ABool ADisallowOldGenGC(void)
             if (result)
                 result = IncrementalGC(A_SHORT_INT_MAX - 1);
             /* FIX: A_SHORT_INT_MAX above is wrong */
-            
+
             AWakeOtherThreads();
 
             AllocCounter = 0;
@@ -392,7 +392,7 @@ ABool ADisallowOldGenGC(void)
             OldGenGCDisallowCount = 1;
     } else
         OldGenGCDisallowCount++;
-    
+
     AReleaseHeap();
 
     return result;
@@ -404,12 +404,12 @@ ABool ADisallowOldGenGC(void)
 void AAllowOldGenGC(void)
 {
     ADebugStatusMsg(("Allow old gen gc\n"));
-    
+
     ALockHeap();
 
     if (OldGenGCDisallowCount <= 0)
         AEpicInternalFailure("OldGenGCDisallowCount would go negative");
-    
+
     OldGenGCDisallowCount--;
     if (OldGenGCDisallowCount == 0 && AIsItTimeForFullGC()) {
         ACollectGarbage();
@@ -417,7 +417,7 @@ void AAllowOldGenGC(void)
            condition since nothing serious happened (we did not try to
            allocate any memory). */
     }
-    
+
     AReleaseHeap();
 }
 
@@ -426,7 +426,7 @@ void AAllowOldGenGC(void)
 void *AAllocUnmovable(unsigned long size)
 {
     void *ptr;
-    
+
     ALockHeap();
 
     ptr = AllocUnmovable_NoLock(size);
@@ -441,7 +441,7 @@ void *AAllocUnmovable(unsigned long size)
 void *AllocUnmovable_NoLock(unsigned long size)
 {
     void *ptr;
-    
+
     size = AGetBlockSize(size);
 
     AOldGenSize += size;
@@ -487,12 +487,12 @@ void *AAllocStatic(unsigned long size)
 
     block->next = StaticBlocks.next;
     block->next->prev = block;
-    
+
     StaticBlocks.next = block;
     block->prev = &StaticBlocks;
 
     AReleaseHeap();
-    
+
     return APtrAdd(block, A_STATIC_BLOCK_HEADER_SIZE);
 }
 
@@ -511,7 +511,7 @@ void AFreeStatic(void *ptr)
 #ifdef A_DEBUG
         ADebug_MemoryEvent(block, "Freed static");
 #endif
-        
+
         block->prev->next = block->next;
         block->next->prev = block->prev;
 
@@ -522,7 +522,7 @@ void AFreeStatic(void *ptr)
         /* FIX: is this necessary? */
         if (AGCState != A_GC_MARK)
             AAddFreeBlock(block, size);
-    
+
         AReleaseHeap();
     }
 }
@@ -533,7 +533,7 @@ void *AGrowStatic(void *ptr, unsigned long newSize)
     void *block;
 
     /* FIX: we -could- check if we can grow the block.. but do we want to? */
-    
+
     block = AAllocStatic(newSize);
     if (block == NULL)
         return NULL;
@@ -544,7 +544,7 @@ void *AGrowStatic(void *ptr, unsigned long newSize)
                 (A_STATIC_BLOCK_HEADER_SIZE - sizeof(AValue)));
         AFreeStatic(ptr);
     }
-    
+
     return block;
 }
 
@@ -559,12 +559,12 @@ ABool AInitializeGarbageCollector(unsigned long maxHeap)
         AMaxHeapSize = A_DEFAULT_MAX_HEAP_SIZE;
     else
         AMaxHeapSize = maxHeap;
-    
+
     if (!AInitializeHeap(A_INITIAL_OLD_GEN_SIZE))
         return FALSE;
-    
+
     /* Initialize the new generation. */
-    
+
     ANurserySize = A_INITIAL_NURSERY_SIZE;
     ANurseryBegin = AGrowNursery(NULL, 0, ANurserySize);
     if (ANurseryBegin == NULL) {
@@ -574,12 +574,12 @@ ABool AInitializeGarbageCollector(unsigned long maxHeap)
     NurseryPtr = ANurseryBegin;
     ANurseryEnd = NurseryPtr + AGetBitFieldIndex(ANurserySize);
     AGCStat.nurserySize = ANurseryEnd - ANurseryBegin;
-    
+
     NewGenBigBlocks = NULL;
     ANewGenLargestBlockSize = 0;
 
     ALiveDataSize = A_MIN_LIVE_DATA_SIZE;
-    
+
     AOldGenSize = 0;
 
     AFloatList = NULL;
@@ -589,7 +589,7 @@ ABool AInitializeGarbageCollector(unsigned long maxHeap)
 
     /* SweepLiveDataSize and OldGenSizeBeforeSweep do not need to be
        initialized. */
-    
+
     AAllocAmount = 0;
 
     AllocCounter = 0;
@@ -618,7 +618,7 @@ ABool AInitializeGarbageCollector(unsigned long maxHeap)
 void ADeinitializeGarbageCollector(void)
 {
     /* FIX: call all destructors */
-    
+
     AFreeHeap();
     AFreeNursery(ANurseryBegin, ANurserySize);
 }
@@ -627,12 +627,12 @@ void ADeinitializeGarbageCollector(void)
 ABool ACollectAllGarbage(void)
 {
     ABool status;
-    
+
     ADebugStatusMsg(("Collect all garbage\n"));
 
     AWaitForHeap();
     AFreezeOtherThreads();
-    
+
     /* Perform ordinary garbage collection at first. */
     status = ACollectGarbage();
 
@@ -640,10 +640,10 @@ ABool ACollectAllGarbage(void)
        long time! */
     if (status)
         status = ACollectGarbageForced();
-    
+
     AWakeOtherThreads();
     AReleaseHeap();
-    
+
     ADebugStatusMsg(("End collect all garbage\n"));
 
     return status;
@@ -656,7 +656,7 @@ static int SweepIncr;
 
 /* Perform garbage collection. Always collects the new generation and
    potentially starts incremental mark-sweep collection.
-   
+
    NOTE: The heap must be locked. */
 ABool ACollectGarbage(void)
 {
@@ -690,12 +690,12 @@ ABool ACollectGarbage(void)
         else
             result = FALSE;
     }
-    
+
 #ifdef A_DEBUG
     if (counter != ADebugInstructionCounter)
         ADebugError_F("Instruction counter modified during gc!\n");
 #endif
-    
+
     AWakeOtherThreads();
 
 #ifdef A_DEBUG
@@ -706,7 +706,7 @@ ABool ACollectGarbage(void)
             ADebugStatusMsg(("End collect garbage (incremental GC active)\n"));
     }
 #endif
-    
+
     return result;
 }
 
@@ -720,7 +720,7 @@ ABool ACollectGarbageForced(void)
 {
     AThread *t;
     ABool isUntracedModules;
-    
+
     AFreezeOtherThreads();
 
     ADebugStatusMsg(("Collect garbage forced\n"));
@@ -731,17 +731,17 @@ ABool ACollectGarbageForced(void)
         AWakeOtherThreads();
         return TRUE;
     }
-    
+
 #ifdef A_DEBUG_VERIFY_MEMORY_AROUND_GC
     ADebugVerifyMemory_F();
 #endif
-    
+
     /* Terminate mark-sweep gc if it is active. */
     TerminateGC();
 
     if (!GetMarkRootSet())
         goto Fail;
-    
+
     /* GetMarkRootSet() leaves some parts of the root set out. Get the rest of
        the root set. */
     for (t = AGetFirstThread();
@@ -749,10 +749,10 @@ ABool ACollectGarbageForced(void)
         if (!PushOldGenStack(t->tempStack,
                              t->tempStackPtr - t->tempStack))
             goto Fail;
-        
+
         if (!PushOldGenStack(t->regExp, A_NUM_CACHED_REGEXPS * 2))
             goto Fail;
-        
+
         if (!PushOldGenStack(&t->exception, 1))
             goto Fail;
 
@@ -774,11 +774,11 @@ ABool ACollectGarbageForced(void)
     ADebugStatusMsg(("Begin mark\n"));
 
   MarkAgain:
-    
+
     /* Mark all objects, including the new generation. */
     if (Mark(A_SHORT_INT_MAX - 1, TRUE) == A_MARK_FAILED)
         goto Fail;
-    
+
     /* Clear untraced lists. Note that untraced lists are not needed during
        full gc as the entire heap is always traced. */
     for (t = AGetFirstThread();
@@ -787,10 +787,10 @@ ABool ACollectGarbageForced(void)
         t->untracedEnd = t->untraced->data.val + A_GC_LIST_BLOCK_LENGTH;
         t->untraced->next = NULL;
     }
-    
+
     /* FIX mark all the new gen big blocks.. but maybe not? maybe we oughta
        free some of them as well.. */
-    
+
 #ifdef A_DEBUG_VERIFY_MEMORY_AROUND_GC
     ADebugVerifyMemory_F();
 #endif
@@ -807,10 +807,10 @@ ABool ACollectGarbageForced(void)
     /* Sweep things that need special processing. */
     SweepModules();
     ASweepOldGenHashMappings();
-    
+
     /* Initialize sweep of everything else. */
     InitializeSweep();
-    
+
     /* FIX what about new gen finalizers.. well, maybe they won't be freed? */
     CheckOldGenFinalizers();
 
@@ -823,13 +823,13 @@ ABool ACollectGarbageForced(void)
 #ifdef A_DEBUG_VERIFY_MEMORY_AROUND_GC
     ADebugVerifyMemory_F();
 #endif
-    
+
     ADebugStatusMsg(("End of forced gc\n"));
-    
+
     AGCStat.fullCollectCount++;
     AGCStat.forcedCollectCount++;
     AGCStat.fullIncrementCount++;
-    
+
     AWakeOtherThreads();
 
     return TRUE;
@@ -857,13 +857,13 @@ ABool ACollectNewGen(ABool forceRetire)
 #endif
 
     AGCStat.newGenCollectCount++;
-    
+
     /* Start counting the number of retired bytes. */
     ResetAllocAmount();
 
     /* Copy the nursery and mark live big blocks. */
     result = TraverseNewGen();
-    
+
     /* Update OldGenSize to include all the retired objects. */
     retired = ResetAllocAmount();
     AOldGenSize += retired;
@@ -874,7 +874,7 @@ ABool ACollectNewGen(ABool forceRetire)
         /* Copying and marking was successful. */
         AThread *t;
         ANewGenNode *bigBlock;
-        
+
         /* Empty newRef lists and thread local heaps. */
         for (t = AGetFirstThread();
              t != NULL; t = AGetNextThread(t)) {
@@ -887,10 +887,10 @@ ABool ACollectNewGen(ABool forceRetire)
 
         /* Mark newRefPtr lists valid (they are empty now). */
         ANewRefPtrListInvalid = FALSE;
-        
+
         /* Run finalizers for new generation objects. */
         CheckNewGenFinalizers();
-        
+
         AMoveNewGenHashMappingsToOldGen();
 
         /* Sweep the big blocks. Retire everything. */
@@ -900,7 +900,7 @@ ABool ACollectNewGen(ABool forceRetire)
             ANewGenNode *next;
 
             next = bigBlock->next;
-        
+
             /* Is the current block alive? */
             block = AGetBigBlockData(bigBlock);
             if (!AIsNewGenBlock(block)) {
@@ -914,7 +914,7 @@ ABool ACollectNewGen(ABool forceRetire)
                 AAddFreeBlock(bigBlock, A_NEW_GEN_NODE_HEADER_SIZE +
                               bigBlock->size);
             }
-            
+
             bigBlock = next;
         }
 
@@ -923,9 +923,9 @@ ABool ACollectNewGen(ABool forceRetire)
 
         if (AIsItTimeToGrowNursery()) {
             ADebugStatusMsg(("Grow nursery\n"));
-            
+
             /* At this point the nursery is empty. */
-            
+
             if (GrowTraverseStack(&NewGenStack, &NewGenStackLength,
                                   2 * NewGenStackLength)) {
                 void *newNursery;
@@ -945,7 +945,7 @@ ABool ACollectNewGen(ABool forceRetire)
             } else
                 result = FALSE;
         }
-    
+
         NurseryPtr = ANurseryBegin;
     } else {
         /* New generation copy-and-mark gc failed. The only possible reason for
@@ -953,7 +953,7 @@ ABool ACollectNewGen(ABool forceRetire)
            blocks may be left in the nursery, and newRefPtr-values in threads
            may point to freed objects, but otherwise the heap will be in a
            consistent state. */
-        
+
         ANewGenNode *bigBlock;
 
         /* FIX: Run finalizers? Move hash mappings? */
@@ -961,7 +961,7 @@ ABool ACollectNewGen(ABool forceRetire)
         /* The newRefPtr lists in threads may contain invalid references. The
            next gc run must not touch the lists. */
         ANewRefPtrListInvalid = TRUE;
-        
+
         /* Turn on the new generation flag for all the original new generation
            blocks in the global heap, since they are still included in the
            NewGenBigBlocks list. As the failure might have resulted from lack
@@ -983,9 +983,9 @@ ABool ACollectNewGen(ABool forceRetire)
 #ifdef A_DEBUG_VERIFY_MEMORY_AROUND_GC
     ADebugVerifyMemory_F();
 #endif
-    
+
     ADebugStatusMsg(("End collect new generation\n"));
-    
+
     return result;
 }
 
@@ -993,15 +993,15 @@ ABool ACollectNewGen(ABool forceRetire)
 ABool PerformGCIncrement(AThread *t)
 {
     ABool status;
-    
+
     AFreezeOtherThreads();
-    
+
     status = IncrementalGC(AllocCounter);
     if (!status)
         ARaisePreallocatedMemoryErrorND(t);
-    
+
     AWakeOtherThreads();
-    
+
     AllocCounter = 0;
 
     return status;
@@ -1012,22 +1012,22 @@ ABool PerformGCIncrement(AThread *t)
 static ABool IncrementalGC(long count)
 {
     /* FIX: instead of returning on error, goto to end of the func */
-    
+
     ADebugStatusMsg(("Begin gc increment\n"));
-    
+
 #ifdef A_DEBUG_VERIFY_MEMORY_AROUND_GC
     ADebugVerifyMemory_F();
 #endif
 
     AGCStat.fullIncrementCount++;
-    
+
     if (AGCState == A_GC_MARK) {
         ClearUnusedStack();
 
       MarkBegin:
 
         ADebugStatusMsg(("Mark\n"));
-        
+
         /* Mark incrementally. */
         count = Mark(count, FALSE);
         if (count == A_MARK_FAILED)
@@ -1045,7 +1045,7 @@ static ABool IncrementalGC(long count)
 
             /* Mark objects retired from the new generation or caught by the
                write barrier. */
-            
+
             if (!GetMarkUntracedSet())
                 return TerminateGC();
 
@@ -1058,7 +1058,7 @@ static ABool IncrementalGC(long count)
                marked. */
             if (count > 0) {
                 ABool isFound;
-                
+
                 if (!FindUntracedModules(&isFound))
                     return TerminateGC();
 
@@ -1067,13 +1067,13 @@ static ABool IncrementalGC(long count)
 
                 SweepModules();
                 ASweepOldGenHashMappings();
-                
+
                 InitializeSweep();
                 CheckOldGenFinalizers();
             }
         }
     }
-    
+
     if (AGCState == A_GC_SWEEP)
         Sweep(count);
 
@@ -1112,7 +1112,7 @@ static ABool TraverseNewGen(void)
        comments */
 
     AddGlobalsToNewGenRootSet();
-    
+
     /* Generate root set. */
 
     /* Loop over all threads. */
@@ -1134,7 +1134,7 @@ static ABool TraverseNewGen(void)
                 for (i = 0; i < newRefVal->size; i++)
                     newRefVal->data.val[i] = *newRef->data.valPtr[i];
             }
-            
+
             PushNewGenStack(newRefVal->data.val, newRefVal->size);
 
             if (newRefVal == t->curNewRefValues)
@@ -1148,7 +1148,7 @@ static ABool TraverseNewGen(void)
         PushNewGenStack(t->stackPtr, t->stackTop - t->stackPtr);
         PushNewGenStack(t->tempStack,
                         t->tempStackPtr - t->tempStack);
-        
+
         PushNewGenStack(t->regExp, 2 * A_NUM_CACHED_REGEXPS);
         PushNewGenStack(&t->exception, 1);
     }
@@ -1156,7 +1156,7 @@ static ABool TraverseNewGen(void)
     /* Perform the actual copying and marking. Note that if this fails, some
        objects in the nursery have not been copied. */
     NewGenTraceResult &= CopyAndMark(NewGenStackTop, NewGenTraceResult);
-    
+
     /* Perform post-collection cleanup for all threads. */
     for (t = AGetFirstThread(); t != NULL; t = AGetNextThread(t)) {
         newRef = t->newRef;
@@ -1185,7 +1185,7 @@ static ABool TraverseNewGen(void)
                         AGCListBlock *cur = AGetGCListBlock(t->untracedEnd);
 
                         cur->size = A_GC_LIST_BLOCK_LENGTH;
-                        
+
                         if (!CreateUntracedListBlock(t, &cur->next)) {
                             NewGenTraceResult = FALSE;
                             break;
@@ -1198,7 +1198,7 @@ static ABool TraverseNewGen(void)
 
             if (newRefVal == t->curNewRefValues)
                 break;
-            
+
             newRef = newRef->next;
             newRefVal = newRefVal->next;
         }
@@ -1221,7 +1221,7 @@ static ABool GetMarkRootSet(void)
                            AGlobalVars + ANumMainGlobals);
 
     PushOldGenStack(AThreadArgBuffer, A_THREAD_ARG_BUFFER_SIZE * 3);
-    
+
     /* Add exit functions. */
     PushOldGenStack(AExitHandlers, AExitBlockInd);
 
@@ -1257,12 +1257,12 @@ static ABool GetMarkUntracedSet(void)
 
     /* Add exit functions. */
     PushOldGenStack(AExitHandlers, AExitBlockInd);
-    
+
     PushFunc = PushOldGenStack;
 
     if (!AddGlobalVarsToOldGenRootSet())
         return FALSE;
-    
+
     for (t = AGetFirstThread();
          t != NULL; t = AGetNextThread(t)) {
         if (!PushOldGenStack(t->tempStack,
@@ -1273,7 +1273,7 @@ static ABool GetMarkUntracedSet(void)
             return FALSE;
         if (!PushOldGenStack(&t->exception, 1))
             return FALSE;
-    
+
         if (!AddStackToOldGenRootSet(t))
             return FALSE;
 
@@ -1330,11 +1330,11 @@ void ClearUnusedStack(void)
 static ABool AddStackToOldGenRootSet(AThread *t)
 {
     t->markStackBottom = t->stackPtr;
-    
+
     if (!PushOldGenStack(t->stackPtr,
                          t->stackTop - t->stackPtr))
         return FALSE;
-    
+
     return TRUE;
 }
 
@@ -1364,19 +1364,19 @@ static void InitializeSweep(void)
     AThread *t;
 
     ADebugStatusMsg(("Begin sweep\n"));
-    
+
 #ifdef A_DEBUG_VERIFY_MEMORY_AROUND_GC
     ADebugVerifyMemory_F();
 #endif
-    
+
     AGCState = A_GC_SWEEP;
-    
+
     SweepBlock = AHeap;
     SweepPtr = AGetHeapBlockData(AHeap);
 
     /* FIX: possibly should mark at least some of the floats.. */
     AFloatList = NULL;
-    
+
     OldGenSizeBeforeSweep = AOldGenSize;
     SweepLiveDataSize = 0;
 
@@ -1418,9 +1418,9 @@ static void Sweep(long count)
     liveData = SweepLiveDataSize;
     block = SweepBlock;
     ptr = SweepPtr;
-    
+
     AInactivateCurFreeBlock();
-    
+
     /* Smallest blocks can't be removed from the free list during sweep since
        they are too small to contain back pointers, and back pointers are
        required for removing a block from the middle of a free list. We solve
@@ -1429,7 +1429,7 @@ static void Sweep(long count)
        they are very small blocks, it's unlikely that there are a very large
        number of them around. */
     ARemoveSmallBlocksFromFreeList();
-    
+
     SweepIncr++;
 
     count++;
@@ -1453,7 +1453,7 @@ static void Sweep(long count)
                        be combined with other free blocks. */
                     if (AIsFreeListBlock(ptr))
                         ARemoveBlockFromFreeList(ptr);
-                    
+
                     if (AIsValueBlock(ptr))
                         ptr = APtrAdd(ptr, AGetValueBlockSize(ptr));
                     else if (AIsInstanceBlock(ptr))
@@ -1464,14 +1464,14 @@ static void Sweep(long count)
                         /* Float buckets are handled here, because they might
                            be empty. If the current bucket is non-empty, mark
                            it allocated and we will leave the inner loop. */
-                        
+
                         AValue bitMask;
                         unsigned long floatBitWordInd;
                         int floatBitInd;
                         AFloatListNode *bucket;
 
                         bucket = APtrAdd(ptr, A_FLOAT_BUCKET_HEADER_SIZE);
-                        
+
                         floatBitWordInd = AGetBitWordIndex(block, bucket);
                         floatBitInd = AGetBitIndex(block, bucket);
 
@@ -1506,12 +1506,12 @@ static void Sweep(long count)
                                         bucket->next = AFloatList;
                                         AFloatList = bucket;
                                     }
-                                    
+
                                     if (bit ==
                                         (1 << ((A_FLOAT_BUCKET_LENGTH - 1)
                                                / A_BITMAP_UNITS_PER_FLOAT)))
                                         break;
-                                        
+
                                     bucket++;
                                     bit *= 2 * A_FLOAT_SIZE /
                                         A_MARK_BITMAP_UNIT;
@@ -1539,7 +1539,7 @@ static void Sweep(long count)
                     if (ALastBlock > (void *)begin
                             && ALastBlock <= APtrAdd(begin, size))
                         ALastBlock = begin;
-                    
+
                     AAddFreeBlock(begin, size);
 
                     if (ptr == blockEnd)
@@ -1556,7 +1556,7 @@ static void Sweep(long count)
                     blockEnd[bitInd] = 0;
                     bitInd = newBitInd;
                 }
-            
+
                 if (AIsValueBlock(ptr))
                     size = AGetValueBlockSize(ptr);
                 else if (AIsInstanceBlock(ptr))
@@ -1578,7 +1578,7 @@ static void Sweep(long count)
             blockEnd[bitInd] = 0;
         else
             AClearMarksUntil(ptr, block, blockEnd);
-        
+
         if (count > 0) {
             /* The current sweep block has been finished. */
             block = block->next;
@@ -1589,7 +1589,7 @@ static void Sweep(long count)
 
                 AGCStat.oldGenSize = AOldGenSize;
                 AGCStat.lastLiveSize = ALiveDataSize;
-                
+
                 AGCState = A_GC_NONE;
                 ADebugStatusMsg(("Sweep end\n"));
                 //AShowGCStats();
@@ -1602,7 +1602,7 @@ static void Sweep(long count)
 
     SweepPtr = ptr;
     SweepBlock = block;
-    
+
     SweepLiveDataSize = liveData;
 }
 
@@ -1618,7 +1618,7 @@ static long Mark(long count, ABool traverseNewGen)
     AValue *heapEnd;
 
     AGCState = A_GC_MARK_EXE;
-    
+
     top = OldGenStackTop;
 
     /* Store the extents of the first heap block in local variables for faster
@@ -1685,7 +1685,7 @@ static long Mark(long count, ABool traverseNewGen)
                             val = AGetIndirectValue(val, block);
                             block = AValueToPtr(val);
                         }
-                        
+
                         /* Use the general algorithm for marking. */
                         isMarked = TryMark(block);
                     }
@@ -1702,9 +1702,9 @@ static long Mark(long count, ABool traverseNewGen)
                     if (ptr != end) {
                         /* First make sure there is space for an additional
                            entry in the stack. */
-                        
+
                         top++;
-                        
+
                         /* Need to grow the stack? */
                         if (top[1] == A_STACK_TOP) {
                             unsigned long stackIndex = top - OldGenStack;
@@ -1715,10 +1715,10 @@ static long Mark(long count, ABool traverseNewGen)
                                 AGCState = A_GC_MARK;
                                 return A_MARK_FAILED;
                             }
-                            
+
                             heapBegin = AHeap;
                             heapEnd   = AGetHeapBlockDataEnd(heapBegin);
-                            
+
                             top = OldGenStack + stackIndex;
                         }
 
@@ -1752,7 +1752,7 @@ static long Mark(long count, ABool traverseNewGen)
                     }
                 }
             } /* if (!AIsShortInt(val)) */
-            
+
             ptr++;
             count--;
         } while (ptr < end);
@@ -1781,7 +1781,7 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
        failure. Otherwise we could perform multiple forced full gcs which could
        cause a long stall. */
     result = isOkThisFar;
-    
+
     /* Continue until the stack is empty. */
     while (*top != A_STACK_BOTTOM) {
         AValue *ptr;
@@ -1814,14 +1814,14 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
                 /* Get pointer to the start of the block that contains the
                    referenced object. */
                 block = AValueToPtr(val);
-                
+
                 if (AIsFloat(val)) {
                     if (AIsInNursery(block)) {
                         if (result
                             && (AFloatList != NULL || AllocFloatBucket())) {
                             AValue *floatDst = (AValue *)AFloatList;
                             AFloatList = AFloatList->next;
-                            
+
                             *ptr = AFloatPtrToValue(floatDst);
 
                             floatDst[0] = block[0];
@@ -1838,13 +1838,13 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
                     AValue blockHeader;
 
                     blockHeader = *block;
-                    
+
                     if (AIsNewGenBlock(block)) {
                         /* Untraversed new generation block */
                         unsigned long blockSize;
                         long beginOffs;
                         unsigned long len;
-                        
+
                         /* Calculate the extents of pointer data within the
                            block. */
                         if (AIsInstanceBlock(block)) {
@@ -1895,7 +1895,7 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
                                 } else
                                     dstBlock = NULL;
                             }
-                            
+
                             AAllocAmount += blockSize;
 
                             if (dstBlock != NULL) {
@@ -1916,7 +1916,7 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
                                 /* Set an indirection indicator in the header
                                    of the original block in the nursery. */
                                 ASetIndirectValue(block, dstBlock);
-                                
+
                                 block = dstBlock;
                             } else
                                 result = FALSE;
@@ -1960,7 +1960,7 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
                     }
                 }
             } /* if (!AIsShortInt(val)) */
-            
+
             ptr++;
         } while (ptr < end);
     } /* while (*top != STACK_BOTTOM) */
@@ -1988,7 +1988,7 @@ static ABool GrowTraverseStack(AValue **stackPtr, unsigned long *lenPtr,
         TryMark(new);
 
     AInitNonPointerBlockOld(new, newSize - sizeof(AValue));
-    
+
     new[1] = A_STACK_BOTTOM;
 
     if (*stackPtr != NULL)
@@ -1996,10 +1996,10 @@ static ABool GrowTraverseStack(AValue **stackPtr, unsigned long *lenPtr,
                  (oldLen - 4) * sizeof(AValue));
     else
         oldLen = 4;
-    
+
     for (i = oldLen - 2; i < newLen - 2; i++)
         new[i] = A_STACK_FILLER;
-    
+
     new[newLen - 2] = A_STACK_TOP;
     new[newLen - 1] = A_STACK_TOP;
 
@@ -2018,7 +2018,7 @@ AMarkBitmapInt AIsMarked(void *ptr)
     block = AHeap;
     for (;;) {
         void *blockEnd = AGetHeapBlockDataEnd(block);
-        
+
         if (AIsInsideHeapBlock(ptr, block, blockEnd))
             return AIsMarkedBounded(ptr, block, blockEnd);
 
@@ -2040,7 +2040,7 @@ AMarkBitmapInt AIsMarked(void *ptr)
 static ABool TryMark(void *ptr)
 {
     AHeapBlock *block;
-    
+
     for (block = AHeap; block != NULL; block = block->next) {
         void *blockEnd;
 
@@ -2097,7 +2097,7 @@ static ABool AllocFloatBucket(void)
     block[1] = A_FLOAT_BUCKET_SUB_HEADER;
 
     floats = APtrAdd(block, A_FLOAT_BUCKET_HEADER_SIZE);
-    
+
     for (i = 0; i < A_FLOAT_BUCKET_LENGTH - 1; i++)
         floats[i].next = &floats[i + 1];
 
@@ -2112,7 +2112,7 @@ static ABool AllocFloatBucket(void)
 
     AAllocAmount += A_FLOAT_BUCKET_SIZE;
     AllocCounter += A_FLOAT_BUCKET_SIZE;
-    
+
     return TRUE;
 }
 
@@ -2122,7 +2122,7 @@ static ABool AllocFloatBucket(void)
 static ABool TerminateGC(void)
 {
     AHeapBlock *block;
-    
+
     for (block = AHeap; block != NULL; block = block->next)
         AClearMem(APtrAdd(block, AGetBitFieldIndex(block->size)),
                   AGetBitFieldSize(block->size));
@@ -2140,7 +2140,7 @@ static void AddGlobalsToNewGenRootSet(void)
     int modNum;
 
     AddModuleGlobalsToRootSet(AFirstMainGlobalVariable);
-    
+
     for (modNum = AFirstDynamicModule;
          modNum != 0; modNum = AGetNextModule(modNum))
         AddModuleGlobalsToRootSet(
@@ -2176,7 +2176,7 @@ static ABool AddModuleGlobalsToRootSet(int num)
 
         num = AGetNextGlobalBucket(num);
     } while (num != 0);
-    
+
     return TRUE;
 }
 
@@ -2235,11 +2235,11 @@ static ABool FindUntracedModules(ABool *isFoundPtr)
              modNum != 0; modNum = AGetNextModule(modNum)) {
             if (!AIsModuleMarked(modNum)) {
                 /* The module is not marked. Mark it if it's alive. */
-                
+
                 if (IsModuleAlive(modNum)) {
                     if (!MarkModule(modNum))
                         return FALSE;
-                    
+
                     isFound = TRUE;
                     endLoop = FALSE;
                 }
@@ -2259,7 +2259,7 @@ static ABool FindUntracedModules(ABool *isFoundPtr)
                             AValueToInt(mod->importedModules[i]))) {
                         if (!MarkModule(AValueToInt(mod->importedModules[i])))
                             return FALSE;
-                    
+
                         isFound = TRUE;
                         endLoop = FALSE;
                     }
@@ -2269,7 +2269,7 @@ static ABool FindUntracedModules(ABool *isFoundPtr)
     } while (!endLoop);
 
     *isFoundPtr = isFound;
-    
+
     return TRUE;
 }
 
@@ -2290,7 +2290,7 @@ static ABool IsModuleAlive(int modNum)
        if anything referenced by the module has been marked. */
     for (bucket = modNum; bucket != 0; bucket = AGetNextGlobalBucket(bucket)) {
         int i;
-        
+
         for (i = 1; i < A_GLOBAL_BUCKET_SIZE; i++) {
             AValue val = AGlobalByNum(bucket + i);
 
@@ -2300,7 +2300,7 @@ static ABool IsModuleAlive(int modNum)
     }
 
     ADebugStatusMsg(("Dynamic module %d is not alive\n", modNum));
-    
+
     return FALSE;
 }
 
@@ -2347,12 +2347,12 @@ ABool AModifyObject(AThread *t, const AValue *header, AValue *objPtr,
                   AValue *newValPtr)
 {
     ABool result;
-    
+
     AModifyObject_M(t, header, objPtr, newValPtr, result);
 
     if (!result)
         ARaisePreallocatedMemoryErrorND(t);
-    
+
     return result;
 }
 
@@ -2361,7 +2361,7 @@ static ABool CreateUntracedListBlock(AThread *t,
                                     AGCListBlock **prev)
 {
     AGCListBlock *block;
-    
+
     block = AGlobalAlloc(AGetBlockSize(sizeof(AGCListBlock)));
     if (block == NULL)
         return FALSE;
@@ -2393,9 +2393,9 @@ static void CreateNewGenBigBlock(ANewGenNode *node, unsigned long size)
 void *AAllocKeep(AThread *t, unsigned long size, AValue *keep)
 {
     void *ptr;
-    
+
     size = AGetBlockSize(size);
-    
+
     if (t->heapPtr + size <= t->heapEnd
         && size < A_MIN_BIG_BLOCK_SIZE) {
         ptr = t->heapPtr;
@@ -2420,17 +2420,17 @@ static void CheckNewGenFinalizers(void)
         AInstance *next;
 
         next = AIntValueToPtr(inst->member[0]);
-        
+
         if (AIsNewGenBlock(&inst->type))
             RunFinalizer(inst);
         else {
             int extDataMember;
-            
+
             /* The instance was previously in nursery, so it has been retired
                to the old generation. Figure out the new location. */
             inst = AValueToInstance(
                     AGetIndirectValue(AInstanceToValue(inst), &inst->type));
-            
+
             /* Move the instance to the old generation list. */
             inst->member[0] = APtrToIntValue(AOldGenFinalizeInst);
             AOldGenFinalizeInst = inst;
@@ -2461,7 +2461,7 @@ static void CheckOldGenFinalizers(void)
          inst != NULL; inst = AIntValueToPtr(inst->member[0])) {
         if (!AIsMarked(inst)) {
             RunFinalizer(inst);
-            
+
             /* Remove from the list. */
             if (prev)
                 prev->member[0] = inst->member[0];
@@ -2469,7 +2469,7 @@ static void CheckOldGenFinalizers(void)
                 AOldGenFinalizeInst = AIntValueToPtr(inst->member[0]);
         } else {
             int extDataMember;
-            
+
             prev = inst;
 
             /* Add the size of external data to live data size, if any. */
@@ -2505,7 +2505,7 @@ static void RunFinalizer(AInstance *inst)
             return;
         }
     }
-    
+
     instVal = AInstanceToValue(inst);
     finalizer->code.cfunc(NULL, &instVal);
 }
@@ -2517,7 +2517,7 @@ void AAddFinalizeInst(AInstance *inst)
 {
     /* This will not block since AFinalizerMutex must be released quickly. */
     athread_mutex_lock(&AFinalizerMutex);
-    
+
     /* There are separate lists for new generation and old generation
        objects. */
     if (AIsNewGenBlock(&inst->type)) {
@@ -2543,7 +2543,7 @@ ABool ASetExternalDataSize(AThread *t, AValue obj, Asize_t size)
     int sizeDelta;
 
     temp = AAllocTemp(t, obj);
-    
+
     type = AGetInstanceType(AValueToInstance(*temp));
     member = type->extDataMember;
     if (member < 0 || size > A_SHORT_INT_MAX) {
@@ -2551,7 +2551,7 @@ ABool ASetExternalDataSize(AThread *t, AValue obj, Asize_t size)
         AFreeTemp(t);
         return FALSE;
     }
-    
+
     ALockHeap();
 
     /* Check if we should garbage collect new generation. */
@@ -2571,16 +2571,16 @@ ABool ASetExternalDataSize(AThread *t, AValue obj, Asize_t size)
     sizeVal = AMemberDirect(*temp, type->extDataMember);
     if (!AIsNil(sizeVal))
         sizeDelta = AMax(0, size - AValueToInt(sizeVal));
-    
+
     /* Store the size of external data in object. */
     ASetMemberDirect(t, *temp, type->extDataMember, AIntToValue(size));
-    
+
     inst = AValueToInstance(*temp);
     if (AIsNewGenBlock(&inst->type)) {
         /* Include additional external data size in accounting. */
         AAllocAmount += sizeDelta;
         AllocCounter += sizeDelta;
-        
+
         /* Update largest object size. */
         if (size > ANewGenLargestBlockSize)
             ANewGenLargestBlockSize = size;
@@ -2604,7 +2604,7 @@ void ATruncateBlock(void *block, unsigned long oldSize, unsigned long newSize)
     if (!AIsInNursery(block) && newSize < oldSize
             && newSize + A_MIN_BLOCK_SIZE <= oldSize) {
         ALockHeap();
-        
+
         if (AIsNewGenBlock((AValue *)block)) {
             ANewGenNode *bigBlock = APtrSub(
                 block, AGetBlockSize(sizeof(ANewGenNode)));

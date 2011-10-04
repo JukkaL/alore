@@ -14,7 +14,7 @@ private const MaxWidth = 78   -- Maximum width of output
 -- Return the width of first column of help, including spaces.
 def HelpColumnWidth(opts as Array<Str>, help as Array<Pair<Str, Str>>) as Int
   var nopts = NormalizeHelpOptions(opts, help)
-  
+
   var width = 6
   var helpMap = Map(*help)
   for opt in nopts
@@ -33,21 +33,21 @@ def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>,
 
   -- Sort options lexicographically.
   nopts = Sort(nopts, def (x, y); return Key(x) < Key(y); end)
-  
+
   var helpMap = Map(*help)
-  
+
   var w = __TextWrapper()
   var helpWidth = MaxWidth - firstColumnWidth
-  
+
   var a = [] as <Str>
   for opt in nopts
     -- Try find a valid help key from the option synonyms.
     var helpOpt = FindHelpKey(helpMap, opt)
-    
+
     -- Help is only available if we found a key.
     if helpOpt != nil
       var argText = ArgText(opt)
-      
+
       -- Construct help text. It needs to be wrapped to fit the second column.
       var helpText = ""
       for s in w.wrap(helpMap[Name(helpOpt)], helpWidth)
@@ -57,7 +57,7 @@ def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>,
           helpText += Newline + firstColumnWidth * " " + s
         end
       end
-      
+
       -- Format the entire text for this set of option synonyms.
       if argText.length() <= firstColumnWidth - 4 or
            (argText + helpText).length() <= MaxWidth - 4
@@ -71,7 +71,7 @@ def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>,
       end
     end
   end
-  
+
   return Newline.join(a)
 end
 
@@ -110,7 +110,7 @@ private def ArgText(opt as Array<Str>) as Str
       argText += " " + arg[all[0]]
     end
   end
-  
+
   return argText
 end
 
@@ -166,12 +166,12 @@ private def NormalizeHelpOptions(opts as Array<Str>,
     end
     res.append(a)
   end
-  
+
   for h in help
     if not h.left.startsWith("-")
       res.append([h.left])
     end
   end
-  
+
   return res
 end

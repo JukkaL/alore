@@ -72,7 +72,7 @@ class InitSuite is Suite
   def testAssignment()
     AssertEqual(V1, 1)
   end
-  
+
   def testBasics()
     AssertEqual(V2, 2)
     AssertEqual(V3, 3)
@@ -81,19 +81,19 @@ class InitSuite is Suite
     AssertEqual(V6, 6)
     AssertEqual(V7, 7)
   end
-  
+
   def testTryExcept()
     AssertEqual(V8, 8)
   end
-  
+
   def testRepeatUntil()
     AssertEqual(V9, 9)
   end
-  
+
   def testAnonymousFunction()
     AssertEqual(V10, 10)
   end
-  
+
   def testExposedVariable()
     AssertEqual(V11, 11)
   end

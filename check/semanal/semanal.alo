@@ -40,24 +40,24 @@ class SemanticAnal is NodeVisitor
   def create(libPath as Array<Str>, errors as Errors)
     self.libPath = libPath
     self.errors = errors
-    
+
     self.symtable = SymbolTable()
-    
+
     self.isCreate = False
     self.isFunction = False
     self.isLocalCtx = False
   end
-  
+
   -- First pass of semantic analysis
   ----------------------------------
-  
+
   -- Populate symbol table and build TypeInfo objects for defined types.
   -- Related TypeInfos (via subtyping) will remain unconnected after the first
   -- pass.
-  
+
   def analMainHeader(tree as AloreFile, fnam as Str)
     self.errors.setFile(fnam)
-    
+
     if tree.header != nil
       fail("Unexpected module header", tree.header)
     end
@@ -66,10 +66,10 @@ class SemanticAnal is NodeVisitor
       fail("Invalid encoding", tree.enc)
     end
   end
-  
+
   def analModuleHeader(tree as AloreFile, fnam as Str, id as Str)
     self.errors.setFile(fnam)
-    
+
     if tree.header == nil
       fail("Module header expected", tree)
       tree.header = Header(id)
@@ -78,7 +78,7 @@ class SemanticAnal is NodeVisitor
       tree.header = Header(id)
     end
   end
-  
+
   -- Perform the first analysis pass. Resolve the full names of definitions
   -- and construct type info structures, but do not resolve inter-definition
   -- references such as supertypes.
@@ -97,19 +97,19 @@ class SemanticAnal is NodeVisitor
       end
    end
   end
-  
+
   def analFuncDef(defn as FuncDef, modId as Str)
     defn.fullName = qualified(defn.name, modId)
     addSymTable(defn.name, SymbolTableNode(Gdef, defn, modId), defn)
   end
-  
+
   def analVarDef(defn as VarDef, modId as Str)
     for n in defn.names
       n.fullName = qualified(n.name, modId)
       addSymTable(n.name, SymbolTableNode(Gdef, n, modId), defn)
     end
   end
-  
+
   -- Perform the first analysis pass for a type.
   def analTypeDef(defn as TypeDef, modId as Str)
     var vars = Map() as <Str, Var>
@@ -117,12 +117,12 @@ class SemanticAnal is NodeVisitor
     var getters = Map() as <Str, FuncDef>
     var setters = Map() as <Str, FuncDef>
     var hasImplicitCreate = False
-    
+
     defn.fullName = qualified(defn.name, modId)
-    
+
     try
       self.errors.setType(defn.name, defn.isInterface)
-      
+
       vars, methods, getters, setters = analTypeMembers(defn.defs, modId)
 
       -- Add implicit create, if required.
@@ -140,7 +140,7 @@ class SemanticAnal is NodeVisitor
           end
           fail("""create"" must be a method", node)
         end
-      
+
         var fdef = CreateImplicitCreate(defn)
         if fdef != nil
           defn.defs.append(fdef)
@@ -148,7 +148,7 @@ class SemanticAnal is NodeVisitor
           hasImplicitCreate = True
         end
       end
-      
+
       -- Verify that create is not private.
       if methods.hasKey("create") and methods["create"].isPrivate
         fail("""create"" must be public", methods["create"])
@@ -161,7 +161,7 @@ class SemanticAnal is NodeVisitor
                         hasImplicitCreate)
     type.line = defn.line
     addSymTable(defn.name, SymbolTableNode(Gdef, type, modId), defn)
-    
+
     self.types[qualified(defn.name)] = type
   end
 
@@ -172,7 +172,7 @@ class SemanticAnal is NodeVisitor
     var methods = Map() as <Str, FuncDef>
     var getters = Map() as <Str, FuncDef>
     var setters = Map() as <Str, FuncDef>
-    
+
     for d in defs
       if d is VarDef
         for n in (d as VarDef).names
@@ -210,25 +210,25 @@ class SemanticAnal is NodeVisitor
         fd.fullName = name
       end
     end
-    
+
     return vars, methods, getters, setters
   end
-  
+
   -- Middle pass of semantic analysis
   -----------------------------------
-  
+
   -- Add supertype references to TypeInfos now that the symbol table contains
   -- all visible global definitions.
-  
+
   def bindSupertypes(fileNode as AloreFile, fnam as Str)
     self.errors.setFile(fnam)
     self.imports = GetImports(fileNode)
     setCurModId(fileNode)
-    
+
     for d in fileNode.defs
       if d is TypeDef
         var td = (d as TypeDef)
-        
+
         -- Inherit from Object implicitly, if the superclass of a class is
         -- not given explicitly.
         if not td.isInterface and td.base == nil and
@@ -296,57 +296,57 @@ class SemanticAnal is NodeVisitor
     end
     return False
   end
-  
+
   -- Final pass of semantic analysis
   ----------------------------------
-  
+
   -- Do the bulk of semantic analysis in this third and final semantic analysis
   -- pass.
-  
+
   def visitFile(fileNode as AloreFile, fnam as Str)
     self.errors.setFile(fnam)
     self.imports = GetImports(fileNode)
     setCurModId(fileNode)
-    
+
     var defs = fileNode.defs
     for d in defs
       d.accept(self)
     end
   end
-  
+
   -- Analyse a function or method definition.
   def visitFuncDef(defn as FuncDef)
     if self.type != nil and defn.name == "create"
       self.isCreate = True
     end
-    
+
     if self.type != nil
       defn.info = self.type
     end
-    
+
     self.errors.setFunction(defn.name)
-    
+
     analyseFunction(defn)
-    
+
     self.errors.setFunction(nil)
-    
+
     self.isCreate = False
   end
-    
+
   -- Analyse a function or method definition or an anonymous function.
   def analyseFunction(defn as FuncBase)
     var wasFunction = self.isFunction
     self.isFunction = True
-    
+
     -- Fdef is a reference to FuncDef unless defn is an anonymous function.
     var fdef = nil as FuncDef
     if defn is FuncDef
       fdef = defn as FuncDef
     end
-    
+
     var isNotAccessor = defn is FuncExpr or
                         (not fdef.isGetter and not fdef.isSetter)
-    
+
     if defn.type != nil
       defn.type.accept(self)
       if isNotAccessor
@@ -362,7 +362,7 @@ class SemanticAnal is NodeVisitor
         end
       end
     end
-    
+
     enter()
     if isNotAccessor
       addFuncTypeVariablesToSymbolTable(defn)
@@ -379,10 +379,10 @@ class SemanticAnal is NodeVisitor
     end
     visitBlock(defn.body)
     leave()
-    
+
     self.isFunction = wasFunction
   end
-  
+
   def verifyFunctionType(defn as FuncBase)
     var t = defn.type.type
     if t is Callable
@@ -407,14 +407,14 @@ class SemanticAnal is NodeVisitor
       -- number of possible arguments, and fixed arguments and varargs must be
       -- matched with equivalent arguments, but otherwise there is more
       -- flexibility.
-      
+
       -- Collect a list of all the items in the intersection type.
       var items = (t as Intersection).items()
-      
+
       -- Verify that all items are compatible with the function.
       for item in items
         -- We know that the item is a Callable.
-        
+
         if item.argTypes.length() < defn.minArgs
           fail("Missing argument type for ""{}"" in type signature".format(
             defn.args[item.argTypes.length()].name), item)
@@ -429,7 +429,7 @@ class SemanticAnal is NodeVisitor
           fail("Type signature incompatible with function", item)
         end
       end
-      
+
       -- Verify that there is an item that has the minimum number of arguments.
       var isMinItem = False
       for item in items
@@ -437,12 +437,12 @@ class SemanticAnal is NodeVisitor
           isMinItem = True
         end
       end
-      
+
       if not isMinItem
         fail("No signature accepts the argument count of {}".format(
           defn.minArgs), defn.type)
       end
-      
+
       -- Verify that there is an item that has the maximum number of arguments.
       var isMaxItem = False
       for item in items
@@ -450,7 +450,7 @@ class SemanticAnal is NodeVisitor
           isMaxItem = True
         end
       end
-      
+
       if not isMaxItem and isMinItem
         fail("No signature accepts the maximum argument count", defn.type)
       end
@@ -458,7 +458,7 @@ class SemanticAnal is NodeVisitor
       raise RuntimeError("Invalid function type {}".format(t))
     end
   end
-  
+
   def visitVarDef(d as VarDef)
     if d.init != nil
       d.init.accept(self)
@@ -495,44 +495,44 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   def visitTypeDef(defn as TypeDef)
     self.errors.setType(defn.name, defn.isInterface)
     self.type = self.types[qualified(defn.name)]
-    
+
     defn.info = self.type
-    
+
     if IsInheritanceCycle(self.type)
       fail("Cycle in inheritance chain", defn)
       return
     end
-    
+
     for n, o, sup in GetInvalidOverrides(self.type)
       fail("""{}"" incompatible with definition in ""{}""".format(n, sup), o)
     end
-    
+
     for msg, o in GetInvalidAccessors(self.type)
       fail(msg, o)
     end
-    
+
     for msg, o in GetInterfaceErrors(self.type)
       fail(msg, o)
     end
-    
+
     enter()
-    
+
     -- Populate symbol table.
     addTypeVariablesToSymbolTable(self.type)
     addMembersToSymbolTable(self.type)
-    
+
     if defn.typeVars != nil
       analTypeArgs(defn, self.type)
       self.type.setTypeBounds(defn.typeVars.items)
     end
-    
+
     analyseBaseTypes(defn, self.type)
     analyseBindings(defn, self.type)
-    
+
     -- Analyse definitions within the type.
     for d in defn.defs
       if d is FuncDef
@@ -545,17 +545,17 @@ class SemanticAnal is NodeVisitor
         fail("Unknown definition", d)
       end
     end
-    
+
     if self.type.hasImplicitCreate
       InferImplicitCreateSignature(self.type, self.type.getMethod("create"))
     end
-    
+
     leave()
-    
+
     self.type = nil
     self.errors.setType(nil, False)
   end
-  
+
   def analTypeArgs(defn as TypeDef, type as TypeInfo)
     var names = Set() as <Str>
     var items = defn.typeVars.items
@@ -566,13 +566,13 @@ class SemanticAnal is NodeVisitor
         failMultipleDef(vd.name, vd)
       end
       names.add(vd.name)
-      
+
       if type.hasReadableMember(vd.name)
         fail("Type variable ""{}"" shadows a member".format(vd.name), defn)
       end
     end
   end
-  
+
   def analTypeVarDef(vd as TypeVarDef, context as Context) as TypeVarDef
     vd = TypeVarDef(vd.name, vd.id, analType(vd.bound), vd.line, vd.repr)
     if vd.bound is Dynamic
@@ -580,7 +580,7 @@ class SemanticAnal is NodeVisitor
     end
     return vd
   end
-  
+
   def analyseBaseTypes(defn as TypeDef, type as TypeInfo)
     -- If no base types are provided and the type is not generic, assume that
     -- we inherit them with dynamic types as type arguments.
@@ -588,20 +588,20 @@ class SemanticAnal is NodeVisitor
        type.typeVars == []
       return
     end
-  
+
     -- Analyse base type references.
     for i in 0 to defn.baseTypes.length()
       defn.baseTypes[i] = analType(defn.baseTypes[i])
       type.bases.append(defn.baseTypes[i])
     end
-    
+
     -- Verify that base types are instances.
     for t in type.bases
       if t != nil and not t is Instance and not t is UnboundType
         fail("Invalid supertype ""{}""".format(t), t)
       end
     end
-    
+
     -- Collect a list of generic supertypes.
     var allSupers = [type.base] + type.interfaces
     var genericSupers = [] as <TypeInfo>
@@ -610,7 +610,7 @@ class SemanticAnal is NodeVisitor
         genericSupers.append(t)
       end
     end
-    
+
     -- Verify that each generic supertype is represented.
     for t in genericSupers
       var found = False
@@ -625,7 +625,7 @@ class SemanticAnal is NodeVisitor
              t.fullName), defn)
       end
     end
-    
+
     -- Verify that each type represents a valid generic supertype.
     for tt in type.bases
       if tt is Instance
@@ -645,7 +645,7 @@ class SemanticAnal is NodeVisitor
         end
       end
     end
-    
+
     -- Verify that superclass is represented only once.
     if type.base != nil
       var numFound = 0
@@ -660,13 +660,13 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   def analyseBindings(defn as TypeDef, type as TypeInfo)
     for b in defn.binds
       if type.base != nil
         fail("Bind used in an interface with a superinterface", b)
       end
-    
+
       visitNameExpr(b)
       if b.fullName != nil
         if not b.node is TypeInfo
@@ -686,7 +686,7 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   def addMembersToSymbolTable(type as TypeInfo)
     for n in type.vars.values() + type.methods.values() +
              type.getters.values() + type.setters.values()
@@ -702,14 +702,14 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   def addTypeVariablesToSymbolTable(info as TypeInfo)
     var vars = info.typeVars
     for i in 0 to vars.length()
       pushTypeVar(vars[i], i + 1)
     end
   end
-  
+
   def addFuncTypeVariablesToSymbolTable(defn as FuncBase)
     if defn.type != nil
       var t = defn.type.type
@@ -719,7 +719,7 @@ class SemanticAnal is NodeVisitor
       else
         types = (t as Intersection).items()
       end
-      
+
       for tt in types
         var names = typeVarNames()
         var items = tt.variables.items
@@ -734,7 +734,7 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   private def typeVarNames() as Set<Str>
     if self.type == nil
       return Set()
@@ -742,10 +742,10 @@ class SemanticAnal is NodeVisitor
       return Set(self.type.typeVars)
     end
   end
-  
+
   -- Statements
   -------------
-  
+
   def visitBlock(block as Array<Node>)
     var prevCtx = self.isLocalCtx
     self.isLocalCtx = True
@@ -756,43 +756,43 @@ class SemanticAnal is NodeVisitor
     leave()
     self.isLocalCtx = prevCtx
   end
-  
+
   def visitExpressionStmt(s as ExpressionStmt)
     s.expr.accept(self)
   end
-  
+
   def visitAssignmentStmt(s as AssignmentStmt)
     s.rvalue.accept(self)
     for i in 0 to s.lvalues.length()
       s.lvalues[i].accept(self)
-      
+
       var lvalue = s.lvalues[i]
       if not s.isInit and not isLvalueExpr(lvalue, self.isCreate)
         fail("Invalid lvalue in assignment", lvalue)
       end
     end
   end
-  
+
   def visitOperatorAssignmentStmt(s as OperatorAssignmentStmt)
     s.lvalue.accept(self)
     s.rvalue.accept(self)
-      
+
     if not isLvalueExpr(s.lvalue, self.isCreate)
       fail("Invalid lvalue in assignment", s.lvalue)
     end
   end
-  
+
   def visitWhileStmt(s as LoopStmt)
     s.expr.accept(self)
     self.loopDepth += 1
     visitBlock(s.body)
     self.loopDepth -= 1
   end
-  
+
   def visitRepeatStmt(s as RepeatStmt)
     visitWhileStmt(s)
   end
-  
+
   def visitForStmt(s as ForStmt)
     for i in 0 to s.types.length()
       var t = s.types[i]
@@ -801,12 +801,12 @@ class SemanticAnal is NodeVisitor
         s.index[i].type = t
       end
     end
-    
+
     -- Report error if only some of the loop variables have annotations.
     if s.types != [nil] * s.types.length() and nil in s.types
       fail("Cannot mix unannotated and annotated loop variables", s)
     end
-    
+
     enter()
     s.expr.accept(self)
     for ind in s.index
@@ -817,7 +817,7 @@ class SemanticAnal is NodeVisitor
     self.loopDepth -= 1
     leave()
   end
-  
+
   def visitIfStmt(s as IfStmt)
     for i in 0 to s.expr.length()
       s.expr[i].accept(self)
@@ -827,7 +827,7 @@ class SemanticAnal is NodeVisitor
       visitBlock(s.elseBody)
     end
   end
-  
+
   def visitSwitchStmt(s as SwitchStmt)
     s.expr.accept(self)
     for c in s.cases
@@ -839,12 +839,12 @@ class SemanticAnal is NodeVisitor
       visitBlock(b)
     end
   end
-  
+
   def visitTryFinallyStmt(s as TryFinallyStmt)
     visitBlock(s.body)
     visitBlock(s.finallyBody)
   end
-  
+
   def visitTryExceptStmt(s as TryExceptStmt)
     visitBlock(s.body)
     for i in 0 to s.types.length()
@@ -865,7 +865,7 @@ class SemanticAnal is NodeVisitor
       leave()
     end
   end
-  
+
   def visitReturnStmt(s as ReturnStmt)
     if not self.isFunction
       fail("Return statement outside function", s)
@@ -874,24 +874,24 @@ class SemanticAnal is NodeVisitor
       s.expr.accept(self)
     end
   end
-  
+
   def visitBreakStmt(s as BreakStmt)
     if self.loopDepth == 0
       fail("Break statement outside loop", s)
     end
   end
-  
+
   def visitRaiseStmt(s as RaiseStmt)
     s.expr.accept(self)
   end
-  
+
   -- Expressions
   ---------------
-  
+
   def visitParenExpr(expr as ParenExpr)
     expr.expr.accept(self)
   end
-  
+
   def visitNameExpr(expr as NameExpr)
     var sym = lookupName(expr.name, expr)
     if sym != nil
@@ -911,16 +911,16 @@ class SemanticAnal is NodeVisitor
       expr.fullName = nil
     end
   end
-  
+
   def visitNameLvalue(expr as NameLvalue)
     visitNameExpr(expr)
   end
-  
+
   def visitOpExpr(expr as OpExpr)
     expr.left.accept(self)
     expr.right.accept(self)
   end
-  
+
   def visitCastExpr(expr as CastExpr)
     expr.expr.accept(self)
     if expr.typeName.name != "dynamic"
@@ -931,17 +931,17 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   def visitUnaryExpr(expr as UnaryExpr)
     expr.expr.accept(self)
   end
-  
+
   def visitCallExpr(expr as CallExpr)
     expr.callee.accept(self)
     for a in expr.args
       a.accept(self)
     end
-    
+
     -- Verify the number of arguments if the callee is a direct reference to
     -- a global function or a type.
     if expr.callee is NameExpr and (expr.callee as NameExpr).kind == Gdef
@@ -960,7 +960,7 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   def visitSelfExpr(expr as SelfExpr)
     if self.type == nil
       fail("""self"" used outside class", expr)
@@ -968,10 +968,10 @@ class SemanticAnal is NodeVisitor
     end
     expr.type = self.type
   end
-  
+
   def visitMemberExpr(expr as MemberExpr)
     expr.expr.accept(self)
-    
+
     -- "create" cannot be accessed. Do not report error if line number is
     -- undefined, since this means that the expression is within the implicit
     -- create method ("create" is a member variable in this case, and this
@@ -980,7 +980,7 @@ class SemanticAnal is NodeVisitor
       fail("Cannot access ""create""", expr)
     end
   end
-  
+
   def visitMemberLvalue(expr as MemberLvalue)
     visitMemberExpr(expr)
     -- Verify that self.x refers to a member in the current class.
@@ -994,7 +994,7 @@ class SemanticAnal is NodeVisitor
       end
     end
   end
-  
+
   private def isSelfExpr(e as Node) as Boolean
     if e is SelfExpr
       return True
@@ -1004,32 +1004,32 @@ class SemanticAnal is NodeVisitor
       return False
     end
   end
-  
+
   def visitIndexExpr(expr as IndexExpr)
     expr.base.accept(self)
     expr.index.accept(self)
   end
-  
+
   def visitIndexLvalue(expr as IndexLvalue)
     visitIndexExpr(expr)
   end
-  
+
   def visitArrayExpr(expr as ArrayExpr)
     for item in expr.items
       item.accept(self)
     end
   end
-  
+
   def visitTupleExpr(expr as TupleExpr)
     for item in expr.items
       item.accept(self)
     end
   end
-  
+
   def visitFuncExpr(expr as FuncExpr)
     analyseFunction(expr)
   end
-  
+
   def visitSuperExpr(expr as SuperExpr)
     if self.type == nil
       fail("""super"" used outside class", expr)
@@ -1042,7 +1042,7 @@ class SemanticAnal is NodeVisitor
     end
     expr.info = self.type
   end
-  
+
   def visitSuperLvalue(expr as SuperLvalue)
     visitSuperExpr(expr)
     if self.type != nil and self.type.base != nil and
@@ -1050,24 +1050,24 @@ class SemanticAnal is NodeVisitor
       fail("Invalid lvalue ""{}""".format(expr.name), expr)
     end
   end
-  
+
   def visitTypeApplication(app as TypeApplication)
     for i in 0 to app.types.length()
       app.types[i] = analType(app.types[i])
     end
     app.expr.accept(self)
   end
-  
+
   -- Types
   --------
-  
+
   def visitAnnotation(ann as Annotation)
     ann.type = analType(ann.type)
   end
-  
+
   -- Helper methods
   -----------------
-  
+
   def analType(t as Typ) as Typ
     if t != nil
       var a = TypeAnalyser(lookupName, fail, pushTypeVar, popTypeVar)
@@ -1076,23 +1076,23 @@ class SemanticAnal is NodeVisitor
       return nil
     end
   end
-  
+
   def pushTypeVar(name as Str, id as Int)
     self.stack.append(name)
     addSymTable(name, SymbolTableNode(Tvar, nil, nil, nil, id), nil)
   end
-  
+
   def popTypeVar() as void
     var name = self.stack[-1]
     self.symtable[name].removeAt(-1)
     self.stack.removeAt(-1)
   end
-  
+
   def enter() as void
     -- Add a marker
     self.stack.append(nil)
   end
-  
+
   def leave() as void
     while self.stack[-1] != nil
       var name = self.stack[-1]
@@ -1101,7 +1101,7 @@ class SemanticAnal is NodeVisitor
     end
     self.stack.removeAt(-1)
   end
-  
+
   -- Add a variable to symbol table. node is Var and kind is Ldef/Gdef/...
   def addVar(node as Var, kind as Constant, name = node.name as Str)
     if kind == Ldef
@@ -1118,7 +1118,7 @@ class SemanticAnal is NodeVisitor
     self.stack.append(name)
     addSymTable(name, SymbolTableNode(kind, node), nil)
   end
-  
+
   -- Add a definition to symbol table. Defn is the parse tree node
   -- representing the name definition.
   def addSymTable(name as Str, node as SymbolTableNode, defn as Node)
@@ -1127,7 +1127,7 @@ class SemanticAnal is NodeVisitor
     end
     self.symtable.add(name, node)
   end
-  
+
   def lookupName(name, node)
     var syms = matchingNames(name)
     if syms.length() > 1
@@ -1139,7 +1139,7 @@ class SemanticAnal is NodeVisitor
     end
     return syms[0]
   end
-  
+
   def isDefined(name)
     if self.symtable.hasKey(name) and
        self.symtable[name].length() > 0
@@ -1161,27 +1161,27 @@ class SemanticAnal is NodeVisitor
       return False
     end
   end
-  
+
   def isDefinedQualified(name as Str) as Boolean
     return matchingNames(name) != []
   end
-  
+
   def matchingNames(name as Str) as Array<SymbolTableNode>
     return MatchingNames(name, self.symtable, self.imports, self.curModId)
   end
-  
+
   def fail(msg as Str, node as Context)
     self.errors.report(node.line, msg)
   end
-  
+
   def failMultipleDef(name as Str, node as Context)
     fail("""{}"" multiply defined".format(name), node)
   end
-  
+
   def failAlreadyDefined(name as Str, node as Context)
     fail("""{}"" already defined".format(name), node)
   end
-  
+
   def isLvalueExpr(expr as Node, isCreate as Boolean) as Boolean
     -- IDEA: Move the NameLvalue logic to analNameLvalue?
     if expr is NameLvalue
@@ -1204,11 +1204,11 @@ class SemanticAnal is NodeVisitor
       return TypeOf(expr) in (MemberLvalue, IndexLvalue, SuperLvalue)
     end
   end
-  
+
   def setCurModId(tree as AloreFile)
     self.curModId = tree.modId()
   end
-  
+
   def qualified(name, modId = self.curModId)
     if modId == nil
       return name
@@ -1239,7 +1239,7 @@ def GetInvalidOverrides(inf as TypeInfo) as Array<(Str, Node, Str)>
   end
   for iface in inf.directlyImplementedInterfaces()
     errors += GetInvalidOverridesForBase(inf, iface)
-    
+
     -- Go through superclasses and check for invalid overrides for inherited
     -- members.
     var b = inf.base

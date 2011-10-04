@@ -72,11 +72,11 @@ void *ACAlloc(unsigned long size)
         }
 
         /* Add CALLOC_BUCKET_LEN blocks to the free list. */
-        
+
         bucket = ACAlloc(size * CALLOC_BUCKET_LEN);
         if (bucket == NULL)
             return NULL;
-        
+
         node = bucket;
         for (i = 0; i < CALLOC_BUCKET_LEN - 2; i++) {
             node->next = APtrAdd(node, size);
@@ -100,12 +100,12 @@ void *ACAlloc(unsigned long size)
 
         sizeLeft = node->next->size - size;
         new = APtrAdd(node->next, sizeLeft);
-        
+
         if (sizeLeft <= MAX_QUICK_SIZE) {
             CFreeListNode *oldNext = node->next;
-            
+
             node->next = node->next->next;
-            
+
             if (sizeLeft >= MIN_CALLOC_SIZE) {
                 int list = GetCFreeListNum(sizeLeft);
                 oldNext->next = CFreeList[list].next;
@@ -117,16 +117,16 @@ void *ACAlloc(unsigned long size)
         return new;
     } else {
         /* Grow the heap. */
-        
+
         unsigned long growSize;
 
         /* Grow by at least BLOCK_SIZE bytes. */
         growSize = AMax(BLOCK_SIZE, size);
-        
+
         node = AAllocStatic(growSize);
         if (node == NULL)
             return NULL;
-        
+
         /* Add the block to the last free list. */
         node->next = CFreeList[NUM_CFREELISTS - 1].next;
         node->size = growSize;
@@ -149,7 +149,7 @@ void ACFree(void *block, unsigned long size)
         CFreeList[0].next = node;
     } else {
         int list;
-        
+
         size = ARoundUp(size, CALLOC_UNIT);
         if (size <= MAX_QUICK_SIZE)
             list = GetCFreeListNum(size);
@@ -157,7 +157,7 @@ void ACFree(void *block, unsigned long size)
             list = NUM_CFREELISTS - 1;
             node->size = size;
         }
-        
+
         node->next = CFreeList[list].next;
         CFreeList[list].next = node;
     }

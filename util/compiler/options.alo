@@ -33,7 +33,7 @@ def AddLibPath(path)
   if path == "/usr/lib" or path == "/lib"
     return
   end
-  
+
   var opt = '"-L{}"'.format(path)
   if not opt in LinkDirOpts
     LinkDirOpts.append(opt)

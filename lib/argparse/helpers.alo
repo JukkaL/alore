@@ -15,37 +15,37 @@ import sys
 private class ParserHelper
   private var args     as Array<Str>        -- Argument list
   private var normOpts as Array<Array<Str>> -- Option aliases without args
-  
+
   -- Options that require an argument
   private var optsWithArgs as Set<Str>
-  
+
   private var i = 0 as Int -- Current args index
-  
+
   def parse(args as Array<Str>, descriptions as Array<Str>) as
                                              (Array<(Str, Str)>, Array<Str>)
     self.args = args
-                                   
+
     self.normOpts, self.optsWithArgs = NormalizeOptions(descriptions)
-  
+
     var opts = [] as <(Str, Str)>
-  
+
     while self.i < self.args.length()
       var ar = self.args[self.i]
       if not ar.startsWith("-") or ar == "-"
         break
       end
-      
+
       -- "--" signals and of arguments and is ignored.
       if ar == "--"
         self.i += 1
         break
       end
-      
+
       var a = findOpt(self.args[self.i])
       if a == []
         raise OptError("invalid option {}".format(args[self.i]))
       end
-  
+
       -- Enumerate ovar all the arguments and their (potential) values.
       for o, arg1 in a
         var arg = arg1
@@ -56,34 +56,34 @@ private class ParserHelper
           arg = self.args[self.i + 1]
           self.i += 1
         end
-      
+
         opts.append((o, arg))
       end
-      
+
       self.i += 1
     end
-    
+
     return opts, args[self.i:]
   end
-  
+
   -- Does an option need an argument?
   private def needsArg(opt as Str) as Boolean
     return opt in self.optsWithArgs
   end
-  
+
   -- Expand an option in one of the supported forms (-x, -xyz, --foo, --foo=x)
   -- into a list of (option, arg) tuples. Return an empty list if the argument
   -- does not look like a supported option. Raise OptError on various error
   -- conditions.
   private def findOpt(opt as Str) as Array<(Str, Str)>
     var matches = [] as <Str>
-    
+
     -- Option strings must have at least two characters ('-' and another one)
     -- and they must begin with a dash '-'.
     if opt.length() <= 1 or not opt.startsWith("-")
       return []
     end
-    
+
     -- If the option does not start with -- but has more than 2 characters,
     -- it must be of form '-xyz', i.e. multiple short options (the previous
     -- is equivalent to '-x', '-y', '-z') or a short option with value
@@ -91,19 +91,19 @@ private class ParserHelper
     if not opt.startsWith("--") and opt.length() > 2
       return findLongShortOpt(opt)
     end
-    
+
     -- Now opt is probably the name of an option or a prefix of an option name,
     -- or a long option with "=" in it.
-    
+
     var optBase = opt    -- Option name without the value
     var withArg = False
-    
+
     -- Is it of form "--foo=bar"?
     if "=" in opt
       optBase = opt[:opt.index("=")]
       withArg = True
     end
-    
+
     -- Go through all the recognized options and find out which of those could
     -- match (via matching prefix).
     for o in self.normOpts
@@ -112,7 +112,7 @@ private class ParserHelper
         matches = [optBase]
         break
       end
-      
+
       -- Try to find a partial match.
       for oo in o
         if oo.startsWith(optBase) and not optBase in ("-", "--")
@@ -121,7 +121,7 @@ private class ParserHelper
         end
       end
     end
-    
+
     -- Now we have a list of matches. Verify that the option is not ambiguous.
     if matches.length() == 1
       -- Not ambiguous.
@@ -142,7 +142,7 @@ private class ParserHelper
       return []
     end
   end
-  
+
   -- Process short option with an argument or multiple short options (i.e.
   -- a string of for "-xy..."). Return an array of (option, value) tuples.
   private def findLongShortOpt(opt as Str) as Array<(Str, Str)>
@@ -155,7 +155,7 @@ private class ParserHelper
         end
       end
     end
-    
+
     -- It must be multiple options.
     var res = [] as <(Str, Str)>
     for c in opt[1:]
@@ -177,7 +177,7 @@ private class ParserHelper
         raise OptError("invalid option {}".format(opt2))
       end
     end
-    
+
     return res
   end
 end

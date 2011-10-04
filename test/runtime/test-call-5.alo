@@ -12,7 +12,7 @@ class CallSuite5 is Suite
     CheckVarArgsFunc(C0__v().Method)
     Ok()
   end
-  
+
   def testT2()
     TestFixedArgsFunc0(C0__().Method)
     TestFixedArgsFuncFail0(C0__().Method)
@@ -22,7 +22,7 @@ class CallSuite5 is Suite
     TestFixedArgsFunc7(C7__().Method)
     Ok()
   end
-  
+
   def testT3()
     TestDefArgsFunc01(C01__().Method)
     TestDefArgsFunc03(C03__().Method)
@@ -31,7 +31,7 @@ class CallSuite5 is Suite
     TestDefArgsFunc34(C34__().Method)
     Ok()
   end
-  
+
   def testT4()
     TestVarArgFunc01(C01__v().Method)
     TestVarArgFunc03(C03__v().Method)

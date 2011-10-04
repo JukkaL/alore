@@ -24,7 +24,7 @@ class StdSuite is Suite
   def testInstanceStrError()
     AssertRaises(TypeError, Str, [ErrorConvertible()])
   end
-  
+
   -- Test the Str function with integers.
   def testIntStr()
     Assert(Str(0) == "0")
@@ -34,32 +34,32 @@ class StdSuite is Suite
     Assert(Str(-123456) == "-123456")
     Assert(Str(-12345678901234567890) == "-12345678901234567890")
   end
-  
+
   -- Test the Str function with floats.
   def testFloatStr()
     Assert(Str(0.0) == "0")
     Assert(Str(-1.23) == "-1.23")
     Assert(Str(1e10) in ("1e+10", "1e+010"))
   end
-  
+
   -- Test the Str function with functions.
   def testFunctionStr()
     Assert(Str(Ord) == "Ord")
     Assert(Str(Sin) == "math::Sin")
   end
-  
+
   -- Test the Str function with types.
   def testTypeStr()
     Assert(Str(NoStrConv) == "libs::NoStrConv")
   end
-  
+
   -- Test the Str function with constants.
   def tstConstStr()
     Assert(Str(MyConst) == "libs::MyConst")
     Assert(Str(True) == "std::True")
     Assert(Str(nil) == "nil")
   end
-  
+
   -- Test the Str function with strings.
   def testStrStr()
     Assert(Str("") == "")
@@ -67,35 +67,35 @@ class StdSuite is Suite
     Assert(Str(SS("foo bar zar")) == "foo bar zar")
     Assert(Str("foo\u0200bar") == "foo\u0200bar")
   end
-  
+
   -- Test the Str function with pairs.
   def testPairStr()
     Assert(Str(1 : "a") == "1 : 'a'")
   end
-  
+
   -- Test the Str function with ranges.
   def testRangeStr()
     AssertEqual(Str(1 to -500), "1 to -500")
     AssertEqual(Str(1 to 2*10**30), "1 to 2000000000000000000000000000000")
   end
-  
+
   -- Test the Str function with bound methods.
   def testBoundMethodStr()
     Assert(Str(NoStrConv().foo) == "foo of libs::NoStrConv")
   end
-  
+
   -- Test the Str function with arrays.
   def testArrayStr()
     Assert(Str([]) == "[]")
     Assert(Str([1, ["a", 2]]) == "[1, ['a', 2]]")
     Assert(Str([2]) == "[2]")
   end
-  
+
   -- Test the Float constructor with instances.
   def testInstanceFloat()
     Assert(Float(Convertible()) == 102.0)
   end
-  
+
   -- Test the Float constructor with invalid arguments.
   def testFloatErrors()
     AssertRaises(MemberError, 'nil has no member "_float"', Float, [nil])
@@ -116,7 +116,7 @@ class StdSuite is Suite
     Assert(Repr(12345678901234567890) == "12345678901234567890")
     Assert(Repr(-12345678901234567890) == "-12345678901234567890")
   end
-  
+
   -- Test the Repr function with narrow strings.
   def testNarrowStrRepr()
     AssertEqual(Repr(""), ReprStr(""))
@@ -130,25 +130,25 @@ class StdSuite is Suite
     AssertEqual(Repr("\u0000\u0009\u001f"),
                 ReprStr("\x0000\x0009\x001f"))
   end
-  
+
   -- Test the Repr function with narrow substrings.
   def testNarrowSubStrRepr()
     AssertEqual(Repr(SS("Foo Bar \u0080\u00ff\u0000\u0009\u001f")),
                 ReprStr(SS("Foo Bar \x0080\x00ff\x0000\x0009\x001f")))
   end
-  
+
   -- Test the Repr function with wide strings.
   def testWideStrRepr()
     Assert(Repr("\u0100") == ReprStr("\x0100"))
     Assert(Repr("abc\uffff \u0001def") == ReprStr("abc\xffff \x0001def"))
   end
-  
+
   -- Test the Repr function with wide substrings.
   def testWideSubStrRepr()
     Assert(Repr(WSS("\u0100abc\uffff \u0001def")) ==
            ReprStr(WSS("\x0100abc\xffff \x0001def")))
   end
-  
+
   -- Test the Repr function with floats.
   def testFloatRepr()
     Assert(Repr(0.0) == "0")
@@ -156,35 +156,35 @@ class StdSuite is Suite
     Assert(Repr(Pi) == "3.1415926535897931")
     Assert(Repr(1e17) in ("1e+17", "1e+017"))
   end
-  
+
   -- Test Repr with Booleans.
   def testBooleanRepr()
     AssertEqual(Repr(True), "True")
     AssertEqual(Repr(False), "False")
   end
-  
+
   -- Test the Repr function with constants.
   def testConstantRepr()
     Assert(Repr(C) == "libs::C")
   end
-  
+
   -- Test Repr with nil.
   def testNilRepr()
     Assert(Repr(nil) == "nil")
   end
-  
+
   -- Test the Repr function with functions.
   def testFunctionRepr()
     Assert(Repr(Ord) == "Ord")
     Assert(Repr(Sin) == "math::Sin")
   end
-  
+
   -- Test the Repr function with types.
   def testTypeRepr()
     Assert(Repr(NoStrConv) == "libs::NoStrConv")
     Assert(Repr(Str) == "Str")
   end
-  
+
   -- Test the Repr function with arrays.
   def testArrayRepr()
     Assert(Repr([]) == "[]")
@@ -192,14 +192,14 @@ class StdSuite is Suite
     Assert(Repr(["foo", 2]) == "['foo', 2]")
     Assert(Repr([1, [2, "a", [3]]]) == "[1, [2, 'a', [3]]]")
   end
-  
+
   -- Test the Repr function with self-referential arrays.
   def testInfArrayRepr()
     var a = [0]
     a[0] = a
     AssertRaises(ValueError, Repr, [a])
   end
-  
+
   -- Test the Repr function with an array that has huge string representation.
   def testHugeArrayRepr()
     var a = 0
@@ -208,42 +208,42 @@ class StdSuite is Suite
     end
     AssertRaises(ValueError, Repr, [a])
   end
-  
+
   -- Test the Repr function with class instances.
   def testInstanceRepr()
     Assert(Repr(NoStrConv()) == "<libs::NoStrConv instance>")
     Assert(Repr(ClassWithRepr(3)) == "ClassWithRepr(3)")
     Assert(Repr(StrConvertible()) == "str")
   end
-  
+
   -- Test raising an exception in the _repr() method.
   def testInstanceReprError()
     AssertRaises(RuntimeError, Repr, [ReprException()])
   end
-  
+
   -- Test the Repr function with ranges.
   def testRangeRepr()
     Assert(Repr(1 to 3) == "1 to 3")
     Assert(Repr(-1 to 10**23) == "-1 to 100000000000000000000000")
   end
-  
+
   -- Test the Repr function with pairs.
   def testPairRepr()
     Assert(Repr("a" : [1, 2]) == "'a' : [1, 2]")
   end
-  
+
   -- Test the Repr function with bound methods.
   def testBoundMethodRepr()
     Assert(Repr(NoStrConv().foo) == "foo of libs::NoStrConv")
   end
-  
+
   -- Test the len method of Array.
   def testArrayLen()
     Assert([].length() == 0)
     Assert([3].length() == 1)
     Assert([3, 4].length() == 2)
   end
-  
+
   -- Test the len method of Str.
   def testStrLen()
     Assert("".length() == 0)
@@ -252,7 +252,7 @@ class StdSuite is Suite
     Assert(SS("foo bart1").length() == 9)
     Assert(WSS("Foo Bart").length() == 8)
   end
-  
+
   -- Test the Int constructor with integers.
   def testIntInt()
     VerifyInts(0, Int(0))
@@ -260,7 +260,7 @@ class StdSuite is Suite
     VerifyInts(1234567890123456789, Int(1234567890123456789))
     VerifyInts(-1234567890123456789, Int(-1234567890123456789))
   end
-  
+
   -- Test the Int constructor with strings.
   def testStrInt()
     VerifyInts(0, Int("0"))
@@ -274,27 +274,27 @@ class StdSuite is Suite
     VerifyInts(10123, Int("abcde10123xyz"[5:10]))
     VerifyInts(61, Int("\u020061"[1:3]))
     VerifyInts(10123656, Int("\u020010123656"[1:9]))
-    
+
     AssertRaises(ValueError, Int, [""])
     AssertRaises(ValueError, Int, [" "])
   end
-  
+
   -- Test the Int constructor with a radix.
   def testRadixInt()
     VerifyInts(0, Int("0", 16))
     VerifyInts(254, Int("fe", 16))
     VerifyInts(8, Int("1000", 2))
     VerifyInts(2**64, Int("10000000000000000", 16))
-    
+
     AssertEqual(Int("   Fe   ", 16), 254)
-    
+
     AssertEqual(Int("-fE", 16), -254)
     AssertEqual(Int("  -6", 16), -6)
-    
+
     for i in 10 to 36
       AssertEqual(Int(Chr(65 - 10 + i), 36), i)
     end
-    
+
     AssertRaises(ValueError, Int, ("", 10))
     AssertRaises(ValueError, Int, (" ", 10))
     AssertRaises(ValueError, Int, ("0", 1))
@@ -304,7 +304,7 @@ class StdSuite is Suite
     AssertRaises(ValueError, Int, ("a", 10))
     AssertRaises(ValueError, Int, ("8", 8))
   end
-  
+
   -- Test the Int constructor with floats.
   def testFloatInt()
     VerifyInts(0, Int(0.0))
@@ -318,12 +318,12 @@ class StdSuite is Suite
     VerifyInts(-1000000000006, Int(-1000000000006.9))
     -- FIX min short int / max short int
   end
-  
+
   -- Test the Int constructor with instances.
   def testInstanceInt()
     Assert(Int(Convertible()) == 101)
   end
-  
+
   -- Test the Int constructor with invalid arguments.
   def testIntError()
     AssertRaises(ValueError, "Invalid string argument: 'x'", Int, ["x"])
@@ -336,24 +336,24 @@ class StdSuite is Suite
     AssertRaises(MemberError, 'libs::NoStrConv has no member "_int"',
                  Int, [NoStrConv()])
   end
-  
+
   -- Test the Array constructor with integer arguments.
   def testArrayConstructor()
     Assert(Array() == [])
   end
-  
+
   def testBasicArrayMul()
     Assert([nil] * 1 == [nil])
     Assert([nil] * 2 == [nil, nil])
     Assert([nil] * 6 == [nil, nil, nil, nil, nil, nil])
   end
-  
+
   -- Test the Array constructor with instances.
   -- FIX: Is this possible any more?
   --def testInstanceArray()
   --  Assert(Array(Convertible()) == (100, 100))
   --end
-  
+
   -- Test the Array constructor with invalid arguments.
   def testArrayErrors()
     AssertRaises(TypeError, Array, [1])
@@ -362,12 +362,12 @@ class StdSuite is Suite
     AssertRaises(MemberError, Array, [NoStrConv()])
     AssertRaises(TypeError, Array, [1.0])
   end
-  
+
   -- Test the Type constructor.
   def testType()
     AssertRaises(ValueError, def (); Type(); end)
   end
-  
+
   -- Test calculating the hash value of an integer.
   def testIntHash()
     Assert(Hash(1) is Int)
@@ -375,7 +375,7 @@ class StdSuite is Suite
     Assert(Hash(2 + 2) == Hash(1 + 3))
     Assert(Hash(2**80) == Hash(2**80))
   end
-    
+
   -- Test calculating the hash value of a string.
   def testStrHash()
     Assert(Hash("foo") is Int)
@@ -385,7 +385,7 @@ class StdSuite is Suite
     Assert(Hash("foobar123") == Hash(SS("foobar123")))
     Assert(Hash("foobar") == Hash(WSS("foobar")))
   end
-    
+
   -- Test calculating the hash value of a pair.
   def testPairHash()
     Assert(Hash(1 : 2) is Int)
@@ -395,7 +395,7 @@ class StdSuite is Suite
     Assert(Hash(1 : 2) == Hash(1 : 2))
     Assert(Hash("foo" : "bar") == Hash("foo" : "bar"))
   end
-    
+
   -- Test calculating the hash value of a range.
   def testRangeHash()
     Assert(Hash(1 to 2) is Int)
@@ -405,14 +405,14 @@ class StdSuite is Suite
     Assert(Hash(1 to 2) == Hash(1 to 2))
     Assert(Hash(2**100 to 2**66) == Hash(2**100 to 2**66))
   end
-    
+
   -- Test calculating the hash value of a constant.
   def testConstantHash()
     Assert(Hash(True) is Int)
     Assert(Hash(True) != Hash(False))
     Assert(Hash(True) == Hash(True))
   end
-  
+
   -- Test calculating the hash value of an Object instance.
   def testObjectHash()
     var o1 = Object()
@@ -421,7 +421,7 @@ class StdSuite is Suite
     AssertEqual(Hash(o1), Hash(o1))
     AssertNotEqual(Hash(o1), Hash(o2))
   end
-    
+
   -- Test calculating the hash value of an array.
   def testArrayHash()
     Assert(Hash([]) is Int)
@@ -435,7 +435,7 @@ class StdSuite is Suite
     Assert(Hash([[1, 2], [3, 4], 5]) == Hash([[1, 2], [3, 4], 5]))
     Assert(Hash([[1, 2], [3, 4], 5]) != Hash([[1, 2], [3, 5], 5]))
   end
-    
+
   -- Test calculating the hash value of a tuple.
   def testTupleHash()
     Assert(Hash(()) is Int)
@@ -448,29 +448,29 @@ class StdSuite is Suite
     Assert(Hash((1, 2)) != Hash((2, 1)))
     Assert(Hash(((1, 2), (3, 4), 5)) == Hash(((1, 2), (3, 4), 5)))
     Assert(Hash(((1, 2), (3, 4), 5)) != Hash(((1, 2), (3, 5), 5)))
-    
+
     -- Verify that Tuple hash is equal to equivalent Array hash.
     AssertEqual(Hash(()), Hash([]))
     AssertEqual(Hash((1, (2, "x"))), Hash([1, [2, "x"]]))
   end
-  
+
   -- Test calculating the hash value of an instance.
   def testOverloadedInstanceHash()
     var l = 123456789012345678901234567890
     Assert(Hash(HashClass(13)) == 13)
     Assert(Hash(HashClass(l)) == l)
-    
+
     AssertRaises(TypeError,
                  "_hash of libs::HashClass returned non-integer (Float)",
                  def (); Hash(HashClass(1.0)); end)
-    
+
     Assert(Hash((l, 1)) is Int)
     Assert(Hash((l, 1)) == Hash((l * 2 div 2, 1)))
-    
+
     Assert(Hash(l : 1) is Int)
     Assert(Hash(l : 1) == Hash(l * 2 div 2 : 1))
   end
-  
+
   -- Test calculating the id-based hash value of an instance.
   def testIdBasedInstanceHash()
     var i1 = IdHash()
@@ -478,29 +478,29 @@ class StdSuite is Suite
     var i3 = IdHash()
     var h1 = Hash(i1)
     var h3 = Hash(i3)
-    
+
     Assert(h1 is Int)
     Assert(h1 != h3)
     Assert(h1 == Hash(i1))
-    
+
     CollectGarbage()
-    
+
     Assert(Hash(i1) == h1)
     Assert(Hash(i3) == h3)
   end
-  
+
   -- Test calculating the hash value of a function.
   def testFunctionHash()
     Assert(Hash(Ord) is Int)
     Assert(Hash(Chr) != Hash(Ord))
   end
-  
+
   -- Test calculating the hash value of a type.
   def testTypeHash()
     Assert(Hash(HashClass) is Int)
     Assert(Hash(HashClass) != Hash(Int))
   end
-  
+
   -- Test calculating the hash value of a bound method.
   def testBoundMethodHash()
     var i = NoStrConv()
@@ -510,20 +510,20 @@ class StdSuite is Suite
     var h2 = Hash(m2)
     Assert(Hash(m1) == h1)
     Assert(h1 != h2)
-    
+
     CollectGarbage()
-    
+
     Assert(Hash(m1) == h1)
     Assert(Hash(m2) == h2)
   end
-  
+
   -- Test calculating the hash value of a float.
   def testFloatHash()
     Assert(Hash(1.2) is Int)
     Assert(Hash(1.2) == Hash(1.2))
     Assert(Hash(12) != Hash(1.2))
   end
-  
+
   -- Test enum with an array.
   def testArrayIteration()
     var e = [1, 2].iterator()
@@ -535,13 +535,13 @@ class StdSuite is Suite
     Assert(not e.hasNext())
     AssertRaises(ValueError, e.next, [])
   end
-  
+
   -- Test enum with an empty array.
   def testEmptyArrayIteration()
     var e = [].iterator()
     Assert(not e.hasNext())
   end
-  
+
   def testMin()
     Assert(Min(1, 1) == 1)
     Assert(Min(2, 3) == 2)
@@ -549,7 +549,7 @@ class StdSuite is Suite
     Assert(Min(-1.0, -0.5) == -1.0)
     Assert(Min("c", "b") == "b")
   end
-  
+
   -- Test calling Min with an iterable argument. This is not supported by
   -- the type system and is likely to removed in the future (or the
   -- functionality may be moved to another function).
@@ -560,7 +560,7 @@ class StdSuite is Suite
     AssertRaises(ValueError, min, [[]])
     AssertEqual(min(Set([4, 2, 5, 7])), 2)
   end
-  
+
   def testMax()
     Assert(Max(1, 1) == 1)
     Assert(Max(2, 3) == 3)
@@ -568,7 +568,7 @@ class StdSuite is Suite
     Assert(Max(-1.0, -0.5) == -0.5)
     Assert(Max("c", "b") == "c")
   end
-  
+
   -- Test calling Max with an iterable argument. The comments to Min, above,
   -- apply to Max: this is likely to not work in the future.
   def testMaxWithIterable()
@@ -576,7 +576,7 @@ class StdSuite is Suite
     AssertRaises(ValueError, max, [[]])
     AssertEqual(max(Set([4, 2, 7, 5])), 7)
   end
-  
+
   def testSort()
     Assert(Sort([]) == [])
     Assert(Sort([11]) == [11])
@@ -585,39 +585,39 @@ class StdSuite is Suite
     Assert(Sort((1, 5, 3, 4, 7, -10, 4, 2)) == (-10, 1, 2, 3, 4, 4, 5, 7))
     Assert(Sort(((3, 2), [1], (3, 1), (3, 2, 2))) ==
            ([1], (3, 1), (3, 2), (3, 2, 2)))
-    
+
     Assert(Sort([], SortFunc) == [])
     AssertEqual(Sort((2, 1), SortFunc2), (2, 1))
     AssertEqual(Sort((1, 2, 3, 4), SortFunc2), (4, 3, 2, 1))
     Assert(Sort((SStruct(5, 1), SStruct(1, 6), SStruct(19, 12)), SortFunc) ==
            (SStruct(1, 6), SStruct(5,1), SStruct(19, 12)))
-           
+
     AssertEqual(Sort((5, 4, 2, 6, 3, 4, 3, 2, 3, 4, 1), SortFunc2),
                 (6, 5, 4, 4, 4, 3, 3, 3, 2, 2, 1))
   end
-  
+
   def testReversed()
     AssertEqual(Reversed([]), [])
     AssertEqual(Reversed([3]), [3])
     AssertEqual(Reversed([3, 5, 4]), [4, 5, 3])
-    
+
     AssertEqual(Reversed(""), [])
     AssertEqual(Reversed("X"), ["X"])
     AssertEqual(Reversed("foobar"), ["r", "a", "b", "o", "o", "f"])
     AssertEqual(Reversed("f\u1234b"), ["b", "\u1234", "f"])
-    
+
     var a = [1, 2]
     AssertEqual(Reversed(a), [2, 1])
     AssertEqual(a, [1, 2])
-    
+
     AssertEqual(Reversed(1 to 1), [])
     AssertEqual(Reversed(1 to 2), [1])
     AssertEqual(Reversed(1 to 3), [2, 1])
     AssertEqual(Reversed(-2 to 2), [1, 0, -1, -2])
-    
+
     AssertEqual(Reversed(2**100 to 2**100+2), [2**100+1, 2**100])
   end
-  
+
   -- Test creating an ExitException instance.
   def testExitException()
     var ok = False
@@ -628,7 +628,7 @@ class StdSuite is Suite
     end
     Assert(ok)
   end
-  
+
   -- Test the Exit function.
   def testExit()
     -- IDEA: Test actually exiting program and returning status to the
@@ -636,19 +636,19 @@ class StdSuite is Suite
     AssertRaises(ExitException, Exit, [])
     AssertRaises(ExitException, Exit, [23])
   end
-  
+
   -- IDEA: This does not really belong here. Try to devise a better location.
   def testConstantMembers()
     Assert(HasMember(C, "_str"))
     Assert(HasMember(C, "_eq"))
     Assert(not HasMember(C, "foo"))
-    
+
     AssertEqual(C._str(), "libs::C")
     AssertEqual(C._eq(C), True)
     AssertEqual(C._eq(C2), False)
     AssertEqual(C._eq(EqTest()), False)
   end
-  
+
   -- IDEA: This does not really belong here. Try to devise a better location.
   def testFunctionMembers()
     var anon = def (); end
@@ -664,11 +664,11 @@ class StdSuite is Suite
       Assert(HasMember(f, "_eq"))
       Assert(not HasMember(f, "_hash"))
     end
-    
+
     AssertEqual(Ord._str(), "Ord")
     AssertEqual(Assert._str(), "unittest::Assert")
   end
-  
+
   -- IDEA: This does not really belong here. Try to devise a better location.
   def testTypeMembers()
     for t in Map, Int
@@ -679,19 +679,19 @@ class StdSuite is Suite
       Assert(HasMember(t, "supertype"))
       Assert(not HasMember(t, "foo"))
     end
-    
+
     AssertEqual(Map._str(), "Map")
     AssertEqual(Suite._str(), "unittest::Suite")
     Assert(Map._eq(Map))
     Assert(not Map._eq(1))
     Assert(not Map._eq(Int))
-    
+
     AssertEqual(Int._str(), "Int")
     Assert(Int._eq(Int))
     Assert(not Int._eq(1))
     Assert(not Int._eq(1))
   end
-  
+
   -- Test std::Type supertype().
   def testTypeSupertype()
     AssertEqual(Object.supertype(), nil)
@@ -703,60 +703,60 @@ class StdSuite is Suite
     AssertEqual(Suite.supertype(), Object)
     AssertEqual(StdSuite.supertype(), Suite)
   end
-  
+
   -- Test std::Type interfaces(). See also runtime::InterfacesSuite.
   def testTypeInterfaces()
     AssertEqual(Object.interfaces(), [])
     AssertEqual(Float.interfaces(), [Comparable])
     AssertEqual(Array.interfaces(), [Multipliable, Comparable, Sequence,
                                      Iterable])
-    
+
     -- Interface implemented by superclass.
     AssertEqual(File.interfaces(), [Iterable])
   end
-  
+
   def testChr()
     AssertEqual(Chr(0), "\u0000")
     AssertEqual(Chr(65), "A")
     AssertEqual(Chr(65535), "\uffff")
-    
+
     AssertRaises(ValueError, Chr, [-1])
     AssertRaises(ValueError, Chr, [65536])
     AssertRaises(ValueError, Chr, [2**128])
     AssertRaises(ValueError, Chr, [-2**128])
   end
-  
+
   def testAbsFloat()
     Assert(Abs(0.0) is Float)
     Assert(Abs(0.0) == 0)
     AssertFloatEqual(Abs(101.2), 101.2)
     AssertFloatEqual(Abs(-101.2), 101.2)
   end
-  
+
   def testAbsInt()
     Assert(Abs(0) is Int)
     Assert(Abs(0) == 0)
     Assert(Abs(1) == 1)
     Assert(Abs(-4) == 4)
   end
-  
+
   def testAbsLongInt()
     Assert(Abs(123456789012345) is Int)
     Assert(Abs(123456789012345) == 123456789012345)
     Assert(Abs(-123456789012345) == 123456789012345)
   end
-  
+
   def testAbsOverload()
     AssertRaises(TypeError, def (); Abs(AbsType(5)); end)
   end
-  
+
   def testIoFunctions()
     AssertType(Function, std::Print)
     AssertType(Function, std::Write)
     AssertType(Function, std::WriteLn)
     AssertType(Function, std::ReadLn)
   end
-  
+
   -- Try calling non-callable type objects such as Range and check that this
   -- raises the correct exception.
   def testCallErrorsWithNonCallableTypes()
@@ -775,7 +775,7 @@ class StdSuite is Suite
     AssertRaises(ValueError, "Type ""Tuple"" is not callable",
                  def (); Tuple(); end)
   end
-  
+
   def testTypeName()
     AssertEqual(TypeName(1), "Int")
     AssertEqual(TypeName([]), "Array")
@@ -783,18 +783,18 @@ class StdSuite is Suite
     AssertEqual(TypeName("\1234"), "Str")
     AssertEqual(TypeName(Int), "Type")
     AssertEqual(TypeName(Comparable), "Type")
-    
+
     AssertEqual(TypeName(StdSuite), "Type")
     AssertEqual(TypeName(self), "libs::StdSuite")
     AssertEqual(TypeName(StdIn), "io::TextStream")
-    
+
     AssertEqual(TypeName(Sort), "Function")
     AssertEqual(TypeName(def (); end), "Function")
     AssertEqual(TypeName(testTypeName), "Function")
-    
+
     AssertEqual(TypeName(nil), "nil")
   end
-  
+
   private def test(a, b = 2, *c)
     return [a, b] + c
   end
@@ -812,7 +812,7 @@ end
 
 private class ClassWithRepr
   private var x
-  
+
   def create(x)
     self.x = x
   end
@@ -832,15 +832,15 @@ end
 
 private class Convertible
   private var i = 100
-  
+
   def _int()
     return i + 1
   end
-  
+
   def _float()
     return i + 2.0
   end
-  
+
   def _array()
     return (i, i)
   end
@@ -851,15 +851,15 @@ private class ErrorConvertible
   def _int()
     return "x"
   end
-  
+
   def _float()
     return "x"
   end
-  
+
   def _str()
     return 1
   end
-  
+
   def _array()
     return "x"
   end
@@ -886,7 +886,7 @@ private class HashClass
   def create(v)
     self.v = v
   end
-  
+
   def _hash()
     return v
   end
@@ -911,7 +911,7 @@ end
 private class SStruct
   const a
   const b
-  
+
   def _eq(x)
     return a == x.a and b == x.b
   end
@@ -941,7 +941,7 @@ private class AbsType
   def _lt(y)
     return x < y
   end
-  
+
   def _neg()
     return AbsType(-x)
   end

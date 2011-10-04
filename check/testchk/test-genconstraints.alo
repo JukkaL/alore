@@ -13,10 +13,10 @@ class ConstraintGenerationSuite is Suite
   def setUp()
     self.fx = TypeFixture()
   end
-  
+
   -- Test cases for InferConstraints
   -- -------------------------------
-  
+
   def testNoConstaints()
     assertConstraint(fx.a, fx.a, "")
     assertConstraint(tuple(fx.a, fx.b), tuple(fx.a, fx.a), "")
@@ -28,7 +28,7 @@ class ConstraintGenerationSuite is Suite
     assertConstraint(fx.t, fx.b, "1 :> B")
     assertConstraint(fx.t, tuple(fx.b, fx.a), "1 :> (B, A)")
   end
-  
+
   def testTupleConstraints()
     assertConstraint(tuple(fx.t, fx.t), tuple(fx.a, fx.b),
                      "1 :> A, 1 :> B")
@@ -36,10 +36,10 @@ class ConstraintGenerationSuite is Suite
                      "1 :> A, 2 :> B")
     assertConstraint(tuple(fx.t, fx.s), fx.dyn,
                      "1 :> dynamic, 2 :> dynamic")
-                     
+
     assertConstraint(tuple(fx.t, fx.s), fx.a, "")
   end
-  
+
   def testCallableConstraints()
     assertConstraint(callable(fx.t, fx.void), callable(fx.a, fx.void),
                      "1 <: A")
@@ -47,50 +47,50 @@ class ConstraintGenerationSuite is Suite
                      "1 :> B")
     assertConstraint(callable(fx.t, fx.s, fx.t), callable(fx.a, fx.b, fx.c),
                      "1 <: A, 2 <: B, 1 :> C")
-                     
+
     assertConstraint(callable(fx.t, fx.s, fx.t), fx.dyn,
                      "1 :> dynamic, 2 :> dynamic, 1 :> dynamic")
   end
-  
+
   def testSimpleGenericInstanceConstraints()
     assertConstraint(fx.gt, fx.ga, "1 :> A, 1 <: A")
     assertConstraint(fx.ga, fx.ga, "")
     assertConstraint(fx.hts, fx.hab, "1 :> A, 1 <: A, 2 :> B, 2 <: B")
-    
+
     assertConstraint(fx.gt, fx.dyn, "1 :> dynamic")
   end
-  
+
   def testGenericsWithRanges()
     assertConstraint(fx.gt, fx.gaa, "1 :> A, 1 <: A")
     assertConstraint(fx.gt, fx.gba, "1 :> B, 1 <: A")
   end
-  
+
   def testSimpleInterfaces()
     assertConstraint(fx.t, fx.f, "1 :> F")
   end
-  
+
   -- Generics with subtyping (InferConstraints)
   -- ------------------------------------------
-  
+
   def testGenericsWithSubtyping()
     assertConstraint(fx.gt, fx.gsab, "1 :> B, 1 <: B")
   end
-  
+
   def testGenericInterfaces()
     var fx = InterfaceTypeFixture()
     assertConstraint(Instance(fx.gfi, [fx.t]), fx.m2,
                      "1 :> A, 1 <: A, 1 :> B, 1 <: B")
   end
-  
+
   -- Test cases for InferConstraintsForCallable
   -- ------------------------------------------
-  
+
   def testSimpleCallable()
     assertCallableConstraint(
       callable(fx.t, fx.s, fx.void), [fx.a, fx.b],
       "1 :> A, 2 :> B")
   end
-  
+
   def testDefaultArgs()
     assertCallableConstraint(
       callableDefault(1, fx.t, fx.s, fx.void), [fx.a, fx.b],
@@ -99,7 +99,7 @@ class ConstraintGenerationSuite is Suite
       callableDefault(1, fx.t, fx.s, fx.void), [fx.a],
       "1 :> A")
   end
-  
+
   def testCalleeVarArgs()
     assertCallableConstraint(
       callableVarArg(0, fx.t, fx.void), [],
@@ -114,7 +114,7 @@ class ConstraintGenerationSuite is Suite
       callableVarArg(1, fx.s, fx.t, fx.void), [fx.a, fx.b, fx.c],
       "2 :> A, 1 :> B, 1 :> C")
   end
-  
+
   def testCallerArrayVarArgs()
     assertCallableConstraint(
       callableVarArg(1, fx.s, fx.t, fx.void), [fx.arra],
@@ -126,7 +126,7 @@ class ConstraintGenerationSuite is Suite
       callableVarArg(1, fx.s, fx.t, fx.void), [fx.c, fx.b, fx.arra],
                      "1 :> A, 2 :> C, 1 :> B", True)
   end
-  
+
   def testCallerTupleVarArgs()
     assertCallableConstraint(
       callable(fx.s, fx.t, fx.void), [TupleType([fx.a, fx.b])],
@@ -134,52 +134,52 @@ class ConstraintGenerationSuite is Suite
     assertCallableConstraint(
       callable(fx.s, fx.b, fx.t, fx.void), [fx.a, TupleType([fx.b, fx.c])],
                      "2 :> A, 1 :> C", True)
-    
+
     assertCallableConstraint(
       callableVarArg(1, fx.s, fx.t, fx.void), [TupleType([fx.a, fx.b, fx.c])],
                      "2 :> A, 1 :> B, 1 :> C", True)
   end
-  
+
   -- FIX varargs call with invalid varargs type
-  
+
   -- FIX complex combination of types
-  
+
   -- FIX assertCallableConstraints with both default args and varargs
   -- FIX callable templates with varargs
   -- FIX caller with varargs
   -- FIX invalid argument count
   -- FIX incompatible callables
-  
+
   private def assertConstraint(template, target, str)
     var c = InferConstraints(template, target)
     var actual = Str(c)[1:-1]
     AssertEqual(actual, str)
   end
-  
+
   private def assertCallableConstraint(calleeType, argTypes, str,
                                        isVarArg = False)
     var c = InferConstraintsForCallable(calleeType, argTypes, isVarArg)
     var actual = Str(c)[1:-1]
     AssertEqual(actual, str)
   end
-  
+
   private def tuple(*a)
     return TupleType(a)
   end
-  
+
   -- callable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r.
   private def callable(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], False)
   end
-  
+
   -- callable(minArgs, a1, ..., an, r) constructs a callable with argument
   -- types a1, ... an and return type r, with minArgs mandatory fixed
   -- arguments.
   private def callableDefault(minArgs, *a)
     return Callable(a[:-1], minArgs, False, a[-1], False)
   end
-  
+
   -- callable(minArgs, a1, ..., an, r) constructs a callable with argument
   -- types a1, ... *an and return type r, with minArgs mandatory fixed
   -- arguments.

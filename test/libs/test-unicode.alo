@@ -14,14 +14,14 @@ class UnicodeSuite is Suite
     AssertEqual(UnicodeName(Chr(48000)), "HANGUL SYLLABLE MWESS")
     AssertEqual(UnicodeName(Chr(65533)), "REPLACEMENT CHARACTER")
   end
-  
+
   def testUnicodeNameErrors()
     AssertRaises(ValueError, UnicodeName, [Chr(0)])
     AssertRaises(ValueError, UnicodeName, [Chr(31)])
     AssertRaises(ValueError, UnicodeName, [Chr(1806)])
     AssertRaises(ValueError, UnicodeName, [Chr(65535)])
   end
-  
+
   def testLookupChr()
     AssertEqual(LookupChr("SPACE"), " ")
     AssertEqual(LookupChr("LATIN CAPITAL LETTER A"), "A")
@@ -31,7 +31,7 @@ class UnicodeSuite is Suite
     AssertEqual(LookupChr("HANGUL SYLLABLE MWESS"), Chr(48000))
     AssertEqual(LookupChr("REPLACEMENT CHARACTER"), Chr(65533))
   end
-  
+
   def testLookupChrErrors()
     AssertRaises(ValueError, LookupChr, ["LATIN FOO"])
     AssertRaises(ValueError, LookupChr, ["CJK UNIFIED IDEOGRAPH-"])

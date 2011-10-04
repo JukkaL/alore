@@ -48,7 +48,7 @@ ABool AInitializeDefaultModuleSearchPath(const char *additPath)
     envPath = getenv(MODULE_SEARCH_PATH_ENV_VAR);
     if (envPath == NULL)
         envPath = "";
-    
+
     len = strlen(base) + strlen(envPath) + strlen(additPath) + 3;
 
     path = AAllocStatic(len);
@@ -64,7 +64,7 @@ ABool AInitializeDefaultModuleSearchPath(const char *additPath)
     strcat(path, A_MODULE_SEARCH_PATH_BASE);
 
     ADefaultModuleSearchPath = path;
-    
+
     return TRUE;
 }
 
@@ -77,7 +77,7 @@ ABool ADefInitCompilation(const char *path, char *moduleSearchPath,
     char *searchPath;
     int searchPathLen;
     int dirLen;
- 
+
     if (moduleSearchPath == NULL)
         moduleSearchPath = "";
 
@@ -93,7 +93,7 @@ ABool ADefInitCompilation(const char *path, char *moduleSearchPath,
         strlen(ADefaultModuleSearchPath) + 3;
     if (!A_IS_ABS(path))
         searchPathLen += 2;
-    
+
     searchPath = AAllocStatic(searchPathLen);
     if (searchPath == NULL)
         return FALSE;
@@ -162,7 +162,7 @@ ABool ADefCloseFile(void *file, void *param)
 /* Default implementation of finding module files during compilation. Call the
    caller-provided addFile function to add a file to the file list. The caller
    must initialize *files.
-   
+
    IDEA: Perhaps we don't really need to parametrize AddFileFunc, i.e. it
          could be constant? */
 ABool ADefFindModule(AFileInterface *iface, AModuleId *module,
@@ -184,11 +184,11 @@ ABool ADefFindModule(AFileInterface *iface, AModuleId *module,
         void *dir;
         int baseLen;
         int pathLen;
-        
+
         for (baseLen = 0;
              search[baseLen] != '\0' && search[baseLen] != A_PATH_SEPARATOR;
              baseLen++);
-        
+
         pathLen = baseLen + relPathLen + 1;
         if (pathLen >= MAX_MODULE_PATH_LEN)
             return FALSE;
@@ -207,7 +207,7 @@ ABool ADefFindModule(AFileInterface *iface, AModuleId *module,
             /* Try loading a dynamic C module. */
             int i;
             struct stat buf;
-            
+
             /* Replace the directory separators with underscores in the module
                name based portion of the path. */
             for (i = baseLen + 1; fullPath[i] != '\0'; i++) {
@@ -232,7 +232,7 @@ ABool ADefFindModule(AFileInterface *iface, AModuleId *module,
         for (;;) {
             const char *fileName;
             int fileNameLen;
-            
+
             fileName = iface->readDir(dir);
             if (fileName == NULL)
                 break;
@@ -270,7 +270,7 @@ ABool ADefMapModule(char *moduleName, char *newModuleName)
     strcpy(newModuleName, moduleName);
     return TRUE;
 }
-    
+
 
 void ADefDeinitCompilation(void *param)
 {

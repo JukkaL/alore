@@ -17,14 +17,14 @@ import io
 -- Main function of the type checker.
 def Main(args)
   var showMain = False
-  
-  -- The -t options causes the output to be compatible with type test case 
+
+  -- The -t options causes the output to be compatible with type test case
   -- descriptions: the file name of the main program is always "main".
   if args != [] and args[0] == "-t"
     showMain = True
     args = args[1:]
   end
-  
+
   -- Display error message and exit if command line arguments are invalid.
   if args.length() != 1 or args[0].startsWith("-")
     if args != [] and args[0].startsWith("-")
@@ -33,8 +33,8 @@ def Main(args)
     StdErr.writeLn("Usage: check.alo [-t] FILE")
     Exit(2)
   end
- 
-  try  
+
+  try
     -- Read the contents of the main source file.
     var fnam = args[0]
     var text = File(fnam).read()
@@ -46,7 +46,7 @@ def Main(args)
     end
 
     -- Perform type checking for the program. Ignore return value.
-    var trees, symtable, typeinfos, types = 
+    var trees, symtable, typeinfos, types =
         Analyse(text, showFnam, True, nil, True)
   except e is IoError
     -- IO error reading a source file or directory. Display error message.

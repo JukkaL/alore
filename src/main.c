@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
     /* Parse command line options. */
     ParseOptions(&argc, &argv, &options);
-    
+
     if (argc >= 1) {
         /* Get the name of the program to run. */
         file = argv[0];
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         /* Get rid of warning (never executed). */
         file = NULL;
     }
-    
+
     returnValue = 0;
 
     /* Compile the program. The return value is the global num of the function
@@ -114,13 +114,13 @@ int main(int argc, char **argv)
             /* Do we need to type check the program? */
             if (options.typeCheckAndRun || options.typeCheckAndExit)
                 returnValue = PerformTypeCheck();
-            
+
             /* Run the program unless there was a type check error or the
                user requested to exit after type checking. */
             if (!options.typeCheckAndExit && returnValue == 0) {
                 AValue val;
                 SetDebugInstructionCounter();
-            
+
                 if (ATry(t)) {
                     /* An uncaught direct exception was raised somewhere in the
                        program. We must not call AEndTry. */
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
                     val = ACallValue(t, AGlobalByNum(num), 0, NULL);
                     AEndTry(t);
                 }
-            
+
                 returnValue = AEndAloreProgram(t, val);
             }
         }
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
         /* Compilation failed. Return error status. */
         returnValue = 1;
     }
-    
+
     return returnValue;
 }
 
@@ -200,18 +200,18 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
                 break;
             } else
                 InvalidOption(argv[0]);
-            
+
 #ifdef A_DEBUG
         case 'm':
             /* Memory dump (IDEA: explain) */
             ADebug_MemoryDump = 1;
             break;
-            
+
         case 'T':
             /* Memory trace (IDEA: explain) */
             ADebug_MemoryTrace = 1;
             break;
-            
+
         case 'a': {
             /* Set up debug watch location (IDEA: explain) */
             unsigned long ptr;
@@ -257,7 +257,7 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
         default:
             InvalidOption(argv[0]);
         }
-        
+
         argv++;
         argc--;
     }
@@ -369,7 +369,7 @@ static int PerformTypeCheck(void)
     GetCheckerPath(checkerPath);
 
     /* FIX: Support double quotes in path names properly. */
-    
+
     /* Build the command line for running the checker. */
 #ifndef A_HAVE_WINDOWS
     /* General version */
@@ -383,7 +383,7 @@ static int PerformTypeCheck(void)
     sprintf(cmd, "\"\"%s\" \"%s\" \"%s\"\"", AInterpreterPath, checkerPath,
             AProgramPath);
 #endif
-    
+
     status = system(cmd);
 
     /* If the command did not return successfully, something unexpected
@@ -406,7 +406,7 @@ static void GetCheckerPath(char *path)
     /* FIX: Length checks */
     /* IDEA: Make the directories configurable instead of hard-coding them. */
     int i;
-    
+
     /* Get the directory that contains the interpreter. */
     strcpy(path, AInterpreterPath);
     for (i = strlen(path); i > 1 && !A_IS_DIR_SEPARATOR(path[i - 1]); i--)
@@ -428,7 +428,7 @@ static void GetCheckerPath(char *path)
     }
 #else
     /* Windows */
-    
+
     {
         char path2[A_MAX_PATH_LEN];
         /* First assume we are installed. */

@@ -25,7 +25,7 @@ class GCSuite1 is Suite
     end
     Ok()
   end
-  
+
   -- Test creating lots of short array objects.
   def testLotsOfArrayGarbage2()
     var i = 0
@@ -67,7 +67,7 @@ class GCSuite1 is Suite
 
   def testCollectingGarbage()
     CollectAllGarbage()
-  
+
     Assert(c1.length() == 2)
     Assert(c1[0] == 1)
     Assert(c2[1] == 3)
@@ -83,7 +83,7 @@ class GCSuite1 is Suite
     Assert(c10[1] == 6)
     Assert(c11[0] == 1)
     Assert(c12[0] == 2)
-  
+
     Assert(v1.length() == 2)
     Assert(v1[0] == 1)
     Assert(v2[1] == 3)
@@ -99,10 +99,10 @@ class GCSuite1 is Suite
     Assert(v10[1] == 6)
     Assert(v11[0] == 1)
     Assert(v12[0] == 2)
-  
+
     Ok()
   end
-            
+
   -- Test retiring of short and long arrays.
   def testRetiringArrays()
     var a = [nil] * 100000
@@ -111,31 +111,31 @@ class GCSuite1 is Suite
       a[i] = i
       i += 1
     end
-  
+
     var short = [nil] * 20
     i = 0
     while i < 20
       short[i] = i
       i += 1
     end
-  
+
     CollectAllGarbage()
-  
+
     i = 0
     while i < 100000
       Assert(a[i] == i)
       i += 1
     end
-    
+
     i = 0
     while i < 20
       Assert(short[i] == i)
       i += 1
     end
-  
+
     Ok()
   end
-  
+
   -- Test tracing of stack.
   def testStackTracing()
     RecurseAndCollect(5000)
@@ -148,34 +148,34 @@ class GCSuite1 is Suite
     while j < 3
       var a = [1, 2]
       var c = a
-  
+
       var i = 0
       while i < 30000
         c = [c, 7]
         i += 1
       end
-  
+
       CollectAllGarbage()
-  
+
       i = 0
       while i < 30000
         Assert(c.length() == 2 and c[1] == 7)
         c = c[0]
         i += 1
       end
-  
+
       Assert(c.length() == 2 and c[1] == 2 and c == a)
-  
+
       j += 1
     end
-  
+
     Ok()
   end
-    
+
   def testMutatingAndGc()
     var a1 = [nil] * L1
     var a2 = [nil] * L1
-  
+
     -- Allocate lots of stuff
     var i = 0
     while i < L2
@@ -183,39 +183,39 @@ class GCSuite1 is Suite
       a1[i][5] = 888
       i += 1
     end
-  
+
     -- Shuffle stuff
     var j = 0
     while j < 20
       i = 0
       while i < L2
         a2[i] = [nil] * L1
-  
+
         a1[i + L2] = a1[i]
         a1[i] = 0
         i += 1
       end
-  
+
       i = 0
       while i < L2
         a2[i + L2] = [nil] * L1
-  
+
         a1[i] = a1[i + L2]
         a1[i + L2] = 0
         i += 1
       end
-  
+
       j += 1
     end
-  
+
     CollectAllGarbage()
-  
+
     i = 0
     while i < L2
       Assert(a1[i][5] == 888)
       i += 1
     end
-  
+
     Ok()
   end
 end

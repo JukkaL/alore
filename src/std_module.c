@@ -140,7 +140,7 @@ ABool AInitializeStdExceptions(AThread *t)
 
     /* IDEA: Maybe all of these can be removed, since these are inherently
              thread-unsafe. */
-    
+
     for (i = 0; i <= EX_LAST; i++) {
         AValue obj = ACreateBasicExceptionInstance(t, i, NULL);
         if (!ASetConstGlobalValue(t, GL_FIRST_ERROR_INSTANCE + i, obj))
@@ -172,7 +172,7 @@ AValue AStdChr(AThread *t, AValue *frame)
 {
     ASignedValue i;
     ABool result;
-    
+
     if (!AIsShortInt(frame[0])) {
         /* Invalid argument */
         if (AIsLongInt(frame[0]))
@@ -229,7 +229,7 @@ static AValue StdOrd(AThread *t, AValue *frame)
                                  frame[0]);
 
     /* String with invalid length. */
-    
+
     return ARaiseValueErrorND(t, "Ord() expects a character "
                               "(string with length %d given)",
                               (int)AStrLen(frame[0]));
@@ -254,7 +254,7 @@ static AValue StdMain(AThread *t, AValue *frame)
     frame[0] = AMakeUnmovableBoolean(t, TRUE);
     ASetGlobalByNum(GL_TRUE, frame[0]);
     ASetGlobalByNum(TrueNum, frame[0]);
-    
+
     /* Initialize the False object. */
     frame[0] = AMakeUnmovableBoolean(t, FALSE);
     ASetGlobalByNum(GL_FALSE, frame[0]);
@@ -292,7 +292,7 @@ AValue AStdRepr(AThread *t, AValue *frame)
 {
     AValue *tmp;
     AValue retVal;
-    
+
     if (!AAllocTempStack(t, 4))
         return AError;
 
@@ -301,7 +301,7 @@ AValue AStdRepr(AThread *t, AValue *frame)
     tmp[1] = AZero;
     tmp[2] = AZero;
     tmp[3] = AZero;
-    
+
     if (AIsShortInt(frame[0]) || AIsLongInt(frame[0]))
         retVal = AStdStr(t, frame);
     else if (AIsStr(frame[0]))
@@ -327,7 +327,7 @@ AValue AStdRepr(AThread *t, AValue *frame)
         retVal = AStdStr(t, frame);
     else if (AIsPair(frame[0]) || AIsRange(frame[0])) {
         retVal = AError;
-        
+
         tmp[0] = AIsPair(frame[0])
             ? AValueToMixedObject(frame[0])->data.pair.head
             : AValueToMixedObject(frame[0])->data.range.start;
@@ -372,7 +372,7 @@ AValue AStdRepr(AThread *t, AValue *frame)
 static AValue RecursiveArrayItem(AValue array, int *indices, int depth)
 {
     int i;
-    
+
     for (i = 0; i <= depth; i++)
         array = AArrayItem(array, indices[i]);
 
@@ -392,11 +392,11 @@ static AValue ArrayRepr(AThread *t, AValue *array, AValue *acc,
     AAppendArray(t, *acc, str);
 
     len = AArrayLen(RecursiveArrayItem(*array, indices, depth - 1));
-    
+
     for (i = 0; i < len; i++) {
         indices[depth] = i;
         *tmp = RecursiveArrayItem(*array, indices, depth);
-        
+
         if (AIsArray(*tmp)) {
             if (depth == MAX_REPR_CALL_DEPTH)
                 return ARaiseValueErrorND(t, NULL);
@@ -407,15 +407,15 @@ static AValue ArrayRepr(AThread *t, AValue *array, AValue *acc,
             *tmp = ACallValue(t, AGlobalByNum(AStdReprNum), 1, tmp);
             if (*tmp == AError)
                 return *tmp;
-            
+
             AAppendArray(t, *acc, *tmp);
         }
-        
+
         if (i < len - 1) {
             str = AMakeStr(t, ", ");
             AAppendArray(t, *acc, str);
         }
-        
+
         if (AArrayLen(*acc) > MAX_REPR_LEN)
             return ARaiseValueErrorND(t, NULL);
     }
@@ -440,7 +440,7 @@ AValue AStdTypeName(AThread *t, AValue *frame)
 
     /* Get the class object. */
     type = AGetTypeObject(t, frame[0]);
-    
+
     /* The class object can be represented as a global function (e.g. Int) or
        a Type object. */
     if (AIsGlobalFunction(type))
@@ -552,7 +552,7 @@ static AValue PairOrRangeHashValue(AThread *t, AValue *frame)
 {
     AValue h1;
     AValue h2;
-    
+
     frame[1] = AValueToMixedObject(frame[0])->data.range.start;
     h1 = ACallValue(t, AGlobalByNum(AStdHashNum), 1,
                       frame + 1);
@@ -564,7 +564,7 @@ static AValue PairOrRangeHashValue(AThread *t, AValue *frame)
         else
             return ARaiseTypeErrorND(t, NULL);
     }
-    
+
     frame[1] = AValueToMixedObject(frame[0])->data.range.stop;
     h2 = ACallValue(t, AGlobalByNum(AStdHashNum), 1,
                       frame + 1);
@@ -576,7 +576,7 @@ static AValue PairOrRangeHashValue(AThread *t, AValue *frame)
         else
             return ARaiseTypeErrorND(t, NULL);
     }
-    
+
     return h1 * 33 + h2;
 }
 
@@ -586,7 +586,7 @@ static AValue PairOrRangeHashValue(AThread *t, AValue *frame)
 static AValue RangeIterCreate(AThread *t, AValue *frame)
 {
     AValue lo, hi;
-    
+
     AGetRange(t, frame[1], &lo, &hi);
 
     AExpectInt(t, lo);
@@ -595,7 +595,7 @@ static AValue RangeIterCreate(AThread *t, AValue *frame)
     frame[1] = hi;
     ASetMemberDirect(t, frame[0], 0, lo);
     ASetMemberDirect(t, frame[0], 1, frame[1]);
-    
+
     return frame[0];
 }
 
@@ -612,7 +612,7 @@ static AValue RangeIterHasNext(AThread *t, AValue *frame)
 static AValue RangeIterNext(AThread *t, AValue *frame)
 {
     AValue next;
-    
+
     frame[1] = AMemberDirect(frame[0], 0);
     next = AAdd(t, frame[1], AMakeInt(t, 1));
     ASetMemberDirect(t, frame[0], 0, next);
@@ -635,7 +635,7 @@ static AValue ExitExceptionCreate(AThread *t, AValue *frame)
 static AValue StdExit(AThread *t, AValue *frame)
 {
     AValue exception;
-    
+
     if (AIsDefault(frame[0]))
         frame[0] = AIntToValue(0);
 
@@ -714,7 +714,7 @@ static AValue StdMin(AThread *t, AValue *frame)
             return AError;
     } else {
         int ret;
-        
+
         frame[2] = AIterator(t, frame[0]);
         if (AIsError(frame[2]))
             return AError;
@@ -754,7 +754,7 @@ static AValue StdMax(AThread *t, AValue *frame)
             return AError;
     } else {
         int ret;
-        
+
         frame[2] = AIterator(t, frame[0]);
         if (AIsError(frame[2]))
             return AError;
@@ -790,7 +790,7 @@ static AValue StdReversed(AThread *t, AValue *frame)
         AShortInt stop = AValueToInt(ARangeStop(frame[0]));
 
         frame[1] = AMakeArray(t, 0);
-        
+
         if (stop > start) {
             AShortInt i;
             for (i = stop - 1; i >= start; i--)
@@ -800,7 +800,7 @@ static AValue StdReversed(AThread *t, AValue *frame)
         /* Use efficient specialized implementation for arrays. */
         Assize_t i;
         Assize_t len;
-    
+
         len = AArrayLen(frame[0]);
         frame[1] = AMakeArray(t, len);
         for (i = 0; i < len; i++) {
@@ -811,7 +811,7 @@ static AValue StdReversed(AThread *t, AValue *frame)
         /* Generic implementation for arbitrary iterables. */
         int status;
         Assize_t i, n;
-        
+
         frame[1] = AMakeArray(t, 0);
         frame[2] = AIterator(t, frame[0]);
         if (frame[2] == AError)
@@ -819,7 +819,7 @@ static AValue StdReversed(AThread *t, AValue *frame)
 
         while ((status = ANext(t, frame[2], &frame[3])) > 0)
             AAppendArray(t, frame[1], frame[3]);
-        
+
         if (status < 0)
             return AError;
 
@@ -830,7 +830,7 @@ static AValue StdReversed(AThread *t, AValue *frame)
             ASetArrayItem(t, frame[1], n - i - 1, frame[2]);
         }
     }
-    
+
     return frame[1];
 }
 
@@ -882,12 +882,12 @@ static AValue Print(AThread *t, AValue *frame)
     Assize_t n = AArrayLen(frame[0]);
 
     frame[1] = AGlobalByNum(AStdOutNum);
-    
+
     for (i = 0; i < n; i++) {
         frame[2] = AArrayItem(frame[0], i);
         if (ACallMethod(t, "write", 1, frame + 1) == AError)
             return AError;
-        
+
         /* Write space separator for non-last items. */
         if (i < n - 1) {
             frame[2] = AMakeStr(t, " ");
@@ -922,7 +922,7 @@ static AValue AnonFuncCall(AThread *t, AValue *frame)
     int totalNumArgs;
     AValue func;
     int funcMinArgs, funcMaxArgs;
-    
+
     /* Call the ordinary global function object that is stored in the anonymous
        function object. */
 
@@ -933,7 +933,7 @@ static AValue AnonFuncCall(AThread *t, AValue *frame)
     func = AMemberDirect(frame[0], A_ANON_IMPLEMENTATION_FUNC);
     funcMinArgs = AValueToFunction(func)->minArgs;
     funcMaxArgs = AValueToFunction(func)->maxArgs;
-    
+
     /* Check the number of arguments. The checking performed by
        ACallValueVarArg is not sufficient since it may receive exposed
        variables as additional arguments that invalidate argument counts in
@@ -941,13 +941,13 @@ static AValue AnonFuncCall(AThread *t, AValue *frame)
     if (totalNumArgs < funcMinArgs ||
         (!(funcMaxArgs & A_VAR_ARG_FLAG) && totalNumArgs > funcMaxArgs))
         return ARaiseArgumentErrorND(t, func, numArgs, numExposed);
-    
+
     /* The arguments contain first any exposed variable containers needed by
        the anonymous function and then the ordinary arguments passed by the
        caller. */
     frame[1] = ConcatFixArrayAndArray(
         t, AMemberDirect(frame[0], A_ANON_EXPOSED_VARS), frame[1]);
-    
+
     return ACallValueVarArg(t, func, 0, frame + 1);
 }
 
@@ -963,7 +963,7 @@ static AValue ConcatFixArrayAndArray(AThread *t, AValue fixa, AValue a)
 
     lenFixa = AFixArrayLen(fixa);
     lenA = AArrayLen(a);
-    
+
     temp[0] = fixa;
     temp[1] = a;
     temp[2] = AMakeArray(t, lenFixa + lenA);
@@ -1079,7 +1079,7 @@ A_MODULE(std, "std")
         A_METHOD("create", 0, 0, AHiddenCreate)
         A_METHOD("_str", 0, 0, BooleanStr)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P("Array", A_NUM_ARRAY_SLOTS, &StdArrayNum)
         A_IMPLEMENT("std::Iterable")
         A_IMPLEMENT("std::Sequence")
@@ -1116,7 +1116,7 @@ A_MODULE(std, "std")
         A_METHOD("hasNext", 0, 0, AArrayIterHasNext)
         A_METHOD("next", 0, 0, AArrayIterNext)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P("Tuple", A_NUM_ARRAY_SLOTS, &StdTupleNum)
         A_IMPLEMENT("std::Iterable")
         A_METHOD("create", 0, 0, AHiddenCreate)
@@ -1154,7 +1154,7 @@ A_MODULE(std, "std")
         A_METHOD("_str", 0, 5, AMap_str)
         A_METHOD("iterator", 0, 1, AMapIter)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P(A_PRIVATE("MapIterator"), 3, &AMapIterNum)
         A_IMPLEMENT("std::Iterator")
         A_METHOD("create", 1, 0, AMapIterCreate)
@@ -1249,7 +1249,7 @@ A_MODULE(std, "std")
         A_METHOD("_repr", 0, 0, AReprWrapper)
         A_METHOD("_int", 0, 0, AIntWrapper)
     A_END_CLASS()
-    
+
     /* Wrapper class for Range objects; this is used when accessing Range
        members */
     A_CLASS_PRIV_P(A_PRIVATE("__Range"), 1, &RangeClassNum)
@@ -1263,7 +1263,7 @@ A_MODULE(std, "std")
         A_METHOD("_hash", 0, 0, AHashWrapper)
         A_METHOD("_str", 0, 0, AStrWrapper)
     A_END_CLASS()
-    
+
     /* Wrapper class for Pair objects; this is used when accessing Pair
        members */
     A_CLASS_PRIV_P(A_PRIVATE("__Pair"), 1, &PairClassNum)
@@ -1274,21 +1274,21 @@ A_MODULE(std, "std")
         A_METHOD("_hash", 0, 0, AHashWrapper)
         A_METHOD("_str", 0, 0, AStrWrapper)
     A_END_CLASS()
-    
+
     /* Wrapper class for Constant objects; this is used when accessing Constant
        members */
     A_CLASS_PRIV_P(A_PRIVATE("__Constant"), 1, &ConstantClassNum)
         A_METHOD("create", 0, 0, AHiddenCreate)
         A_METHOD("_str", 0, 0, AStrWrapper)
     A_END_CLASS()
-    
+
     /* Wrapper class for Function objects; this is used when accessing
        Function members */
     A_CLASS_PRIV_P(A_PRIVATE("__Function"), 1, &FunctionClassNum)
         A_METHOD("create", 0, 0, AHiddenCreate)
         A_METHOD("_str", 0, 0, AStrWrapper)
     A_END_CLASS()
-    
+
     /* Wrapper class for Type objects; this is used when accessing
        Type members */
     A_CLASS_PRIV_P(A_PRIVATE("__Type"), 1, &TypeClassNum)
@@ -1319,25 +1319,25 @@ A_MODULE(std, "std")
     A_DEF_P("Function", 0, 0, StdFunction, &AStdFunctionNum)
     A_DEF_P("Pair", 0, 0, StdPair, &AStdPairNum)
     A_DEF_P("Constant", 0, 0, StdConstant, &AStdConstantNum)
-    
+
     A_DEF("Abs", 1, 0, StdAbs)
-    
+
     A_DEF("Chr", 1, 0, AStdChr)
     A_DEF("Ord", 1, 0, StdOrd)
-    
+
     A_DEF_P("Hash", 1, 2, AStdHash, &AStdHashNum) /* NOTE: don't change */
     A_DEF_OPT("Min", 1, 2, 2, StdMin)
     A_DEF_OPT("Max", 1, 2, 2, StdMax)
     A_DEF_OPT("Sort", 1, 2, 5, AStdSort)
     A_DEF("Reversed", 1, 3, StdReversed)
-    
+
     A_DEF_OPT("Exit", 0, 1, 2, StdExit)
 
     A_DEF_VARARG("Print", 0, 0, 3, Print)
     A_DEF_VARARG("WriteLn", 0, 0, 2, WriteLn) /* NOTE: See Print and Stream */
     A_DEF_VARARG("Write", 0, 0, 2, Write)     /* NOTE: See Print and Stream */
     A_DEF("ReadLn", 0, 5, ReadLn)
-    
+
     A_EMPTY_CONST_P("False", &FalseNum)
     A_EMPTY_CONST_P("True", &TrueNum)
 
@@ -1353,7 +1353,7 @@ A_MODULE(std, "std")
         A_METHOD("hasNext", 0, 0, RangeIterHasNext)
         A_METHOD("next", 0, 1, RangeIterNext)
     A_END_CLASS()
-    
+
     A_CLASS_PRIV_P("Exception", 1, &AStdExceptionNum)
         A_EMPTY_CONST("message")
         A_METHOD_OPT("create", 0, 1, 0, AStdExceptionCreate)

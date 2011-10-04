@@ -34,25 +34,25 @@
 typedef enum {
     ET_LOCAL_LVALUE,            /* Local lvalue */
     ET_LOCAL,                   /* Local value */
-    
+
     ET_GLOBAL_LVALUE,           /* Global lvalue */
     ET_GLOBAL,                  /* Global value */
 
     ET_MEMBER_LVALUE,           /* Member */
     ET_MEMBER,
-    
+
     ET_MEMBER_FILLER,
     ET_MEMBER_FUNCTION,
-    
+
     ET_LOCAL_LVALUE_EXPOSED,    /* Exposed local lvalue */
     ET_LOCAL_EXPOSED,           /* Exposed local value */
-    
+
     ET_PARTIAL_LVALUE,          /* ?? */
     ET_PARTIAL,                 /* Partial local value */
-    
+
     ET_ARRAY_LVALUE,            /* Array lvalue */
     ET_ARRAY,                   /* Array value */
-    
+
     ET_ARRAY_LOCAL_LVALUE,      /* Array lvalue, all locals */
     ET_FILLER,
 
@@ -61,7 +61,7 @@ typedef enum {
 
     ET_TUPLE_LOCAL_LVALUE,      /* Tuple lvalue, all locals */
     ET_INT,                     /* Integer */
-    
+
     ET_ERROR,
     ET_LOGICAL                  /* Logical expression */
 } AExpressionType;

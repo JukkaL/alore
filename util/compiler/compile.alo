@@ -38,11 +38,11 @@ def Compile(fnam)
   var o = FileOutput(cfile, CurrentDir())
   o.addFile(fnam)
   o.output()
-  
+
   Msg("C compiler: " + CCompiler)
   Msg("C options: " + " ".join(COpts))
   Msg("Linker options: " + " ".join(LinkDirOpts + LinkOpts))
-  
+
   DoSystem("{} {}".format(CCompiler, " ".join(COpts)) +
            " -c ""{}"" -o ""{}""".format(cfile, ofile))
   var dest = FileBase(fnam) + ExeSuffix()
@@ -95,7 +95,7 @@ private class FileOutput
       end
     end
   end
-  
+
   def output()
     f.writeLn("#include ""cmodules.h""")
     f.writeLn("const char AloreModuleSearchPath[] = {};".format(
@@ -130,7 +130,7 @@ private class FileOutput
     f.writeLn(";")
     f.close()
   end
-  
+
   private var f
   private var basePath
   private var files = []
@@ -146,12 +146,12 @@ private def Cstr(s)
   s = s.replace("""", "\""")
   s = s.replace(CR, "\r")
   s = s.replace(LF, "\n")
-  
+
   -- Replace 0 characters with \\u0000. We know that the characters are
   -- within comments or string literals, \\u0000 does not harm there, but
   -- 0 characters within a C string literal would cause problems.
   s = s.replace("\u0000", "\\" + "u0000")
-  
+
   return """" + s + """"
 end
 
@@ -159,7 +159,7 @@ end
 private def CStrLen(s)
   return s.length() + s.count("\u0000") * 5
 end
-  
+
 
 private class FileInfo
   const name
@@ -183,7 +183,7 @@ private def ImportedFiles(p)
       var m = rm.group(1)
       m = m.replace(" ", "")
       m = m.replace(Tab, "")
-      
+
       for mm in m.split(",")
         -- Convert into a path name.
         var path = mm.replace("::", "/")
@@ -218,7 +218,7 @@ private def AddModuleFiles(m, res, builtin, dyn, ind = "  ")
       end
     end
   end
-  
+
   var path = FindFile(ModuleSearchPaths, "liba{}.a".format(m))
   if path != nil
     if not m in dyn
@@ -227,11 +227,11 @@ private def AddModuleFiles(m, res, builtin, dyn, ind = "  ")
         dir = "."
       end
       AddLibPath(dir)
-    
+
       var inf = Subst(path, ".a$", ".inf")
       Msg(ind + "  Dynamic module ({})".format(path))
       dyn.append(m)
-      
+
       if IsFile(inf) and not m in DynLinkOpts
         DynLinkOpts.add(m)
         var f = File(inf)
@@ -241,7 +241,7 @@ private def AddModuleFiles(m, res, builtin, dyn, ind = "  ")
         Msg(ind + "  Linker flags ({})".format(o))
         LinkOpts.append(o)
       end
-      
+
       var soPath = GetDynLib(path)
       Msg(ind + "  Access {}". format(soPath))
       var imp = GetCModuleImports(soPath)

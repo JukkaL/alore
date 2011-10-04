@@ -211,19 +211,19 @@ class PackStream is Stream
   def readFloats64(n) as Array<Float>
     return packer.unpackFloats64(readExactly(8 * n))
   end
-  
+
   def writeStr(s as Str, len as Int)
     write(packer.packStr(s, len))
   end
-  
+
   def readStr(len as Int) as Str
     return readExactly(len)
   end
-  
+
   def writeStrs(a as Array<Str>, len as Int)
     write(packer.packStrs(a, len))
   end
-  
+
   def readStrs(n as Int, len as Int) as Array<Str>
     var a = [] as <Str>
     for i in 0 to n
@@ -231,7 +231,7 @@ class PackStream is Stream
     end
     return a
   end
-  
+
   private def readExactly(n as Int) as Str
     var s = read(n)
     if s.length() != n
@@ -239,20 +239,20 @@ class PackStream is Stream
     end
     return s
   end
-  
+
   def _read(n as Int) as Str
     return (stream as dynamic)._read(n) -- FIX remove cast
   end
-  
+
   def _write(*a as Str)
     (stream as dynamic)._write(*a) -- FIX remove cast
   end
-  
+
   def close() as void
     super.close()
     stream.close()
   end
-  
+
   def seek(offset as Int) as Str
     flush()
     -- Discard any data in the input buffer.

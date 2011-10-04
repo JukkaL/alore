@@ -51,7 +51,7 @@ private def TestRoundtrip(testcase)
         if not first
           a.append("{}:".format(FixPath(RemovePrefix(t.path, TestTempDir))))
         end
-      
+
         var v = OutputVisitor()
         t.accept(v)
         var s = v.output()

@@ -16,7 +16,7 @@ class ReflectionSuite is Suite
     AssertEqual(GetMember(r, "_eq")(r), True)
     AssertRaises(MemberError, def (); GetMember(r, "X"); end)
   end
-  
+
   def testHasMember()
     -- IDEA: Test that it does not call getters.
     -- IDEA: Test inherited members and C types.
@@ -29,7 +29,7 @@ class ReflectionSuite is Suite
     Assert(HasMember(r, "_eq"))
     Assert(not HasMember(r, "X"))
   end
-  
+
   def testSetMember()
     -- IDEA: Test inherited members and C types.
     var r = Refl()
@@ -41,39 +41,39 @@ class ReflectionSuite is Suite
     AssertRaises(MemberError, def (); SetMember(r, "getx", 1); end)
     AssertRaises(MemberError, def (); SetMember(r, "foo", 1); end)
   end
-  
+
   def testTypeOf()
     Assert(TypeOf(1) == Int)
     Assert(TypeOf(100000000000000000000000000) == Int)
-    
+
     Assert(TypeOf("") == Str)
     Assert(TypeOf("abc") == Str)
     Assert(TypeOf(Chr(2000)) == Str)
     Assert(TypeOf("12345678901234567890"[4:15]) == Str)
-    
+
     Assert(TypeOf([1, 2]) == Array)
     Assert(TypeOf((1, 2)) == Tuple)
-    
+
     Assert(TypeOf(1.0) == Float)
-    
+
     Assert(TypeOf(Ord) == Function)
     Assert(TypeOf(VerifyInts) == Function)
     Assert(TypeOf(NoStrConv().foo) == Function)
-    
+
     Assert(TypeOf(True) == Boolean)
     Assert(TypeOf(False) == Boolean)
-    
+
     Assert(TypeOf(MyConst) == Constant)
-    
+
     Assert(TypeOf(1 to 2) == Range)
-    
+
     Assert(TypeOf(1 : 2) == Pair)
-    
+
     Assert(TypeOf(Int) == Type)
     Assert(TypeOf(NoStrConv) == Type)
-    
+
     Assert(TypeOf(NoStrConv()) == NoStrConv)
-    
+
     AssertRaises(ValueError, def (); TypeOf(nil); end)
   end
 end
@@ -82,19 +82,19 @@ end
 class Refl
   var x = 1
   const y = 2
-  
+
   def setx
     return "x"
   end
-  
+
   def setx = new
     self.x = new + 1
   end
-  
+
   def getx
     return self.x + 2
   end
-  
+
   def foo(x)
     return x + 1
   end

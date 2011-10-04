@@ -34,7 +34,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
     strEnd = info->strEnd;
     st = info->stackBase;
     stTop = info->stackTop;
-    
+
     for (;;) {
         CHAR *repeatBeg;
 
@@ -52,12 +52,12 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 sprintf(ch, "'\\n'");
             else
                 sprintf(ch, "'\\x%.2x'", *str);
-            
+
             TRACE(("%d: opcode %d - char %s (depth %d)", ip - info->ip, *ip,
                    ch, st - info->stackBase));
         }
 #endif
-        
+
         switch (*ip++) {
         case A_BOW:
             /* Beginning of word */
@@ -93,7 +93,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 goto Fail;
 
             break;
-            
+
         case A_EOL:
             /* End of line (single line) */
 
@@ -117,11 +117,11 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             st->repeat = backRef + PAREN_MIN2;
             st->str = (CHAR *)info->strBeg + info->subExpBeg[backRef];
             st->ip = NULL;
-            
+
             info->subExpBeg[backRef] = str - (CHAR *)info->strBeg;
             goto Check;
         }
-            
+
         case A_RPAREN_SKIP:
             if (info->subExpBeg[*ip] == str - (CHAR *)info->strBeg) {
                 ip += 3;
@@ -129,10 +129,10 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             }
 
             /* Fall through */
-            
+
         case A_RPAREN: {
             int backRef = *ip++;
-            
+
             st++;
             st->repeat = backRef + PAREN_MIN;
             st->str = (CHAR *)info->strBeg + info->subExpBeg[backRef];
@@ -140,7 +140,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
 
             goto Check;
         }
-        
+
         case A_BACKREF:
         case A_BACKREF_I:
         case A_BACKREF_SKIP:
@@ -196,16 +196,16 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
 
             break;
         }
-            
+
             /* Literal character opcodes */
-            
+
         case A_LITERAL:
             if (str == strEnd || *str != *ip)
                 goto Fail;
-            
+
             ip++;
             str++;
-            
+
             break;
 
         case A_LITERAL_REPEAT:
@@ -220,7 +220,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 goto Fail;
 
             ch = ip[2];
-            
+
             for (; min > 0; min--)
                 if (*str++ != ch)
                     goto Fail;
@@ -229,10 +229,10 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
 
             /* FIX: Does this work with very long strings? */
             repeatEnd = AMin(str + opt, strEnd);
-            
+
             if (str == repeatEnd || *str != ch)
                 break;
-            
+
             repeatBeg = str;
             do {
                 str++;
@@ -263,10 +263,10 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
         case A_LITERAL_I:
             if (str == strEnd || LOWER(*str) != *ip)
                 goto Fail;
-      
+
             ip++;
             str++;
-      
+
             break;
 
         case A_LITERAL_I_REPEAT:
@@ -281,7 +281,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 goto Fail;
 
             ch = ip[2];
-            
+
             for (; min > 0; min--)
                 if (LOWER(*str++) != ch)
                     goto Fail;
@@ -289,10 +289,10 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             ip += 3;
 
             repeatEnd = AMin(str + opt, strEnd);
-            
+
             if (str == repeatEnd || LOWER(*str) != ch)
                 break;
-            
+
             repeatBeg = str;
             do {
                 str++;
@@ -322,14 +322,14 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
         }
 
             /* Character set opcodes */
-        
+
         case A_SET:
             if (str == strEnd || !IS_IN_SET(ip, *str))
                 goto Fail;
-      
+
             ip = SkipSet(ip);
             str++;
-      
+
             break;
 
         case A_SET_REPEAT:
@@ -343,7 +343,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 goto Fail;
 
             ip += 2;
-            
+
             for (; min > 0; min--) {
                 if (!IS_IN_SET(ip, *str))
                     goto Fail;
@@ -351,12 +351,12 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             }
 
             repeatEnd = AMin(str + opt, strEnd);
-            
+
             if (str == repeatEnd || !IS_IN_SET(ip, *str)) {
                 ip = SkipSet(ip);
                 break;
             }
-            
+
             repeatBeg = str;
             do {
                 str++;
@@ -370,9 +370,9 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 goto RepeatMin;
             }
         }
-        
+
             /* Any character opcodes */
-            
+
         case A_ANY:
             if (str == strEnd)
                 goto Fail;
@@ -412,7 +412,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                 str++;
             } while (str != repeatEnd && (*str != '\n' ||
                                           ip[-3] > A_ANY_REPEAT_MIN));
-            
+
             if ((ip[-3] & 1) == (A_ANY_REPEAT & 1))
                 goto Repeat;
             else
@@ -465,7 +465,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             TRACE(("Invalid opcode"));
             return -1;
         }
-        
+
         continue;
 
       RepeatMin:
@@ -474,11 +474,11 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
         st->str = str;
         st->repeat = repeatBeg - str;
         st->ip = ip;
-        
+
         str = repeatBeg;
 
         goto Check;
-        
+
       Repeat:
 
         st++;

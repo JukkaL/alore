@@ -48,11 +48,11 @@ private def GetTempDir()
         end
       end
     end
-  
+
     if TempDir == nil
       raise IoError("No temp directory found")
     end
-    
+
     return TempDir
   finally
     TempMutex.unlock()
@@ -62,7 +62,7 @@ end
 
 private def PotentialTempDirs()
   var dirList = []
-  
+
   for env in "TMPDIR", "TEMP", "TMP"
     var v = GetEnv(env)
     if v != nil
@@ -75,7 +75,7 @@ private def PotentialTempDirs()
   else
     dirList += ["/tmp", "/var/tmp"]
   end
-  
+
   return dirList
 end
 

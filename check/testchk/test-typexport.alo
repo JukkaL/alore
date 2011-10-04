@@ -38,7 +38,7 @@ class TypeExportSuite is Suite
       if line.startsWith("--")
         mask = "(" + line[2:].strip() + ")$"
       end
-      
+
       var src = LF.join(testcase.input)
       var map = Analyse(src, "main", False, TestTempDir, True)[3]
       var kk = map.keys()

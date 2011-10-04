@@ -88,13 +88,13 @@ class IsSuite is Suite
     Assert(not derived1 is Int)
     Assert(not pair1 is Int)
     Assert(not nil is Int)
-    
+
     VerifyNot(array1 is Int)
     VerifyNot(nil is Int)
     VerifyNot(not int1 is Int)
   end
-  
-  
+
+
   def testIsArray()
     Assert(not obj is Array)
     Assert(not int1 is Array)
@@ -121,8 +121,8 @@ class IsSuite is Suite
     Assert(not pair1 is Array)
     Assert(not nil is Array)
   end
-  
-  
+
+
   def testIsStr()
     Assert(not int1 is Str)
     Assert(not int2 is Str)
@@ -148,8 +148,8 @@ class IsSuite is Suite
     Assert(not pair1 is Str)
     Assert(not nil is Str)
   end
-  
-  
+
+
   def testIsType()
     Assert(not int1 is Type)
     Assert(not int2 is Type)
@@ -176,8 +176,8 @@ class IsSuite is Suite
     Assert(not pair1 is Type)
     Assert(not nil is Type)
   end
-  
-  
+
+
   def testIsFloat()
     Assert(not int1 is Float)
     Assert(not int2 is Float)
@@ -203,8 +203,8 @@ class IsSuite is Suite
     Assert(not pair1 is Float)
     Assert(not nil is Float)
   end
-  
-  
+
+
   def testIsRange()
     Assert(not int1 is Range)
     Assert(not int2 is Range)
@@ -230,8 +230,8 @@ class IsSuite is Suite
     Assert(not pair1 is Range)
     Assert(not nil is Range)
   end
-  
-  
+
+
   def testIsFunction()
     Assert(not int1 is Function)
     Assert(not int2 is Function)
@@ -257,8 +257,8 @@ class IsSuite is Suite
     Assert(not pair1 is Function)
     Assert(not nil is Function)
   end
-  
-  
+
+
   def testIsPair()
     Assert(not int1 is Pair)
     Assert(not int2 is Pair)
@@ -284,8 +284,8 @@ class IsSuite is Suite
     Assert(pair1 is Pair)
     Assert(not nil is Pair)
   end
-  
-  
+
+
   def testIsConstant()
     Assert(not int1 is Constant)
     Assert(not int2 is Constant)
@@ -311,8 +311,8 @@ class IsSuite is Suite
     Assert(not pair1 is Constant)
     Assert(not nil is Constant)
   end
-  
-  
+
+
   def testIsBase()
     Assert(not obj is Base)
     Assert(not int1 is Base)
@@ -339,8 +339,8 @@ class IsSuite is Suite
     Assert(not pair1 is Base)
     Assert(not nil is Base)
   end
-  
-  
+
+
   def testIsDerived()
     Assert(not int1 is Derived3)
     Assert(not int2 is Derived3)
@@ -365,7 +365,7 @@ class IsSuite is Suite
     Assert(derived1 is Derived3)
     Assert(not pair1 is Derived3)
     Assert(not nil is Derived3)
-    
+
     -- A few additional test cases
     Assert(Derived2() is Base)
     Assert(not Derived2() is Derived1)
@@ -375,8 +375,8 @@ class IsSuite is Suite
     Assert(not Derived1 is Base)
     Assert(not Base is Base)
   end
-  
-  
+
+
   def testErrors()
     var nerr = 0
     try

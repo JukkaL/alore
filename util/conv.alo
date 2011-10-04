@@ -36,12 +36,12 @@ def Main(args)
     WriteLn("Usage: conv.alo [-i] INPUT OUTDIR RELEASE")
     return 1
   end
-  
+
   if args[0] == "-i" and args.length() >= 3
     ignoreBrokenLinks = True
     args = args[1:]
   end
-  
+
   var conv = Converter()
   conv.preprocess(args[0])
   conv.convert(args[0], args[1], args[2], ignoreBrokenLinks)
@@ -60,7 +60,7 @@ class ConversionState
   const outDir
   const release
   const ignoreBrokenLinks
-  
+
   var out = []
   var state = Stack()
   var curMod = nil
@@ -73,7 +73,7 @@ class ConversionState
   var topIndex = -1
   var content = nil
   var prev  = ""
-  
+
   -- Collect interfaces specified by @implements, used by @supertypes.
   var interfaces = []
   -- Collect supertype information for @supertypes.
@@ -146,11 +146,11 @@ class Converter
           st.content.append(s)
         end
       end
-      
+
       if ss != ""
         st.prev = tag
       end
-      
+
       i += 1
     end
 
@@ -178,7 +178,7 @@ class Converter
 
     return st.title
   end
-  
+
   -- Replace inline tags of form @x and @x{...}. Inline tags can appear
   -- anywhere within a line.
   def replaceInlineTags(s, st)
@@ -189,7 +189,7 @@ class Converter
 
     -- Replace href and ref tags with HTML links.
     s, ss = replaceRefs(s, ss, st.ignoreBrokenLinks, st.path)
-    
+
     return s, ss
   end
 
@@ -298,7 +298,7 @@ class Converter
     outputNavToolbar(nav, st.path, True)
     st.out.insertAt(st.topIndex, Newline.join(nav))
   end
-  
+
   -- Process @fun or @exception.
   def processFunOrException(arg, st)
     if st.state.top() != "dl"
@@ -309,7 +309,7 @@ class Converter
                   formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
-  
+
   -- Process @class.
   def processClass(arg, st)
     if st.state.top() != "dl"
@@ -321,14 +321,14 @@ class Converter
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
   end
-  
+
   -- Process @class-hidden.
   def processHiddenClass(arg, st)
     st.out.append(Anchor(st.anchors, arg))
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
   end
-  
+
   -- Process @op.
   def processOp(arg, st)
     if st.state.top() != "dl"
@@ -344,7 +344,7 @@ class Converter
                 end)
     st.out.append("<dt>" + HiliSpan(arg))
   end
-  
+
   -- Process @var.
   def processVar(arg, st)
     if st.state.top() != "dl"
@@ -354,7 +354,7 @@ class Converter
     st.out.append("<dt>" + Anchor(nil, arg, st.curClass) + formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
-  
+
   def processDesc(arg, st)
     st.out.append("<dd>")
     st.state.push("dd")
@@ -380,12 +380,12 @@ class Converter
         end
         st.out.append(", ".join(a))
       end
-      
+
       st.inherits = nil
       st.interfaces = []
     end
   end
-  
+
   -- Process @end.
   def processEnd(st)
     if st.prev == "@end" and st.state.top() == "dl"
@@ -404,7 +404,7 @@ class Converter
     st.state.pop()
     st.sectionType = nil
   end
-  
+
   -- Process @h2.
   def processHeading(arg, st)
     if st.state.top() == "dl"
@@ -413,7 +413,7 @@ class Converter
     end
     st.out.append("<h2>" + Anchor(nil, arg) + arg + "</h2>")
   end
-  
+
   -- Process @link.
   def processLink(arg, st)
     var t = convert(arg, st.outDir, st.release, st.ignoreBrokenLinks)
@@ -451,7 +451,7 @@ class Converter
     end
     return s, ss
   end
-  
+
   -- Return the HTML for a link to a definition or a heading.
   def makeLink(target, isIdRef = True, isLower = False, isAnn = False)
     var t, anchor = NormLinkTarget(target)
@@ -723,13 +723,13 @@ class Stack is Array
   def push(o)
     append(o)
   end
-  
+
   def pop()
     var o = top()
     removeAt(-1)
     return o
   end
-  
+
   def top()
     return self[-1]
   end
@@ -868,7 +868,7 @@ def FormatGrammar(s, nameMap)
     pre = "<a id=""{}""></a>{}::".format(pre.strip(), pre)
   end
   post += " "
-  
+
   var r = ""
   var i = 0
   while i < post.length()
@@ -878,7 +878,7 @@ def FormatGrammar(s, nameMap)
         i += 1
       until r[-4:] == "&gt;"
     end
-  
+
     var m = Match("[^""]([a-z0-9-]+)[^""a-z0-9-;]", post, i)
     r += post[i]
     if m != nil
@@ -893,7 +893,7 @@ def FormatGrammar(s, nameMap)
       i += 1
     end
   end
-  
+
   return pre + r[:-1]
 end
 
@@ -972,7 +972,7 @@ def ObfuscateEmail(email)
   if repl == nil or email.length() < 5
     raise ValueError("Unsupported email address")
   end
-  
+
   -- Modify the email address by inserting copies of the character to the
   -- email address.
   var obfuscated = email[:2] + repl + email[2:5] + repl + email[5:8] + repl +
@@ -985,6 +985,6 @@ def ObfuscateEmail(email)
             "document.write(('{}' + '{}').replace(/{}/g, ''));".format(
               obfuscated[:4], obfuscated[4:], repl) +
             "</script>";
-  
+
   return res
 end

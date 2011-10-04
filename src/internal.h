@@ -18,7 +18,7 @@
 #define AScale(val, scale) \
     ((((val) + 31) >> 5) * (scale))
 
-    
+
 /* Returns the minimum/maximum of arguments. */
 #define AMin(a, b) ((a) < (b) ? (a) : (b))
 #define AMax(a, b) ((a) > (b) ? (a) : (b))
@@ -38,7 +38,7 @@
 /* Converts a _letter_ to uppercase. Be careful: no non-letters! */
 #define AUpCase(ch) ((ch) & ~32)
 
-    
+
 /* Returns TRUE if CH is a digit [0-9]. */
 #define AIsDigit(ch) \
     ((ch) >= '0' && (ch) <= '9')

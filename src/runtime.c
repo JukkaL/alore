@@ -53,7 +53,7 @@ AValue AWrapObject(AThread *t, AValue obj)
     /* Instances do not need to be wrapped. */
     if (AIsInstance(obj))
         return obj;
-    
+
     *t->tempStack = obj;
     instance = AAlloc(t, 2 * sizeof(AValue));
     if (instance == NULL)
@@ -93,7 +93,7 @@ AValue AWrapObject(AThread *t, AValue obj)
     /* Initialize the wrapper object. */
     AInitInstanceBlock(&instance->type, type);
     instance->member[0] = *t->tempStack;
-    
+
     *t->tempStack = AZero;
     return AInstanceToValue(instance);
 }
@@ -146,13 +146,13 @@ AValue AMemberByNum(AThread *t, AValue val, int member)
         if (AIsError(val))
             return AError;
     }
-    
+
     inst = AValueToInstance(val);
     type = AGetInstanceType(inst);
     table = AGetMemberTable(type, MT_VAR_GET_PUBLIC);
-    
+
     node = &table->item[member & table->size];
-    
+
     /* Search the get hash table. */
     while (node->key != member) {
         if (node->next == NULL) {
@@ -166,18 +166,18 @@ AValue AMemberByNum(AThread *t, AValue val, int member)
         } else
             node = node->next;
     }
-    
+
     if (node->item < A_VAR_METHOD)
         return inst->member[node->item];
     else {
         AValue funcVal;
         AValue ret;
-        
+
         /* Call getter method. */
         t->tempStack[1] = val;
         funcVal = AGlobalByNum(node->item & ~A_VAR_METHOD);
         ret = ACallValue(t, funcVal, 1, t->tempStack + 1);
-        
+
         return ret;
     }
 }
@@ -201,12 +201,12 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
     /* Is the type object an ordinary type (a normal class or an interface? */
     if (AIsNonSpecialType(typeVal)) {
         ATypeInfo *type = AValueToType(typeVal);
-        
+
         if (AIsTypeClass(typeVal)) {
             if (AIsInstance(val)) {
                 AInstance *inst = AValueToInstance(val);
                 ATypeInfo *instType = AGetInstanceType(inst);
-                
+
                 /* Class type inclusion checking. */
                 do {
                     if (instType == type)
@@ -228,7 +228,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
                 return A_IS_FALSE;
             else
                 instType = InternalType(val);
-            
+
             /* Interface type inclusion checking. */
             do {
                 int i;
@@ -254,7 +254,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
         if (AIsNonSpecialType(newTypeVal))
             return AIsOfType(val, newTypeVal);
     }
-    
+
     /* The type is either a special type (represented by a function) or an
        invalid type. */
 
@@ -277,7 +277,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
     else if (typeVal == AGlobalByNum(AStdTypeNum))
         return AIsNonSpecialType(val) || AIsSpecialType(val) ?
             A_IS_TRUE : A_IS_FALSE;
-    
+
     return A_IS_ERROR;
 }
 
@@ -345,15 +345,15 @@ AValue AIsEqual(AThread *t, AValue left, AValue right)
 
         if (!AGetInstanceType(AValueToInstance(left))->hasEqOverload)
             return BoolToIntValue(left == right);
-        
+
         if (!AAllocTempStack_M(t, 2))
             return AError;
-        
+
         t->tempStackPtr[-2] = left;
         t->tempStackPtr[-1] = right;
         res = ACallMethodByNum(t, AM_EQ, 1, t->tempStackPtr - 2);
         t->tempStackPtr -= 2;
-        
+
         return CheckBoolean(t, res);
     }
 
@@ -387,7 +387,7 @@ AValue AIsEqual(AThread *t, AValue left, AValue right)
 
         return AZero;
     }
-    
+
     if (AIsLongInt(left)) {
         if (AIsLongInt(right) && ACompareLongInt(left, right) == 0)
             return AIntToValue(1);
@@ -429,7 +429,7 @@ AValue AIsEqual(AThread *t, AValue left, AValue right)
 AValue IsRangeOrPairEqual(AThread *t, AValue v1, AValue v2)
 {
     AValue res;
-    
+
     if (!AAllocTempStack(t, 2))
         return AError;
 
@@ -458,7 +458,7 @@ AValue ACompareOrder(AThread *t, AValue left, AValue right,
 {
     if (AIsInstance(left)) {
         AValue res;
-        
+
         if (!AAllocTempStack_M(t, 2))
             return AError;
 
@@ -483,7 +483,7 @@ AValue ACompareOrder(AThread *t, AValue left, AValue right,
                     CheckBoolean(t, res) : CheckBooleanNot(t, res);
             }
         }
-        
+
         t->tempStackPtr -= 2;
         return res;
     }
@@ -493,7 +493,7 @@ AValue ACompareOrder(AThread *t, AValue left, AValue right,
 
     for (;;) {
         AValue temp;
-        
+
         if (AIsFloat(left) && AIsFloat(right)) {
             if (AValueToFloat(left) > AValueToFloat(right))
                 return BoolToIntValue(AGtSatisfiesOp(operator));
@@ -566,7 +566,7 @@ AValue ACoerce(AThread *t, AOperator op, AValue left, AValue right,
                AValue *rightRes)
 {
     /* IDEA: Could this code be made smaller? This is ugly. */
-    
+
     if (AIsFloat(left)) {
         if (AIsShortInt(right)) {
             *t->tempStack = left;
@@ -637,12 +637,12 @@ AValue AIsIn(AThread *t, AValue left, AValue right)
         res = ACallMethodByNum(t, AM_IN, 1, t->tempStackPtr - 2);
 
         t->tempStackPtr -= 2;
-        
+
         return CheckBoolean(t, res);
     } else if (AIsRange(right)) {
         if (!AIsInt(left))
             return AZero;
-        
+
         if (!AAllocTempStack_M(t, 3))
             return AError;
 
@@ -656,7 +656,7 @@ AValue AIsIn(AThread *t, AValue left, AValue right)
                                 t->tempStackPtr[-1], OPER_LT);
 
         t->tempStackPtr -= 3;
-        
+
         return res;
     } else if (AIsStr(right))
         return AIsInString(t, right, left);
@@ -673,7 +673,7 @@ int AGetInstanceMember(AInstance *inst, AMemberTableType memberType,
     ATypeInfo *type;
     AMemberHashTable *table;
     AMemberNode *node;
- 
+
     type = AGetInstanceType(inst);
     table = AGetMemberTable(type, memberType);
     node = &table->item[member & table->size];
@@ -728,7 +728,7 @@ AValue ACreateBoundMethod(AThread *t, AValue inst, int methodNum)
     method->data.boundMethod.method = AIntToValue(methodNum);
 
     *t->tempStack = AZero;
-   
+
     return AMixedObjectToValue(method);
 }
 

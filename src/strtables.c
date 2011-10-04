@@ -538,15 +538,15 @@ AWideChar AUpper2(AWideChar ch)
             int masked;
             int first;
             int last;
-            
+
             masked = ch & 63;
 
             first = AUpperLookupTable[ch >> 6];
             last = AUpperLookupTable[(ch >> 6) + 1];
-            
+
             for (j = first;
                  j < last && AUpperTable[j].end < masked; j++);
-            
+
             if (j < last && masked >= AUpperTable[j].beg
                 && (AUpperTable[j].delta != -1
                     || ((masked - AUpperTable[j].beg) & 1) == 0))
@@ -571,15 +571,15 @@ AWideChar ALower2(AWideChar ch)
             int masked;
             int first;
             int last;
-            
+
             masked = ch & 63;
-            
+
             first = ALowerLookupTable[ch >> 6];
             last  = ALowerLookupTable[(ch >> 6) + 1];
-            
+
             for (j = first;
                  j < last && ALowerTable[j].end < masked; j++);
-            
+
             if (j < last && masked >= ALowerTable[j].beg
                 && (ALowerTable[j].delta != 1
                     || ((masked - ALowerTable[j].beg) & 1) == 0))

@@ -26,11 +26,11 @@ class FullSuite is Suite
   const testParseRegressionsSuite = ParserRegressionsSuite()
   const testStrLiteralsSuite = StrLiteralsSuite()
   const testParseCastsSuite = ParseCastsSuite()
-  
+
   -- Code generation test cases
-  
+
   const testCodeGenRegressionsSuite = CodeGenRegressionsSuite()
-  
+
   -- Runtime test cases
 
   const testObjectSuite = ObjectSuite()
@@ -84,9 +84,9 @@ class FullSuite is Suite
   const testInit = InitSuite()
   const testInterfaces = InterfacesSuite()
   const testCasts = CastsSuite()
-  
+
   -- Library test cases
-  
+
   const testStdSuite = StdSuite()
   const testStdMapSuite = StdMapSuite()
   const testSetSuite = SetSuite()
@@ -118,13 +118,13 @@ class FullSuite is Suite
   const testHttpSuite = HttpSuite()
   const testMemoryStreamSuite = MemoryStreamSuite()
   const testFileUtilSuite = FileUtilSuite()
-  
+
   const testArgparseParse = ArgparseParseSuite()
   const testArgparseWrap = ArgparseWrapSuite()
   const testArgparseArguments = ArgparseArgumentsSuite()
   const testArgparseUsage = ArgparseUsageSuite()
   const testArgparseHelp = ArgparseHelpSuite()
-  
+
   -- Type checker test cases
   const testChecker = CheckerSuite()
 

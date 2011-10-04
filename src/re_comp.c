@@ -55,13 +55,13 @@ typedef struct {
     AReOpcode *buf;          /* Pointer to output buffer */
     int bufInd;
     int bufLen;
-    
+
     int numParen;           /* Number of subexpression in parentheses */
     int parenFlags;         /* Bitmap telling which subexprs are complete */
 
     unsigned minLen;        /* Minimum length of match */
     unsigned maxLen;        /* Maximum length of match */
-    
+
     int depth;
     int flags;
 
@@ -150,17 +150,17 @@ AValue ACompileRegExp(AThread *t, AValue str, int flags)
     if (!AIsWideStr(str)) {
         if (!AIsNarrowStr(str) && !AIsSubStr(str))
             return ARaiseTypeErrorND(t, NULL);
-            
+
         str = ANarrowStringToWide(t, str, &str);
         if (AIsError(str))
             return AError;
     }
 
     /* str is a wide string or a wide substring. */
-    
+
     info.t = t;
     info.isError = FALSE;
-    
+
     info.strVal = str;
     info.str = info.strBeg = NULL;
     SetStringPointers(&info);
@@ -177,7 +177,7 @@ AValue ACompileRegExp(AThread *t, AValue str, int flags)
     info.maxLen = 0;
     info.flags = flags;
     info.depth = 0;
-    
+
     memset(info.startChar, 0, sizeof(info.startChar));
 
     ParseExpr(&info);
@@ -187,7 +187,7 @@ AValue ACompileRegExp(AThread *t, AValue str, int flags)
 
     if (info.bufInd >= 32768)
         AGenerateError(&info, ErrInternalOverflow);
-    
+
     if (info.isError)
         return AError;
 
@@ -197,21 +197,21 @@ AValue ACompileRegExp(AThread *t, AValue str, int flags)
     re = AAlloc(t, sizeof(ARegExp));
     if (re == NULL)
         return AError;
-    
+
     AInitMixedBlock(&re->header1, sizeof(ARegExp), 2);
 
     info.buf = APtrAdd(AValueToPtr(t->tempStack[0]), sizeof(AValue));
-    
+
     re->code = t->tempStack[0];
     re->searchTable = AZero;
-    
+
     if (info.mustStr != 0) {
         flags |= A_ALRE_MUSTLITERAL;
 
         re->mustStringInd  = info.mustStr;
         re->mustStringLen  = info.buf[info.mustStr - 1];
         re->mustStringBack = info.mustStrBack;
-        
+
         if (info.buf[info.mustStr - 1] < 255) {
             if (info.mustStr == 2
                     && info.buf[re->mustStringLen + 2] == A_MATCH)
@@ -257,7 +257,7 @@ static void ParseExpr(ParseInfo *info)
         str = info->str;
         strEnd = info->strEnd;
         len = strEnd - str;
-        
+
         info->minLen = len;
 
         if (len > 0) {
@@ -313,7 +313,7 @@ static void ParseAlternatives(ParseInfo *info)
     oldBufInd = info->bufInd;
     oldMustStr = info->mustStr;
     oldMustStrBack = info->mustStrBack;
-    
+
     if (++info->depth >= A_MAX_NESTING_DEPTH) {
         AGenerateError(info, ErrInternalOverflow);
         return;
@@ -321,16 +321,16 @@ static void ParseAlternatives(ParseInfo *info)
 
     oldMinLen = info->minLen;
     oldMaxLen = info->maxLen;
-    
+
     /* Parse the first alternative. */
     ParseConcat(info);
-    
+
     /* Only single alternative? */
     if (info->str == info->strEnd || *info->str != '|') {
         info->depth--;
         return;
     }
-    
+
     /* Multiple alternatives */
 
     altMinLen = info->minLen;
@@ -353,7 +353,7 @@ static void ParseAlternatives(ParseInfo *info)
 
     info->mustStr = oldMustStr;
     info->mustStrBack = oldMustStrBack;
-    
+
     info->depth--;
 
     if (altMinLen < info->minLen)
@@ -373,7 +373,7 @@ static void ParseConcat(ParseInfo *info)
 
     litLen = 0;
     isPrevLit = FALSE;
-    
+
     while (info->str < info->strEnd) {
         if (!isPrevLit)
             litLen = 0;
@@ -433,7 +433,7 @@ static void ParseConcat(ParseInfo *info)
                 info->str++;
                 complement = TRUE;
             }
-            
+
             /* End of expression? */
             if (info->str == info->strEnd)
                 AGenerateError(info, ErrUnmatchedLbracket);
@@ -446,12 +446,12 @@ static void ParseConcat(ParseInfo *info)
 
                 if (info->str == info->strEnd)
                     break;
-                
+
                 if (code >= CC) {
                     int i;
                     const AReOpcode *chClass =
                         ACharClass[(code - CC) & ~CC_COMP];
-                    
+
                     for (i = 0; i < A_SET_SIZE; i++) {
                         if (code & CC_COMP)
                             set[i] |= ~chClass[i];
@@ -488,7 +488,7 @@ static void ParseConcat(ParseInfo *info)
                         }
 
                         AddToWideSet(info, &wset, ch, hiChar);
-                                     
+
                         for (; ch <= AMin(hiChar, 255); ch++)
                             AAddToSet(set, ch);
 
@@ -516,9 +516,9 @@ static void ParseConcat(ParseInfo *info)
             AddStartSet(info, set, complement);
             ParseSimpleRepetition(info, A_SET);
             EmitCharSet(info, set, &wset, complement, flags);
-            
+
             FreeWideSet(&wset);
-            
+
             break;
         }
 
@@ -545,21 +545,21 @@ static void ParseConcat(ParseInfo *info)
                     if (code == A_BACKREF || code == A_BACKREF_I) {
                         int num = ch & ~48;
                         int oldMaxLen = info->maxLen;
-                    
+
                         if (!(info->parenFlags & (1 << num)))
                             AGenerateError(info, ErrInvalidBackReference);
-                    
+
                         Emit(info, num);
 
                         info->maxLen *= 2;
-                        
+
                         ParseRepetition(info, info->minLen, oldMaxLen, 2,
                                         info->mustStr, info->mustStrBack);
                     }
                 } else {
                     AReOpcode set[A_SET_SIZE];
                     int flags = 0;
-                    
+
                     memcpy(set, ACharClass[(code  - CC) & ~CC_COMP], 32);
 
                     /* Underline character is part of the \w set. */
@@ -571,7 +571,7 @@ static void ParseConcat(ParseInfo *info)
 
                     if (code == CC_W || code == (CC_W | CC_COMP))
                         flags = A_WS_WORD_CHAR;
-                    
+
                     EmitCharSet(info, set, NULL, code & CC_COMP, flags);
                 }
 
@@ -613,7 +613,7 @@ static void ParseConcat(ParseInfo *info)
                     info->buf[info->bufInd - 1]  = 2;
                     Emit(info, prevCh);
                     Emit(info, ch);
-                    
+
                     if (info->mustStr == 0) {
                         info->mustStr = info->bufInd - litLen;
                         info->mustStrBack = info->maxLen - 2; /* FIX? */
@@ -622,12 +622,12 @@ static void ParseConcat(ParseInfo *info)
                     /* Add a character to a literal string. */
 
                     Emit(info, ch);
-                    
+
                     if (info->buf[info->mustStr - 1] <= litLen) {
                         info->mustStr = info->bufInd - litLen;
                         info->mustStrBack = info->maxLen - litLen; /* FIX? */
                     }
-                    
+
                     info->buf[info->bufInd - litLen - 1] = litLen;
                 } else {
                     Emit(info, code);
@@ -665,10 +665,10 @@ static void ParseParen(ParseInfo *info)
 
     /* Initialize only to satisfy stupid C compilers. */
     groupNum = 0;
-    
+
     /* Skip '('. */
     info->str++;
-    
+
     /* Check end of expression. */
     if (info->str == info->strEnd) {
         AGenerateError(info, ErrUnmatchedLparen);
@@ -688,7 +688,7 @@ static void ParseParen(ParseInfo *info)
 
     if (groupNum < 10)
         info->parenFlags |= 1 << groupNum;
-    
+
     /* Unexpected end of expression? */
     if (info->str == info->strEnd || *info->str != ')')
         AGenerateError(info, ErrUnmatchedLparen);
@@ -714,7 +714,7 @@ static void ParseRepetition(ParseInfo *info, int oldMinLen, int oldMaxLen,
         info->mustStr = oldMustStr;
         info->mustStrBack = oldMustStrBack;
     }
-    
+
     info->minLen = oldMinLen + min * (info->minLen - oldMinLen);
     if (opt < A_INFINITE_REPEAT)
         info->maxLen = oldMaxLen + (min + opt) * (info->maxLen - oldMinLen);
@@ -731,7 +731,7 @@ static void ParseRepetition(ParseInfo *info, int oldMinLen, int oldMaxLen,
            either RPAREN or BACKREF(_I). Convert it to the
            corresponding SKIP opcode. */
         info->buf[info->bufInd - 2]++;
-        
+
         EmitBranchAt(info, info->bufInd - size, A_BRANCH_AFTER - minimize,
                      info->bufInd + 2);
         EmitBranch(info, A_BRANCH_BEFORE + minimize, info->bufInd - size);
@@ -768,7 +768,7 @@ static void ParseSimpleRepetition(ParseInfo *info, AOpcode code)
         info->maxLen += min + opt;
     else
         info->maxLen = A_INFINITE_LENGTH;
-    
+
     return;
 }
 
@@ -781,9 +781,9 @@ static ABool ParseRepeatType(ParseInfo *info, unsigned *pMin, unsigned *pOpt)
     AWideChar ch;
 
     ch = info->str < info->strEnd ? *info->str : '\0';
-    
+
     info->str++;
-    
+
     switch (ch) {
     case '?':
         min = 0;
@@ -813,7 +813,7 @@ static ABool ParseRepeatType(ParseInfo *info, unsigned *pMin, unsigned *pOpt)
 
     *pMin = min;
     *pOpt = opt;
-    
+
     if (info->str < info->strEnd && *info->str == '?') {
         info->str++;
         return TRUE;
@@ -879,7 +879,7 @@ static void ParseRange(ParseInfo *info, unsigned *pMin, unsigned *pOpt)
 static int ParseChar(ParseInfo *info, AReOpcode *code)
 {
     unsigned char c;
-    
+
     *code = A_EMPTY;
 
     /* Assumption: info->bufInd < info->bufLen. */
@@ -904,78 +904,78 @@ static int ParseChar(ParseInfo *info, AReOpcode *code)
 
     if (c == 'x') {
         /* Hexadecimal ascii value? */
-        
+
         int digit1 = GetHexDigit(info);
         int digit2;
-        
+
         if (digit1 < 0)
             return 'x';
-        
+
         digit2 = GetHexDigit(info);
-        
+
         if (digit2 < 0)
             return digit1;
         else
             return digit1 * 16 + digit2;
     }
-    
+
     if (c >= 'a' && c <= 'z') {
         int conv = CharConv[c - 'a'];
         if (conv >= CC)
             *code = conv;
         return conv;
     }
-    
+
     if (c == '<') {
         *code = A_BOW;
         return '<';
     }
-    
+
     if (c == '>') {
         *code = A_EOW;
         return '>';
     }
-    
+
     if (c == 'D') {
         *code = CC + CC_COMP;
         return 0;
     }
-    
+
     if (c == 'S') {
         *code = CC + 1 + CC_COMP;
         return 0;
     }
-    
+
     if (c == 'W') {
         *code = CC + 2 + CC_COMP;
         return 0;
     }
-    
+
     if (ReIsDigit(c)) {
         /* Octal ascii value / back reference */
-        
+
         if (c != '0' && (c > '7' || info->str == info->strEnd
                 || !IsOctal(*info->str))) {
             /* Back reference */
-            
+
             *code = info->flags & A_RE_NOCASE ? A_BACKREF_I : A_BACKREF;
-            
+
             return c > '7' ? c : c - '0';
         } else {
             /* Octal value */
-            
+
             int number = c - '0';
-            
+
             if (info->str < info->strEnd && IsOctal(*info->str)) {
                 number = number * 8 + (*info->str++ - '0');
                 if (info->str < info->strEnd && IsOctal(*info->str))
                     number = number * 8 + (*info->str++ - '0');
             }
-            
+
             return number;
         }
     }
-    
+
     /* No special interpretion */
     return c;
 }
@@ -988,7 +988,7 @@ static int GetHexDigit(ParseInfo *info)
 {
     if (info->str == info->strEnd)
         return -1;
-    
+
     if (ReIsDigit(*info->str))
         return *info->str++ - '0';
 
@@ -1006,7 +1006,7 @@ static void Emit(ParseInfo *info, AReOpcode code)
         if (!GrowOutputBuffer(info))
             return;
     }
-    
+
     info->buf[info->bufInd++] = code;
 }
 
@@ -1018,7 +1018,7 @@ static void EmitCharSet(ParseInfo *info, AReOpcode *set, WideCharSet *wset,
     int len;
 
     len = A_SET_SIZE + 2 + WideSetLen(wset) * 2;
-    
+
     while (info->bufInd + len > info->bufLen) {
         if (!GrowOutputBuffer(info))
             return;
@@ -1036,7 +1036,7 @@ static void EmitCharSet(ParseInfo *info, AReOpcode *set, WideCharSet *wset,
 
     Emit(info, flags | ((info->flags & A_RE_NOCASE) ? A_WS_IGNORE_CASE : 0) |
          (complement ? A_WS_COMPLEMENT : 0));
-    
+
     for (i = 0; i < WideSetLen(wset); i++) {
         Emit(info, WideSetLo(wset, i));
         Emit(info, WideSetHi(wset, i));
@@ -1047,7 +1047,7 @@ static void EmitCharSet(ParseInfo *info, AReOpcode *set, WideCharSet *wset,
 static void AddStartSet(ParseInfo *info, AReOpcode *set, ABool complement)
 {
     int i;
-    
+
     if (info->minLen == 0)
         for (i = 0; i < A_SET_SIZE; i++)
             info->startChar[i] |= set[i] ^ (complement ? 0xffff : 0);
@@ -1060,14 +1060,14 @@ static void EmitBranchAt(ParseInfo *info, int pos, AOpcode code, int dest)
     int disp;
 
     disp = dest - pos - 1;
-    
+
     if (dest >= pos)
         disp += 2;
-    
+
     /* Get enough space for opcode. */
     if (!Insert(info, pos, 2))
         return;
-    
+
     info->buf[pos]     = code;
     info->buf[pos + 1] = disp;
 }
@@ -1081,13 +1081,13 @@ static ABool Insert(ParseInfo *info, int pos, int len)
 
     if (info->mustStr != 0 && info->mustStr > pos)
         info->mustStr += len;
-    
+
     info->bufInd += len;
     if (info->bufInd >= info->bufLen) {
         if (!GrowOutputBuffer(info))
             return FALSE;
     }
-    
+
     dest = pos + len;
     copyInd = info->bufInd - dest;
 
@@ -1107,7 +1107,7 @@ static void Copy(ParseInfo *info, int pos, int len)
         if (!GrowOutputBuffer(info))
             return;
     }
-    
+
     memmove(info->buf + info->bufInd, info->buf + pos,
             len * sizeof(AReOpcode));
     info->bufInd += len;
@@ -1139,14 +1139,14 @@ static ABool GrowOutputBuffer(ParseInfo *info)
     if (info->buf != NULL)
         info->t->tempStack[1] =
             ANonPointerBlockToValue(APtrSub(info->buf, sizeof(AValue)));
-    
+
     buf = AAlloc(info->t, sizeof(AValue) + len * sizeof(AReOpcode));
-    
+
     info->strVal = info->t->tempStack[0];
     if (info->buf != NULL)
         info->buf = APtrAdd(AValueToPtr(info->t->tempStack[1]),
                            sizeof(AValue));
-    
+
     if (buf == NULL) {
         AGenerateError(info, NULL);
         return FALSE;
@@ -1161,11 +1161,11 @@ static ABool GrowOutputBuffer(ParseInfo *info)
         memcpy(buf, info->buf, info->bufInd * sizeof(AReOpcode));
 
     info->buf = (AReOpcode *)buf;
-    
+
     SetStringPointers(info);
 
     info->bufLen = len;
-    
+
     return TRUE;
 }
 
@@ -1175,7 +1175,7 @@ static void SetStringPointers(ParseInfo *info)
     int ind;
 
     ind = info->str - info->strBeg;
-    
+
     if (AIsWideStr(info->strVal)) {
         info->strBeg = AGetWideStrElem(info->strVal);
         info->strEnd = info->strBeg + AStrLen(info->strVal);
@@ -1194,13 +1194,13 @@ static void AddToWideSet(ParseInfo *info, WideCharSet *set, AWideChar lo,
 {
     if (lo > hi || hi < 256)
         return;
-    
+
     if (set->length == set->maxLength) {
         /* Keep track of pointers that might by moved. */
         info->t->tempStack[0] = info->strVal;
         info->t->tempStack[1] =
             ANonPointerBlockToValue(APtrSub(info->buf, sizeof(AValue)));
-        
+
         if (set->length == 0) {
             set->data = AAllocStatic(16 * 2 * sizeof(AWideChar));
             set->maxLength = 16;

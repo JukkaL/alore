@@ -88,7 +88,7 @@
         L(OP_TRY),             \
         L(OP_TRY_END),         \
     };
-   
+
 
 #define A_BEGIN_INTERPRETER_LOOP goto *labels[*ip];
 #define A_BEGIN_INTERPRETER_LOOP_2

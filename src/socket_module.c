@@ -104,11 +104,11 @@ static AValue SocketCreate(AThread *t, AValue *frame)
         frame[1] = frame[3];
     else
         return ARaiseValueError(t, "Invalid arguments");
-    
+
     frame[2] = AGlobalByNum(AInputNum);
     frame[3] = AGlobalByNum(AOutputNum);
     frame[4] = AGlobalByNum(ANarrowNum);
-    
+
     if (AIsError(AStreamCreate(t, frame)))
         return AError;
 
@@ -116,7 +116,7 @@ static AValue SocketCreate(AThread *t, AValue *frame)
     memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
     address.sin_port = htons(port);
-    
+
     /* GetHostByName can handle both numeric IP addresses and host names. */
     if (!GetHostByName(t, addressStr, &address.sin_addr))
         return AError;
@@ -134,7 +134,7 @@ static AValue SocketCreate(AThread *t, AValue *frame)
         status = connect(handle, (struct sockaddr *)&address,
                          sizeof(address));
         AEndBlocking();
-        
+
         if (status < 0) {
             if (errno == EINTR) {
                 if (AIsInterrupt && AHandleInterrupt(t))
@@ -179,7 +179,7 @@ static AValue SocketClose(AThread *t, AValue *frame)
 
     for (i = 1; i <= 4; i++)
         ASetMemberDirect(t, frame[0], A_FILE_ID + i, ANil);
-    
+
     ret = AFileCloseWithMethod(t, frame, A_SOCKET_METHOD);
 
     ASetMemberDirect(t, frame[0], A_FILE_ID, AMakeInt(t, -1));
@@ -274,7 +274,7 @@ static AValue SocketGetInfo(AThread *t, AValue *frame)
         int handle;
 
         handle = AGetInt(t, AMemberDirect(frame[0], A_FILE_ID));
-        
+
         len = sizeof(address);
         if (getsockname(handle, (struct sockaddr *)&address, &len) < 0)
             return RaiseSocketError(t);
@@ -317,7 +317,7 @@ static int GetHErrno(void)
 static AValue RaiseGetHostByNameException(AThread *t, int code)
 {
     const char *message = NULL;
-    
+
 #ifndef A_HAVE_WINDOWS
     switch (code) {
     case HOST_NOT_FOUND:
@@ -336,7 +336,7 @@ static AValue RaiseGetHostByNameException(AThread *t, int code)
 #else
     message = AGetWinsockErrorMessage(code);
 #endif
-    
+
     return ARaiseByNum(t, NameErrorNum, message);
 }
 
@@ -377,10 +377,10 @@ static AValue SocketGetHostByAddress(AThread *t, AValue *frame)
 
     AAllowBlocking();
     LockGetHostByName();
-    
+
     host = gethostbyaddr((void *)&address, sizeof(address), AF_INET);
     AEndBlocking();
-    
+
     if (host == NULL) {
         int code = GetHErrno();
         UnlockGetHostByName();
@@ -396,10 +396,10 @@ static AValue SocketGetHostByAddress(AThread *t, AValue *frame)
     strcpy(buf, host->h_name);
 
     UnlockGetHostByName();
-    
+
     if (addrtype != AF_INET)
         return ARaiseIoError(t, "Invalid host type");
-    
+
     return AMakeStr(t, buf);
 }
 
@@ -411,7 +411,7 @@ static AValue SocketGetHostName(AThread *t, AValue *frame)
 
     if (gethostname(buf, sizeof(buf)) < 0)
         return RaiseSocketError(t);
-    
+
     return AMakeStr(t, buf);
 }
 
@@ -435,14 +435,14 @@ static ABool GetHostByName(AThread *t, const char *hostStr,
     /* Handle numeric IP addresses quickly as a special case. */
     if (inet_pton(AF_INET, hostStr, address) > 0)
         return TRUE;
-    
+
     AAllowBlocking();
     LockGetHostByName();
-    
+
     host = gethostbyname(hostStr);
-    
+
     AEndBlocking();
-    
+
     if (host == NULL) {
         int code = GetHErrno();
         UnlockGetHostByName();

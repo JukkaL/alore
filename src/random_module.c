@@ -33,12 +33,12 @@ static AValue Random(AThread *t, AValue *frame)
 {
     int value;
     int max;
-    
+
     /* FIX: Make this work with long integers. */
     max = AGetInt(t, frame[0]);
     if (max <= 0)
         return ARaiseValueError(t, "Positive argument expected");
-    
+
     value = (unsigned int)((double)max * rand() / RAND_DIVISOR);
     return AMakeInt(t, value);
 }
@@ -54,7 +54,7 @@ static AValue RandomFloat(AThread *t, AValue *frame)
 static AValue RandomSeed(AThread *t, AValue *frame)
 {
     unsigned int seed;
-    
+
     if (AIsDefault(frame[0])) {
 #ifdef HAVE_GETTIMEOFDAY
         struct timeval t;
@@ -70,7 +70,7 @@ static AValue RandomSeed(AThread *t, AValue *frame)
         seed = AGetInt(t, frame[0]);
 
     srand(seed);
-    
+
     return ANil;
 }
 

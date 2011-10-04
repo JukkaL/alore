@@ -187,11 +187,11 @@ static void DetermineInterpreterPath(ABool isStandalone,
 int AEndAloreProgram(AThread *t, AValue val)
 {
     /* IDEA: Check what happens if en exception is raised here. */
-    
+
     int returnValue = 0;
 
     ADebugVerifyMemory();
-    
+
     if (t->contextIndex != 0) {
         char buf[200];
         sprintf(buf, "Internal error: contextIndex == %d at program exit",
@@ -204,7 +204,7 @@ int AEndAloreProgram(AThread *t, AValue val)
         ADefDisplay("alore: Uncaught exception at program exit", NULL);
         return UNCAUGHT_EXCEPTION_STATUS;
     }
-    
+
     if (AIsError(val)) {
         if (AIsOfType(t->exception,
                       AGlobalByNum(AErrorClassNum[EX_EXIT_EXCEPTION]))
@@ -229,16 +229,16 @@ int AEndAloreProgram(AThread *t, AValue val)
             returnValue = UNCAUGHT_EXCEPTION_STATUS;
         }
     }
-    
+
     if (AIsError(val))
         ADisplayStackTraceback(t, ADefDisplay, NULL);
-    
+
     if (!AExecuteExitHandlers(t))
         ADefDisplay("alore: Uncaught exception raised by an exit handler",
                     NULL);
-    
+
     AEndTry(t);
-    
+
     return returnValue;
 }
 
@@ -261,7 +261,7 @@ static ABool MakeAbsolutePath(char *path, const char *src)
         else
             strcat(path, src);
     }
-    
+
     return TRUE;
 }
 
@@ -276,11 +276,11 @@ static ABool FindProgram(char *path, const char *src)
 
     if (strlen(src) >= A_MAX_PATH_LEN)
         return FALSE;
-    
+
     strcpy(path, "");
 
     for (i = 0; src[i] != '\0' && !A_IS_DIR_SEPARATOR(src[i]); i++);
-    
+
     if (src[i] == '\0') {
         /* No path is given; we assume that we can find the interpreter
            directory using the PATH environment variable. */
@@ -291,7 +291,7 @@ static ABool FindProgram(char *path, const char *src)
 
         if (env == NULL)
             return TRUE;
-        
+
         do {
             s = strchr(env, A_PATH_SEPARATOR);
             i = s == NULL ? strlen(env) : s - env;
@@ -302,18 +302,18 @@ static ABool FindProgram(char *path, const char *src)
             env = s + 1;
             if (!AJoinPath(fp, comp, src))
                 return FALSE;
-                
+
             /* Concatenate executable extension to path (.exe in Windows). */
             if (strlen(fp) + strlen(A_EXECUTABLE_EXT) >= A_MAX_PATH_LEN)
                 return FALSE;
             strcat(fp, A_EXECUTABLE_EXT);
-            
+
             if (AIsFile(fp)) {
                 strcpy(path, fp);
                 return TRUE;
             }
         } while (s != NULL);
-        
+
         return TRUE;
     }
 
@@ -332,7 +332,7 @@ static ABool GetRealInterpreterDir(char *path, const char *src)
 
     if (!FindProgram(path, src))
         return FALSE;
-    
+
     /* Remove the last component from the path (the program name). */
     i = strlen(path);
     while (i > 0 && !A_IS_DIR_SEPARATOR(path[i - 1]))
@@ -370,7 +370,7 @@ static ABool GetInterpreterLibPath(char *path, const char *interpreter)
     if (APathEndsWith(path, "/") && strlen(path) > 1 &&
         (path[1] != ':' || strlen(path) > 3))
         path[strlen(path) - 1] = '\0';
-    
+
     if (APathEndsWith(path, "/src")) {
         path[strlen(path) - 3] = '\0';
         strcat(path, "lib");
@@ -379,7 +379,7 @@ static ABool GetInterpreterLibPath(char *path, const char *interpreter)
             strcpy(path, "");
     }
 #endif
-    
+
     return TRUE;
 }
 
@@ -438,19 +438,19 @@ ABool AInitializeCompiler(AThread **t, const char *additModuleSearchPath,
     ACompilerThread = *t;
 
     AInitializeCAlloc();
-    
+
     AInitializeLexicalAnalyzer();
 
     AInitializeExitHandlers();
 
     AIsDynamicCompile = FALSE;
     AIsStandaloneFlag = isStandalone;
-    
+
     AInitFunctions = NULL;
-    
+
     if (!AInitializeDefaultModuleSearchPath(searchPath))
         return FALSE;
-    
+
     if (!AInitializeGlobals())
         goto Fail;
 
@@ -497,7 +497,7 @@ ABool AInitializeCompiler(AThread **t, const char *additModuleSearchPath,
   Fail:
 
     ADeinitializeGarbageCollector();
-    
+
     return FALSE;
 }
 
@@ -530,7 +530,7 @@ void AGetDefaultFileInterface(AFileInterface *fileIface)
 void ADeinitializeCompiler(void)
 {
     /* FIX: stop all threads?? */
-    
+
     ADeinitializeGarbageCollector();
 }
 
@@ -583,7 +583,7 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
         AInitFunctions = NULL; /* FIX: why this?? */
 
     ADebugCompilerMsg(("Begin initialize"));
-    
+
     /* Initialize bytecode output. */
     if (!AInitializeOutput()) {
         AGenerateOutOfMemoryError();
@@ -609,11 +609,11 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
     ACurMainModule->info.module.isActive = FALSE;
     ACurMainModule->info.module.isImported = FALSE;
     ACurMainModule->info.module.cModule = A_CM_NON_C;
-    
+
     file = ACAlloc(sizeof(AFileList));
     if (file == NULL)
         goto NoMemory;
-    
+
     if (!AFileIface.initCompilation(path, moduleSearchPath,
                                     AFileIface.param)) {
         ACFree(file, sizeof(AFileList));
@@ -629,7 +629,7 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
         AFileIface.deinitCompilation(AFileIface.param);
         goto NoMemory;
     }
-    
+
     mainModule.numParts = 0;
 
     ADebugCompilerMsg(("Begin compile"));
@@ -641,11 +641,11 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
            major errors, since otherwise this may cause erratic behaviour. */
         ADebugCompilerMsg(("Fix superclasses"));
         AFixSupertypes();
-        
+
         AEnterSection();
-    
+
         ANumLocals = 4;
-    
+
         /* Emit calls for all the module Main functions. */
         for (node = AInitFunctions;
              node != NULL; node = ARemoveIntList(node)) {
@@ -663,7 +663,7 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
         }
 
         AEmitOpcode(OP_HALT);
-        
+
         if (!ASetConstGlobalValue(ACompilerThread, *global,
                                   ALeaveSection(NULL, 0, 0, 0)))
             result = FALSE;
@@ -681,15 +681,15 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
            compiler run. */
         if (!result || AFirstError != NULL)
             AFreeDynamicModules();
-        
+
         ADeinitializeDynamicModuleCompilation();
     } else
         ARecordNumMainGlobals();
 
     AFreeStatic(AAccessedExposedVariables);
-    
+
     ADebugVerifyMemory();
-    
+
     /* Only the first compilation is not dynamic. */
     AIsDynamicCompile = TRUE;
 
@@ -701,7 +701,7 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
 
     /* Handle out of memory error condition encountered before starting actual
        compilation. */
-    
+
     AGenerateOutOfMemoryError();
 
     if (ACurMainModule != NULL)
@@ -759,7 +759,7 @@ ABool ACompileFiles(AFileList *file, AModuleId *module, int *globalPtr)
     for (fileIter = file; fileIter != NULL; fileIter = fileIter->next) {
         AActiveFiles[ANumActiveFiles] = fileIter->path;
         ANumActiveFiles++;
-        
+
         if (!CompileImportedModules(fileIter->tok)) {
             ADebugCompilerMsg(("Failure compiling imports"));
             result = FALSE;
@@ -771,7 +771,7 @@ ABool ACompileFiles(AFileList *file, AModuleId *module, int *globalPtr)
     }
 
     ADebugCompilerMsg(("Begin parse"));
-    
+
     ABeginNewModule(module);
 
     if (AIsDynamicCompile)
@@ -782,7 +782,7 @@ ABool ACompileFiles(AFileList *file, AModuleId *module, int *globalPtr)
     /* Compile all the files to bytecode. */
     for (fileIter = file; fileIter != NULL; fileIter = fileIter->next) {
         ACurFileNum = AAddNewFile(fileIter->path);
-        
+
 #ifdef HAVE_JIT_COMPILER
         AIsJitModule = AIsJitModuleId(module);
 #endif
@@ -799,19 +799,19 @@ ABool ACompileFiles(AFileList *file, AModuleId *module, int *globalPtr)
         AInitFunctions = AAddIntListEnd(AInitFunctions, AMainFunctionNum);
 
     /* FIX: what if parse unsuccessful? */
-    
+
     result = AEndModule();
 
     if (AIsDynamicCompile)
         result &= AEndDynamicModuleCompilation(firstVar, firstConst);
-    
+
   Leave:
 
     for (fileIter = file; fileIter != NULL; fileIter = fileIter->next)
         AFreeTokens(fileIter->tok);
-    
+
     AFreeFileList(file);
-    
+
     return result;
 }
 
@@ -840,7 +840,7 @@ ABool ACompileModule(AModuleId *module)
                            ErrModuleCouldNotBeImported, module);
             return FALSE;
         }
-        
+
         return TRUE;
     } else
 #endif
@@ -864,7 +864,7 @@ static ABool InitializeInput(void)
 {
     InputBufferLength = INITIAL_INPUT_BUFFER_LENGTH;
     InputBlockLength = INITIAL_INPUT_BLOCK_LENGTH;
-    
+
     InputBuffer = AAllocStatic(InputBufferLength);
 
     return InputBuffer != NULL;
@@ -883,7 +883,7 @@ static ABool ReadFile(char *path, AToken **tokPtr)
     void *file;
     AToken *tok;
     AEncoding encoding;
-    
+
     /* Number of characters left in buffer from previous block */
     Assize_t bufIndex;
 
@@ -956,7 +956,7 @@ static ABool ReadFile(char *path, AToken **tokPtr)
            list is empty. */
         if (numRead == 0 && ptr <= InputBuffer + 1 && *tokPtr != NULL)
             break;
-        
+
         if (!ATokenize(InputBuffer, ptr, tokPtr, &tok, &encoding)) {
             /* The caller will have to free the tokens. */
             AGenerateOutOfMemoryError();
@@ -982,7 +982,7 @@ static ABool ReadFile(char *path, AToken **tokPtr)
   Fail:
 
     AFileIface.closeFile(file, AFileIface.param);
-    
+
     return FALSE;
 }
 
@@ -993,10 +993,10 @@ static ABool CompileImportedModules(AToken *tok)
 {
     if (tok->type == TT_BOM)
         tok = AAdvanceTok(tok);
-    
+
     if (tok->type == TT_NEWLINE)
         tok = AAdvanceTok(tok);
-    
+
     /* Skip module headers and encoding declarations. */
     while (tok->type == TT_MODULE || tok->type == TT_ENCODING) {
         while (tok->type != TT_NEWLINE)
@@ -1033,9 +1033,9 @@ static ABool AddFile(AFileList **files, char *path)
         AFreeFileList(*files);
         return FALSE;
     }
-    
+
     strcpy(newPath, path);
-    
+
     file->path = newPath;
     file->next = *files;
     *files = file;
@@ -1053,7 +1053,7 @@ AValue ACreateConstant(ASymbolInfo *sym)
 
     AInitNonPointerBlockOld(&c->header, sizeof(AConstant) - sizeof(AValue));
     c->sym = sym;
-    
+
     return AConstantToValue(c);
 }
 

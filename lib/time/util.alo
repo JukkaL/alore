@@ -38,18 +38,18 @@ private def ParseAmPm(s as Str, i as Int) as (Str, Str, Int)
   while slash < s.length() and s[slash] != "/"
     slash += 1
   end
-  
+
   var close = slash
   while close < s.length() and s[close] != "]"
     close += 1
   end
-  
+
   var am = s[i + 1:slash]
   var pm = s[slash + 1:close]
-  
+
   if close >= s.length() or am == pm or am == "" or pm == ""
     raise ValueError("Invalid format ({})".format(s))
   end
-  
+
   return am, pm, close + 1
 end

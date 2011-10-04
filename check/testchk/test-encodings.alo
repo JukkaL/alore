@@ -35,7 +35,7 @@ class EncodingTestCase is TestCase
     super.create(FileBase(fnam))
     self.fnam = fnam
   end
-  
+
   -- Perform the test case. Parse the file and verify that the output matches
   -- the test case output file (.out extension).
   def run()

@@ -96,7 +96,7 @@ ABool AInitializeThreads(void)
 {
     if (athread_init())
         return FALSE;
-    
+
     if (athread_mutex_init(&AHeapMutex, NULL)
         || athread_mutex_init(&AThreadMutex, NULL)
         || athread_mutex_init(&AStreamMutex, NULL)
@@ -108,7 +108,7 @@ ABool AInitializeThreads(void)
         || athread_cond_init(&ArgBufRemoveCond, NULL)
         || athread_cond_init(&ArgBufInsertCond, NULL))
         return FALSE;
-    
+
     ArgBufFirst = 0;
     ArgBufLast = 0;
 
@@ -134,17 +134,17 @@ AValue AThreadCreate(AThread *t, AValue *frame)
 
     /* Call the thread function always with no arguments. */
     frame[2] = AMakeArray(t, 0);
-    
+
     threadData = AAllocUnmovable(sizeof(AValue) + THREAD_DATA_SIZE);
     if (threadData == NULL)
         return ARaiseMemoryErrorND(t);
 
     AInitNonPointerBlockOld(threadData, THREAD_DATA_SIZE);
-    
+
     *t->tempStack = ANonPointerBlockToValue(threadData);
     ASetMemberDirect(t, frame[0], A_THREAD_DATA, *t->tempStack);
     threadData = AValueToPtr(*t->tempStack);
-    
+
     if (athread_mutex_init(GetThreadMutex(threadData), NULL)
         || athread_cond_init(GetThreadCond(threadData), NULL))
         return ARaiseMemoryErrorND(t);
@@ -157,11 +157,11 @@ AValue AThreadCreate(AThread *t, AValue *frame)
         AAvoidWarning_M(newThread = NULL);
     } else {
         athread_mutex_unlock(&AThreadMutex);
-        
+
         newThread = ACreateThread(frame + 3);
         if (newThread == NULL)
             return ARaiseMemoryErrorND(t);
-        
+
         isWaiting = FALSE;
 
         athread_mutex_lock(&AThreadMutex);
@@ -182,7 +182,7 @@ AValue AThreadCreate(AThread *t, AValue *frame)
     ArgBufLast = NextInd(ArgBufLast);
 
     athread_mutex_unlock(&AThreadMutex);
-    
+
     if (isWaiting)
         athread_cond_signal(&ArgBufInsertCond);
     else {
@@ -208,7 +208,7 @@ AValue AThreadFinalize(AThread *t, AValue *frame)
         athread_mutex_destroy(GetThreadMutex(threadData));
         athread_cond_destroy(GetThreadCond(threadData));
     }
-    
+
     return AZero;
 }
 
@@ -229,14 +229,14 @@ static void *BeginNewThread(void *voidThread)
     t = voidThread;
 
     athread_mutex_lock(&AThreadMutex);
-    
+
     ADebugStatusMsg(("New os thread (%ld)\n", (long)t));
 
     /* Each physical thread loops forever and waits for new arguments that
        signal the creation of a new Alore (logical) thread. */
     for (;;) {
         ABool broadcast;
-        
+
         /* FIX: perhaps gotta wake up something at some place.. no? */
 
         /* Wait until we are given some arguments that indicate that we should
@@ -249,7 +249,7 @@ static void *BeginNewThread(void *voidThread)
         /* From this point on, this thread is active. Keep track of the number
            of active threads. */
         ANumThreads++;
-        
+
         /* Initially all the threads could be frozen. Make sure that the
            thread is not frozen after we start the execution of the thread,
            since otherwise the garbage collector might be active. */
@@ -262,7 +262,7 @@ static void *BeginNewThread(void *voidThread)
             ANumThreads--;
             continue;
         }
-    
+
         ADebugStatusMsg(("Alore thread started (%ld)\n", (long)t));
 
         /* Construct a dummy stack frame at the bottom of the thread stack that
@@ -333,7 +333,7 @@ static void *BeginNewThread(void *voidThread)
         }
 
         t->stackPtr = stack + 7;
-        
+
         athread_mutex_lock(&AThreadMutex);
 
         NumWaitingThreads++;
@@ -341,9 +341,9 @@ static void *BeginNewThread(void *voidThread)
 
         if (AIsFreeze && NumFreezableThreads == ANumThreads - 1)
             athread_cond_signal(&AllFrozenCond);
-        
+
         ADebugStatusMsg(("Alore thread ended   (%ld)\n", (long)t));
-        
+
         athread_mutex_unlock(mutex);
 
         if (broadcast)
@@ -427,10 +427,10 @@ static void PerformFreeze(void)
         AEndBlocking();
         athread_mutex_lock(&AThreadMutex);
     }
-    
+
     AIsInterrupt = TRUE;
     AIsFreeze = TRUE;
-    
+
     /* Wait until everybody can be frozen. */
     while (NumFreezableThreads < ANumThreads - 1)
         athread_cond_wait(&AllFrozenCond, &AThreadMutex);
@@ -449,7 +449,7 @@ void AWakeOtherThreads(void)
 
         AIsInterrupt = AIsKeyboardInterrupt;
         AIsFreeze = FALSE;
-        
+
         athread_mutex_unlock(&AThreadMutex);
         athread_cond_broadcast(&WakeUpCond);
     } else
@@ -467,7 +467,7 @@ void AWakeOtherThreadsSilently(void)
     if (FreezeDepth == 0) {
         AIsInterrupt = AIsKeyboardInterrupt;
         AIsFreeze = FALSE;
-        
+
         athread_mutex_unlock(&AThreadMutex);
         athread_cond_broadcast(&WakeUpCond);
     } else
@@ -534,10 +534,10 @@ AValue AMutexCreate(AThread *t, AValue *frame)
         return ARaiseMemoryErrorND(t);
 
     AInitNonPointerBlock(mutex, sizeof(athread_mutex_t));
-    
+
     *t->tempStack = AStrToValue(mutex);
     ASetMemberDirect(t, frame[0], 1, *t->tempStack);
-    
+
     if (athread_mutex_init(APtrAdd(AValueToPtr(*t->tempStack), sizeof(AValue)),
                            NULL))
         return ARaiseMemoryErrorND(t);
@@ -563,10 +563,10 @@ AValue AConditionCreate(AThread *t, AValue *frame)
         return ARaiseMemoryErrorND(t);
 
     AInitNonPointerBlock(cond, sizeof(athread_cond_t));
-    
+
     *t->tempStack = AStrToValue(cond);
     ASetMemberDirect(t, frame[0], 1, *t->tempStack);
-    
+
     if (athread_cond_init(APtrAdd(AValueToPtr(*t->tempStack), sizeof(AValue)),
                           NULL))
         return ARaiseMemoryErrorND(t);
@@ -592,13 +592,13 @@ AValue AThreadJoin(AThread *t, AValue *frame)
     ABool isLocked;
 
     isLocked = FALSE;
-    
+
     /* Wait until the thread has finished execution. */
     for (;;) {
         inst = AValueToInstance(frame[0]);
         if (inst->member[A_THREAD_DATA] == ANil)
             return ARaiseValueErrorND(t, NULL); /* FIX: msg? */
-        
+
         threadData = AValueToPtr(inst->member[A_THREAD_DATA]);
         mutex = GetThreadMutex(threadData);
         cond = GetThreadCond(threadData);
@@ -607,7 +607,7 @@ AValue AThreadJoin(AThread *t, AValue *frame)
             athread_mutex_lock(mutex);
             isLocked = TRUE;
         }
-        
+
         if (inst->member[A_THREAD_STATE] != ANil
             && inst->member[A_THREAD_STATE] != AZero)
             break;
@@ -619,7 +619,7 @@ AValue AThreadJoin(AThread *t, AValue *frame)
     }
 
     athread_mutex_unlock(mutex);
-    
+
     /* If there was an exception, raise it. Otherwise, return the thread
        return value or no return value. */
     if (inst->member[A_THREAD_STATE] == AIntToValue(2)) {
@@ -646,7 +646,7 @@ AValue AMutexLock(AThread *t, AValue *frame)
         athread_mutex_lock(GetMutexData(frame[0]));
         AEndBlocking();
     }
-    
+
     return ANil;
 }
 
@@ -662,12 +662,12 @@ AValue AConditionWait(AThread *t, AValue *frame)
 {
     if (AIsOfType(frame[1], AGlobalByNum(AThreadMutexNum)) != A_IS_TRUE)
         return ARaiseTypeErrorND(t, NULL);
-    
+
     AAllowBlocking();
     athread_cond_wait(GetConditionData(frame[0]),
                       GetMutexData(frame[1]));
     AEndBlocking();
-    
+
     return ANil;
 }
 
@@ -698,13 +698,13 @@ ABool AHandleInterrupt(AThread *t)
 
         if (NumFreezableThreads == ANumThreads - 1)
             athread_cond_signal(&AllFrozenCond);
-        
+
         while (AIsFreeze)
             athread_cond_wait(&WakeUpCond, &AThreadMutex);
-        
+
         NumFreezableThreads--;
     }
-    
+
     athread_mutex_unlock(&AThreadMutex);
 
     /* Check if we should raise an InterruptException. It is only raised in the

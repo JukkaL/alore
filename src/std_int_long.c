@@ -23,7 +23,7 @@
    objects which could be represented as short ints or objects with 0 digits
    as most significant digits). User code should never see these; high-level
    functions will normalize these into short integers.
-   
+
    The comments do not always indicate whether the result is non-normalized. */
 
 /* These functions do not raise direct exceptions, unless explicitly mentioned
@@ -84,13 +84,13 @@ AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
         AAlloc_M(t, AGetBlockSize(Size(1)), li, result);
         if (!result)
             return ARaiseMemoryErrorND(t);
-        
+
         if (intVal < 0) {
             AInitLongIntBlock(li, 1, TRUE);
             intVal = -intVal;
         } else
             AInitLongIntBlock(li, 1, FALSE);
-        
+
         li->digit[0] = intVal;
     } else {
         li = AAlloc(t, AGetBlockSize(Size(2)));
@@ -133,23 +133,23 @@ AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
             sign = TRUE;
         } else
             sign = FALSE;
-        
+
         if (intVal > MASK)
             len = 2;
         else
             len = 1;
-        
+
         AAlloc_M(t, AGetBlockSize(Size(len)), li, result);
         if (!result)
             return ARaiseMemoryErrorND(t);
-        
+
         AInitLongIntBlock(li, len, sign);
-        
+
         li->digit[0] = intVal & MASK;
         if (len > 1)
             li->digit[1] = intVal >> BITS;
     }
-    
+
     return ALongIntToValue(li);
 }
 
@@ -223,7 +223,7 @@ AValue AMultiplyLongInt(AThread *t, AValue aVal, AValue bVal)
 
     a = AValueToLongInt(aVal);
     b = AValueToLongInt(bVal);
-    
+
     lenA = Len(a);
     lenB = Len(b);
     lenD = lenA + lenB;
@@ -234,10 +234,10 @@ AValue AMultiplyLongInt(AThread *t, AValue aVal, AValue bVal)
 
     for (i = 0; i < lenB; i++)
         d->digit[i] = 0;
-    
+
     for (i = 0; i < lenA; i++) {
         ALongIntDoubleDigit carry;
-        
+
         carry = 0;
         for (j = 0; j < lenB; j++) {
             carry += d->digit[i + j] +
@@ -245,7 +245,7 @@ AValue AMultiplyLongInt(AThread *t, AValue aVal, AValue bVal)
             d->digit[i + j] = carry & A_LONGINT_DIGIT_MASK;
             carry >>= A_LONG_INT_DIGIT_BITS;
         }
-        
+
         d->digit[i + j] = carry;
     }
 
@@ -258,10 +258,10 @@ AValue AAddLongInt(AThread *t, AValue aVal, AValue bVal)
 {
     ALongInt *a;
     ALongInt *b;
-    
+
     a = AValueToLongInt(aVal);
     b = AValueToLongInt(bVal);
-    
+
     if (Sign(a) == Sign(b))
         return AddAbsolute(t, a, b, TRUE);
     else
@@ -277,7 +277,7 @@ AValue ASubLongInt(AThread *t, AValue aVal, AValue bVal)
 
     a = AValueToLongInt(aVal);
     b = AValueToLongInt(bVal);
-    
+
     if (Sign(a) == Sign(b))
         return SubAbsolute(t, a, b, TRUE);
     else
@@ -363,16 +363,16 @@ static AValue SubAbsolute(AThread *t, ALongInt *a, ALongInt *b,
         lenA = lenB;
         b = tmpInt;
         lenB = tmpLen;
-        
+
         sign = !sign;
     } else if (lenA == lenB) {
         for (i = lenA - 1; i >= 0 && a->digit[i] == b->digit[i]; i--);
-        
+
         if (i >= 0 && a->digit[i] < b->digit[i]) {
             ALongInt *tmpInt = a;
             a = b;
             b = tmpInt;
-            
+
             sign = !sign;
         }
     }
@@ -433,7 +433,7 @@ AValue ANegateLongInt(AThread *t, AValue aVal)
     /* FIX: use block copy? */
     for (i = 0; i < lenA; i++)
         d->digit[i] = a->digit[i];
-    
+
     if (!Sign(a))
         SetSign(d);
 
@@ -493,7 +493,7 @@ static AValue AddAbsoluteSingle(AThread *t, ALongInt *a, unsigned add)
         Digit res = carry + a->digit[i];
 
         d->digit[i] = res;
-        
+
         if (res >= a->digit[i]) {
             i++;
             carry = 0;
@@ -593,7 +593,7 @@ ALongInt *AMulAddSingle(AThread *t, ALongInt *a, unsigned mul, unsigned add)
 
     lenA = Len(a);
     lenD = lenA + 1;
-        
+
     d = CreateLongInt(t, lenD, &a, NULL);
     if (d == NULL)
         return NULL;
@@ -621,7 +621,7 @@ static void Shl(ALongInt *src, ALongInt *dst, unsigned long shift)
     unsigned long dstLen;
     unsigned long carry;
     long i;
-    
+
     wordShift = shift / BITS;
     bitShift = shift & (BITS - 1);
 
@@ -705,16 +705,16 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
     /* Keeping everything available for the garbage collector is a pain. */
     if (!AAllocTempStack(t, 2))
         return AError;
-    
+
     t->tempStackPtr[-2] = oldAVal;
     t->tempStackPtr[-1] = oldBVal;
-    
+
     oldA = AValueToLongInt(oldAVal);
     oldB = AValueToLongInt(oldBVal);
-    
+
     signOldA = Sign(oldA);
     signOldB = Sign(oldB);
-    
+
     lenB = Len(oldB);
 
     /* Calculate how many bits the B value need to be shifted left so that
@@ -730,7 +730,7 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
 
         oldA = AValueToLongInt(t->tempStackPtr[-2]);
         t->tempStackPtr[-2] = tmp;
-        
+
         oldAVal = AddAbsolute(t, oldA, AValueToLongInt(tmp), FALSE);
         if (AIsError(oldAVal))
             goto OutOfMemory;;
@@ -741,17 +741,17 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
 
     /* Shift both operands left so that the divisor has 1 as the msb of the
        most significant digit. */
-    
+
     a = CreateLongInt(t, Len(oldA) + 1, &oldA, &oldB);
     if (a == NULL)
         goto OutOfMemory;
-    
+
     Shl(oldA, a, shift);
-    
+
     b = CreateLongInt(t, lenB, &a, &oldB);
     if (b == NULL)
         goto OutOfMemory;
-    
+
     Shl(oldB, b, shift);
 
     lenA = Len(a);
@@ -765,7 +765,7 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
         unsigned long aHi;
         unsigned long q;
         DoubleDigit carry;
-        
+
         aHi = (aInd < lenA ? a->digit[aInd] : 0);
 
         /* Get an estimate for the next digit (as q). */
@@ -806,7 +806,7 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
             d->digit[dInd] = q;
         else {
             d->digit[dInd] = q - 1;
-            
+
             carry = 0;
             for (i = 0; i < lenB; i++) {
                 carry += (ALongIntDoubleDigit)a->digit[i + dInd] + b->digit[i];
@@ -826,7 +826,7 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
     if (signOldA ^ signOldB) {
         /* Tweak the remainder if the operands had different signs. */
         AValue tmp;
-        
+
         a = TruncateZeroDigits(t, a, 0);
         if (a == NULL)
             goto OutOfMemory;
@@ -837,18 +837,18 @@ AValue ADivModLongInt(AThread *t, AValue oldAVal, AValue oldBVal,
 
         a = AValueToLongInt(tmp);
     }
-    
+
     *mod = ANormalize(t, a, signOldB);
 
     d = AValueToLongInt(t->tempStackPtr[-1]);
     t->tempStackPtr -= 2;
-    
+
     return ANormalize(t, d, signOldA ^ signOldB);
 
   OutOfMemory:
-    
+
     t->tempStackPtr -= 2;
-    
+
     return ARaiseMemoryErrorND(t);
 }
 
@@ -873,10 +873,10 @@ ALongInt *CreateLongInt(AThread *t, long len, ALongInt **a, ALongInt **b)
         *a = AValueToLongInt(t->tempStack[0]);
         if (b != NULL)
             *b = AValueToLongInt(t->tempStack[1]);
-        
+
         t->tempStack[0] = AZero;
         t->tempStack[1] = AZero;
-        
+
         if (li == NULL)
             return NULL;
     } else {
@@ -896,14 +896,14 @@ ALongInt *CreateLongInt(AThread *t, long len, ALongInt **a, ALongInt **b)
 static ALongInt *TruncateZeroDigits(AThread *t, ALongInt *li, ABool isNeg)
 {
     long len = AGetLongIntLen(li);
-    
+
     if (li->digit[len - 1] == 0) {
         long oldSize;
         long newSize;
         ABool isNewGen;
 
         oldSize = AGetBlockSize(AGetLongIntSize(len));
-        
+
         do {
             len--;
         } while (len > 1 && li->digit[len - 1] == 0);
@@ -955,9 +955,9 @@ AValue ANormalize(AThread *t, ALongInt *li, ABool isNeg)
     li = TruncateZeroDigits(t, li, isNeg);
     if (li == NULL)
         return ARaiseMemoryError(t);
-    
+
     len = AGetLongIntLen(li);
-    
+
     if (len <= DIGITS_IN_INT) {
 #if DIGITS_IN_INT == 1
         if (isNeg) {
@@ -995,10 +995,10 @@ AValue AMultiplyShortInt(AThread *t, AValue left, AValue right)
 {
     AValue prod;
     ABool isNeg;
-    
+
     if (AHi(left) != 0 || AHi(right) != 0) {
         isNeg = FALSE;
-        
+
         if ((ASignedValue)left < 0) {
             left = -left;
             if ((ASignedValue)left < 0) {
@@ -1009,7 +1009,7 @@ AValue AMultiplyShortInt(AThread *t, AValue left, AValue right)
             }
             isNeg = TRUE;
         }
-        
+
         if ((ASignedValue)right < 0) {
             right = -right;
             if ((ASignedValue)right < 0) {
@@ -1020,52 +1020,52 @@ AValue AMultiplyShortInt(AThread *t, AValue left, AValue right)
             }
             isNeg ^= 1;
         }
-        
+
         if (right > left) {
             AValue tmp = left;
             left = right;
             right = tmp;
         }
-        
+
         /* Now left and right are positive. isNeg is true iff result
            is negative. */
-        
+
         if (AHi(right) != 0) {
-            
+
           FullLongMul:
-            
+
             if (isNeg)
                 left = -left;
-                    
+
             left = ACreateLongIntFromIntND(t, AValueToInt(left));
             if (AIsError(left))
                 return left;
-            
+
             *t->tempStack = left;
-            
+
             right = ACreateLongIntFromIntND(t, AValueToInt(right));
-            
+
             left = *t->tempStack;
             *t->tempStack = AZero;
-            
+
             if (AIsError(right))
                 return right;
-            
+
             prod = AMultiplyLongInt(t, left, right);
         } else if (AIsIntTimesHalfIntOverflow(left, right, isNeg)) {
-            
+
           ShortLongMul:
-            
+
             left = ACreateLongIntFromIntND(t, AValueToInt(left));
             if (AIsError(left))
                 return left;
-            
+
             prod = ALongIntToValue(
                 AMulAddSingle(t, AValueToLongInt(left),
                              AValueToInt(right), 0));
             if (AIsError(prod))
                 return prod;
-            
+
             if (isNeg)
                 ASetLongIntSign(AValueToLongInt(prod));
         } else {
@@ -1091,7 +1091,7 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 {
     AValue val;
     long exp;
-    
+
     if (AIsLongInt(expVal)) {
         /* Raise exception if exponent is negative. */
         if (Sign(AValueToLongInt(expVal)))
@@ -1099,7 +1099,7 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 
         if (baseVal == AZero)
             return AZero;
-        
+
         if (baseVal == AIntToValue(1)) {
             if (Sign(AValueToLongInt(expVal)))
                 return ACreateFloat(t, 1.0);
@@ -1126,16 +1126,16 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 
     if (!AAllocTempStack(t, 2))
         return AError;
-        
+
     t->tempStackPtr[-2] = baseVal;
     t->tempStackPtr[-1] = baseVal;
 
     val = baseVal;
     exp--;
-    
+
     if (AIsLongInt(val))
         goto LongIntLoop;
-    
+
     /* Invariant: baseVal^exp * val == result. */
     while (exp > 0) {
         while ((exp & 1) == 0) {
@@ -1144,7 +1144,7 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 
             if (AIsError(baseVal))
                 goto OutOfMemory;
-            
+
             if (AIsLongInt(baseVal)) {
                 t->tempStackPtr[-2] = baseVal;
                 t->tempStackPtr[-1] = ACreateLongIntFromIntND(
@@ -1157,10 +1157,10 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
 
         val = AMultiplyShortInt(t, val, baseVal);
         exp--;
-        
+
         if (AIsError(val))
             goto OutOfMemory;
-        
+
         if (AIsLongInt(val)) {
             t->tempStackPtr[-1] = val;
             t->tempStackPtr[-2] = ACreateLongIntFromIntND(
@@ -1192,7 +1192,7 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
         t->tempStackPtr[-1] = AMultiplyLongInt(
             t, t->tempStackPtr[-1], t->tempStackPtr[-2]);
         exp--;
-        
+
         if (t->tempStackPtr[-1] == AError)
             goto OutOfMemory;
     }
@@ -1204,7 +1204,7 @@ AValue APowInt(AThread *t, AValue baseVal, AValue expVal)
   OutOfMemory:
 
     t->tempStackPtr -= 2;
-    
+
     return ARaiseMemoryErrorND(t);
 }
 
@@ -1232,9 +1232,9 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
 
     if (!AAllocTempStack(t, 1))
         return AError;
-    
+
     t->tempStackPtr[-1] = liVal;
-    
+
     li = AValueToLongInt(liVal);
 
     if (Sign(li))
@@ -1250,7 +1250,7 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
         maxLen = Len(li) * BITS / 4 + 2;
     if (maxLen < minWidth + 1)
         maxLen = minWidth + 1;
-    
+
     /* Allocate space for the string if necessary, or use a fixed-length
        buffer allocated in the stack (quicker!) when possible. */
     if (maxLen > LONGINT_STACK_BUF_SIZE) {
@@ -1278,7 +1278,7 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
     do {
         unsigned rem;
         char ch;
-        
+
         li = ADivModSingle(t, li, radix, &rem);
         if (li == NULL)
             goto MemoryError;
@@ -1290,7 +1290,7 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
             ch = rem + '0';
         else
             ch = rem - 10 + 'a';
-        
+
         buf[--ind] = ch;
     } while (Len(li) > 0 || li->digit[0] != 0);
 
@@ -1302,7 +1302,7 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
         buf[--ind] = '-';
 
     len = maxLen - ind;
-    
+
     /* Allocate the string. */
     s = AAlloc(t, sizeof(AValue) + len);
     if (s == NULL)
@@ -1312,18 +1312,18 @@ AValue ALongIntToStr(AThread *t, AValue liVal, int radix, int minWidth)
         buf = APtrAdd(AValueToPtr(t->tempStackPtr[-1]), sizeof(AValue));
 
     AInitNonPointerBlock(&s->header, len);
-    
+
     /* Copy stuff to the string */
     ACopyMem(s->elem, buf + ind, len);
 
     t->tempStackPtr--;
-    
+
     return AStrToValue(s);
 
   MemoryError:
 
     t->tempStackPtr--;
-    
+
     return ARaiseMemoryErrorND(t);
 }
 
@@ -1357,7 +1357,7 @@ AValue AFloatToLongInt(AThread *t, double f)
     li = AAlloc(t, Size(n));
     if (li == NULL)
         return AError;
-    
+
     AInitLongIntBlock(li, n, isNeg);
     ACopyMem(li->digit, digits, n * sizeof(ALongIntDigit));
     return ALongIntToValue(li);
@@ -1371,9 +1371,9 @@ AValue ALongIntHashValue(AValue val)
     ALongInt *l = AValueToLongInt(val);
     unsigned long hashValue = 0;
     long i;
-    
+
     for (i = 0; i < AGetLongIntLen(l); i++)
         hashValue += hashValue * 32 + l->digit[i];
-    
+
     return AIntToValue(hashValue);
 }

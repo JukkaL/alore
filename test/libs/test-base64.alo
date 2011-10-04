@@ -26,13 +26,13 @@ class Base64Suite is Suite
       AssertEqual(Base64Encode(origEnc.left), origEnc.right)
     end
   end
-  
+
   def testDecode()
     for origEnc in Base64Pairs
       AssertEqual(Base64Decode(origEnc.right), origEnc.left)
     end
   end
-  
+
   def testDecodeErrors()
     AssertRaises(ValueError, Base64Decode, ["!"])
     AssertRaises(ValueError, Base64Decode, [" "])
@@ -53,7 +53,7 @@ class Base64Suite is Suite
     AssertRaises(ValueError, Base64Decode, ["ab=c"])
     AssertRaises(ValueError, Base64Decode, ["abcdabc"])
   end
-  
+
   -- FIX error if try to encode wide string
 end
 

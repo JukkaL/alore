@@ -13,7 +13,7 @@ def Main(args)
     if args.length() > 1
       n = Int(args[1])
     end
-  end  
+  end
   LargestDirs(n, dir)
 end
 
@@ -41,7 +41,7 @@ def DirSizes(dir, res)
       var s = DirSizes(p, res)
       res.append((s, NormPath(p)))
       size += s
-    end    
+    end
   end
   return size
 end

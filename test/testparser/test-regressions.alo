@@ -27,7 +27,7 @@ private class B
     var a = [self.x.y] -- This was miscompiled
     return a
   end
-  
+
   def g()
     self.x = A()
     var a = [self.x.y, self.x.z] -- This was compiled correctly

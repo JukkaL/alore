@@ -20,10 +20,10 @@ class IOSuite3 is Suite
         end
       end
     end
-  
+
     TestReadLine(CR, LF)
   end
-  
+
   def testStreamWrite()
     for i in 1 to NumStr + 1
       TestWrite([GetStr(i)])
@@ -67,7 +67,7 @@ class IOSuite3 is Suite
       end
     end
   end
-  
+
   -- Class that implements stream reading with customized return values.
   -- FIX test returning invalid stuff from _read
   -- FIX test raising an exception in _write
@@ -89,7 +89,7 @@ private def TestWrite(*a)
     o.flush()
     Assert(o.s == s)
   end
-  
+
   -- Test writeLn.
   for m in OutputModes
     var o = WriteStream(*m)
@@ -111,13 +111,13 @@ private class WriteStream is Stream
   def create(*m)
     super.create(*m)
   end
-  
+
   def _write(*aa)
     for x in aa
       s += x
     end
   end
-  
+
   var s = ""
 end
 
@@ -128,7 +128,7 @@ private def TestRead(*a)
   for x in a
     s += x
   end
-  
+
   -- First read a single character, then all but the last, then the last
   -- character.
   for m in InputModes
@@ -145,7 +145,7 @@ private def TestRead(*a)
     end
     Assert(r.eof())
   end
-  
+
   -- Read the whole contents of the stream at once.
   for m in InputModes
     var r = ReadStream(a, *m)
@@ -161,16 +161,16 @@ private def TestReadLine(*a)
   for x in a
     s += x
   end
-  
+
   for m in InputModes
     var r = ReadStream(a, *m)
-    
+
     var i = 0
     while i < s.length()
       if m[1] != Unbuffered
         Assert(not r.eof())
       end
-      
+
       var lin = r.readLn()
 
       -- Figure out what should have been returned.
@@ -187,9 +187,9 @@ private def TestReadLine(*a)
         WriteEsc(s[i0:i])
         WriteLn(">")
       end
-      
+
       Assert(lin == s[i0:i])
-      
+
       -- Skip line separator.
       if i < s.length()
 	if s[i] == CR and i < s.length() - 1 and s[i + 1] == LF
@@ -200,7 +200,7 @@ private def TestReadLine(*a)
       end
     end
     Assert(r.eof())
-    
+
     -- Try readLn() at end of file.
     var f = 0
     try
@@ -224,7 +224,7 @@ private def TestReadAll(*a)
     var s2 = r.read()
     Assert(s == s2)
     AssertRaises(IoError, def (); r.eof(); end)
-    
+
     -- Read all but the first character of the stream in one operation.
     r = ReadStream(a, *m)
     Assert(r.read(1) == s[0])
@@ -243,7 +243,7 @@ private class ReadStream is Stream
     end
     ind = 0
   end
-  
+
   def _read(l)
     if ind >= a.length()
       return nil
@@ -256,7 +256,7 @@ private class ReadStream is Stream
       return a[ind - 1]
     end
   end
-  
+
   private var a
   private var ind
 end

@@ -31,7 +31,7 @@ class DirectExceptionSuite is Suite
     end
     Assert(n == 3)
   end
-  
+
   -- Test a try statement that has several non-empty except blocks.
   def testTryWithMultipleExceptBlocks()
     var n = 0
@@ -113,7 +113,7 @@ class DirectExceptionSuite is Suite
     end
     Assert(n == 3)
   end
-  
+
   -- Catch a direct exception raised many calls deep in the call stack.
   def testRecursiveCatch()
     var n = 0
@@ -125,7 +125,7 @@ class DirectExceptionSuite is Suite
     end
     Assert(n == 1)
   end
-  
+
   -- Catch a direct exception raised below a C function in the call stack.
   def testRaiseOverCFunction()
     var n = 0
@@ -136,13 +136,13 @@ class DirectExceptionSuite is Suite
     end
     Assert(n == 1)
   end
-  
+
   -- Test CallTrace with a direct exception.
   def testCallTrace()
     var e, tb = CallTrace(RaiseRecursiveTypeError, 30)
     Assert(e is TypeError)
   end
-  
+
   -- Test direct exceptions across Thread join.
   def testThreads()
     if Platform != "windows"
@@ -158,7 +158,7 @@ class DirectExceptionSuite is Suite
       Assert(n == 1)
     end
   end
-  
+
   -- Test multiple nested except statements.
   def testMultipleExcept()
     var n = 0
@@ -174,7 +174,7 @@ class DirectExceptionSuite is Suite
       n += 1
     end
     Assert(n == 1)
-        
+
     try
       try
         RaiseDirectTypeError()
@@ -210,7 +210,7 @@ class DirectExceptionSuite is Suite
     end
     Assert(n == 3)
   end
-  
+
   -- FIX: Test traceback generation.
   -- FIX: Test uncaught exceptions.
 end

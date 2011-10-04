@@ -16,7 +16,7 @@ class ObjectSuite is Suite
     AssertEqual(o2, o2)
     AssertNotEqual(o1, o2)
   end
-  
+
   -- Test Object members.
   def testMembers()
     var o1 = std::Object()
@@ -26,7 +26,7 @@ class ObjectSuite is Suite
     Assert(HasMember(o1, "_eq"))
     Assert(not HasMember(o1, "_str"))
   end
-  
+
   -- Test class with name Object defined outside std.
   def testObjectOutsideStd()
     var o1 = objecthelpers::Object()
@@ -35,7 +35,7 @@ class ObjectSuite is Suite
     AssertNotEqual(o1, o2)
     AssertEqual(objecthelpers::Object.supertype(), std::Object)
   end
-  
+
   -- Test class that explicitly inherits from Object.
   def testExplicitObjectSupertype()
     var e1 = Explicit()

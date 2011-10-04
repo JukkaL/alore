@@ -18,23 +18,23 @@ class TypeStrVisitor is TypeVisitor<Str>
     end
     return s
   end
-  
+
   def visitErrorType(t)
     return "<ERROR>"
   end
-  
+
   def visitDynamic(t)
     return "dynamic"
   end
-  
+
   def visitVoid(t)
     return "void"
   end
-  
+
   def visitNilType(t)
     return "Nil"
   end
-  
+
   def visitInstance(t)
     var s = t.type.fullName
     if t.args != []
@@ -51,7 +51,7 @@ class TypeStrVisitor is TypeVisitor<Str>
     end
     return s
   end
-  
+
   def visitTypeVar(t)
     if t.name == nil
       -- Anonymous type variable type (only numeric id).
@@ -61,39 +61,39 @@ class TypeStrVisitor is TypeVisitor<Str>
       return "{}`{}".format(t.name, t.id)
     end
   end
-  
+
   def visitCallable(t)
     var s = listStr(t.argTypes[:t.minArgs])
-    
+
     var opt = t.argTypes[t.minArgs:]
     if t.isVarArg
       opt = opt[:-1]
     end
-    
+
     for o in opt
       if s != ""
         s += ", "
       end
       s += Str(o) + "="
     end
-    
+
     if t.isVarArg
       if s != ""
         s += ", "
       end
       s += "*" + Str(t.argTypes[-1])
     end
-    
+
     s = "({})".format(s)
-      
+
     if not t.retType is Void
       s += " as {}".format(t.retType)
     end
-    
+
     if t.variables.items != []
       s = "{} {}".format(t.variables, s)
     end
-    
+
     if t.boundVars != []
       -- Include implicit bound type variables.
       var a = []
@@ -102,10 +102,10 @@ class TypeStrVisitor is TypeVisitor<Str>
       end
       s = "[{}] {}".format(", ".join(a), s)
     end
-    
+
     return "def {}".format(s)
   end
-  
+
   def visitTupleType(t)
     var s = listStr(t.items)
     if t.items.length() == 1
@@ -113,15 +113,15 @@ class TypeStrVisitor is TypeVisitor<Str>
     end
     return "({})".format(s)
   end
-  
+
   def visitIntersection(t)
     return Str(t.item1) +  " /\ " + Str(t.item2)
   end
-  
+
   def visitRuntimeTypeVar(t)
     return "<RuntimeTypeVar>"
   end
-  
+
   -- Convert items of an array to strings (pretty-print types) and join the
   -- results with commas.
   private def listStr(a)

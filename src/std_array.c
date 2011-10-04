@@ -70,7 +70,7 @@ AValue AArrayCreate(AThread *t, AValue *frame)
     frame[2] = AIterator(t, frame[1]);
     if (AIsError(frame[2]))
         return AError;
-    
+
     for (;;) {
         int res = ANext(t, frame[2], &frame[3]);
         if (res == 0)
@@ -97,7 +97,7 @@ AValue AArray_get(AThread *t, AValue *frame)
         return AFixArrayItem(a, AValueToInt(frame[1]));
     } else if (AIsPair(frame[1])) {
         AValue loVal, hiVal;
-        
+
         AGetPair(t, frame[1], &loVal, &hiVal);
         if (AIsNil(loVal))
             loVal = AZero;
@@ -210,7 +210,7 @@ AValue AArray_add(AThread *t, AValue *frame)
             return AError;
         ASetArrayItem(t, frame[2], len1 + i, item);
     }
-    
+
     return frame[2];
 }
 
@@ -227,13 +227,13 @@ AValue AArray_mul(AThread *t, AValue *frame)
 
     if (n < 0)
         return ARaiseValueError(t, "Negative repetition count");
-    
+
     if (len == 1) {
         /* Simple case of repeating an array of length 1 has an optimized
            implementation. */
         ABool result;
         AValue init;
-        
+
         AMakeUninitArray_M(t, n, frame[2], result);
         if (!result)
             return AError;
@@ -268,7 +268,7 @@ static AValue CompareArrayOrder(AThread *t, AValue *frame, int op)
     Assize_t len1 = AGetInt_ssize_t(t, AMemberDirect(frame[0], A_ARRAY_LEN));
     Assize_t len2 = ALen(t, frame[1]);
     Assize_t i;
-    
+
     if (len2 < 0)
         return AError;
 
@@ -299,7 +299,7 @@ static AValue CompareArrayOrder(AThread *t, AValue *frame, int op)
                 return ATrue;
             else if (res < 0)
                 return AError;
-            
+
             res = AIsEq(t, AFixArrayItem(frame[2], i), frame[3]);
             if (res == 0)
                 return AFalse;
@@ -415,10 +415,10 @@ AValue AArrayExtend(AThread *t, AValue *frame)
             ASetFixArrayItem(t, frame[2], len + i, item);
         }
     }
-    
+
     AValueToInstance(frame[0])->member[A_ARRAY_LEN] =
         AIntToValue(len + argLen);
-    
+
     return ANil;
 }
 
@@ -438,14 +438,14 @@ AValue AArrayInsertAt(AThread *t, AValue *frame)
 
     if (n == AArrayCapacity(frame[0]))
         AResizeArray(t, frame, 0);
-    
+
     frame[3] = AMemberDirect(frame[0], A_ARRAY_A);
     for (j = n - 1; j >= i; j--)
         ASetFixArrayItem(t, frame[3], j + 1, AFixArrayItem(frame[3], j));
 
     ASetFixArrayItem(t, frame[3], i, frame[2]);
     AValueToInstance(frame[0])->member[A_ARRAY_LEN] += AIntToValue(1);
-    
+
     return ANil;
 }
 
@@ -458,7 +458,7 @@ AValue AArrayRemove(AThread *t, AValue *frame)
     frame[3] = AMemberDirect(frame[0], A_ARRAY_A);
     len = AArrayLen(frame[0]);
     numDel = 0;
-    
+
     for (i = 0; i < len; i++) {
         frame[2] = AFixArrayItem(frame[3], i);
         int ret = AIsEq(t, frame[2], frame[1]);
@@ -496,7 +496,7 @@ AValue AArrayRemoveAt(AThread *t, AValue *frame)
     ASetFixArrayItem(t, frame[2], n - 1, AZero);
 
     AValueToInstance(frame[0])->member[A_ARRAY_LEN] -= AIntToValue(1);
-    
+
     return frame[3];
 }
 
@@ -511,7 +511,7 @@ AValue AArrayTuple_str(AThread *t, AValue *frame, const char *startDelim,
     AValue str;
 
     repr = AGlobal(t, "std::Repr");
-    
+
     frame[1] = AMemberDirect(frame[0], A_ARRAY_A);
     n = AGetInt_ssize_t(t, AMemberDirect(frame[0], A_ARRAY_LEN));
     frame[2] = AMakeArray(t, 0);
@@ -537,7 +537,7 @@ AValue AArrayTuple_str(AThread *t, AValue *frame, const char *startDelim,
 
     str = AMakeStr(t, endDelim);
     AAppendArray(t, frame[2], str);
-    
+
     return AJoin(t, frame[2], ADefault);
 }
 
@@ -580,7 +580,7 @@ AValue AArrayFind(AThread *t, AValue *frame)
     Assize_t len, i;
 
     frame[2] = AMemberDirect(frame[0], A_ARRAY_A);
-    
+
     len = AArrayLen(frame[0]);
     for (i = 0; i < len; i++) {
         int ret = AIsEq(t, AFixArrayItem(frame[2], i), frame[1]);
@@ -646,12 +646,12 @@ AValue AArrayCopy(AThread *t, AValue *frame)
     AValue newArray;
     Assize_t len;
     Assize_t i;
-    
+
     len = AArrayLen(frame[0]);
     newArray = AMakeArray(t, len);
     for (i = 0; i < len; i++)
         ASetArrayItemNewGen(newArray, i, AArrayItem(frame[0], i));
-    
+
     return newArray;
 }
 
@@ -747,10 +747,10 @@ AValue AConcatArrays(AThread *t, AValue arrVal1, AValue arrVal2)
 
     t->tempStack[0] = arrVal1;
     t->tempStack[1] = arrVal2;
-    
+
     arr1Len = AArrayLen(arrVal1);
     arr2Len = AArrayLen(arrVal2);
-    
+
     length = arr1Len + arr2Len;
     cat = AMakeArrayND(t, length);
     if (AIsError(cat))
@@ -860,7 +860,7 @@ static AValue CompareArraysRecursive(AThread *t, AValue *a,
     if (index >= BUF_SIZE - 2)
         return ARaiseValueErrorND(t, NULL); /* IDEA: Add error message and
                                                perhaps raise RuntimeError. */
-    
+
     l1 = AArrayOrTupleLen(a[index]);
     l2 = AArrayOrTupleLen(a[index + 1]);
     len = AMin(l1, l2);
@@ -925,7 +925,7 @@ AValue AArrayTupleHashValue(AThread *t, AValue *frame)
 
     for (i = 0; i < len; i++) {
         AValue ret;
-        
+
         frame[1] = AArrayItem(frame[0], i);
         ret = ACallValue(t, AGlobalByNum(AStdHashNum), 1,
                             frame + 1);

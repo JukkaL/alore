@@ -7,14 +7,14 @@ class ParserSuite is Suite
   sub testFunction()
     AssertEqual(Foo(3), 4)
   end
-  
+
   sub testMethod()
     AssertEqual(method(3, 6), 9)
     var s = self
     AssertEqual(s.method(3, 6), 9)
     AssertEqual(privateMethod("y"), "yx")
   end
-  
+
   sub testAnonymousFunction()
     AssertEqual(Anon(5), 7)
     var i = 3
@@ -23,11 +23,11 @@ class ParserSuite is Suite
             end
     AssertEqual(a(6), 18)
   end
-  
+
   sub method(x, y)
     return x + y
   end
-  
+
   private sub privateMethod(x)
     return x + "x"
   end

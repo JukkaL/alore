@@ -88,87 +88,87 @@ class OperatorExceptionMessagesSuite is Suite
       assertBinOpMessage(op, "x", 1.1)
       assertBinOpMessage(op, 1, nil)
       assertBinOpMessage(op, nil, 1)
-      
+
       assertBinOpMessage(op, True, 1)
       assertBinOpMessage(op, True, "x")
       assertBinOpMessage(op, "x", True)
-      
+
       assertBinOpMessage(op, Ord, 1)
       assertBinOpMessage(op, 1, testIn)
       assertBinOpMessage(op, anonFunc, 1)
-      
+
       assertBinOpMessage(op, (1 : 2), "x")
       assertBinOpMessage(op, "x", (1 : 2))
-      
+
       assertBinOpMessage(op, "x", [])
       if op != "+"
         assertBinOpMessage(op, [], "x")
       end
-      
+
       assertBinOpMessage(op, "x", ())
       assertBinOpMessage(op, (), "x")
-      
+
       assertBinOpMessage(op, User(), "x")
       assertBinOpMessage(op, "x", User())
-      
+
       assertBinOpMessage(op, 1, "\u1234")
       assertBinOpMessage(op, "\u1234", 1)
-      
+
       assertBinOpMessage(op, User(), "\u1234")
       assertBinOpMessage(op, "\u1234", User())
-      
+
       assertBinOpMessage(op, User(), ss)
       assertBinOpMessage(op, ss, User())
     end
-    
+
     -- + switches operands if the left operand is Int/Float.
     AssertRaises(TypeError, opMsg("+", True, 1), def (); 1 + True; end)
     AssertRaises(TypeError, opMsg("+", True, 1.1), def (); 1.1 + True; end)
-    
+
     AssertRaises(TypeError, "Can only concatenate Array (not Str) to Array",
                  def (); [] + "x"; end)
   end
-  
+
   def testMultiply()
     assertBinOpMessage("*", "x", 1.0)
     assertBinOpMessage("*", 1.0, "x")
     assertBinOpMessage("*", "x", nil)
     assertBinOpMessage("*", 1, nil)
     assertBinOpMessage("*", nil, 1)
-    
+
     assertBinOpMessage("*", True, 1)
     assertBinOpMessage("*", True, "x")
     assertBinOpMessage("*", "x", True)
-    
+
     assertBinOpMessage("*", "x", [])
-    
+
     assertBinOpMessage("*", "x", ())
     assertBinOpMessage("*", (), "x")
-    
+
     assertBinOpMessage("*", "x", User())
     assertBinOpMessage("*", User(), "x")
-    
+
     assertBinOpMessage("*", ss, User())
     assertBinOpMessage("*", User(), ss)
-    
+
     assertBinOpMessage("*", "\u1234", User())
     assertBinOpMessage("*", User(), "\u1234")
-    
+
     assertBinOpMessage("*", ss, User())
     assertBinOpMessage("*", User(), ss)
-    
+
     assertBinOpMessage("*", "x", Ord)
     assertBinOpMessage("*", testIn, "x")
     assertBinOpMessage("*", anonFunc, "x")
-    
+
     -- * switches operands if the left operand is Int/Float.
     AssertRaises(TypeError, opMsg("*", True, 1), def (); 1 * True; end)
     AssertRaises(TypeError, opMsg("*", True, 1.1), def (); 1.1 * True; end)
-    
+
     AssertRaises(TypeError, "Int expected (but Str found)",
                  def (); [] * "x"; end)
   end
-  
+
   def testCompare()
     for op in "<", ">", "<=", ">=", "not <", "not >", "not <=", "not >="
       assertBinOpMessage(op, 1, "x")
@@ -180,39 +180,39 @@ class OperatorExceptionMessagesSuite is Suite
 
       assertBinOpMessage(op, True, "x")
       assertBinOpMessage(op, "x", True)
-      
+
       assertBinOpMessage(op, "x", [])
-      
+
       assertBinOpMessage(op, 1, Ord)
       assertBinOpMessage(op, testIn, 1)
-      
+
       assertBinOpMessage(op, (1 : 2), "x")
       assertBinOpMessage(op, "x", (1 : 2))
-      
+
       assertBinOpMessage(op, "x", (1, 2))
-      
+
       assertBinOpMessage(op, User(), "x")
       assertBinOpMessage(op, "x", User())
-      
+
       assertBinOpMessage(op, 1, "\u1234")
       assertBinOpMessage(op, "\u1234", 1)
-      
+
       assertBinOpMessage(op, 1, ss)
       assertBinOpMessage(op, ss, 1)
     end
-    
+
     -- Int/Float sometimes switch operands.
-    
+
     AssertRaises(TypeError, opMsg(">", True, 1), def (); 1 < True; end)
     AssertRaises(TypeError, opMsg("<", True, 1), def (); 1 > True; end)
     AssertRaises(TypeError, opMsg(">=", True, 1), def (); 1 <= True; end)
     AssertRaises(TypeError, opMsg("<=", True, 1), def (); 1 >= True; end)
-    
+
     AssertRaises(TypeError, opMsg(">", True, 1.1), def (); 1.1 < True; end)
     AssertRaises(TypeError, opMsg("<", True, 1.1), def (); 1.1 > True; end)
     AssertRaises(TypeError, opMsg(">=", True, 1.1), def (); 1.1 <= True; end)
     AssertRaises(TypeError, opMsg("<=", True, 1.1), def (); 1.1 >= True; end)
-    
+
     -- Array/Tuple have special messages.
     AssertRaises(TypeError, "Array or Tuple expected (but Str given)",
                  def (); [] < "x"; end)
@@ -223,7 +223,7 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, "Array or Tuple expected (but Str given)",
                  def (); () > "x"; end)
   end
-  
+
   def testIn()
     assertBinOpMessage("in", 1, 1)
     assertBinOpMessage("in", 1, "x")
@@ -232,29 +232,29 @@ class OperatorExceptionMessagesSuite is Suite
     assertBinOpMessage("in", 1, 1.1)
     assertBinOpMessage("in", 1, testIn)
     assertBinOpMessage("in", 1, Ord)
-    
+
     assertBinOpMessage("in", 1, True)
-    
+
     assertBinOpMessage("in", 1, User())
-    
+
     assertBinOpMessage("not in", 1, nil)
     assertBinOpMessage("not in", 1, 1)
     assertBinOpMessage("not in", 1, "x")
   end
-  
+
   def testIs()
     assertBinOpMessage("is", 1, 1)
     assertBinOpMessage("is", 1, "x")
     assertBinOpMessage("is", True, nil)
     assertBinOpMessage("is", nil, 1)
-    
+
     assertBinOpMessage("is", nil, User())
-    
+
     assertBinOpMessage("not is", 1, nil)
     assertBinOpMessage("not is", 1, 1)
     assertBinOpMessage("not is", 1, "x")
   end
-  
+
   def testAnd()
     assertBinOpMessage("and", 1, True, "Invalid type for boolean (Int)")
     assertBinOpMessage("and", True, "x", "Invalid type for boolean (Str)")
@@ -262,13 +262,13 @@ class OperatorExceptionMessagesSuite is Suite
     assertBinOpMessage("and", User(), True,
                        "Invalid type for boolean (runtime::User)")
   end
-  
+
   def testOr()
     assertBinOpMessage("or", 1, True, "Invalid type for boolean (Int)")
     assertBinOpMessage("or", False, "x", "Invalid type for boolean (Str)")
     assertBinOpMessage("or", nil, True, "Invalid type for boolean (nil)")
   end
-  
+
   def testInc()
     AssertRaises(TypeError, "Unsupported operand types for + (nil and Int)",
                  def (); var x; x += 1; end)
@@ -276,7 +276,7 @@ class OperatorExceptionMessagesSuite is Suite
                  "Unsupported operand types for + (runtime::User and Int)",
                  def (); var x = User(); x += 1; end)
   end
-  
+
   def testDec()
     AssertRaises(TypeError, "Unsupported operand types for - (nil and Int)",
                  def (); var x; x -= 1; end)
@@ -284,14 +284,14 @@ class OperatorExceptionMessagesSuite is Suite
                  "Unsupported operand types for - (runtime::User and Int)",
                  def (); var x = User(); x -= 1; end)
   end
-  
+
   def testNot()
     AssertRaises(TypeError, "Invalid type for boolean (Int)",
                  def (); if not 1; end; end)
     AssertRaises(TypeError, "Invalid type for boolean (runtime::User)",
                  def (); var x = not User(); end)
   end
-  
+
   def testNeg()
     AssertRaises(TypeError, "Invalid operand type for unary - (Str)",
                  def (); -"x"; end)
@@ -299,7 +299,7 @@ class OperatorExceptionMessagesSuite is Suite
                  "Invalid operand type for unary - (runtime::User)",
                  def (); var x = -User(); end)
   end
-  
+
   def testIndexingWithInvalidBase()
     AssertRaises(TypeError, "nil object is not indexable",
                  def (); nil[1]; end)
@@ -310,14 +310,14 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, "runtime::User object is not indexable",
                  def (); User()[1]; end)
   end
-  
+
   def testIndexingWithInvalidIndexType()
     AssertRaises(TypeError, "Array indexed with non-integer (Str)",
                  def (); []["x"]; end)
     AssertRaises(TypeError, "Str indexed with non-integer (Float)",
                  def (); "x"[1.1]; end)
   end
- 
+
   def testIndexingWithInvalidSliceType()
     var msg = "Slice index neither Int nor nil"
     AssertRaises(TypeError, msg,
@@ -337,7 +337,7 @@ class OperatorExceptionMessagesSuite is Suite
                    "x"[1:"x"]
                  end)
   end
-  
+
   def testIndexingWithInvalidIndexValue()
     AssertRaises(IndexError, "Array index out of range",
                  def (); [][1]; end)
@@ -348,7 +348,7 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(IndexError, "String index out of range",
                  def (); "x"[-21]; end)
   end
-  
+
   def testInvalidMapKey()
     AssertRaises(KeyError, "'foo'",
                  def (); Map()['foo']; end)
@@ -368,7 +368,7 @@ class OperatorExceptionMessagesSuite is Suite
       Assert(e.message.startsWith("'" + 'fab' * 20))
     end
   end
-  
+
   def testCallingAnInvalidValue()
     AssertRaises(TypeError, "True is not callable",
                  def (); True(1); end)
@@ -381,7 +381,7 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, "nil is not callable",
                  def (); nil(1); end)
   end
-  
+
   def testInvalidRangeOperand()
     AssertRaises(TypeError, "Non-integer Range lower bound (Str)",
                  def (); 'x' to 1; end)
@@ -416,20 +416,20 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, "Boolean expected (but Float found)",
                  def (); 1 <= o; end)
   end
-  
+
   -- Test invalid return value from the _in method when using the "in"
   -- operator.
   def testInvalidOverloadedIn()
     AssertRaises(TypeError, "Boolean expected (but nil found)",
                  def (); 1 in InvalidOverload(); end)
   end
-  
+
   def testInvalidVarArgsArgument()
     AssertRaises(TypeError,
                  "Array or Tuple value expected after * (Str found)",
                  def (); Int(*'x'); end)
   end
-  
+
   private def assertBinOpMessage(op, left, right, msg = opMsg(op, left, right))
     try
       self.opFuncs[op](left, right)
@@ -439,14 +439,14 @@ class OperatorExceptionMessagesSuite is Suite
     end
     raise AssertionFailure("No exception")
   end
-  
+
   private def opMsg(op, left, right)
     var tl = typeStr(left)
     var tr = typeStr(right)
     var opStr = opStr(op)
     return "Unsupported operand types for {} ({} and {})".format(opStr, tl, tr)
   end
-  
+
   private def typeStr(v)
     if v is Int
       return "Int"
@@ -474,7 +474,7 @@ class OperatorExceptionMessagesSuite is Suite
       return "???"
     end
   end
-  
+
   private const opMap = Map("in" : """in""",
                             "is" : """is""",
                             "<" : "< or >=",

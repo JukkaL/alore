@@ -64,7 +64,7 @@ AValue AToStr(AThread *t, AValue o)
 AValue AConcat(AThread *t, AValue a, AValue b)
 {
     AValue v;
-    
+
     if (AIsStr(a)) {
         if (AIsStr(b))
             v = AConcatStrings(t, a, b);
@@ -167,12 +167,12 @@ AValue ARaiseMemoryError(AThread *t)
 AValue ARaiseTypeError(AThread *t, const char *fmt, ...)
 {
     va_list args;
-    
+
     va_start(args, fmt);
     ARaiseByNumFmtVa(t, AErrorClassNum[EX_TYPE_ERROR], fmt, args);
     va_end(args);
     ADispatchException(t);
-    
+
     return AError;
 }
 
@@ -240,7 +240,7 @@ int AMemberNum(AThread *t, const char *member)
     int id;
     ASymbol *sym;
     ASymbolInfo *symInfo;
-    
+
     ALockInterpreter();
     if (!AGetSymbol(member, strlen(member), &sym))
         goto Fail;
@@ -249,11 +249,11 @@ int AMemberNum(AThread *t, const char *member)
         goto Fail;
     id = symInfo->num;
     AUnlockInterpreter();
-    
+
     return id;
 
   Fail:
-    
+
     AUnlockInterpreter();
     return ARaiseMemoryError(t);
 }
@@ -263,12 +263,12 @@ int AMemberNum(AThread *t, const char *member)
 AValue AMember(AThread *t, AValue o, const char *member)
 {
     int id;
-    
+
     *t->tempStack = o;
     id = AMemberNum(t, member);
     o = *t->tempStack;
     *t->tempStack = AZero;
-    
+
     return AMemberByNum(t, o, id);
 }
 
@@ -278,11 +278,11 @@ AValue ASetMember(AThread *t, AValue o, const char *member, AValue v)
 {
     int id;
     AValue ret;
-    
+
     t->tempStack[0] = o;
     t->tempStack[1] = v;
     id = AMemberNum(t, member);
-    
+
     ret = ASetMemberHelper(t, t->tempStack, id);
     t->tempStack[0] = t->tempStack[1] = AZero;
     return ret;
@@ -296,7 +296,7 @@ AValue ASuperMember(AThread *t, AValue *frame, const char *member)
 
     while (type->super != NULL) {
         int method, read;
-        
+
         type = type->super;
 
         method = ALookupMemberTable(type, MT_METHOD_PUBLIC, id);
@@ -314,7 +314,7 @@ AValue ASuperMember(AThread *t, AValue *frame, const char *member)
             }
         }
     }
-    
+
     return ARaiseMemberErrorND(t, frame[0], id);
 }
 
@@ -326,7 +326,7 @@ AValue ASetSuperMember(AThread *t, AValue *frame, const char *member, AValue v)
 
     while (type->super != NULL) {
         int write;
-        
+
         type = type->super;
 
         write = ALookupMemberTable(type, MT_VAR_SET_PUBLIC, id);
@@ -348,7 +348,7 @@ AValue ASetSuperMember(AThread *t, AValue *frame, const char *member, AValue v)
                 return ret;
             }
         }
-        
+
     }
 
     return ARaiseMemberErrorND(t, frame[0], id);
@@ -383,10 +383,10 @@ void ASetMemberDirect(AThread *t, AValue o, int num, AValue newVal)
 AValue ASetMemberByNum(AThread *t, AValue o, int member, AValue v)
 {
     AValue ret;
-    
+
     t->tempStack[0] = o;
     t->tempStack[1] = v;
-    
+
     ret = ASetMemberHelper(t, t->tempStack, member);
     t->tempStack[0] = t->tempStack[1] = AZero;
     return ret;
@@ -415,7 +415,7 @@ int AGetGlobalNum(AThread *t, const char *name)
     AToken *tok;
     ASymbolInfo *sym;
     int num;
-    
+
     ALockInterpreter();
 
     if (!ATokenizeStr(name, &tok)) {
@@ -423,7 +423,7 @@ int AGetGlobalNum(AThread *t, const char *name)
         ARaiseMemoryError(t);
         return 0; /* Unreached */
     }
-    
+
     AParseGlobalVariable(tok, &sym, TRUE, TRUE);
     AFreeTokens(tok);
 
@@ -433,7 +433,7 @@ int AGetGlobalNum(AThread *t, const char *name)
         return -1;
     } else
         num = sym->num;
-    
+
     AUnlockInterpreter();
 
     return num;
@@ -463,7 +463,7 @@ void AGetPair(AThread *t, AValue pair, AValue *v1, AValue *v2)
 static AValue AMakeMixed(AThread *t, int type, AValue v1, AValue v2)
 {
     AMixedObject *obj;
-    
+
     t->tempStack[0] = v1;
     t->tempStack[1] = v2;
 
@@ -510,7 +510,7 @@ AValue AMakeRange(AThread *t, AValue lo, AValue hi)
 int AIsEq(AThread *t, AValue a, AValue b)
 {
     AValue res;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b))
         return a == b;
 
@@ -534,10 +534,10 @@ int AIsEq(AThread *t, AValue a, AValue b)
 int AIsLt(AThread *t, AValue a, AValue b)
 {
     AValue res;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b))
         return (ASignedValue)a < (ASignedValue)b;
-    
+
     res = ACompareOrder(t, a, b, OPER_LT);
     if (AIsError(res)) {
         ADispatchException(t);
@@ -552,10 +552,10 @@ int AIsLt(AThread *t, AValue a, AValue b)
 int AIsGt(AThread *t, AValue a, AValue b)
 {
     AValue res;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b))
         return (ASignedValue)a > (ASignedValue)b;
-    
+
     res = ACompareOrder(t, a, b, OPER_GT);
     if (AIsError(res)) {
         ADispatchException(t);
@@ -624,30 +624,30 @@ AValue AGetItem(AThread *t, AValue s, AValue index)
 
         /* Different cases (narrow/wide) of getting a single character are
            implemented separately for better performance. */
-        
+
         if (AIsNarrowStr(s) || AIsNarrowSubStr(s)) {
             ASignedValue i = AValueToInt(index);
             AString *str;
-        
+
             if (i < 0 || i >= AStrLen(s)) {
                 i = ANormIndex(i, AStrLen(s));
                 if (i < 0 || i >= AStrLen(s))
                     return ARaiseByNum(t, AErrorClassNum[EX_INDEX_ERROR],
                                        NULL);
             }
-            
+
             /* Create a short string object of length 1. */
             AAlloc_M(t, AGetBlockSize(sizeof(AValue) + 1), str, result);
             if (!result)
                 return ARaiseMemoryError(t);
             AInitNonPointerBlock(&str->header,  1);
             str->elem[0] = AStrItem(s, i);
-            
+
             return AStrToValue(str);
         } else if (AIsWideStr(s) || AIsSubStr(s)) {
             ASignedValue i = AValueToInt(index);
             AWideString *str;
-            
+
             if (i < 0 || i >= AStrLen(s)) {
                 i = ANormIndex(i, AStrLen(s));
                 if (i < 0 || i >= AStrLen(s))
@@ -662,21 +662,21 @@ AValue AGetItem(AThread *t, AValue s, AValue index)
                 return ARaiseMemoryError(t);
             AInitNonPointerBlock(&str->header, sizeof(AWideChar));
             str->elem[0] = AStrItem(s, i);
-            
+
             return AWideStrToValue(str);
         } else
             return ARaiseTypeError(t, NULL); /* IDEA: Provide error message. */
     } else if (AIsPair(index)) {
         AValue loVal, hiVal;
         Assize_t lo, hi;
-        
+
         AGetPair(t, index, &loVal, &hiVal);
 
         if (AIsNil(loVal))
             loVal = AZero;
         if (AIsNil(hiVal))
             hiVal = AIntToValue(A_SLICE_END);
-        
+
         lo = AGetInt_ssize_t(t, loVal);
         hi = AGetInt_ssize_t(t, hiVal);
 
@@ -725,7 +725,7 @@ AValue ASetItem(AThread *t, AValue s, AValue index, AValue o)
                 return ANil;
             }
         }
-        
+
         args = AAllocTemps(t, 3);
         args[0] = s;
         args[1] = index;
@@ -736,7 +736,7 @@ AValue ASetItem(AThread *t, AValue s, AValue index, AValue o)
             return ret;
     } else
         return ARaiseTypeError(t, NULL); /* IDEA: Provide an error message. */
-    
+
     return ANil;
 }
 
@@ -747,7 +747,7 @@ static AValue InstanceOp(AThread *t, AValue a, AValue b, int member)
 {
     AValue *args = AAllocTemps(t, 2);
     AValue ret;
-    
+
     args[0] = a;
     args[1] = b;
     ret = ACallMethodByNum(t, member, 1, args);
@@ -781,7 +781,7 @@ AValue AAdd(AThread *t, AValue a, AValue b)
             sum = AError;
         else {
             b = t->tempStack[1];
-            
+
             if (AIsLongInt(a) && AIsLongInt(b))
                 sum = AAddLongInt(t, a, b);
             else if (AIsFloat(a))
@@ -802,7 +802,7 @@ AValue AAdd(AThread *t, AValue a, AValue b)
 AValue ASub(AThread *t, AValue a, AValue b)
 {
     AValue diff;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b)) {
         diff = a - b;
         if (!AIsSubOverflow(diff, a, b))
@@ -817,7 +817,7 @@ AValue ASub(AThread *t, AValue a, AValue b)
             diff = AError;
         else {
             b = t->tempStack[1];
-            
+
             if (AIsLongInt(a) && AIsLongInt(b))
                 diff = ASubLongInt(t, a, b);
             else if (AIsFloat(a))
@@ -833,12 +833,12 @@ AValue ASub(AThread *t, AValue a, AValue b)
     return diff;
 }
 
-    
+
 /* Evaluate a * b. */
 AValue AMul(AThread *t, AValue a, AValue b)
 {
     AValue prod;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b)) {
         if (AHi(a) == 0 && AHi(b) == 0) {
             prod = AValueToInt(a) * (ASignedValue)b;
@@ -861,7 +861,7 @@ AValue AMul(AThread *t, AValue a, AValue b)
             prod = AError;
         else {
             b = t->tempStack[1];
-            
+
             if (AIsLongInt(a) && AIsLongInt(b))
                 prod = AMultiplyLongInt(t, a, b);
             else if (AIsFloat(a))
@@ -893,10 +893,10 @@ AValue ADiv(AThread *t, AValue a, AValue b)
 {
     if (b == AZero)
         return DivModByZero(t);
-    
+
     if (AIsShortInt(a) && AIsShortInt(b))
         return AMakeFloat(t, (double)AValueToInt(a) / AValueToInt(b));
-    
+
     if (AIsInstance(a))
         return InstanceOp(t, a, b, AM_DIV);
 
@@ -905,9 +905,9 @@ AValue ADiv(AThread *t, AValue a, AValue b)
         ADispatchException(t);
         return AError;
     }
-    
+
     b = t->tempStack[1];
-    
+
     if (AIsLongInt(a) && AIsLongInt(b))
         return AMakeFloat(t, ALongIntToFloat(a) / ALongIntToFloat(b));
     else if (AIsFloat(a)) {
@@ -924,7 +924,7 @@ AValue AIntDiv(AThread *t, AValue a, AValue b)
 {
     AValue mod;
     AValue div;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b))
         div = AIntDivMod(t, a, b, &mod);
     else if (AIsInstance(a))
@@ -937,7 +937,7 @@ AValue AIntDiv(AThread *t, AValue a, AValue b)
             div = AError;
         else {
             b = t->tempStack[1];
-            
+
             if (AIsLongInt(a) && AIsLongInt(b))
                 div = ADivModLongInt(t, a, b, t->tempStack + 1);
             else if (AIsFloat(a)) {
@@ -961,13 +961,13 @@ AValue AIntDiv(AThread *t, AValue a, AValue b)
 AValue AMod(AThread *t, AValue a, AValue b)
 {
     AValue mod;
-    
+
     if (AIsShortInt(a) && AIsShortInt(b)) {
         if (AIntDivMod(t, a, b, &mod) == AError)
             ADispatchException(t);
         return mod;
     }
-    
+
     if (AIsInstance(a))
         return InstanceOp(t, a, b, AM_MOD);
 
@@ -977,9 +977,9 @@ AValue AMod(AThread *t, AValue a, AValue b)
     a = ACoerce(t, OPER_MOD, a, b, t->tempStack + 1);
     if (AIsError(a))
         ADispatchException(t);
-    
+
     b = t->tempStack[1];
-    
+
     if (AIsLongInt(a) && AIsLongInt(b)) {
         if (ADivModLongInt(t, a, b, &mod) == AError)
             ADispatchException(t);
@@ -987,7 +987,7 @@ AValue AMod(AThread *t, AValue a, AValue b)
     } else if (AIsFloat(a)) {
         double result;
         double bFloat = AValueToFloat(b);
-         
+
         if (bFloat == 0.0)
             return DivModByZero(t);
         result = fmod(AValueToFloat(a), bFloat);
@@ -1009,7 +1009,7 @@ AValue APow(AThread *t, AValue a, AValue b)
         else
             ADispatchException(t);
     }
-    
+
     if (AIsFloat(a) && AIsInt(b)) {
         AValue p = APowFloatInt(t, a, b);
         if (!AIsError(p))
@@ -1017,16 +1017,16 @@ AValue APow(AThread *t, AValue a, AValue b)
         else
             ADispatchException(t);
     }
-    
+
     if (AIsInstance(a))
         return InstanceOp(t, a, b, AM_POW);
 
     a = ACoerce(t, OPER_POW, a, b, t->tempStack + 1);
     if (AIsError(a))
         ADispatchException(t);
-    
+
     b = t->tempStack[1];
-    
+
     if (AIsFloat(a)) {
         if (AValueToFloat(a) < 0.0) {
             ARaiseByNum(t, AErrorClassNum[EX_ARITHMETIC_ERROR], NULL);
@@ -1043,7 +1043,7 @@ AValue APow(AThread *t, AValue a, AValue b)
 AValue ANeg(AThread *t, AValue a)
 {
     AValue neg;
-    
+
     if (AIsShortInt(a)) {
         if (a == AIntToValue(A_SHORT_INT_MIN))
             neg = ACreateLongIntFromIntND(t, -A_SHORT_INT_MIN);
@@ -1076,7 +1076,7 @@ AValue AIterator(AThread *t, AValue v)
 
     args = AAllocTemps(t, 2);
     args[0] = v;
-    
+
     if (AIsInstance(v))
         ret = ACallMethodByNum(t, AM_ITERATOR, 0, args);
     else if (AIsRange(v))
@@ -1085,9 +1085,9 @@ AValue AIterator(AThread *t, AValue v)
         ret = ACallValue(t, AGlobalByNum(AStrIterNum), 1, args);
     else
         ret = ARaiseTypeError(t, "Invalid iterable");
-    
+
     AFreeTemps(t, 2);
-    
+
     return ret;
 }
 
@@ -1145,14 +1145,14 @@ int AIn(AThread *t, AValue item, AValue collection)
 AValue AMakeUninitializedObject(AThread *t, AValue type)
 {
     AInstance *inst;
-    
+
     inst = AAlloc(t, AValueToType(type)->instanceSize);
     if (inst == NULL)
         return ARaiseMemoryError(t);
-    
+
     AInitInstanceBlock(&inst->type, AValueToType(type));
     AInitInstanceData(inst, AValueToType(type));
-    
+
     return AInstanceToValue(inst);
 }
 
@@ -1176,9 +1176,9 @@ AValue AAllocContainer(AThread *t, AValue initValue)
     AValue ret;
 
     tmp = AAllocTemps(t, 2);
-    
+
     /* NOTE: The container is always allocated in the old generation. */
-    
+
     tmp[0] = initValue;
 
     /* Allocate and initialize a container object, implemented as a FixArray
@@ -1190,11 +1190,11 @@ AValue AAllocContainer(AThread *t, AValue initValue)
     /* Store the initial value. */
     tmp[1] = AFixArrayToValue(container);
     ASetFixArrayItem(t, tmp[1], 0, tmp[0]);
-    
+
     ret = tmp[1];
-    
+
     AFreeTemps(t, 2);
-    
+
     return ret;
 }
 
@@ -1256,7 +1256,7 @@ AValue AHash(AThread *t, AValue object)
 
     frame[0] = object;
     hash = AStdHash(t, frame);
-    
+
     AFreeTemps(t, 3);
 
     return hash;
@@ -1295,7 +1295,7 @@ ABool AGetRepr(AThread *t, char *buf, Assize_t bufLen, AValue object)
     Assize_t len;
     Assize_t i;
     AValue repr = ARepr(t, object);
-    
+
     /* If producing the representation fails, return an empty string and
        return error status. */
     if (AIsError(repr)) {

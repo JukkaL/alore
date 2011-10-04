@@ -23,36 +23,36 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
   def testReadExposedLocal()
     TestReadExposedLocal()
   end
-  
+
   def testModifyExposedLocal()
     TestModifyExposedLocal()
   end
-  
+
   def testExposedFunctionArguments()
     TestExposedFunctionArguments(5, 6)
     TestExposedFunctionArguments(5, 6, 7)
   end
-  
+
   def testExposedVarArgs()
     TestExposedVarArgs(4, 5, 6)
   end
-  
+
   def testExposedVariablesAfterFunctionReturn()
     TestExposedVariablesAfterFunctionReturn()
   end
-  
+
   def testExposedMultipleInitialization()
     TestExposedMultipleInitialization()
   end
-  
+
   def testExposedArgumentWithDefaultArgValue()
     TestExposedArgumentWithDefaultArgvalue(33)
   end
-  
+
   def testComplexAnonWithExposed()
     TestComplexAnonWithExposed()
   end
-  
+
   def testSelf()
     var f = def ()
       var x = self
@@ -60,14 +60,14 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f(), 5)
   end
-  
+
   def testMemberVariables()
     var f = def ()
       return mvar + pmvar
     end
     AssertEqual(f(), 11)
   end
-  
+
   def testMethods()
     var f = def (x)
       AssertEqual(method(5), 6)
@@ -76,7 +76,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f("b"), "ba")
   end
-  
+
   def testdAccessors()
     var f = def ()
       AssertEqual(getter, 55)
@@ -87,7 +87,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     AssertEqual(f(), 2)
     AssertEqual(x, 67)
   end
-  
+
   def testSuper()
     var f = def ()
       AssertEqual(foo(), 33)
@@ -95,7 +95,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f(), 11)
   end
-  
+
   def testLvarsWithinMethod()
     var x = 5
     var f = def ()
@@ -103,7 +103,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f(), 5)
   end
-  
+
   def testLvarsAndMembersWithinMethod()
     var xx = 5
     var y
@@ -114,7 +114,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f(), (5, "ab"))
   end
-  
+
   -- Test local variable and member with the same name.
   def testLvarHidingMember()
     var mvar = "foo"
@@ -123,7 +123,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f(), ("foo", 5))
   end
-  
+
   def testLocalAndGlobalWithSameName()
     var foovar = 5 -- There is also a global with the same name
     var f = def ()
@@ -133,20 +133,20 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     AssertEqual(::foovar, 6)
     AssertEqual(f(), 6)
   end
-  
+
   -- Test that accessing a member with the same name as a local variable
   -- using . operator in an anonymous function without accessing the local
   -- variable works.
   def testMemberWithSameNameAsLocal()
     var mvar = 222
-    
+
     var f = def ()
       return self.mvar
     end
     AssertEqual(mvar, 222)
     AssertEqual(f(), 5)
   end
-  
+
   -- Test nested anonymous functions where the inner function accessed a
   -- variable defined in the outer anonymous function.
   def testSimpleNestedAnonymousFunctions()
@@ -161,7 +161,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f(), 2)
   end
-  
+
   -- Test nested anonymous functions where the inner function accessed a
   -- variable defined in the outermost function.
   def testSimpleNestedAnonymousFunctions2()
@@ -176,7 +176,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     f()
     AssertEqual(a, 2)
   end
-  
+
   -- Test nested anonymous functions which access variables defined in outer
   -- scopes.
   def testNestedAnonymousFunctions()
@@ -205,7 +205,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     AssertEqual(l1, 10)
     AssertEqual(l1b, 2)
   end
-  
+
   -- Test multiple nested anonymous functions which access variables defined
   -- in outer scopes.
   def testMultiplyNestedAnonymousFunctions()
@@ -225,7 +225,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(f1(), (55 + 5) * 2)
   end
-  
+
   -- Test anonymous function within a multiple assignment.
   def testAnonFunctionWithinMultiAssignment()
     var out = 999
@@ -247,7 +247,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     f()
     AssertEqual(out, 0)
   end
-  
+
   -- Test anonymous function in the default argument value of an anonymous
   -- function.
   def testAnonFunctionInDefaultArgValue()
@@ -263,7 +263,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
       AssertEqual(a, 4)
     end
   end
-  
+
   -- Test accessing loop variable defined in an outside scope within an
   -- anonymous function when looping over a range.
   def testExposedLoopVariableOverRange()
@@ -282,7 +282,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     x = 3
     AssertEqual(f(), 15)
   end
-  
+
   -- Test accessing loop variable defined in an outside scope within an
   -- anonymous function when looping over an array.
   def testExposedLoopVariableOverArray()
@@ -301,7 +301,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     x = 3
     AssertEqual(f(), 12)
   end
-  
+
   -- Test accessing multiple for loop variables, some of which are exposed.
   def testMultipleExposedLoopVariables()
     -- First variable exposed, the other not
@@ -315,7 +315,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     end
     AssertEqual(a, [(16, 8, 2), (2, 1, 4), (10, 5, 7)])
     AssertEqual(f(), 10)
-    
+
     -- First variable not exposed, other 2 are
     a = []
     for i, j, k in (4, 7, 6), (1, 2, 5)
@@ -327,7 +327,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     AssertEqual(a, [7 * 6, 2 * 5])
     AssertEqual(f(), 2 * 5)
   end
-  
+
   -- Test accessing exposed exception variable in try/except.
   def testExposedExceptionVariable()
     try
@@ -341,7 +341,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
       AssertEqual(f(5), (e, 34))
     end
   end
-  
+
   -- Test accessing exposed exception variable in try/except that can catch
   -- direct exceptions.
   def testExposedExceptionVariableWithDirectException()
@@ -355,7 +355,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
       AssertEqual(f(), e)
     end
   end
-  
+
   -- Test invalid argument count when calling an anonymous function defined
   -- within a method.
   def testInvalidArgCountInMethod()
@@ -368,7 +368,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     AssertRaises(ValueError, "anonymous function expects 1 argument (0 given)",
                 f, [])
   end
-  
+
   -- Test invalid argument count when calling an anonymous function defined
   -- outside a class.
   def testInvalidArgCountInFunction()
@@ -380,7 +380,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
                 "anonymous function expects at most 3 arguments (4 given)",
                 f, [1, 2, 3, 4])
   end
-  
+
   -- Test exception raised when trying to perform an invalid operation with
   -- an anonymous function.
   def testInvalidOperationExceptions()
@@ -394,32 +394,32 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
                   f * 2
                 end)
   end
-  
+
   -- Test a large number of exposed variables.
   def testManyExposedVars()
     var f = FuncWithManyExposedVars()
     AssertEqual(f(), 150 * (1 + 150) div 2)
   end
-  
+
   -- Test accessing an exposed variable within a getter method.
   def testExposedInGetter()
     var f = anonGetter
     AssertEqual(f(), 3)
     AssertEqual(f(), 5)
   end
-  
+
   -- Test expossing the argument to a setter method.
   def testExposedSetterArgument()
     setterArgTest = 7
     AssertEqual(setterArgTestAnon(), 8)
     AssertEqual(setterArgTestAnon(), 9)
   end
-  
+
   -- Test anonymous function defined within class body, i.e. outside method.
   def testAnonFunctionInClassBody()
     AssertEqual(anon(6), 10)
   end
-  
+
   -- Test break at two function nesting levels.
   def testBreakAtTwoLevels()
     while True
@@ -431,7 +431,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
       end
     end
   end
-  
+
   -- Test return + finally in anonymous functions.
   def testReturnAndFinally()
     var x = 0
@@ -451,34 +451,34 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
     AssertEqual(foo(), 5)
     AssertEqual(x, 1)
   end
-  
+
   -- Some additional definitions are included below that are used by the test
   -- cases above.
-  
+
   var mvar = 5
   private var pmvar = 6
-  
+
   def method(x)
     return x + 1
   end
-  
+
   private def pmethod(x, y)
     return x * y
   end
-  
+
   def getter
     return 55
   end
-  
+
   def setter
     raise ValueError() -- Not used
   end
-  
+
   var x
   def setter = xx
     x = xx + 1
   end
-  
+
   var setterArgTestAnon
   def setterArgTest
     return 0
@@ -489,7 +489,7 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
       return x
     end
   end
-  
+
   def anonGetter
     var x = 1
     return def ()
@@ -497,11 +497,11 @@ class AnonFuncSuite2 is AnonFuncSuite2Base
       return x
     end
   end
-  
+
   def foo()
     return 33
   end
-  
+
   private var foovar = 4
   var anon = def (x)
     return foovar + x

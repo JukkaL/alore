@@ -25,7 +25,7 @@ class ExceptionMessagesSuite is Suite
                    end
                  end)
   end
-  
+
   def testWhile()
     AssertRaises(TypeError, "Invalid type for boolean (Int)",
                  def ()
@@ -33,7 +33,7 @@ class ExceptionMessagesSuite is Suite
                    end
                  end)
   end
-  
+
   def testRepeat()
     AssertRaises(TypeError, "Invalid type for boolean (Int)",
                  def ()
@@ -41,7 +41,7 @@ class ExceptionMessagesSuite is Suite
                    until 1
                  end)
   end
-  
+
   def testInvalidStrMethod()
     AssertRaises(TypeError,
                  "_str of runtime::InvalidStr returned non-string (nil)",
@@ -54,7 +54,7 @@ class ExceptionMessagesSuite is Suite
                    Str(InvalidStr(1))
                  end)
   end
-  
+
   def testInvalidReprMethod()
     AssertRaises(TypeError,
                  "_repr of runtime::InvalidStr returned non-string (nil)",
@@ -67,14 +67,14 @@ class ExceptionMessagesSuite is Suite
                    Repr(InvalidStr(1))
                  end)
   end
-  
+
   def testChr()
     AssertRaises(TypeError, "Chr() expects an Int (Str given)",
                  def ()
                    Chr("x")
                  end)
   end
-  
+
   def testOrd()
     AssertRaises(TypeError, "Ord() expects a character (Int given)",
                  def ()
@@ -91,21 +91,21 @@ class ExceptionMessagesSuite is Suite
                    Ord(SS("foo bar bar"))
                  end)
   end
-  
+
   def testStrExpected()
     AssertRaises(TypeError, "Str expected (but Int found)",
                  def ()
                    "x".count(1)
                  end)
   end
-  
+
   def testStrExpected2()
     AssertRaises(TypeError, "Str expected (but nil found)",
                  def ()
                    IsAbs(nil)
                  end)
   end
-  
+
   def testCharacterExpected()
     AssertRaises(TypeError, "Character expected (but nil found)",
                  def ()
@@ -127,7 +127,7 @@ class ExceptionMessagesSuite is Suite
                    IsLetter(SS("foo123bar"))
                  end)
   end
-  
+
   def testInvalidRvalue()
     AssertRaises(TypeError, "Array or Tuple expected (but Int found)",
                  def ()
@@ -154,7 +154,7 @@ class ExceptionMessagesSuite is Suite
                    var a, b = t
                  end)
   end
-  
+
   def testInvalidRaisedValue()
     AssertRaises(TypeError,
       "Exception must be derived from std::Exception (not nil)",
@@ -167,7 +167,7 @@ class ExceptionMessagesSuite is Suite
         raise 1
       end)
   end
-  
+
   def testInvalidForIterable()
     AssertRaises(MemberError, "Invalid iterable (True)",
       def ()
@@ -194,11 +194,11 @@ end
 
 class InvalidStr
   var val
-  
+
   def _str()
     return self.val
   end
-  
+
   def _repr()
     return self.val
   end

@@ -28,7 +28,7 @@ private class TypeParser
     self.tok = tok
     self.ind = ind
   end
- 
+
   def index() as Int
     return self.ind
   end
@@ -82,14 +82,14 @@ private class TypeParser
       isTok = skip()
       bound = parseType()
     end
-    
+
     if isFunc
       n = -n
     end
 
     return TypeVarDef(name, n, bound, line, TypeVarDefRepr(t, isTok))
   end
-  
+
   -- Parse "dynamic" type.
   def parseDynamicType() as Dynamic
     var tok = skip()
@@ -123,7 +123,7 @@ private class TypeParser
 
         var t = parseType()
         argTypes.append(t)
-        
+
         if currentTokenStr() == "=" and not isVarArg
           assigns.append(skip())
           if minArgs == -1
@@ -241,7 +241,7 @@ private class TypeParser
     self.ind += 1
     return self.tok[self.ind - 1]
   end
-  
+
   def expect(str as Str) as Token
     if self.tok[self.ind].str == str
       self.ind += 1
@@ -250,7 +250,7 @@ private class TypeParser
       parseError()
     end
   end
-  
+
   def expectType(type as Type) as Token
     if currentToken() is type
       self.ind += 1
@@ -259,15 +259,15 @@ private class TypeParser
       parseError()
     end
   end
-  
+
   def currentToken() as Token
     return self.tok[self.ind]
   end
-  
+
   def currentTokenStr() as Str
     return currentToken().str
   end
-  
+
   def parseError() as void
     raise TypeParseError(self.tok, self.ind)
   end

@@ -73,7 +73,7 @@ def AssertRaises(type as Type, *rest as dynamic)
       raise ValueError("Too many arguments")
     end
   end
-  
+
   -- Perform call and verify the exception.
   try
     f(*args)
@@ -106,27 +106,27 @@ class TestCase
     self.name = name
     self.suite = suite
   end
-  
+
   def run() as void
     if func != nil
       func()
     end
   end
-  
+
   def setUp() as void
     if suite != nil
       suite.setUp()
     end
   end
-  
+
   def tearDown() as void
     if suite != nil
       suite.tearDown()
     end
   end
-  
+
   var name as Str
-  
+
   private const func as def ()
   private const suite as Suite
 end
@@ -134,14 +134,14 @@ end
 
 class Suite
   private var testCases = [] as Array<dynamic> -- TestCase or (Str, func)
-  
+
   def create() as void
     init()
   end
-  
+
   def setUp() as void
   end
-  
+
   def tearDown() as void
   end
 
@@ -157,18 +157,18 @@ class Suite
       end
     end
   end
-  
+
   def addTest(test as TestCase) or
              (test as (Str, def ()))
     self.testCases.append(test)
   end
-  
+
   def cases() as Array<dynamic>
     return self.testCases[:]
   end
-  
+
   const prefix = UnqualifyName(Str(TypeOf(self))) + "." as Str
-  
+
   def skip() as void
     raise SkipTestCaseException()
   end
@@ -203,12 +203,12 @@ def RunTest(t as Suite, args = [] as Array<Str>)
   end
 
   var numTotal, numFail, numSkip = RunTestRecursive(t, 0, 0, 0, "", 0)
-  
+
   var skipMsg = ""
   if numSkip > 0
     skipMsg = ", {} skipped".format(numSkip)
   end
-  
+
   if numFail == 0
     if not IsQuiet
       WriteLn(numTotal, " test cases run", skipMsg, ", all passed.")
@@ -218,7 +218,7 @@ def RunTest(t as Suite, args = [] as Array<Str>)
     StdErr.writeLn(numFail, "/", numTotal, " test cases failed", skipMsg, ".")
     StdErr.writeLn("*** FAILURE ***")
   end
-  
+
   --for x, y in Sort(Times)[-20:]
   --  WriteLn("{-40:} {}".format(y, x))
   --end
@@ -231,7 +231,7 @@ def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int,
                                                              (Int, Int, Int)
   if t is TestCase
     var name = prefix + t.name
-    
+
     var match = False
     for p in Patterns
       if MatchPattern(name, p)
@@ -239,20 +239,20 @@ def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int,
         break
       end
     end
-    
+
     if match
       if IsVerbose
 	StdErr.write(name)
       end
-      
+
       var t1 = DateTime()
-      
+
       t.setUp() -- FIX: check exceptions
       var traceback = CallTrace(t.run)
       t.tearDown() -- FIX: check exceptions
-      
+
       Times.append((DateTime() - t1, name))
-      
+
       if traceback[1] != nil
         var e = traceback[0]
         if e is SkipTestCaseException
@@ -304,7 +304,7 @@ def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int,
       suite = t
       suitePrefix = t.prefix
     end
-  
+
     for tt in suite.cases()
       var newPrefix = prefix
       if depth > 0

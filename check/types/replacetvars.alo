@@ -12,7 +12,7 @@ end
 class ReplaceTypeVarsVisitor is TypeTranslator
   -- Only override type variable handling; otherwise perform an indentity
   -- transformation.
-  
+
   def visitTypeVar(t as TypeVar) as Typ
     if t.repr != nil
       -- Give a representation for the dynamic type.

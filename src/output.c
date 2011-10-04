@@ -61,7 +61,7 @@ ABool AInitializeOutput(void)
     ABufSize = 0;
     if (!GrowBuffer(&ABuf, &ABufSize, INITIAL_OUTPUT_BUFFER_SIZE))
         return FALSE;
-    
+
     ABufInd = 1;
     ABuf[0] = OP_NOP;
 
@@ -92,7 +92,7 @@ ABool AInitializeOutput(void)
     }
 
     DebugInfoBufIndex = 0;
-    
+
     ANumActiveSections = 0;
 
     return TRUE;
@@ -123,7 +123,7 @@ void AEnterSection(void)
     ASection[ANumActiveSections].prevLine = PrevLine;
 
     ANumActiveSections++;
-    
+
     PrevLineCodeIndex = ABufInd;
     LineIndex = A_OPCODE_BITS == 32 ? 3 : 1;
 }
@@ -133,11 +133,11 @@ void AEnterSection(void)
 void AQuitSection(void)
 {
     ANumActiveSections--;
-    
+
     ABufInd = ASection[ANumActiveSections].bufInd;
     DebugInfoBufIndex = ASection[ANumActiveSections].debugInfoBufInd;
     ExceptBufIndex = ASection[ANumActiveSections].exceptInd;
-    
+
     /* Set previous opcode to NOP (Buf[0] == NOP). */
     APrevOpcodeInd = 0;
 
@@ -169,7 +169,7 @@ AValue ALeaveSection(ASymbolInfo *sym, int minArgs, int maxArgs, int num)
         AEmitDebugInfo(A_LINE_NUMBER); /* FIX */
         /* FIX: what if EmitDebugInfo fails? */
     }
-    
+
     codeLen = ABufInd - ASection[ANumActiveSections].bufInd;
     ABufInd = ASection[ANumActiveSections].bufInd;
 
@@ -183,7 +183,7 @@ AValue ALeaveSection(ASymbolInfo *sym, int minArgs, int maxArgs, int num)
     /* Calculate the fixed size of a Functin object (all the data before the
        opcodes). */
     fixedSize = APtrDiff(&dummy.code, &dummy.header);
-    
+
     blockLen = fixedSize + (codeLen + exceptInfoLen +
                             debugInfoLen) * sizeof(AOpcode);
     func = AAllocUnmovable(blockLen);
@@ -191,7 +191,7 @@ AValue ALeaveSection(ASymbolInfo *sym, int minArgs, int maxArgs, int num)
         AGenerateOutOfMemoryError();
         return AZero;
     }
-    
+
     AInitNonPointerBlockOld(&func->header, blockLen - sizeof(AValue));
     /* Set previous opcode to NOP (Buf[0] == NOP). */
     APrevOpcodeInd = 0;
@@ -212,7 +212,7 @@ AValue ALeaveSection(ASymbolInfo *sym, int minArgs, int maxArgs, int num)
     func->num = num;
     func->isJitFunction = AIsJitModule;
 #endif
-    
+
     /* Is the stack frame of this code section too large? */
     if (ANumLocals >= A_MAX_FRAME_DEPTH)
         AGenerateError(-1, ErrInternalOverflow, IOF_STACK_FRAME_TOO_LARGE);
@@ -222,7 +222,7 @@ AValue ALeaveSection(ASymbolInfo *sym, int minArgs, int maxArgs, int num)
     PrevLine = ASection[ANumActiveSections].prevLine;
 
     /* FIX do we need to update NumLocals? */
-    
+
     return AFunctionToValue(func);
 }
 
@@ -385,7 +385,7 @@ void AEmitLineNumber(AToken *tok)
     unsigned codeDelta = AGetCodeIndex() - PrevLineCodeIndex;
 
     PrevLine = tok->lineNumber;
-    
+
     PrevLineCodeIndex = AGetCodeIndex();
 
     while (codeDelta > 15) {
@@ -468,10 +468,10 @@ void AToggleInstruction(int index)
 {
     /* We only need to switch the opcode - the operands can always be
        reused without modification. */
-    
+
     int prevOpcode = AGetOpcode(index);
     int newOpcode = prevOpcode;
-    
+
     switch (prevOpcode) {
     case OP_ASSIGN_LL:
         newOpcode = OP_ASSIGN_LL_REV;
@@ -502,7 +502,7 @@ void AToggleInstruction(int index)
         AGenerateError(0, ErrInternalError);
         break;
     }
-    
+
     ASetOpcode(index, newOpcode);
 }
 

@@ -44,7 +44,7 @@ ABool ALoadCModule(const char *path, AModuleDef **def)
         /* fputs(dlerror(), stderr); */
         return FALSE;
     }
-    
+
     for (i = strlen(path) - 1; i >= 0 && path[i] != A_DIR_SEPARATOR; i--);
 
     if (i < 0) {

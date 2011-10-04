@@ -23,7 +23,7 @@ class ArgumentParser
   var epilog = nil      as Str
   var usage = nil       as Str
   var program = nil     as Str
-  
+
   -- These function can be overridden by the client by assigning to these
   -- variables. Default implementations are given for all of them.
   var display   as def (Str, Stream) -- Display a message.
@@ -37,12 +37,12 @@ class ArgumentParser
     if descriptions != [] and not descriptions[0] is Str
       raise TypeError("Arguments must be strings")
     end
-    
+
     -- Strip descriptions.
     for i in 0 to descriptions.length()
       descriptions[i] = descriptions[i].strip()
     end
-    
+
     -- Find the number of non-positional/positional arguments. All positional
     -- arguments must be after non-positional arguments in the description
     -- list.
@@ -51,19 +51,19 @@ class ArgumentParser
           descriptions[i - 1] != ""
       i -= 1
     end
-  
+
     self.descriptions = descriptions[:i]
     self.positional = descriptions[i:]
-    
+
     checkPositionalDescriptions()
-    
+
     self.display = defDisplay
     self.showUsage = defShowUsage
     self.fail = defFail
     self.showHelp = defShowHelp
     self.exit = defExit
   end
-  
+
   -- Check that the descriptions of positional arguments are valid.
   -- Valid forms include 'name', 'name ...', '[name]', '[name] ...' and '...'.
   private def checkPositionalDescriptions() as void
@@ -78,7 +78,7 @@ class ArgumentParser
       end
     end
   end
-  
+
   -- Parse an array of command line arguments, and return an object that can
   -- be used to access the parsed arguments. If the argument is not given,
   -- parse sys::Args instead.
@@ -86,31 +86,31 @@ class ArgumentParser
     if args == nil
       args = sys::Args
     end
-    
+
     try
       var opts, rest = ParserHelper().parse(args, fullDescriptions())
-      
+
       for opt, value in opts
         if hasHelp() and opt in ("-h", "--help")
           showHelp()
           return nil
         end
       end
-      
+
       checkNumberOfPositionals(rest.length())
-        
+
       return Arguments(self, opts, rest, self.descriptions)
     except e is OptError
       fail(e.message)
     end
   end
-  
+
   private def checkNumberOfPositionals(n as Int)
     -- By default accept any number of positionals.
     if self.positional == []
       return
     end
-  
+
     var min = 0
     var max = 0
     var isVarArg = False
@@ -129,13 +129,13 @@ class ArgumentParser
       fail("too many positional arguments")
     end
   end
-  
+
   private def defFail(message as Str)
     showUsage(StdErr)
     display("{}: {}".format(programName(), message), StdErr)
     exit(2)
   end
-  
+
   private def fullDescriptions() as Array<Str>
     if hasHelp() and not hasExplicitHelpCommand()
       return ["-h --help"] + self.descriptions
@@ -143,7 +143,7 @@ class ArgumentParser
       return self.descriptions
     end
   end
-  
+
   -- Return True if one of the options given by the user is -h or --help.
   private def hasExplicitHelpCommand() as Boolean
     for d in self.descriptions
@@ -154,7 +154,7 @@ class ArgumentParser
     end
     return False
   end
-  
+
   private def programName() as Str
     if self.program != nil
       return self.program
@@ -162,11 +162,11 @@ class ArgumentParser
       return BaseName(ProgramPath)
     end
   end
-  
+
   private def defDisplay(msg as Str, target as Stream)
     target.writeLn(msg)
   end
-  
+
   private def defShowUsage(target as Stream)
     var msg = self.usage
     if msg == nil
@@ -186,7 +186,7 @@ class ArgumentParser
     msg = wrap(msg, 10)
     display(msg, target)
   end
-  
+
   private def positionalUsage() as Str
     if self.positional == []
       return " ..."
@@ -208,7 +208,7 @@ class ArgumentParser
       return s + close
     end
   end
-  
+
   private def defShowHelp() as void
     var out = StdOut
     showUsage(out)
@@ -226,19 +226,19 @@ class ArgumentParser
           opt.append(h)
         end
       end
-      
+
       -- Include a default help text for the -h option.
       var help = ["-h" : "show this help message and exit"] + opt
       var desc = fullDescriptions()
       var columnWidth = HelpColumnWidth(desc, help)
-      
+
       if pos != []
         display("", out)
         display("Positional arguments:", out)
         columnWidth = Max(columnWidth, HelpColumnWidth([], pos))
         display(HelpText([], pos, columnWidth), out)
       end
-    
+
       display("", out)
       display("Optional arguments:", out)
       display(HelpText(desc, help, columnWidth), out)
@@ -249,15 +249,15 @@ class ArgumentParser
     end
     exit(0)
   end
-  
+
   private def defExit(code as Int)
     Exit(code)
   end
-  
+
   private def hasHelp() as Boolean
     return self.help != nil or self.description != nil
   end
-  
+
   private def wrap(str as Str, indent = 0 as Int) as Str
     var w = __TextWrapper()
     w.subsequentIndent = " " * indent

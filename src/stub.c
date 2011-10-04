@@ -113,7 +113,7 @@ int main(int argc, char **argv)
                             TRUE, argc, argv, &iface, 0);
     if (num >= 0) {
         AValue val;
-            
+
 #ifdef A_DEBUG_COMPILER
         ADebugInstructionCounter = 1000000;
 #endif
@@ -155,7 +155,7 @@ static void *CompOpenFile(char *path, void *param)
             return &ReadOffset;
         }
     }
-    
+
     return NULL;
 }
 
@@ -193,7 +193,7 @@ static ABool HasDirSeparator(const char *path)
 static int PathCmp(const char *p1, const char *p2, int n)
 {
     int i;
-    
+
     if (n == -1)
         n = AMax(strlen(p1), strlen(p2));
 
@@ -242,7 +242,7 @@ static const char *CompReadDir(void *dir)
 {
     const char *ret;
     const char *p;
-    
+
     if (DirPos < 0)
         return NULL;
 
@@ -255,7 +255,7 @@ static const char *CompReadDir(void *dir)
         if (A_IS_DIR_SEPARATOR(*p))
             ret = p + 1;
     }
-    
+
     return ret;
 }
 

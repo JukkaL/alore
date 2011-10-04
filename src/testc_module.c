@@ -143,11 +143,11 @@ static AValue TestC_CallTrace(AThread *t, AValue *frame)
 static AValue TestC_CollectGarbage(AThread *t, AValue *frame)
 {
     ABool status;
-    
+
     ALockHeap();
     status = ACollectGarbage();
     AReleaseHeap();
-    
+
     if (!status)
         return ARaiseMemoryErrorND(t);
     else
@@ -187,14 +187,14 @@ static AValue TestC_Call(AThread *t, AValue *frame)
     int c1;
     int c2;
     int i;
-    
+
     if (!AIsArray(frame[1]) || (!AIsArray(frame[2]) && frame[2] != ADefault))
         return ARaiseTypeErrorND(t, NULL);
 
     c1 = AArrayLen(frame[1]);
     if (c1 > 4)
         return ARaiseValueErrorND(t, NULL);
-    
+
     /* Copy the fixed arguments. */
     for (i = 0; i < c1; i++)
         frame[3 + i] = AArrayItem(frame[1], i);
@@ -205,7 +205,7 @@ static AValue TestC_Call(AThread *t, AValue *frame)
         c2 = c1 + 1 + A_VAR_ARG_FLAG;
     else
         c2 = c1;
-    
+
     return ACallValue(t, frame[0], c2, frame + 3);
 }
 
@@ -256,7 +256,7 @@ static AValue TestC_Members(AThread *t, AValue *frame)
         frame[2] = AMakeStr(t, members[i].name);
         ASetArrayItem(t, frame[1], i, frame[2]);
     }
-    
+
     return frame[1];
 }
 
@@ -308,7 +308,7 @@ static int NumMembers(ATypeInfo *type)
         n = NumMembers(type->super);
     else
         n = 0;
-    
+
     return n +
         NumTableMembers(type->memberTable[MT_VAR_GET_PUBLIC], type->super) +
         NumTableMembers(type->memberTable[MT_METHOD_PUBLIC], type->super);
@@ -334,7 +334,7 @@ static int GetTableMembers(MemberStruct *m, int n, AValue v, ABool isMethod)
                 if (m[j].name == m[n].name)
                     break;
             }
-            
+
             if (j == n) {
                 m[n].classNum = 0;
                 /* FIX This ordering is kind of ad-hoc, but maybe it doesn't
@@ -361,10 +361,10 @@ static int GetMembers(MemberStruct *m, ATypeInfo *type)
         return 0;
 
     i = GetMembers(m, type->super);
-    
+
     i = GetTableMembers(m, i, type->memberTable[MT_VAR_GET_PUBLIC], FALSE);
     i = GetTableMembers(m, i, type->memberTable[MT_METHOD_PUBLIC], TRUE);
-    
+
     return i;
 }
 
@@ -491,7 +491,7 @@ static void IntU64ToStr(char *buf, AIntU64 i)
 static void Int64ToStr(char *buf, AInt64 i)
 {
     AIntU64 ui;
-    
+
     if (i < 0) {
         buf[0] = '-';
         /* This is tricky because the negation of -(1<<63) is not representable
@@ -513,7 +513,7 @@ static AValue TestC_AGetInt64(AThread *t, AValue *frame)
 
     /* sprintf(buf, "%lld", i) would be simpler but not as portable. */
     Int64ToStr(buf, i);
-    
+
     return AMakeStr(t, buf);
 }
 
@@ -528,7 +528,7 @@ static AValue TestC_AGetIntU64(AThread *t, AValue *frame)
 
     /* sprintf(buf, "%llu", i) would be simpler but not as portable. */
     IntU64ToStr(buf, i);
-    
+
     return AMakeStr(t, buf);
 }
 
@@ -707,13 +707,13 @@ static AValue TestC_ATemps(AThread *t, AValue *frame)
     AValue *t1;
     AValue *t2;
     AValue *tempStackPtr = t->tempStackPtr;
-    
+
     t1 = AAllocTemp(t, AZero);
     if (*t1 != AZero)
         goto Fail;
 
     *t1 = AMakeStr(t, "hello");
-    
+
     t2 = AAllocTemps(t, 3);
     if (t2[0] != AZero || t2[1] != AZero || t2[2] != AZero)
         goto Fail;
@@ -845,22 +845,22 @@ static AValue TestC_ATry(AThread *t, AValue *frame)
 static AValue TestC_AIsExceptionType(AThread *t, AValue *frame)
 {
     char type[100];
-    
+
     AGetStr(t, frame[1], type, sizeof(type));
-    
+
     if (ATry(t)) {
         if (AIsExceptionType(t, type))
             return ATrue;
         return AError;
     }
-    
+
     if (ACallValue(t, frame[0], 0, frame + 2) == AError) {
         AEndTry(t);
         if (AIsExceptionType(t, type))
             return ATrue;
         return AError;
     }
-    
+
     AEndTry(t);
     return AFalse;
 }
@@ -871,7 +871,7 @@ static AValue TestC_ACallMethod(AThread *t, AValue *frame)
 {
     char member[100];
     int nargs;
-    
+
     AGetStr(t, frame[0], member, 100);
 
     for (nargs = 3; nargs > 0 && frame[nargs + 1] == ADefault; nargs--);
@@ -979,43 +979,43 @@ static AValue TestC_Time(AThread *t, AValue *frame)
 }
 #endif
 
-    
+
 static AValue TestC_AIsEq(AThread *t, AValue *frame)
 {
     return AIntToValue(AIsEq(t, frame[0], frame[1]));
 }
 
-    
+
 static AValue TestC_AIsNeq(AThread *t, AValue *frame)
 {
     return AIntToValue(AIsNeq(t, frame[0], frame[1]));
 }
 
-    
+
 static AValue TestC_AIsLt(AThread *t, AValue *frame)
 {
     return AIntToValue(AIsLt(t, frame[0], frame[1]));
 }
 
-    
+
 static AValue TestC_AIsGt(AThread *t, AValue *frame)
 {
     return AIntToValue(AIsGt(t, frame[0], frame[1]));
 }
 
-    
+
 static AValue TestC_AIsLte(AThread *t, AValue *frame)
 {
     return AIntToValue(AIsLte(t, frame[0], frame[1]));
 }
 
-    
+
 static AValue TestC_AIsGte(AThread *t, AValue *frame)
 {
     return AIntToValue(AIsGte(t, frame[0], frame[1]));
 }
 
-    
+
 static AValue TestC_ASubArray(AThread *t, AValue *frame)
 {
     int i1 = AGetInt(t, frame[1]);
@@ -1023,7 +1023,7 @@ static AValue TestC_ASubArray(AThread *t, AValue *frame)
     return ASubArray(t, frame[0], i1, i2);
 }
 
-    
+
 static AValue TestC_ALen(AThread *t, AValue *frame)
 {
     int l = ALen(t, frame[0]);
@@ -1127,7 +1127,7 @@ static AValue TestC_GetCModuleImports(AThread *t, AValue *frame)
     AModuleDef *def;
 
     AGetStr(t, frame[0], path, sizeof(path));
-    
+
     if (!ALoadCModule(path, &def))
         return ARaiseValueError(t, "Invalid path");
 
@@ -1172,7 +1172,7 @@ static AValue TestC_SymbolInfoCount(AThread *t, AValue *frame)
 
         while (base != NULL) {
             ASymbolInfo *cur;
-            
+
             cur = base->info;
             while ((void *)cur != (void *)base) {
                 /* Do not count member symbols since they cannot be cleaned up
@@ -1185,8 +1185,8 @@ static AValue TestC_SymbolInfoCount(AThread *t, AValue *frame)
             base = base->next;
         }
     }
-    
-    
+
+
     return AMakeInt(t, count);
 }
 
@@ -1214,10 +1214,10 @@ static AValue TestC_GlobalValueCount(AThread *t, AValue *frame)
             count += A_GLOBAL_BUCKET_SIZE;
             i = AGetNextGlobalBucket(i);
         }
-        
+
         num = AGetNextModule(num);
     }
-    
+
     return AMakeInt(t, count);
 }
 
@@ -1325,7 +1325,7 @@ static AValue BinaryData2Get(AThread *t, AValue *frame)
     int j = ((int *)ADataPtr(frame[0], BinaryDataOffset2))[1];
     return AMakeInt(t, i + j);
 }
-   
+
 
 static AValue BinaryData2Create(AThread *t, AValue *frame)
 {
@@ -1334,7 +1334,7 @@ static AValue BinaryData2Create(AThread *t, AValue *frame)
     ((int *)ADataPtr(frame[0], BinaryDataOffset2))[1] = 3000;
     return frame[0];
 }
-   
+
 
 static AValue BinaryData2Init(AThread *t, AValue *frame)
 {
@@ -1453,7 +1453,7 @@ A_MODULE(__testc, "__testc")
     A_DEF("AContainerPtr", 1, 0, TestC_AContainerPtr)
     A_DEF("AContainerValue", 1, 0, TestC_AContainerValue)
     A_DEF("ASetContainerValue", 2, 0, TestC_ASetContainerValue)
-    
+
     A_EMPTY_CONST_P("ShortIntMax", &ShortIntMaxNum)
     A_EMPTY_CONST_P("ShortIntMin", &ShortIntMinNum)
 
@@ -1464,7 +1464,7 @@ A_MODULE(__testc, "__testc")
         A_METHOD("get", 0, 0, BinaryData1Get)
         A_METHOD("#i", 0, 0, BinaryData1Init)
     A_END_CLASS()
-    
+
     A_CLASS("BinaryData2")
         A_INHERIT("::BinaryData")
         A_BINARY_DATA_P(2 * sizeof(int), &BinaryDataOffset2)
@@ -1472,7 +1472,7 @@ A_MODULE(__testc, "__testc")
         A_VAR("x")
         A_VAR("y")
         A_VAR("z")
-    
+
         A_METHOD("create", 0, 0, BinaryData2Create)
         A_METHOD("set2", 2, 0, BinaryData2Set)
         A_METHOD("get2", 0, 0, BinaryData2Get)
@@ -1484,7 +1484,7 @@ A_MODULE(__testc, "__testc")
         A_METHOD("set", 1, 0, BinaryData1Set)
         A_METHOD("get", 0, 0, BinaryData1Get)
     A_END_CLASS()
-    
+
     A_CLASS("RecursionClassC")
         A_METHOD("infiniteRecursion", 0, 50, RecursionClassCInfiniteRecursion)
     A_END_CLASS()

@@ -92,7 +92,7 @@ static void PrintChar(AWideChar c)
             return;
         }
     }
-    
+
     if (c >= 32 && c < 127)
         printf("%c", c); /* Ordinary 7-bit character */
     else if (c < 256)
@@ -114,7 +114,7 @@ void PrintRange(AReOpcode *ptr, ABool isMax)
         printf(",");
     else if (opt != 0)
         printf(",%d", min + opt);
-    
+
     printf("}");
     printf(isMax ? " " : "? ");
 }
@@ -129,7 +129,7 @@ void PrintString(AReOpcode **ptr)
 
     len = **ptr;
     str = *ptr + 1;
-    
+
     *ptr += len + 1;
 
     printf("\"");
@@ -153,7 +153,7 @@ static void DisplaySet(void *set, ABool (*check)(void *, int))
     printf("[");
     if (comp)
         printf("^");
-    
+
     do {
         while (check(set, i) == comp)
             if (i == 255) {
@@ -195,7 +195,7 @@ void ADisplayRegExp(ARegExp *re)
     reCodeBeg = reCode;
 
     printf("minLen: %d\n", re->minLen);
-    
+
     if (re->mustStringInd != 0) {
         int i;
 
@@ -203,10 +203,10 @@ void ADisplayRegExp(ARegExp *re)
         for (i = 0; i < re->mustStringLen; i++)
             PrintChar(reCodeBeg[re->mustStringInd + i]);
         printf("\n");
-        
+
         printf("back: %d\n", re->mustStringBack);
     }
-    
+
     printf("startChar: ");
     DisplaySet(re->startChar, IsInCharSet);
     printf("\n");
@@ -228,7 +228,7 @@ void ADisplayRegExp(ARegExp *re)
         case A_EMPTY:
             printf("%s", Name[code]);
             break;
-            
+
         case A_LPAREN:
         case A_RPAREN:
         case A_RPAREN_SKIP:
@@ -248,7 +248,7 @@ void ADisplayRegExp(ARegExp *re)
             reCode += 2;
 
             /* Fall through */
-            
+
         case A_LITERAL:
         case A_LITERAL_I:
             printf("\"");
@@ -307,7 +307,7 @@ void ADisplayRegExp(ARegExp *re)
             fprintf(stderr, "Invalid opcode %d!\n", code);
             return;
         }
-        
+
         printf("\n");
     } while (code != A_MATCH);
 }

@@ -9,7 +9,7 @@ class ClassSuite4 is Suite
   def testTestPrivateMembers()
     Test(1, 2, 3)
   end
-  
+
   def testTestPrivateMemberErrors()
     TestError()
   end
@@ -25,21 +25,21 @@ private class Test
   private def z
     return public
   end
-  
+
   var public
 
   def create(x, y, z)
     Assert(x == 1)
     Assert(y == 2)
     Assert(z == 3)
-    
+
     self.x = x + 1
     Assert(self.x == 2)
     self.y = y + 1
     Assert(self.y == 3)
     self.z = z + 1
     Assert(self.z == 5)
-    
+
     testMethod()
   end
 
@@ -52,7 +52,7 @@ end
 
 private class TestError
   private var x
-  
+
   def create()
     var nerr = 0
 
@@ -70,11 +70,11 @@ private class TestError
     end
     Assert(nerr == 2)
   end
-  
+
   def foo()
     (self).x = 3
   end
-  
+
   def bar()
     return (self).x
   end

@@ -14,29 +14,29 @@ class CgiSuite is Suite
     AssertEqual(Html("&<>+/-'""ä\u0000\u1234"),
                            "&amp;&lt;&gt;+/-'&quot;ä\u0000\u1234")
   end
-  
+
   def testHtmlQuotes()
     AssertEqual(HtmlQuot(""), "")
     AssertEqual(HtmlQuot("foo bar"), "foo bar")
     AssertEqual(HtmlQuot("&<>+/-'""ä"), "&amp;&lt;&gt;+/-&#39;&quot;ä")
   end
-  
+
   def testEncodeNil()
     -- HTML encoding preserves nils.
     AssertEqual(Html(nil), nil)
     AssertEqual(HtmlQuot(nil), nil)
   end
-  
+
   def testParseQuery()
     AssertEqual(ParseQuery(""), [])
     AssertEqual(ParseQuery("foo=bar"), ["foo" : "bar"])
     AssertEqual(ParseQuery("foo=bar&x=y"), ["foo" : "bar", "x" : "y"])
   end
-  
+
   def testParseQuerySpecialChars()
     AssertEqual(ParseQuery("foo+bar=x%3f%20y"), ["foo bar" : "x? y"])
   end
-  
+
   def testParseQuerySpecial()
     AssertEqual(ParseQuery("&&&"), [])
     AssertEqual(ParseQuery("?&xyz&&"), [])
@@ -46,7 +46,7 @@ class CgiSuite is Suite
     AssertEqual(ParseQuery("/=ä"), ["/" : "ä"])
     AssertEqual(ParseQuery("f%2z=%"), ["f%2z" : "%"])
   end
-  
+
   def testRequest()
     -- Setup environment.
     SetEnv("REQUEST_METHOD", "GET")
@@ -56,30 +56,30 @@ class CgiSuite is Suite
     SetEnv("HTTP_ACCEPT", "text/html")
     SetEnv("HTTP_USER_AGENT", "foo/bar xyz/123")
     SetEnv("QUERY_STRING", "f+oo=b+ar&x=y&x=123&Z=")
-    
+
     var r = Request()
-    
+
     AssertEqual(r.method, "GET")
     AssertEqual(r.pathInfo, "/x/y")
     AssertEqual(r.remoteAddr, "127.0.0.1")
     AssertEqual(r.remoteHost, nil)
     AssertEqual(r.userAgent, "foo/bar xyz/123")
-    
+
     AssertEqual(r.length(), 3)
-    
+
     Assert(r.hasKey("f oo"))
     Assert(r.hasKey("x"))
     Assert(r.hasKey("Z"))
     Assert(not r.hasKey("z"))
-    
+
     AssertEqual(r["f oo"], "b ar")
     AssertEqual(r["x"], "y")
     AssertEqual(r["Z"], "")
-    
+
     AssertEqual(r.valueList("xx"), [])
     AssertEqual(r.valueList("f oo"), ["b ar"])
     AssertEqual(r.valueList("x"), ["y", "123"])
   end
-  
+
   -- FIX: Only GET requests are tested
 end

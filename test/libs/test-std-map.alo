@@ -21,26 +21,26 @@ class StdMapSuite is Suite
     Assert(m.length() == 2)
     Assert(m["foo"] == 3)
   end
-  
+
   -- Test initialization at construction.
   def testCreate()
     var m = Map(1 : "foo", 2 : "bar")
     Assert(m.length() == 2)
     Assert(m[1] == "foo")
     Assert(m[2] == "bar")
-    
+
     m = Map(1 : 2, 1 : 3)
     Assert(m.length() == 1)
     Assert(m[1] == 3)
   end
-  
+
   -- Test the get method.
   def testGet()
     var m = Map(12 : "foo", 37 : "bar")
     AssertEqual(m.get(13, 99), 99)
     AssertEqual(m.get(12, 99), "foo")
   end
-  
+
   -- Test the hasKey method.
   def testHasKey()
     var m = Map(12 : "foo", 37 : "bar")
@@ -52,7 +52,7 @@ class StdMapSuite is Suite
     m["foo"] = 999
     Assert(m.hasKey("foo"))
   end
-  
+
   -- Test removing items from Map.
   def testRemove()
     var m = Map(12 : "foo", 37 : "bar")
@@ -66,11 +66,11 @@ class StdMapSuite is Suite
     m[37] = "hup"
     Assert(m.length() == 1)
     Assert(m[37] == "hup")
-    
+
     AssertRaises(KeyError, "'foo'",
                  def (); Map().remove("foo"); end)
   end
-  
+
   -- Test growing the hash table and emptying it after growing.
   def testResize()
     var m = Map()
@@ -90,7 +90,7 @@ class StdMapSuite is Suite
       Assert(not m.hasKey(i * 7 - 300))
     end
   end
-  
+
   -- Test iterating Map objects.
   def testIteration()
     TestMapEnum()
@@ -103,7 +103,7 @@ class StdMapSuite is Suite
     end
     TestMapEnum(*l)
   end
-  
+
   -- Test manually calling the iterator methods.
   def testIterationMethods()
     var m = Map(1 : "a", 5 : "e", 3 : "c")
@@ -127,7 +127,7 @@ class StdMapSuite is Suite
     AssertRaises(ValueError, e.next, [])
     AssertEqual(Sort(a), [(1, "a"), (3, "c"), (5, "e")])
   end
-  
+
   -- Test comparing map objects for equality.
   def testEquality()
     var m = Map()
@@ -136,7 +136,7 @@ class StdMapSuite is Suite
     Assert(m2 == m2)
     Assert(m != m2)
   end
-  
+
   -- Test raising exceptions on index errors.
   def testIndexErrors()
     var nerr = 0
@@ -153,12 +153,12 @@ class StdMapSuite is Suite
     end
     Assert(nerr == 11)
   end
-  
+
   -- Test the items method.
   def testItems()
     AssertEqual(Map().items(), [])
     AssertEqual(Map(1 : 2).items(), [(1, 2)])
-    
+
     var m = Map(1 : "foo", "bar" : 3, [3, 4] : 5, True : False)
     AssertType(Array, m.items())
     AssertEqual(Set(m.items()), Set([(1, "foo"), ("bar", 3), ([3, 4], 5),
@@ -166,30 +166,30 @@ class StdMapSuite is Suite
     m.remove(1)
     AssertEqual(Set(m.items()), Set([("bar", 3), ([3, 4], 5), (True, False)]))
   end
-  
+
   -- Test the keys method.
   def testKeys()
     var m = Map(1 : "foo", "bar" : 3, [3, 4] : 5, True : False)
     m.remove(1)
     AssertEqual(Set(m.keys()), Set(["bar", [3, 4], True]))
   end
-  
+
   -- Test the values method.
   def testValues()
     var m = Map(1 : "foo", "bar" : 3, [3, 4] : 5, True : False)
     m.remove(1)
     AssertEqual(Set(m.values()), Set([3, 5, False]))
   end
-  
+
   -- Test converting Map objects to strings.
   def testConversionToStr()
     AssertEqual(Str(Map()), "Map()")
     AssertEqual(Str(Map(1 : "foo")), "Map(1 : 'foo')")
-    
+
     var s = Str(Map(1 : 2, 2 : 3))
     Assert(s == "Map(1 : 2, 2 : 3)" or s == "Map(2 : 3, 1 : 2)")
   end
-  
+
   -- Test user-defined types as keys.
   def testUserDefinedKeys()
     var m = Map()
@@ -197,7 +197,7 @@ class StdMapSuite is Suite
     Assert(m.hasKey(KeyClass(1, 2, False)))
     Assert(not m.hasKey(KeyClass(1, 1, False)))
   end
-  
+
   -- Test returning long integer as hash value.
   def testLongIntHash()
     var m = Map()
@@ -205,12 +205,12 @@ class StdMapSuite is Suite
     Assert(m.hasKey(KeyClass(2**100, 3, False)))
     Assert(not m.hasKey(KeyClass(2**101, 3, False)))
   end
-  
+
   -- Test raising an exception in an overloaded equality operator.
   def testCompareException()
     var m = Map()
     var err = False
-    
+
     m[KeyClass(1, 2, True)] = 3
     try
       var k = m[KeyClass(1, 2, True)]
@@ -219,45 +219,45 @@ class StdMapSuite is Suite
     end
     Assert(err)
   end
-  
+
   -- Test raising an exception in the _hash method.
   def testHashException()
     var m = Map()
     var err = 0
-    
+
     try
       var k = m[KeyClass(1, "a", False)]
     except ExitException
       err += 1
     end
-    
+
     try
       m[KeyClass(1, "a", False)] = 3
     except ExitException
       err += 1
     end
-    
+
     try
       var k = m.hasKey(KeyClass(1, "a", False))
     except ExitException
       err += 1
     end
-    
+
     try
       m.remove(KeyClass(1, "a", False))
     except ExitException
       err += 1
     end
-    
+
     Assert(err == 4)
   end
-  
+
   def testSubTypeWithoutSuperCreate()
     var m = MapSubType()
     m["foo"] = "kissa"
     AssertEqual(m["foo"], "kissa")
   end
-  
+
   def testNilItems()
     var m1 = Map(nil : 1)
     AssertEqual(m1.keys(), [nil])
@@ -286,14 +286,14 @@ private class KeyClass
   const a
   const b
   const exception
-  
+
   def _eq(x)
     if exception
       raise InterruptException()
     end
     return a == x.a and b == x.b
   end
-  
+
   def _hash()
     if b is Str
       raise ExitException(2)

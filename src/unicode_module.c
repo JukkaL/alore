@@ -98,7 +98,7 @@ static void GetGenericUnicodeName(int c, char *buf)
         int j = AUnicodeNameList[i]; /* Shared prefix length */
         int k = 0;
         i++;
-        
+
         /* Read word numbers not part of the shared prefix. The last word
            has the highest bit set. */
         do {
@@ -230,11 +230,11 @@ static AValue UnicodeName(AThread *t, AValue *frame)
 {
     int ch = AGetCh(t, frame[0]);
     char buf[128];
-    
+
     GetUnicodeName(ch, buf);
     if (*buf == '\0')
         ARaiseValueError(t, "Invalid Unicode character");
-    
+
     return AMakeStr(t, buf);
 }
 
@@ -262,7 +262,7 @@ static AValue LookupChr(AThread *t, AValue *frame)
     char buf[256];
     char name[128];
     int i;
-    
+
     AGetStr(t, frame[0], buf, sizeof(buf));
 
     if (strncmp(buf, "CJK UNIFIED IDEOGRAPH-", 22) == 0) {
@@ -285,7 +285,7 @@ static AValue LookupChr(AThread *t, AValue *frame)
     }
 
     /* Use the generic algorithm for character lookup. */
-    
+
     /* The hash table AUnicodeNameHashTable is used to map names to code
        points. Each item in the hash table is a code point. Hash the name
        string, and look up the name of the code point in the corresponding
@@ -304,7 +304,7 @@ static AValue LookupChr(AThread *t, AValue *frame)
     /* No match. */
 
   Error:
-    
+
     return ARaiseValueError(t, "Invalid Unicode character name");
 }
 

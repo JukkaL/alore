@@ -84,7 +84,7 @@ ATypeInfo *ACreateTypeInfo(AThread *t, ASymbolInfo *sym, ABool isInterface)
     /* The type has still to be initialized (setting up member hash tables
        etc.). */
     type->isValid = FALSE;
-    
+
     if (!ASetConstGlobalValue(t, sym->num, ATypeToValue(type)))
         return NULL;
 
@@ -149,7 +149,7 @@ void ABuildTypeInfoMembers(ATypeInfo *type)
             node = (AMemberNode *)&TempMemberList[i];
             while (node->next != NULL) {
                 AMemberNode *nextNode = node->next;
-                
+
                 if ((nextNode->item & A_VAR_METHOD)
                     && TempMemberList[i] != nextNode) {
                     node->next = nextNode->next;
@@ -170,7 +170,7 @@ void ABuildTypeInfoMembers(ATypeInfo *type)
             nextNode = node->next;
             nextKey = nextNode->key;
             nextItem = nextNode->item;
-                
+
             if (table->item[nextKey & tableSize].key == 0) {
                 table->item[nextKey & tableSize].key  = nextKey;
                 table->item[nextKey & tableSize].item = nextItem;
@@ -190,7 +190,7 @@ void ABuildTypeInfoMembers(ATypeInfo *type)
             /* Find a free node. */
             while (table->item[j].key != 0)
                 j++;
-            
+
             table->item[j].key  = node->key;
             table->item[j].item = node->item;
             table->item[j].next = NULL;
@@ -236,7 +236,7 @@ static ABool HasTypeMethod(ATypeInfo *type, int methodNum, ABool ignoreObject)
         /* Ignore method defined Object if asked to do so. */
         if (ignoreObject && ASuperType(type) == NULL)
             return FALSE;
-        
+
         if (GetMemberCount(type->memberTable[MT_METHOD_PUBLIC],
                            methodNum) > 0)
             return TRUE;
@@ -290,7 +290,7 @@ void AUpdateInheritedMiscTypeData(ATypeInfo *type)
 ABool AInitializeClassOutput(void)
 {
     int i;
-    
+
     for (i = 0; i < A_NUM_MEMBER_HASH_TABLES; i++) {
         TempMemberList[i] = NULL;
         NumMembers[i] = 0;
@@ -387,8 +387,8 @@ int AGetMemberVar(ABool isPrivate, unsigned key)
 
     return -1;
 }
- 
- 
+
+
 ASymbolInfo *AGetMemberSymbol(ASymbol *s)
 {
     ASymbolInfo *sym = (ASymbolInfo *)s;
@@ -400,7 +400,7 @@ ASymbolInfo *AGetMemberSymbol(ASymbol *s)
         sym = AAddIdentifier(s, ID_MEMBER);
         if (sym == NULL)
             return NULL;
-        
+
         sym->type = ID_MEMBER;
         sym->num  = ANumMemberIds;
         sym->sym  = NULL;
@@ -409,7 +409,7 @@ ASymbolInfo *AGetMemberSymbol(ASymbol *s)
             MemberSymListBlock *new = AAllocStatic(sizeof(MemberSymListBlock));
             if (new == NULL)
                 return NULL;
-            
+
             new->next = MemberSyms;
             MemberSyms = new;
         }
@@ -417,7 +417,7 @@ ASymbolInfo *AGetMemberSymbol(ASymbol *s)
         MemberSyms->sym[ANumMemberIds & (MEMBER_LIST_BLOCK_LENGTH - 1)] = sym;
 
         ANumMemberIds++;
-        
+
         return sym;
     } else
         return sym->next;
@@ -432,7 +432,7 @@ ASymbolInfo *AGetMemberSymbolByKey(int key)
     /* Three special members don't have any symbols. */
     if (key == AM_NONE || key == AM_INITIALIZER || key == AM_FINALIZER)
         return NULL;
-    
+
     while (key < curBlockKey) {
         block = block->next;
         curBlockKey -= MEMBER_LIST_BLOCK_LENGTH;
@@ -453,7 +453,7 @@ static int GetMemberCount(AValue tableValue, unsigned key)
     node = &table->item[key & table->size];
 
     numFound = 0;
-    
+
     if (node->key == key)
         numFound++;
 
@@ -462,7 +462,7 @@ static int GetMemberCount(AValue tableValue, unsigned key)
         if (node->key == key)
             numFound++;
     }
-    
+
     return numFound;
 }
 
@@ -482,7 +482,7 @@ static int GetMemberVariableCount(AValue tableValue, unsigned key,
 
     if (isMethod)
         isMethod = A_VAR_METHOD;
-    
+
     if (node->key == key && (node->item & A_VAR_METHOD) == isMethod)
         numFound++;
 
@@ -491,7 +491,7 @@ static int GetMemberVariableCount(AValue tableValue, unsigned key,
         if (node->key == key && (node->item & A_VAR_METHOD) == isMethod)
             numFound++;
     }
-    
+
     return numFound;
 }
 
@@ -500,7 +500,7 @@ static void CheckNoInterfaceDefinition(ATypeInfo *type, unsigned key,
                                        AToken *tok, int table)
 {
     int i;
-    
+
     /* Check that no interface defines member of the specified type with the
        specified name. */
     for (i = 0; i < type->numInterfaces; i++) {
@@ -597,7 +597,7 @@ void ACheckSetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
             AGenerateError(tok->lineNumber, ErrIncompatibleWithSuperClass,
                            tok);
     }
-    
+
     /* Check if there is another setter or method with the same name. */
     if (GetMemberVariableCount(type->memberTable[MT_VAR_SET_PUBLIC +
                                                 isPrivate], key, TRUE) > 1
@@ -606,7 +606,7 @@ void ACheckSetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
             GetMemberCount(type->memberTable[MT_METHOD_PUBLIC], key) +
             GetMemberCount(type->memberTable[MT_METHOD_PRIVATE], key) > 0))
         AGenerateError(tok->lineNumber, ErrRedefined, tok);
-    
+
     CheckNoInterfaceDefinition(type, key, tok, MT_METHOD_PUBLIC);
     if (isPrivate)
         CheckNoInterfaceDefinition(type, key, tok, MT_VAR_GET_PUBLIC);
@@ -669,11 +669,11 @@ void ACheckGetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
         || GetMemberVariableCount(type->memberTable[MT_VAR_GET_PRIVATE -
                                                  isPrivate], key, FALSE) > 0)
         AGenerateError(tok->lineNumber, ErrRedefined, tok);
-    
+
     CheckNoInterfaceDefinition(type, key, tok, MT_METHOD_PUBLIC);
     if (isPrivate)
         CheckNoInterfaceDefinition(type, key, tok, MT_VAR_GET_PUBLIC);
-    
+
     while (ASuperType(type) != NULL) {
         type = type->super;
 
@@ -693,7 +693,7 @@ void ACheckGetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
 int ATotalNumMemberVars(ATypeInfo *type)
 {
     int num = 0;
-    
+
     for (; type != NULL; type = ASuperType(type))
         num += type->numVars;
 
@@ -723,7 +723,7 @@ void ACalculateInstanceSize(ATypeInfo *type)
     type->dataOffset = (1 + type->totalNumVars) * sizeof(AValue);
     type->instanceSize = AGetBlockSize((1 + type->totalNumVars) *
                                        sizeof(AValue) + type->dataSize);
-    
+
     if (type->dataSize > 0)
         type->hasFinalizerOrData = TRUE;
 }
@@ -839,14 +839,14 @@ ABool AIsSubType(AValue subVal, AValue typeVal)
 {
     ATypeInfo *subType = AValueToType(subVal);
     ATypeInfo *type = AValueToType(typeVal);
-    
+
     do {
         if (subType == type)
             return TRUE;
-        
+
         subType = subType->super;
     } while (subType != NULL);
-    
+
     return FALSE;
 }
 
@@ -872,13 +872,13 @@ ABool AAllocateInterfacesInTypeInfo(ATypeInfo *type, unsigned numInterfaces)
     for (i = 0; i < type->numInterfaces; i++)
         *AInterfaceListPtr(ANonPointerBlockToValue(block), i) =
             ATypeInterface(type, i);
-    
+
     ACompilerThread->tempStack[0] = ANonPointerBlockToValue(block);
     if (!AModifyOldGenObject(ACompilerThread, &type->interfaces,
                              ACompilerThread->tempStack))
         return FALSE;
     type->interfacesSize = numInterfaces;
-    
+
     return TRUE;
 }
 
@@ -909,7 +909,7 @@ ABool AAddInterface(ATypeInfo *type, ATypeInfo *interface, ABool allocSpace)
         if (!AAllocateInterfacesInTypeInfo(type, type->interfacesSize + 1))
             return FALSE;
     }
-    
+
     *AInterfaceListPtr(type->interfaces, n) = interface;
     type->numInterfaces++;
 

@@ -62,7 +62,7 @@ typedef enum {
     TT_ASSIGN_POW,
     TT_DOT,
     TT_SCOPEOP,
-    
+
     TT_NEWLINE,
     TT_EOF,             /* End of file, always preceded by newline token */
 
@@ -104,7 +104,7 @@ typedef enum {
     TT_LAST_RESERVED = TT_BIND,
 
     TT_ANNOTATION,                    /* Part of an (ignored) annotation */
-    
+
     TT_ERR_STRING_UNTERMINATED,
     TT_ERR_INVALID_NUMERIC,
     TT_ERR_UNRECOGNIZED_CHAR,         /* Invalid character outside a comment or
@@ -116,7 +116,7 @@ typedef enum {
     TT_ERR_INVALID_UTF8_SEQUENCE,     /* Invalid UTF-8 character sequence in
                                          a comment or a string literal*/
     TT_ERR_PARSE,
-    
+
     TT_LAST_TOKEN,
     TT_EMPTY
 } ATokenType;

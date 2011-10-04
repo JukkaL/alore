@@ -28,14 +28,14 @@ static const signed char Base64DecMap[128] = {
 static AValue Base64Encode(AThread *t, AValue *frame)
 {
     /* FIX: Raise exception if argument is a wide string. */
-    
+
     int srcLen;
     int dstLen;
     AValue res;
     int i, j, resInd;
 
     AExpectStr(t, frame[0]);
-    
+
     srcLen = AStrLen(frame[0]);
     dstLen = (srcLen + 2) / 3 * 4;
 
@@ -71,7 +71,7 @@ static AValue Base64Encode(AThread *t, AValue *frame)
 
         resInd += 4;
     }
-    
+
     return res;
 }
 
@@ -141,10 +141,10 @@ static AValue Base64Decode(AThread *t, AValue *frame)
 
         resInd += 3;
     }
-    
+
     if ((srcLen & 3) != 0)
         return ARaiseValueError(t, "Incorrect padding");
-    
+
     return res;
 }
 

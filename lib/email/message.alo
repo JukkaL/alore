@@ -23,13 +23,13 @@ import re
 class Message is Map
   def create(data = "")
     super.create()
-    
+
     if data == ""
       return
     end
-    
+
     var headers, body = data.split(CR + LF + CR + LF, 1)
-    
+
     var a = headers.split(CR + LF)
     var i = 0
     while i < a.length()
@@ -46,14 +46,14 @@ class Message is Map
       end
       i += 1
     end
-    
+
     self.body = body
   end
-  
+
   def _get(name)
     return super._get(altMap[name.lower()])
   end
-  
+
   def _set(name, value)
     var l = name.lower()
     if altMap.hasKey(l)
@@ -62,18 +62,18 @@ class Message is Map
     super._set(name, value)
     altMap[l] = name
   end
-  
+
   def remove(name)
     var l = name.lower()
     super.remove(altMap[l])
     altMap.remove(l)
   end
-  
+
   def hasKey(name)
     return altMap.hasKey(name.lower())
   end
-  
+
   var body
-  
+
   private var altMap = Map()
 end

@@ -9,49 +9,49 @@ import checker
 
 class SolveSuite is Suite
   private var fx
-  
+
   def setUp()
     self.fx = TypeFixture()
   end
-  
+
   def testEmptyInput()
     assertSolve([], [], [])
   end
-  
+
   def testSimpleSupertypeConstraints()
     assertSolve(["T"], [supc(fx.t, fx.a)], [(fx.a, fx.o)])
     assertSolve(["T"], [supc(fx.t, fx.a),
                         supc(fx.t, fx.b)], [(fx.a, fx.o)])
   end
-  
+
   def testSimpleSubtypeConstraints()
     assertSolve(["T"], [subc(fx.t, fx.a)], [(fx.nilt, fx.a)])
     assertSolve(["T"], [subc(fx.t, fx.a),
                         subc(fx.t, fx.b)], [(fx.nilt, fx.b)])
   end
-  
+
   def testBothKindsOfConstraints()
     assertSolve(["T"], [supc(fx.t, fx.b),
                         subc(fx.t, fx.a)], [(fx.b, fx.a)])
   end
-  
+
   def testUnsatisfiableConstraints()
     -- The constraints are impossible to satisfy.
     assertSolve(["T"], [supc(fx.t, fx.a),
                         subc(fx.t, fx.b)], [nil])
   end
-  
+
   def testExactlySpecifiedResult()
     assertSolve(["T"], [supc(fx.t, fx.b),
                         subc(fx.t, fx.b)], [(fx.b, fx.b)])
   end
-  
+
   def testMultipleVariables()
     assertSolve(["T", "S"], [supc(fx.t, fx.b),
                              supc(fx.s, fx.c),
                              subc(fx.t, fx.a)], [(fx.b, fx.a), (fx.c, fx.o)])
   end
-  
+
   def testNoConstraintsForVar()
     assertSolve(["T"], [], [(fx.nilt, fx.o)])
     assertSolve(["T", "S"], [], [(fx.nilt, fx.o), (fx.nilt, fx.o)])
@@ -59,56 +59,56 @@ class SolveSuite is Suite
                 [supc(fx.s, fx.a)],
                 [(fx.nilt, fx.o), (fx.a, fx.o)])
   end
-  
+
   def testVoidConstraints()
     assertSolve(["T"], [supc(fx.t, fx.void)], [(fx.void, fx.void)])
     assertSolve(["T"], [subc(fx.t, fx.void)], [(fx.void, fx.void)])
-                 
+
     -- Both bounds void.
     assertSolve(["T"], [supc(fx.t, fx.void),
                         subc(fx.t, fx.void)], [(fx.void, fx.void)])
-    
+
     -- Cannot infer any type.
     assertSolve(["T"], [supc(fx.t, fx.a),
                         supc(fx.t, fx.void)], [nil])
     assertSolve(["T"], [subc(fx.t, fx.a),
                         subc(fx.t, fx.void)], [nil])
   end
-  
+
   def testSimpleConstraintsWithDynamicType()
     assertSolve(["T"], [supc(fx.t, fx.dyn)], [(fx.dyn, fx.dyn)])
     assertSolve(["T"], [supc(fx.t, fx.dyn),
                         supc(fx.t, fx.dyn)], [(fx.dyn, fx.dyn)])
     assertSolve(["T"], [supc(fx.t, fx.dyn),
                         supc(fx.t, fx.a)], [(fx.dyn, fx.dyn)])
-                 
+
     assertSolve(["T"], [subc(fx.t, fx.dyn)], [(fx.dyn, fx.dyn)])
     assertSolve(["T"], [subc(fx.t, fx.dyn),
                         subc(fx.t, fx.dyn)], [(fx.dyn, fx.dyn)])
     assertSolve(["T"], [subc(fx.t, fx.dyn),
                         subc(fx.t, fx.a)], [(fx.dyn, fx.dyn)])
   end
-  
+
   def testBothNormalAndDynamicTypesInResults()
     -- If one of the bounds is dynamic, we promote the other bound to dynamic
     -- as well, since otherwise the type range does not make sense.
     assertSolve(["T"], [supc(fx.t, fx.a),
                         subc(fx.t, fx.dyn)], [(fx.dyn, fx.dyn)])
-                 
+
     assertSolve(["T"], [supc(fx.t, fx.dyn),
                         subc(fx.t, fx.a)], [(fx.dyn, fx.dyn)])
   end
-  
-  
+
+
   private def assertSolve(vars, constraints, results)
     var actual = SolveConstraints(vars, constraints, fx.basic)
     AssertEqual(Str(actual), Str(results))
   end
-  
+
   def supc(typeVar, bound)
     return Constraint(typeVar.name, SupertypeOf, bound)
   end
-  
+
   def subc(typeVar, bound)
     return Constraint(typeVar.name, SubtypeOf, bound)
   end

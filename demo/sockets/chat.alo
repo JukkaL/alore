@@ -1,7 +1,7 @@
 -- Usage: chat.alo                  (for server)
 --        chat.alo SERVER-ADDR      (for client)
 --
--- Simple socket-based chat client/server. Input from the client is displayed 
+-- Simple socket-based chat client/server. Input from the client is displayed
 -- on the server and vice versa. First start the server, then start the client
 -- to create a connection.
 
@@ -13,7 +13,7 @@ const Port = 9991
 
 def Main(args)
   var socket
-  
+
   if args == []
     WriteLn('Waiting for a connection on port {}...'.format(Port))
     socket = ServerSocket(Port).accept(Unbuffered)
@@ -23,15 +23,15 @@ def Main(args)
     socket = Socket(args[0], Port, Unbuffered)
     WriteLn("Connected.")
   end
-  
+
   var eof = 'Control-D'
   if Platform == "windows"
     eof = 'Control-Z'
   end
   WriteLn('Enter some input; use {} to exit.'.format(eof))
-  
+
   var cv = Condition()
-  
+
   -- Use one thread for processing remote input and another for local input.
   Thread(def ()
            Listen(socket, cv)
@@ -39,12 +39,12 @@ def Main(args)
   Thread(def ()
            ProcessInput(socket, cv)
          end)
-  
+
   -- Wait until the user enters EOF or the remote closes the socket.
   var m = Mutex()
   m.lock()
   cv.wait(m)
-  
+
   socket.close()
 end
 

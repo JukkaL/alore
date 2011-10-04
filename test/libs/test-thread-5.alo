@@ -21,19 +21,19 @@ class ThreadSuite5 is Suite
   -- Test producer/consumer threads (mutexes and condition variables).
   def testProducerConsumer()
     var t = [nil] * NumThreads
-  
+
     var i = 0
     while i < NumThreads
       t[i] = Thread(Consume)
       i += 1
     end
-  
+
     i = 0
     while i < NumThreads
       Thread(Produce)
       i += 1
     end
-  
+
     i = 0
     while i < NumThreads
       t[i].join()

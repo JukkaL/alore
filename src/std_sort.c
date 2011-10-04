@@ -36,7 +36,7 @@ AValue AStdSort(AThread *t, AValue *frame)
     else
         return frame[2];
 }
-   
+
 
 static ABool QSort(AThread *t, AValue *frame, int b, int e)
 {
@@ -89,9 +89,9 @@ static ABool QSort(AThread *t, AValue *frame, int b, int e)
 
         if (!QSort(t, frame, b, l - 1))
             return FALSE;
-        
+
         b = l + 1;
-        
+
         /* The next while iteration logically corresponds to recursive call
            QSort(frame, l + 1, e). */
     }

@@ -53,13 +53,13 @@ static Assize_t Count(AValue str, AValue substr, Assize_t max);
 /* std::Str(x)
    Construct a Str object. Frame contains exactly one value. Note that this is
    implemented internally as a function, not a type.
-   
+
    NOTE: frame may point almost anywhere! Be careful. */
 AValue AStdStr(AThread *t, AValue *frame)
 {
     /* IDEA: Implement repetive type checking "if" checks using a switch
              statement -- it might be a lot faster in some cases. */
-    
+
     if (AIsShortInt(frame[0])) {
         /* Short int to Str */
         unsigned char buf[INT_BUF_SIZE];
@@ -72,19 +72,19 @@ AValue AStdStr(AThread *t, AValue *frame)
         unsigned char *dst;
 
         ind = INT_BUF_SIZE - 1;
-        
+
         n = AValueToInt(frame[0]);
         if (n < 0) {
             n = -n;
             isNeg = TRUE;
         } else
             isNeg = FALSE;
-        
+
         while (n >= 10) {
             buf[ind--] = n % 10 + '0';
             n /= 10;
         }
-        
+
         buf[ind] = n + '0';
 
         if (isNeg)
@@ -97,9 +97,9 @@ AValue AStdStr(AThread *t, AValue *frame)
             return ARaiseMemoryErrorND(t);
 
         AInitNonPointerBlock(&s->header, len);
-        
+
         dst = s->elem;
-        
+
         do {
             *dst++ = buf[ind++];
         } while (ind < INT_BUF_SIZE);
@@ -190,12 +190,12 @@ AValue AStrUpper(AThread *t, AValue *frame)
 
     /* Use optimized alternative implementations for different string
        representations. */
-      
+
     if (AIsNarrowStr(frame[1])) {
         AString *s;
         unsigned char *src;
         Assize_t i;
-        
+
         begIndex = 0;
         len = AGetStrLen(AValueToStr(frame[1]));
 
@@ -205,7 +205,7 @@ AValue AStrUpper(AThread *t, AValue *frame)
         s = AAlloc(t, sizeof(AValue) + len);
         if (s == NULL)
             return AError;
-        
+
         AInitNonPointerBlock(&s->header, len);
 
         src = AValueToStr(frame[1])->elem + begIndex;
@@ -228,7 +228,7 @@ AValue AStrUpper(AThread *t, AValue *frame)
         AWideString *s;
         AWideChar *src;
         Assize_t i;
-        
+
         begIndex = 0;
         len = AGetWideStrLen(AValueToWideStr(frame[1]));
 
@@ -237,9 +237,9 @@ AValue AStrUpper(AThread *t, AValue *frame)
         s = AAlloc(t, sizeof(AValue) + sizeof(AWideChar) * len);
         if (s == NULL)
             return AError;
-        
+
         AInitNonPointerBlock(&s->header, sizeof(AWideChar) * len);
-        
+
         src = AValueToWideStr(frame[1])->elem + begIndex;
 
         for (i = 0; i < len; i++) {
@@ -277,12 +277,12 @@ AValue AStrLower(AThread *t, AValue *frame)
 
     /* Use optimized alternative implementations for different string
        representations. */
-    
+
     if (AIsNarrowStr(frame[1])) {
         AString *s;
         unsigned char *src;
         Assize_t i;
-        
+
         begIndex = 0;
         len = AGetStrLen(AValueToStr(frame[1]));
 
@@ -291,7 +291,7 @@ AValue AStrLower(AThread *t, AValue *frame)
         s = AAlloc(t, sizeof(AValue) + len);
         if (s == NULL)
             return AError;
-        
+
         AInitNonPointerBlock(&s->header, len);
 
         src = AValueToStr(frame[1])->elem + begIndex;
@@ -304,7 +304,7 @@ AValue AStrLower(AThread *t, AValue *frame)
         AWideString *s;
         AWideChar *src;
         Assize_t i;
-        
+
         begIndex = 0;
         len = AGetWideStrLen(AValueToWideStr(frame[1]));
 
@@ -313,9 +313,9 @@ AValue AStrLower(AThread *t, AValue *frame)
         s = AAlloc(t, sizeof(AValue) + sizeof(AWideChar) * len);
         if (s == NULL)
             return AError;
-        
+
         AInitNonPointerBlock(&s->header, sizeof(AWideChar) * len);
-        
+
         src = AValueToWideStr(frame[1])->elem + begIndex;
 
         for (i = 0; i < len; i++) {
@@ -347,7 +347,7 @@ AValue AStrStrip(AThread *t, AValue *frame)
 {
     Assize_t i1, i2, len;
     AValue str;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
     str = A_UNWRAP(frame[0]);
 
@@ -359,7 +359,7 @@ AValue AStrStrip(AThread *t, AValue *frame)
             break;
         i1++;
     }
-    
+
     i2 = len - 1;
     while (i2 > i1) {
         int ch = AStrItem(str, i2);
@@ -377,9 +377,9 @@ AValue AStrFind(AThread *t, AValue *frame)
 {
     Assize_t index;
     Assize_t startIndex;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     AExpectStr(t, frame[1]);
 
     if (!AIsDefault(frame[2])) {
@@ -402,9 +402,9 @@ AValue AStrFind(AThread *t, AValue *frame)
 AValue AStrIndex(AThread *t, AValue *frame)
 {
     Assize_t index;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     AExpectStr(t, frame[1]);
 
     index = Find(A_UNWRAP(frame[0]), 0, frame[1]);
@@ -431,7 +431,7 @@ AValue AStrStartsWith(AThread *t, AValue *frame)
 {
     Assize_t len, prefixLen, i;
     AValue str;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
     str = A_UNWRAP(frame[0]);
     AExpectStr(t, frame[1]);
@@ -446,7 +446,7 @@ AValue AStrStartsWith(AThread *t, AValue *frame)
         if (AStrItem(frame[1], i) != AStrItem(str, i))
             return AFalse;
     }
-    
+
     return ATrue;
 }
 
@@ -456,7 +456,7 @@ AValue AStrEndsWith(AThread *t, AValue *frame)
 {
     Assize_t len, suffixLen, i;
     AValue str;
-    
+
     frame[0] = AWrapObject(t, frame[0]);
     str = A_UNWRAP(frame[0]);
     AExpectStr(t, frame[1]);
@@ -471,7 +471,7 @@ AValue AStrEndsWith(AThread *t, AValue *frame)
         if (AStrItem(frame[1], suffixLen - i) != AStrItem(str, len - i))
             return AFalse;
     }
-    
+
     return ATrue;
 }
 
@@ -487,7 +487,7 @@ AValue AStrReplace(AThread *t, AValue *frame)
     Assize_t n;
 
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     AExpectStr(t, frame[1]);
     AExpectStr(t, frame[2]);
 
@@ -495,7 +495,7 @@ AValue AStrReplace(AThread *t, AValue *frame)
         max = A_SSIZE_T_MAX;
     else
         max = AGetInt(t, frame[3]);
-    
+
     frame[3] = A_UNWRAP(frame[0]);
     origLen = AStrLen(frame[3]);
     srcLen = AStrLen(frame[1]);
@@ -521,7 +521,7 @@ AValue AStrReplace(AThread *t, AValue *frame)
         if (newLen < 0)
             return ARaiseRuntimeError(t, "Replace result too long");
     }
-    
+
     /* Setup the new string. */
     if ((AIsNarrowStr(frame[3]) || AIsNarrowSubStr(frame[3]))
         && (AIsNarrowStr(frame[1]) || AIsNarrowSubStr(frame[1]))
@@ -545,7 +545,7 @@ AValue AStrReplace(AThread *t, AValue *frame)
 
         if (i > origLen - srcLen)
             break;
-        
+
         if (IsMatchAt(frame[3], i, frame[1], srcLen)) {
             Assize_t k;
             for (k = 0; k < dstLen; k++) {
@@ -562,7 +562,7 @@ AValue AStrReplace(AThread *t, AValue *frame)
     }
 
     ACopySubStr(frame[4], j, frame[3], i, origLen - i);
-    
+
     return frame[4];
 }
 
@@ -591,7 +591,7 @@ AValue AStrSplit(AThread *t, AValue *frame)
     ssize_t max;
     ssize_t n;
     AValue ss;
-    
+
     frame[3] = frame[0];
     frame[0] = AWrapObject(t, frame[0]);
 
@@ -602,20 +602,20 @@ AValue AStrSplit(AThread *t, AValue *frame)
         max = AGetInt(t, frame[2]);
     else
         max = A_SSIZE_T_MAX;
-    
+
     n = 0;
-    
+
     if (frame[1] != ADefault && frame[1] != ANil) {
         /* Explicit separator string */
         ssize_t sepLen;
         int ch;
-        
+
         AExpectStr(t, frame[1]);
-        
+
         sepLen = AStrLen(frame[1]);
         if (sepLen == 0)
             return ARaiseValueError(t, "Empty separator");
-        
+
         ch = AStrItem(frame[1], 0);
         i0 = 0;
         for (i = 0; i <= strLen - sepLen;) {
@@ -662,7 +662,7 @@ AValue AStrSplit(AThread *t, AValue *frame)
     AAppendArray(t, frame[4], ss);
 
   End:
-    
+
     return frame[4];
 }
 
@@ -707,19 +707,19 @@ AValue AStrJoin(AThread *t, AValue *frame)
     /* Optimize for the special case of a single-element sequence. */
     if (len == 1)
         return AGetItemAt(t, frame[1], 0);
-    
+
     /* Create a new string. */
     if (isWide)
         frame[2] = AMakeEmptyStrW(t, strLen);
     else
         frame[2] = AMakeEmptyStr(t, strLen);
-    
+
     /* Copy strings. */
     ti = 0;
     for (i = 0; i < len; i++) {
         ssize_t slen;
         AValue s = AGetItemAt(t, frame[1], i);
-        
+
         if (!AIsStr(s)) {
             if (AIsError(s))
                 return AError;
@@ -736,7 +736,7 @@ AValue AStrJoin(AThread *t, AValue *frame)
             ti += sepLen;
         }
     }
-    
+
     return frame[2];
 }
 
@@ -747,12 +747,12 @@ AValue AStrDecode(AThread *t, AValue *frame)
     ABool isStrict = TRUE;
 
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     /* Shift arguments by 1. */
     frame[3] = frame[2];
     frame[2] = frame[1];
     frame[1] = A_UNWRAP(frame[0]);
-    
+
     /* Did caller provide a strictness argument? */
     if (AIsDefault(frame[3])) {
         /* No. Assume strict encoding. */
@@ -763,7 +763,7 @@ AValue AStrDecode(AThread *t, AValue *frame)
             isStrict = FALSE;
         frame[3] = ACallMethod(t, "decoder", 1, frame + 2);
     }
-        
+
     if (AIsError(frame[3]))
         return AError;
 
@@ -785,7 +785,7 @@ AValue AStrDecode(AThread *t, AValue *frame)
             frame[1] = AConcat(t, frame[1], frame[3]);
         }
     }
-    
+
     return frame[1];
 }
 
@@ -803,7 +803,7 @@ AValue AStrEncode(AThread *t, AValue *frame)
         /* Explicit strictness. */
         frame[2] = ACallMethod(t, "encoder", 1, frame + 1);
     }
-    
+
     if (AIsError(frame[2]))
         return AError;
 
@@ -817,7 +817,7 @@ AValue AStrIter(AThread *t, AValue *frame)
 {
     frame[1] = frame[0];
     frame[0] = AWrapObject(t, frame[0]);
-    
+
     return ACallValue(t, AGlobalByNum(AStrIterNum), 1, frame + 1);
 }
 
@@ -826,7 +826,7 @@ AValue AStrIter(AThread *t, AValue *frame)
 AValue AStrIterCreate(AThread *t, AValue *frame)
 {
     AValue len;
-    
+
     AExpectStr(t, frame[1]);
     ASetMemberDirect(t, frame[0], STR_ITER_I, AZero);
     len = AIntToValue(AStrLen(frame[1]));
@@ -856,12 +856,12 @@ AValue AStrIterNext(AThread *t, AValue *frame)
 
     if (i < n) {
         int ch;
-        
+
         ch = AStrItem(AMemberDirect(frame[0], STR_ITER_S), AValueToInt(i));
-        
+
         i += AIntToValue(1);
         AValueToInstance(frame[0])->member[STR_ITER_I] = i;
-        
+
         return AMakeCh(t, ch);
     } else
         return ARaiseValueError(t, "No items left");
@@ -931,7 +931,7 @@ Assize_t AStrLenUtf8(AValue v)
     utf8len = 0;
     for (i = 0; i < len; i++)
         utf8len += A_UTF8_LEN(AStrItem(v, i));
-    
+
     return utf8len;
 }
 
@@ -955,7 +955,7 @@ Assize_t AGetStrW(AThread *t, AValue s, AWideChar *buf, Assize_t bufLen)
 {
     Assize_t i;
     Assize_t len;
-    
+
     if (!AIsStr(s))
         return ARaiseTypeError(t, AMsgStrExpected);
 
@@ -977,7 +977,7 @@ Assize_t AGetStrUtf8(AThread *t, AValue s, char *buf, Assize_t bufLen)
     Assize_t i, j;
     Assize_t len;
     Assize_t resultLen;
-    
+
     AExpectStr(t, s);
 
     len = AStrLen(s);
@@ -986,7 +986,7 @@ Assize_t AGetStrUtf8(AThread *t, AValue s, char *buf, Assize_t bufLen)
     resultLen = 0;
     for (i = 0; i < len; i++)
         resultLen += A_UTF8_LEN(AStrItem(s, i));
-    
+
     if (resultLen >= bufLen)
         ARaiseValueError(t, "Str too long");
 
@@ -1009,7 +1009,7 @@ Assize_t AGetStrUtf8(AThread *t, AValue s, char *buf, Assize_t bufLen)
         }
     }
     buf[j] = '\0';
-    
+
     return resultLen;
 }
 
@@ -1056,13 +1056,13 @@ AValue AMakeStrUtf8(AThread *t, const char *str)
 
     if (i != len)
         goto DecodeError;
-    
+
     s = AMakeEmptyStrW(t, resultLen);
     j = 0;
     for (i = 0; i < resultLen; i++) {
         unsigned char ch1 = str[j];
         AWideChar result;
-        
+
         if (ch1 <= 0x7f) {
             result = ch1;
             j++;
@@ -1084,10 +1084,10 @@ AValue AMakeStrUtf8(AThread *t, const char *str)
                 goto DecodeError;
             result = ((ch1 & 0xf) << 12) | ((ch2 & 0x3f) << 6) | (ch3 & 0x3f);
         }
-        
+
         ASetStrItemW(s, i, result);
     }
-    
+
     return s;
 
   DecodeError:
@@ -1236,10 +1236,10 @@ Assize_t AGetCStrFromString(AThread *t, AValue strVal, char *buf,
                             Assize_t bufLen)
 {
     /* FIX: do not allocate memory?? */
-    
+
     AString *str;
     Assize_t len;
-    
+
     strVal = ANormalizeNarrowString(t, strVal);
     if (AIsError(strVal))
         return -1;
@@ -1252,7 +1252,7 @@ Assize_t AGetCStrFromString(AThread *t, AValue strVal, char *buf,
         buf[len] = '\0';
         return len;
     }
-    
+
     ARaiseValueErrorND(t, "String too long");
     return -1;
 }
@@ -1266,7 +1266,7 @@ char *AAllocCStrFromString(AThread *t, AValue strVal, char *buf,
 {
     AString *str;
     Assize_t len;
-    
+
     strVal = ANormalizeNarrowString(t, strVal);
     if (AIsError(strVal))
         return NULL;
@@ -1318,7 +1318,7 @@ AValue AWideStringToNarrow(AThread *t, AValue wide, AValue *keep)
     AWideChar *str;
     Assize_t len;
     AString *narrowStr;
-    
+
     if (AIsSubStr(wide)) {
         str = AGetWideSubStrElem(wide);
         len = AGetSubStrLen(AValueToSubStr(wide));
@@ -1326,7 +1326,7 @@ AValue AWideStringToNarrow(AThread *t, AValue wide, AValue *keep)
         str = AGetWideStrElem(wide);
         len = AGetWideStrLen(AValueToWideStr(wide));
     }
-    
+
     for (i = 0; i < len; i++) {
         if (str[i] > 0xff)
             return ARaiseValueErrorND(t, NULL);
@@ -1342,9 +1342,9 @@ AValue AWideStringToNarrow(AThread *t, AValue wide, AValue *keep)
 
     if (narrowStr == NULL)
         return AError;
-    
+
     AInitNonPointerBlock(&narrowStr->header, len);
-    
+
     if (AIsSubStr(wide))
         str = AGetWideSubStrElem(wide);
     else
@@ -1366,7 +1366,7 @@ AValue ANarrowStringToWide(AThread *t, AValue narrow, AValue *keep)
     Assize_t len;
     Assize_t blockSize;
     AWideString *wideStr;
-    
+
     if (AIsSubStr(narrow)) {
         if (AIsWideStr(AValueToSubStr(narrow)->str))
             return narrow;
@@ -1379,9 +1379,9 @@ AValue ANarrowStringToWide(AThread *t, AValue narrow, AValue *keep)
     if (t->heapPtr + blockSize > t->heapEnd || A_NO_INLINE_ALLOC) {
         t->tempStack[0] = narrow;
         t->tempStack[1] = *keep;
-        
+
         wideStr = AAlloc(t, blockSize);
-        
+
         narrow = t->tempStack[0];
         *keep  = t->tempStack[1];
 
@@ -1398,7 +1398,7 @@ AValue ANarrowStringToWide(AThread *t, AValue narrow, AValue *keep)
         str = AGetStrElem(narrow);
 
     AInitNonPointerBlock(&wideStr->header, len * sizeof(AWideChar));
-    
+
     for (i = 0; i < len; i++)
         wideStr->elem[i] = str[i];
 
@@ -1443,7 +1443,7 @@ AValue ANormalizeNarrowString(AThread *t, AValue strVal)
         } else if (AIsSubStr(strVal)) {
             /* Substring to narrow string */
             ASubString *ss;
-            
+
             ss = AValueToSubStr(strVal);
             if (AIsWideStr(ss->str)) {
                 /* Wide substring */
@@ -1461,11 +1461,11 @@ AValue ANormalizeNarrowString(AThread *t, AValue strVal)
                 ind = AValueToInt(ss->ind);
 
                 *t->tempStack = ss->str;
-                
+
                 dst = AAlloc(t, sizeof(AValue) + len);
                 if (dst == NULL)
                     return AError;
-                
+
                 src = AValueToStr(*t->tempStack);
 
                 AInitNonPointerBlock(&dst->header, len);
@@ -1488,50 +1488,50 @@ AValue AConcatStrings(AThread *t, AValue left, AValue right)
     unsigned char *rightStr;
     Assize_t leftLen;
     Assize_t rightLen;
-    
+
     if (AIsNarrowStr(left)) {
         AString *res;
         Assize_t blockSize;
         Assize_t resultLen;
-        
+
         leftLen = AGetStrLen(AValueToStr(left));
         leftStr = AValueToStr(left)->elem;
-        
+
       NarrowLeft:
-        
+
         if (AIsNarrowStr(right)) {
             rightLen = AGetStrLen(AValueToStr(right));
             rightStr = AValueToStr(right)->elem;
         } else if (AIsSubStr(right)) {
             ASubString *subStr;
-            
+
             subStr = AValueToSubStr(right);
             if (AIsWideStr(subStr->str))
                 return AConcatWideStrings(t, left, right);
-            
+
             rightStr = AValueToStr(subStr->str)->elem +
                 AValueToInt(subStr->ind);
             rightLen = AValueToInt(subStr->len);
         } else
             return AConcatWideStrings(t, left, right);
-        
+
         resultLen = leftLen + rightLen;
         blockSize = AGetBlockSize(sizeof(AValue) + resultLen);
-        
+
         if (t->heapPtr + blockSize > t->heapEnd || A_NO_INLINE_ALLOC) {
             t->tempStack[0] = left;
             t->tempStack[1] = right;
-            
+
             res = AAlloc(t, blockSize);
             if (res == NULL)
                 return AError;
-            
+
             left = t->tempStack[0];
             if (AIsNarrowStr(left))
                 leftStr = AGetStrElem(left);
             else
                 leftStr = AGetSubStrElem(left);
-            
+
             right = t->tempStack[1];
             if (AIsNarrowStr(right))
                 rightStr = AGetStrElem(right);
@@ -1541,30 +1541,30 @@ AValue AConcatStrings(AThread *t, AValue left, AValue right)
             res = (AString *)t->heapPtr;
             t->heapPtr += blockSize;
         }
-        
+
         AInitNonPointerBlock(&res->header, resultLen);
-        
+
         ACopyMem(res->elem, leftStr, leftLen);
         ACopyMem(res->elem + leftLen, rightStr, rightLen);
-        
+
         return AStrToValue(res);
     }
-    
+
     if (AIsSubStr(left)) {
         ASubString *subStr;
-        
+
         subStr = AValueToSubStr(left);
-        
+
         if (AIsWideStr(subStr->str))
             return AConcatWideStrings(t, left, right);
-        
+
         leftStr = AValueToStr(subStr->str)->elem +
             AValueToInt(subStr->ind);
         leftLen = AValueToInt(subStr->len);
-        
+
         goto NarrowLeft;
     }
-    
+
     if (AIsWideStr(left))
         return AConcatWideStrings(t, left, right);
 
@@ -1585,7 +1585,7 @@ AValue AConcatWideStrings(AThread *t, AValue left, AValue right)
 
     if (AIsNarrowStr(left) || AIsNarrowSubStr(left))
         left = ANarrowStringToWide(t, left, &right);
-    
+
     if (!AIsWideStr(right)) {
         if (AIsNarrowStr(right) || AIsNarrowSubStr(right))
             right = ANarrowStringToWide(t, right, &left);
@@ -1612,11 +1612,11 @@ AValue AConcatWideStrings(AThread *t, AValue left, AValue right)
         /* Ordinary allocation. */
         t->tempStack[0] = left;
         t->tempStack[1] = right;
-        
+
         wideStr = AAlloc(t, blockSize);
         if (wideStr == NULL)
             return AError;
-        
+
         left  = t->tempStack[0];
         right = t->tempStack[1];
     } else {
@@ -1680,11 +1680,11 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
 
     if (AIsNarrowStr(strVal)) {
         AString *newStr;
-        
+
         str = AValueToStr(strVal);
 
       NarrowStr:
-        
+
         if (len < A_MIN_SUBSTR_LEN) {
             /* The new string object is short; construct a narrow string object
                instead of substring object. */
@@ -1727,11 +1727,11 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
             return AStrToValue(newStr);
         } else {
             /* Create a substr object */
-            
+
             ASubString *ss;
 
           SubStr:
-            
+
             if ((int)len < -1)
                 goto IndexError;
 
@@ -1775,7 +1775,7 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
         }
     } else if (AIsWideStr(strVal)) {
         AWideString *newWideStr;
-        
+
         wideStr = AValueToWideStr(strVal);
 
       WideStr:
@@ -1796,7 +1796,7 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
                 newWideStr = (AWideString *)t->heapPtr;
                 t->heapPtr += A_COPY_SUBSTR_SIZE;
             }
-            
+
             AInitNonPointerBlock(&newWideStr->header, sizeof(AWideChar) * len);
 
             /* Copy the characters to the target string; round the string
@@ -1833,21 +1833,21 @@ int ACompareStrings(AValue s1, AValue s2)
     unsigned char *str1;
     AWideChar *wstr1;
     Assize_t len1;
-    
+
     unsigned char *str2;
     AWideChar *wstr2;
     Assize_t len2;
 
     /* Use several optimized implementation variants for different
        representations of s1/s2. */
-    
+
     if (AIsNarrowStr(s1)) {
         /* Narrow str as first operand */
         str1 = AValueToStr(s1)->elem;
         len1 = AGetStrLen(AValueToStr(s1));
 
       Narrow:
-        
+
         if (AIsNarrowStr(s2)) {
             /* Narrow vs narrow compare */
             str2 = AValueToStr(s2)->elem;
@@ -1912,7 +1912,7 @@ int ACompareStrings(AValue s1, AValue s2)
 
         ss = AValueToSubStr(s1);
         len1 = AValueToInt(ss->len);
-        
+
         if (AIsNarrowStr(ss->str)) {
             /* Narrow substr as first operand */
             str1 = AValueToStr(ss->str)->elem + AValueToInt(ss->ind);
@@ -1930,14 +1930,14 @@ int ACompareStrings(AValue s1, AValue s2)
         len1 = AGetWideStrLen(AValueToStr(s1));
 
       Wide:
-        
+
         if (AIsWideStr(s2)) {
             /* Wide vs wide compare */
             wstr2 = AValueToWideStr(s2)->elem;
             len2 = AGetWideStrLen(AValueToWideStr(s2));
 
           WideVsWide:
-            
+
             while (len1 > 0 && len2 > 0) {
                 if (*wstr1 != *wstr2)
                     return *wstr1 - *wstr2;
@@ -2029,19 +2029,19 @@ AValue ARepeatString(AThread *t, AValue strVal, Assize_t num)
             } else {
                 while (num > 0) {
                     Assize_t i;
-                    
+
                     i = 0;
                     do {
                         dst[i] = src[i];
                         i++;
                     } while (i < len);
-                    
+
                     dst += len;
                     num--;
                 }
             }
         }
-        
+
         return AStrToValue(s);
     }
 
@@ -2069,7 +2069,7 @@ AValue ARepeatString(AThread *t, AValue strVal, Assize_t num)
 
             while (num > 0) {
                 Assize_t i;
-                
+
                 i = 0;
                 do {
                     dst[i] = src[i];
@@ -2080,7 +2080,7 @@ AValue ARepeatString(AThread *t, AValue strVal, Assize_t num)
                 num--;
             }
         }
-        
+
         return AWideStrToValue(s);
     }
 
@@ -2094,7 +2094,7 @@ AValue ARepeatString(AThread *t, AValue strVal, Assize_t num)
         len = AValueToInt(ss->len);
         strVal = ss->str;
         *t->tempStack = strVal;
-        
+
         if (AIsNarrowStr(strVal))
             goto Narrow;
         else
@@ -2107,7 +2107,7 @@ AValue ARepeatString(AThread *t, AValue strVal, Assize_t num)
 AValue AConcatStringAndCStr(AThread *t, AValue str, const char *cstr)
 {
     AValue cstrVal;
-    
+
     *t->tempStack = str;
     cstrVal = ACreateStringFromCStr(t, cstr);
     if (AIsError(cstrVal))
@@ -2140,7 +2140,7 @@ AValue AStringHashValue(AValue str)
     unsigned hashValue = 0;
 
     len = AStrLen(str);
-    
+
     if (AIsNarrowStr(str)) {
         s = AValueToStr(str)->elem;
         for (i = 0; i < len; i++)
@@ -2196,12 +2196,12 @@ AValue AStrRepr(AThread *t, AValue *strPtr)
     }
 
     quote = (!hasSingleQuote || hasDoubleQuote) ? '\'' : '"';
-    
+
     /* Calculate the length of the result string. */
     resultLen = 2;
     for (i = 0; i < len; i++) {
         int item = AStrItem(str, i);
-        
+
         if (item < 32 || item >= 127)
             resultLen += 6;
         else if (item == quote)
@@ -2209,7 +2209,7 @@ AValue AStrRepr(AThread *t, AValue *strPtr)
         else
             resultLen++;
     }
-    
+
     resultStr = AMakeEmptyStr(t, resultLen);
 
     resultElem = AGetStrElem(resultStr);
@@ -2315,7 +2315,7 @@ static Assize_t Find(AValue str, Assize_t i, AValue substr)
     Assize_t len2;
     int ch;
     Assize_t j;
-    
+
     len1 = AStrLen(str);
     len2 = AStrLen(substr);
 
@@ -2341,7 +2341,7 @@ static Assize_t Find(AValue str, Assize_t i, AValue substr)
                 return i;
         }
     }
-    
+
     return -1;
 }
 
@@ -2392,7 +2392,7 @@ void ACopySubStr(AValue dst, ssize_t dstIndex, AValue src, ssize_t srcIndex,
         memcpy(dstItems + dstIndex, srcItems + srcIndex, srcLen);
     } else {
         AWideChar *dstItems = AGetWideStrElem(dst);
-        
+
         if (AIsWideStr(src) || AIsWideSubStr(src)) {
             /* wide -> wide */
             const AWideChar *srcItems = AWideStrItems(src);

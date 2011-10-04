@@ -29,44 +29,44 @@ end
 -- Visitor for checking whether two types are the "same" type.
 private class SameTypeVisitor is TypeVisitor<Boolean>
   private var right as Typ
-  
+
   def create(right as Typ)
     self.right = right
   end
-  
+
   -- visitX(left) means: is left (which is an instance of X) the same type as
   -- right?
 
   def visitUnboundType(left as UnboundType) as Boolean
     return True
   end
-  
+
   def visitErrorType(left as ErrorType) as Boolean
     return False
   end
-  
+
   def visitDynamic(left as Dynamic) as Boolean
     return right is Dynamic
   end
-  
+
   def visitVoid(left as Void) as Boolean
     return right is Void
   end
-  
+
   def visitNilType(left as NilType) as Boolean
     return right is NilType
   end
-  
+
   def visitInstance(left as Instance) as Boolean
     return right is Instance and left.type == (right as Instance).type and
            IsSameTypes(left.args, (right as Instance).args)
   end
-  
+
   def visitTypeVar(left as TypeVar) as Boolean
     return right is TypeVar and left.id == (right as TypeVar).id and
            left.isWrapperVar == (right as TypeVar).isWrapperVar
   end
-  
+
   def visitCallable(left as Callable) as Boolean
     -- FIX generics
     if right is Callable
@@ -80,7 +80,7 @@ private class SameTypeVisitor is TypeVisitor<Boolean>
       return False
     end
   end
-  
+
   def visitTupleType(left as TupleType) as Boolean
     if right is TupleType
       return IsSameTypes(left.items, (right as TupleType).items)
@@ -88,7 +88,7 @@ private class SameTypeVisitor is TypeVisitor<Boolean>
       return False
     end
   end
-  
+
   def visitIntersection(left as Intersection) as Boolean
     if right is Intersection
       return IsSameType(left.item1, (right as Intersection).item1) and

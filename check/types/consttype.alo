@@ -14,7 +14,7 @@ private class IsConstantTypeVisitor is TypeQuery
     super.create(True,
                  AllTypesStrategy)
   end
-  
+
   -- A type variable is not a constant.
   def visitTypeVar(t as TypeVar) as Boolean
     return False

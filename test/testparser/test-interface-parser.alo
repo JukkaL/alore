@@ -7,11 +7,11 @@ class InterfaceParserSuite is Suite
   def testSimpleInterfaceAnnotation()
     AssertType(Type, If1a)
   end
-  
+
   def testAnnotatedInterfaceMethods()
     AssertType(Type, If2)
   end
-  
+
   def testAnnotatedInterfaceAccessors()
     AssertType(Type, If3)
   end

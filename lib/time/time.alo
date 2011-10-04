@@ -56,7 +56,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       secs, nsecs = NormalizeTime(0, h, m, s + us / 1e6)
     end
   end
-  
+
   def _str() as Str
     if day == 0
       return format("-hh:mm:ss.ss")
@@ -64,11 +64,11 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       return format("-d\d hh:mm:ss.ss")
     end
   end
-  
+
   def format(f as Str) as Str
     return FormatDateTime(Time, TimeFormatWrapper(self), f)
   end
-  
+
   def day as Int
     if nonNegative()
       return secs div 86400
@@ -76,7 +76,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       return -(-secs div 86400)
     end
   end
-  
+
   def hour as Int
     if nonNegative()
       return secs div 3600 mod 24
@@ -84,7 +84,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       return -(-secs div 3600 mod 24)
     end
   end
-  
+
   def minute as Int
     if nonNegative()
       return secs div 60 mod 60
@@ -92,7 +92,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       return -(-secs div 60 mod 60)
     end
   end
-  
+
   def second as Float
     if nonNegative()
       return secs mod 60 + nsecs / 1e9
@@ -100,19 +100,19 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       return -(-secs mod 60 - nsecs / 1e9)
     end
   end
-  
+
   def toSeconds() as Float
     return secs + nsecs / 1e9
   end
-  
+
   def toNanoSeconds() as Int
     return secs * 10**9 + nsecs
   end
-  
+
   def _float() as Float
     return self.toSeconds()
   end
-  
+
   def _eq(x as Object) as Boolean
     if x is Time
       var t = (x as Time)
@@ -122,15 +122,15 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       return False
     end
   end
-  
+
   def _lt(x as Time) as Boolean
     return (day, hour, minute, second) < (x.day, x.hour, x.minute, x.second)
   end
-  
+
   def _gt(x as Time) as Boolean
     return (day, hour, minute, second) > (x.day, x.hour, x.minute, x.second)
   end
-  
+
   def _add(x as DateTime) as DateTime or
           (x as Time) as Time
     if x is DateTime
@@ -140,35 +140,35 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
                   x.second + secs + nsecs / 1e9) as dynamic
     end
   end
-  
+
   def _sub(x as Time) as Time
     return Time(-x.day, -x.hour, -x.minute, secs + nsecs / 1e9 - x.second)
   end
-  
+
   def _neg() as Time
     return Time(-day, -hour, -minute, -second)
   end
-  
+
   def _mul(x as Int) as Time or
           (x as Float) as Time
     return Time((secs + nsecs / 1e9) * x)
   end
-  
+
   def _div(x as Int) as Time or
           (x as Float) as Time
     return self * (1 / x)
   end
-  
+
   def _hash() as Int
     return Hash((secs, nsecs))
   end
-  
+
   -- Total number of seconds (Int). The sign is the same as of the time value.
   private const secs as Int
   -- Nanooseconds (integer between -10**9 and 10**9, not inclusive). The sign
   -- is the same as of the time value.
   private const nsecs as Int
-  
+
   private def nonNegative() as Boolean
     return secs >= 0 and nsecs >= 0
   end
@@ -181,7 +181,7 @@ private def NormalizeTime(d as Int, h as Int, m as Int, s as Float) as
   var secs = Int(d * 86400 + h * 3600 + m * 60 + Int(Trunc(s)))
   -- Absolute value of the fractional part of s, in nanoseconds.
   var nsecs = Int((Abs(s) - Int(Abs(s))) * 1e9 + 0.5)
-  
+
   -- Limit nanosecond range after rounding.
   if nsecs == 1000000000
     nsecs = 0
@@ -191,14 +191,14 @@ private def NormalizeTime(d as Int, h as Int, m as Int, s as Float) as
       secs -= 1
     end
   end
-  
+
   if secs < 0 and s > 0 and nsecs > 0
     secs += 1
   end
   if s < 0 and secs > 0 and nsecs > 0
     secs -= 1
   end
-  
+
   -- Calculate the final nanoseconds value.
   if nsecs != 0
     if secs < 0 and s > 0
@@ -209,38 +209,38 @@ private def NormalizeTime(d as Int, h as Int, m as Int, s as Float) as
       nsecs = 10**9 - nsecs
     end
   end
-  
+
   return secs, nsecs
 end
 
 
 private class TimeFormatWrapper implements IDateTime
   const time as Time
-  
+
   def year as Int
     raise ValueError()
   end
-  
+
   def month as Int
     raise ValueError()
   end
-  
+
   def weekday as Int
     raise ValueError()
   end
-  
+
   def day as Int
     return self.time.day
   end
-  
+
   def hour as Int
     return self.time.hour
   end
-  
+
   def minute as Int
     return self.time.minute
   end
-  
+
   def second as Float
     return self.time.second
   end

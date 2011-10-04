@@ -11,40 +11,40 @@ class UrlClassSuite is Suite
     assertUrl("http://www.alore-lang.org:8080/path/file.ext",
               "http", "www.alore-lang.org", 8080, "/path/file.ext")
   end
-  
+
   def testMissingPort()
     assertUrl("ftp://ftp.foobar.fi/file",
               "ftp", "ftp.foobar.fi", -1, "/file")
   end
-  
+
   def testMissingHost()
     assertUrl("ftp:/file.ext", "ftp", "", -1, "/file.ext")
     assertUrl("ftp:file.ext", "ftp", "", -1, "file.ext")
   end
-  
+
   def testMissingProtocolAndHost()
     assertUrl("/path/file.ext", "", "", -1, "/path/file.ext")
     assertUrl("file", "", "", -1, "file")
   end
-  
+
   def testMissingPath()
     assertUrl("http://www.x.org", "http", "www.x.org", -1, "")
   end
-  
+
   def testUser()
     assertUrl("http://root:password@foob.com",
               "http", "foob.com", -1, "", "", "root", "password")
     assertUrl("http://root@foob.com",
               "http", "foob.com", -1, "", "", "root")
   end
-  
+
   def testQuery()
     assertUrl("http://abc.de:23/path/file.ext?foo=bar&zar=dar",
               "http", "abc.de", 23, "/path/file.ext", "foo=bar&zar=dar")
     assertUrl("http://abc.de?foo=bar&zar=dar",
               "http", "abc.de", -1, "", "foo=bar&zar=dar")
   end
-  
+
   def testFragment()
     assertUrl("http://abc.de:23/path/file.ext?foo=bar&zar=dar#ref-brah",
               "http", "abc.de", 23, "/path/file.ext", "foo=bar&zar=dar",
@@ -53,28 +53,28 @@ class UrlClassSuite is Suite
               "http", "www.xy", -1, "", "", "", "", "x")
     assertUrl("#xyz", "", "", -1, "", "", "", "", "x")
   end
-  
+
   def testOnlyHost()
     assertUrl("//www.xy", "", "www.xy", -1, "")
   end
-  
+
   def testSpecialChars()
     assertUrl("AZaz09://%20b$@az.0-9.AZ/%7ffuu..-as?%65=%20.-_#%fF$",
               "AZaz09", "az.0-9.AZ", -1, "/%7ffuu..-as", "%65=%20.-_",
               "%20b$", "", "%fF$")
   end
-  
+
   def testMailto()
     assertUrl("mailto:foo@bar.com", "mailto", "", -1, "foo@bar.com")
   end
-  
+
   def testSpecialCases()
     assertUrl("a@ba:", "", "", -1, "a@ba:")
   end
-  
+
   def testCreateFromComponents()
     var u
-    
+
     u = Url(("http", "user:pwd@foo.com:34", "/foo", "query", "ref"))
     AssertEqual(u.url(), "http://user:pwd@foo.com:34/foo?query#ref")
     AssertEqual(u.scheme, "http")
@@ -86,7 +86,7 @@ class UrlClassSuite is Suite
     AssertEqual(u.path, "/foo")
     AssertEqual(u.query, "query")
     AssertEqual(u.fragment, "ref")
-    
+
     u = Url(("foo", "user2@foo.com", "", "", ""))
     AssertEqual(u.url(), "foo://user2@foo.com")
     AssertEqual(u.scheme, "foo")
@@ -97,7 +97,7 @@ class UrlClassSuite is Suite
     AssertEqual(u.path, "")
     AssertEqual(u.query, "")
     AssertEqual(u.fragment, "")
-    
+
     u = Url(("", "", "/foo", "", ""))
     AssertEqual(u.url(), "/foo")
     AssertEqual(u.scheme, "")
@@ -108,7 +108,7 @@ class UrlClassSuite is Suite
     AssertEqual(u.path, "/foo")
     AssertEqual(u.query, "")
     AssertEqual(u.fragment, "")
-    
+
     u = Url(("", "foo.com", "", "", ""))
     AssertEqual(u.url(), "//foo.com")
     AssertEqual(u.scheme, "")
@@ -121,7 +121,7 @@ class UrlClassSuite is Suite
     AssertEqual(u.query, "")
     AssertEqual(u.fragment, "")
   end
-  
+
   def testInvalidUrl()
     AssertRaises(ValueError, Url, ["foo bar"])
     AssertRaises(ValueError, Url, ["/дц"])
@@ -132,18 +132,18 @@ class UrlClassSuite is Suite
     AssertRaises(ValueError, Url, ["http://foo:"])
     AssertRaises(ValueError, Url, ["http://foo$bar"])
   end
-  
+
   def testStr()
     var u = Url("http://foo.com")
     AssertEqual(Str(u), "Url('http://foo.com')")
   end
-  
+
   def testRepr()
     var u = Url("http://foo.com/xyz?q#frag")
     AssertEqual(Repr(u), "Url(scheme='http', netLocation='foo.com', " +
                 "path='/xyz', query='q', fragment='frag')")
   end
-  
+
   private def assertUrl(url, scheme, host, port, path, query = "",
                         username = "", password = "", fragment = "", str = url)
     var u = Url(url)
@@ -164,7 +164,7 @@ class UrlFuncsSuite is Suite
     AssertEqual(UrlEncode("&?/:%"), "%26%3f%2f%3a%25")
     AssertRaises(ValueError, UrlEncode, ["\u0100"])
   end
-  
+
   def testUrlDecode()
     AssertEqual(UrlDecode(""), "")
     AssertEqual(UrlDecode("azAZ09.-_"), "azAZ09.-_")
@@ -173,7 +173,7 @@ class UrlFuncsSuite is Suite
     AssertEqual(UrlDecode("&?/:@"), "&?/:@")
     AssertEqual(UrlDecode("%ax%"), "%ax%")
   end
-  
+
   def testRawUrlEncode()
     AssertEqual(RawUrlEncode(""), "")
     AssertEqual(RawUrlEncode("azAZ09.-_"), "azAZ09.-_")
@@ -182,7 +182,7 @@ class UrlFuncsSuite is Suite
     AssertEqual(RawUrlEncode("&foo+bar/fub//", "+/"), "%26foo+bar/fub//")
     AssertRaises(ValueError, RawUrlEncode, ["\u0100"])
   end
-  
+
   def testRawUrlDecode()
     AssertEqual(RawUrlDecode(""), "")
     AssertEqual(RawUrlDecode("azAZ09.-_"), "azAZ09.-_")

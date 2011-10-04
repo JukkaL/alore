@@ -57,13 +57,13 @@ int athread_init(void)
     athread_tls_index = TlsAlloc();
     if (athread_tls_index == TLS_OUT_OF_INDEXES)
         return -1;
-    
+
     athread_local_t *data = alloc_thread_local_data();
     if (data == NULL)
         return -1;
 
     TlsSetValue(athread_tls_index, data);
-    
+
     return 0;
 }
 
@@ -83,7 +83,7 @@ int athread_create(athread_t *ptr, void *(*func)(void *), void *param)
         free(args);
         return -1;
     }
-    
+
     ptr->id = (void *)_beginthread(thread_func, 0, args);
     if ((uintptr_t)ptr->id == (uintptr_t)-1L) {
         free(args->data);
@@ -109,7 +109,7 @@ int athread_mutex_init(athread_mutex_t *mutex, void *arg)
         free(*mutex);
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -258,7 +258,7 @@ static athread_local_t *alloc_thread_local_data(void)
     athread_local_t *data = malloc(sizeof(athread_local_t));
     if (data == NULL)
         return NULL;
-    
+
     data->event = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (data->event == 0) {
         free(data);

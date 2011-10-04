@@ -15,7 +15,7 @@ class IOSuite1 is Suite
   def testStreamObjects()
     var f = TestStreamMethods
     var a = 1
-  
+
     -- Calling convention of f:
     --   f((numMemberErrors, numIoErrors), *flags)
     f((1, 3), Output)
@@ -27,10 +27,10 @@ class IOSuite1 is Suite
     f((4, 0), Input, Output)
     f((5, 0), Input, Output, LineBuffered)
     f((5, 0), Input, Output, Unbuffered)
-    
+
     -- FIX: unicode strings, substrings
   end
-  
+
   -- Construct a stream object with given params and try to call all Stream
   -- methods. Keep track of numbers and kinds of exceptions raised, and verify
   -- that the correct exceptions were raised.
@@ -42,7 +42,7 @@ class IOSuite1 is Suite
     TryInvalidCalls(LineBuffered)
     TryInvalidCalls(Unbuffered)
   end
-  
+
   -- Test closing a stream.
   def testClose()
     var s = Stream(Input)
@@ -60,7 +60,7 @@ class IOSuite1 is Suite
     s.close()
     -- There is still an error after additional close operations.
     AssertRaises(IoError, s.readLn, [])
-    
+
     s = Stream(Output)
     s.close()
     AssertRaises(IoError, s.readLn, [])
@@ -77,14 +77,14 @@ class IOSuite1 is Suite
     -- There is still an error after additional close operations.
     AssertRaises(IoError, s.writeLn, [])
   end
-  
+
   def testInterfaces()
     Assert(Stream() is Iterable)
     Assert(StdIn is Iterable)
     var iter = Stream().iterator()
     Assert(iter is Iterator)
   end
-  
+
   def testIoErrorInstance()
     try
       File("saiodf")

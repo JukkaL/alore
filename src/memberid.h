@@ -55,7 +55,7 @@ enum {
                                    hack, but it might save a few kB of memory
                                    since we do not need to add an additional
                                    flag to AFunction... */
-    
+
     AM_FIRST_USER_MEMBER        /* Id of first non-predefined member */
 };
 

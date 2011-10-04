@@ -15,15 +15,15 @@ class NilSuite is Suite
     AssertNotEqual(nil, Object())
     AssertNotEqual(Object(), nil)
   end
-  
+
   def testStr()
     AssertEqual(Str(nil), "nil")
   end
-  
+
   def testRepr()
     AssertEqual(Repr(nil), "nil")
   end
-  
+
   -- Test Object members.
   def testMembers()
     Assert(HasMember(nil, "_eq"))

@@ -34,14 +34,14 @@ class SymbolTable is Map<Str, Array<SymbolTableNode>>
     a[-1] += ")"
     return Newline.join(a)
   end
-  
+
   def add(name as Str, node as SymbolTableNode)
     if not self.hasKey(name)
       self[name] = []
     end
     self[name].append(node)
   end
-  
+
   def cleanup() as void
     for k in keys()
       if self[k] == []
@@ -57,7 +57,7 @@ interface SymNode
   bind FuncDef
   bind Var
   bind TypeInfo
-  
+
   def name as Str
   def fullName as Str
   def isPrivate as Boolean
@@ -70,9 +70,9 @@ class SymbolTableNode
                          -- TypeInfo), nil for Tvar
   const tvarId as Int    -- Type variable id (for Tvars only)
   const modId  as Str    -- Module id (e.g. "foo::bar") or nil
-  
+
   private const typeOverride as Typ  -- If nil, fall back to type of node
-  
+
   def create(kind as Constant, node as SymNode, modId = nil as Str,
              type = nil as Typ, tvarId = 0 as Int)
     self.kind = kind
@@ -81,7 +81,7 @@ class SymbolTableNode
     self.modId = modId
     self.tvarId = tvarId
   end
-  
+
   def fullName as Str
     if self.node != nil
       return self.node.fullName
@@ -101,7 +101,7 @@ class SymbolTableNode
       return nil
     end
   end
-  
+
   def _str() as Str
     var s = "{}/{}".format(CleanUp(Str(kind)), ShortType(node))
     if self.modId != nil

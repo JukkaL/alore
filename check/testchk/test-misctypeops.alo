@@ -9,45 +9,45 @@ import types
 
 class TypeOpsSuite is Suite
   private var fx
-  
+
   def setUp()
     self.fx = TypeFixture()
   end
-  
-  
+
+
   -- Checking whether generic function accepts ranges
   -- ------------------------------------------------
-  
-  
+
+
   def testNonGenericRangeCheck()
     assertRangeVars(callable([], fx.void), [])
   end
-  
+
   def testRangeCheckTrivially()
     assertRangeVars(callable(["T"], fx.a, fx.a), [True])
   end
-    
+
   def testRangeCheckWithNakedVariable()
     assertRangeVars(callable(["T"], fx.tf, fx.void), [True])
     assertRangeVars(callable(["T"], fx.tf), [False])
   end
-  
+
   def testRangeCheckWithTypeArg()
     assertRangeVars(callable(["T"], fx.gtf), [True])
     assertRangeVars(callable(["T"], fx.gtf, fx.gtf), [True])
   end
-    
+
   def testRangeCheckWithMultipleInstancesInReturnType()
     assertRangeVars(callable(["T"], tuple(fx.gtf)), [True])
     assertRangeVars(callable(["T"], tuple(fx.gtf, fx.gtf)), [False])
   end
-  
+
   def testRangeCheckWithTupleTypes()
     assertRangeVars(callable(["T"], tuple(fx.a, fx.a)), [True])
     assertRangeVars(callable(["T"], tuple(fx.tf, fx.a)), [False])
     assertRangeVars(callable(["T"], tuple(fx.a, fx.tf)), [False])
   end
-  
+
   def testRangeCheckWithCallableTypes()
     assertRangeVars(callable(["T"], callable([], fx.a, fx.a, fx.a)),
                     [True])
@@ -58,27 +58,27 @@ class TypeOpsSuite is Suite
     assertRangeVars(callable(["T"], callable([], fx.a, fx.a, fx.tf)),
                     [False])
   end
-  
+
   def testRangeCheckWithInvalidCallableReturnType()
     -- Invalid return type which is callable.
     assertRangeVars(callable(["T"], callable([], fx.gtf)), [True])
     assertRangeVars(callable(["T"], callable([], fx.gtf, fx.a)), [True])
     assertRangeVars(callable(["T"], callable([], fx.gtf, fx.gtf)), [False])
   end
-  
+
   def testRangeCheckWithInvalidGenericReturnType()
     assertRangeVars(callable(["T"], Instance(fx.hi, [fx.a, fx.a])), [True])
     assertRangeVars(callable(["T"], Instance(fx.hi, [fx.tf, fx.a])), [True])
     assertRangeVars(callable(["T"], Instance(fx.hi, [fx.a, fx.tf])), [True])
     assertRangeVars(callable(["T"], Instance(fx.hi, [fx.tf, fx.tf])), [False])
   end
-  
+
   def testRangeCheckWithMultipleGenericFunctionVars()
     assertRangeVars(callable(["T", "S"], tuple(fx.gt, fx.sf)), [True, False])
     assertRangeVars(callable(["S", "T"], tuple(fx.gtf2, fx.sf1)),
                                                          [False, True])
   end
-  
+
   def testRangeCheckWithMultipleGenericTypeVars()
     assertRangeVars(callable(["T"], Instance(fx.hi, [fx.tf, fx.a])),
                     [True])
@@ -89,23 +89,23 @@ class TypeOpsSuite is Suite
     assertRangeVars(callable(["T"], Instance(fx.hi, [fx.a, tuple(fx.tf)])),
                     [False])
   end
-  
+
   -- IDEA: Add test cases for
   --   nested generics
   --   generic function types
   --   intersection types
   --   dynamic type
   --   nil + other simple types
-  
+
   private def assertRangeVars(type, vars)
     AssertEqual(GenericFunctionRangeVariables(type), vars)
   end
-  
-  
+
+
   -- ExpandTypes
   -- -----------
-  
-  
+
+
   def testTrivialExpand()
     for t in fx.a, fx.o, fx.t, fx.void, fx.nilt, tuple(fx.a),
              callable([], fx.a, fx.a), fx.dyn
@@ -114,36 +114,36 @@ class TypeOpsSuite is Suite
       assertExpand(t, [], t)
     end
   end
-  
+
   def testExpandNakedTypeVar()
     assertExpand(fx.t, [1 : fx.a], fx.a)
     assertExpand(fx.t, [2 : fx.a], fx.t)
   end
-  
+
   def testExpandBasicGenericTypes()
     assertExpand(fx.gt, [1 : fx.a], fx.ga)
   end
-  
+
   def testExpandNakedWithRange()
     assertExpand(fx.t, [1 : (fx.b, fx.a)], fx.b)
   end
-  
+
   def testGenericTypeArgWithRange()
     assertExpand(fx.gt, [1 : (fx.b, fx.a)], fx.gba)
     assertExpand(fx.ga, [1 : (fx.b, fx.a)], fx.ga)
     assertExpand(fx.gs, [1 : (fx.b, fx.a)], fx.gs)
   end
-  
+
   -- IDEA: Add test cases for
   --   ranges with multiple type arguments
   --   tuple types
   --   callable types
   --   multiple arguments
-  
+
   private def assertExpand(orig, mapItems, result)
     var lowerBounds = Map()
     var upperBounds = Map()
-    
+
     for item in mapItems
       var name = item.left
       if item.right is Tuple
@@ -153,26 +153,26 @@ class TypeOpsSuite is Suite
         lowerBounds[name] = item.right
       end
     end
-    
+
     if upperBounds.length() == 0
       AssertEqual(Str(ExpandType(orig, lowerBounds)), Str(result))
     else
       AssertEqual(Str(ExpandType(orig, lowerBounds, upperBounds)), Str(result))
     end
   end
-  
-  
+
+
   -- CollapseType
   -- ------------
-  
-  
+
+
   def testTrivialCollapse()
     for t in fx.a, fx.o, fx.t, fx.void, fx.nilt, tuple(fx.a),
              callable([], fx.a, fx.a), fx.dyn, fx.err
       assertCollapse(t, t)
     end
   end
-  
+
   def testCollapseGenericType()
     assertCollapse(fx.ga, fx.ga)
     assertCollapse(fx.gaa, fx.ga)
@@ -180,146 +180,146 @@ class TypeOpsSuite is Suite
     assertCollapse(fx.gbo, fx.gb)
     assertCollapse(fx.gao, fx.ga)
   end
-  
+
   def testCollapseGenericWithinCompositeType()
     assertCollapse(tuple(fx.ga), tuple(fx.ga))
     assertCollapse(tuple(fx.gbo, fx.gaa), tuple(fx.gb, fx.ga))
-    
+
     assertCollapse(callable([], fx.gbo, fx.gaa),
                    callable([], fx.gb, fx.ga))
   end
-  
+
   def testCollapseGenericFunctionType()
     assertCollapse(callable(["T"], fx.t), callable(["T"], fx.t))
   end
-  
+
   -- IDEA: Add test cases for
   --   intersection types
   --   multiple type arguments
   --   generic function type with bounds
-  
+
   private def assertCollapse(orig, collapsed)
     AssertEqual(Str(CollapseType(orig)), Str(collapsed))
   end
-  
-  
+
+
   -- ReplaceTypeVars
   -- ---------------
-  
-  
+
+
   def testTrivialReplace()
     for t in fx.a, fx.o, fx.void, fx.nilt, tuple(fx.a),
              callable([], fx.a, fx.a), fx.dyn, fx.err
       assertReplace(t, t)
     end
   end
-  
+
   def testReplaceTypeVar()
     assertReplace(fx.t, fx.dyn)
   end
-  
+
   def testReplaceGenericInstance()
     assertReplace(fx.ga, fx.ga)
     assertReplace(fx.gt, fx.gdyn)
   end
-  
+
   private def assertReplace(orig, result)
     AssertEqual(Str(ReplaceTypeVars(orig)), Str(result))
   end
-  
-  
+
+
   -- EraseType
   -- ---------
-  
-  
+
+
   def testTrivialErase()
     for t in fx.a, fx.o, fx.void, fx.nilt, fx.dyn, fx.err
       assertErase(t, t)
     end
   end
-  
+
   def testEraseWithTypeVariable()
     assertErase(fx.t, fx.dyn)
   end
-  
+
   def testEraseWithGenericType()
     assertErase(fx.ga, fx.gdyn)
     assertErase(fx.hab, Instance(fx.hi, [fx.dyn, fx.dyn]))
   end
-  
+
   def testEraseWithTupleType()
     assertErase(tuple(fx.a), fx.stdTuple)
   end
-  
+
   def testEraseWithFunctionType()
     assertErase(fx.callable(fx.a, fx.b), fx.stdFunction)
   end
-  
+
   def testEraseWithTypeObject()
     assertErase(fx.callableType(fx.a, fx.b), fx.stdFunction)
   end
-  
+
   private def assertErase(orig, result)
     AssertEqual(Str(EraseType(orig, fx.basic)), Str(result))
   end
-  
-  
+
+
   -- IsConstantType
   -- --------------
-  
-  
+
+
   def testTrivialIsConstant()
     for t in fx.a, fx.o, fx.void, fx.nilt, fx.dyn, fx.err
       assertIsConst(t)
     end
   end
-  
+
   def testIsConstantWithTypeVariable()
     assertNotIsConst(fx.t)
     assertNotIsConst(fx.s)
   end
-  
+
   def testIsConstantWithGenericType()
     assertIsConst(fx.ga)
     assertNotIsConst(fx.gt)
   end
-  
+
   def testIsConstantWithTupleType()
     assertIsConst(tuple())
     assertIsConst(tuple(fx.a))
     assertIsConst(tuple(fx.a, fx.ga))
-    
+
     assertNotIsConst(tuple(fx.a, fx.t))
     assertNotIsConst(tuple(fx.t, fx.a))
     assertNotIsConst(tuple(fx.t, fx.t))
   end
-  
+
   def testIsConstantWithFunctionType()
     assertIsConst(fx.callable(fx.void))
     assertIsConst(fx.callable(fx.a, fx.a, fx.a))
-    
+
     assertNotIsConst(fx.callable(fx.t, fx.a, fx.a))
     assertNotIsConst(fx.callable(fx.a, fx.t, fx.a))
     assertNotIsConst(fx.callable(fx.a, fx.a, fx.t))
   end
-  
+
   private def assertIsConst(t)
     Assert(IsConstantType(t))
   end
-  
+
   private def assertNotIsConst(t)
     Assert(not IsConstantType(t))
   end
-  
-  
+
+
   -- Helpers
   -- -------
-  
-  
+
+
   private def tuple(*a)
     return TupleType(a)
   end
-  
+
   -- callable(args, a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r and type arguments vars.
   private def callable(vars, *a)

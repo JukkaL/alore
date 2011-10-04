@@ -34,7 +34,7 @@ typedef struct ASymbolInfo_ {
     struct ASymbolInfo_ *next;    /* NOTE: has to be the second field */
     int num;
     unsigned char type;           /* NOTE: has to be the fourth field */
-    
+
     /* The active union member depends on the type member. */
     union {
         int blockDepth; /* Block depth of a local variable */

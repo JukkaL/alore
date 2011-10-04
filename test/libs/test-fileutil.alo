@@ -15,13 +15,13 @@ class FileUtilSuite is Suite
 
   -- FnMatch test cases
   ---------------------
-  
+
 
   def testTrivialMatch()
     assertMatch("", "")
     assertMatch("a", "a")
     assertMatch("foo.bar", "foo.bar")
-    
+
     assertNotMatch("", "a")
     assertNotMatch("a", "")
     assertNotMatch("x", "y")
@@ -30,42 +30,42 @@ class FileUtilSuite is Suite
     assertNotMatch("xyz", "yyz")
     assertNotMatch("xyz", "xyy")
   end
-  
+
   def testUnicodeMatch()
     assertMatch("\u1234", "\u1234")
     assertNotMatch("\u1020", "\u0020")
   end
-  
+
   def testLongMatch()
     assertMatch("xy " * 10000, "xy " * 10000)
   end
-  
+
   def testAsteriskMatch()
     assertMatch("*", "")
     assertMatch("*", "a")
     assertMatch("*", "ab/d.y")
-    
+
     assertMatch("a*", "a")
     assertMatch("a*", "ab/d.y")
     assertNotMatch("a*", "ba")
     assertNotMatch("a*", "")
-    
+
     assertMatch("*y", "y")
     assertMatch("*y", "ab/d.y")
     assertNotMatch("*y", "ya")
     assertNotMatch("*y", "")
-    
+
     assertMatch("a*b", "ab")
     assertMatch("a*b", "a-b")
     assertMatch("a*b", "ab/d.b")
     assertNotMatch("a*b", "ba")
     assertNotMatch("a*b", "abc")
     assertNotMatch("a*b", "cab")
-    
+
     assertMatch("foo*bar*zar", "foobarzar")
     assertMatch("foo*bar*zar", "foo.bar.zar")
     assertMatch("foo*bar*zar", "fooXYZbarGGYzar")
-    
+
     assertNotMatch("foo*bar*zar", "fobarzar")
     assertNotMatch("foo*bar*zar", "fooarzar")
     assertNotMatch("foo*bar*zar", "foobarza")
@@ -74,19 +74,19 @@ class FileUtilSuite is Suite
     assertNotMatch("foo*bar*zar", "ffoobarzar")
     assertNotMatch("foo*bar*zar", "fo0barzar")
     assertNotMatch("foo*bar*zar", "foobarz4r")
-    
+
     assertMatch("a**b", "ab")
     assertMatch("a**b", "a--b")
     assertNotMatch("a**b", "a--")
   end
-  
+
   def testQuestionMarkMatch()
     assertMatch("?", "a")
     assertMatch("?", ".")
     assertMatch("?", "?")
     assertNotMatch("?", "")
     assertNotMatch("?", "aa")
-    
+
     assertMatch("ab???cd", "ab---cd")
     assertMatch("ab???cd", "ab123cd")
     assertNotMatch("ab???cd", "ab---.cd")
@@ -94,7 +94,7 @@ class FileUtilSuite is Suite
     assertNotMatch("ab???cd", "ac---cd")
     assertNotMatch("ab???cd", "ac---cd.")
   end
-  
+
   def testCaseMatching()
     if self.caseInsensitive
       assertMatch("a", "A")
@@ -108,45 +108,45 @@ class FileUtilSuite is Suite
     end
   end
 
-    
+
   -- Glob tests cases
   -------------------
-  
-  
+
+
   def testGlobSimpleFile()
     setup("foo")
     assertGlob("foo", ["foo"])
     assertGlob("foo/", [])
     assertGlob("foob", [])
   end
-  
+
   def testGlobSimpleDirectory()
     setup("foo/")
     assertGlob("foo", ["foo"])
     assertGlob("foo/", ["foo/"])
-    
+
     assertGlob("foob", [])
     assertGlob("foob/", [])
   end
-  
+
   def testEmptyGlob()
     setup()
     assertGlob("", [])
   end
-  
+
   def testGlobNestedFile()
     setup("foo/", "foo/bar")
     assertGlob("foo/bar", ["foo/bar"])
   end
-  
+
   def testGlobNestedDirectory()
     setup("foo/", "foo/bar/", "foo/bar/zar")
     assertGlob("foo/bar", ["foo/bar"])
     assertGlob("foo/bar/", ["foo/bar/"])
-    
+
     assertGlob("foo/zar", [])
   end
-  
+
   def testGlobAbsolutePath()
     setup()
     assertGlob("/", ["/"])
@@ -158,14 +158,14 @@ class FileUtilSuite is Suite
       assertGlob("/bin/sh", ["/bin/sh"])
     end
   end
-  
+
   def testDotPrefix()
     setup("foo/", "foo/bar")
     assertGlob("./foo", ["./foo"])
     assertGlob("./foo/", ["./foo/"])
     assertGlob("./foo/bar", ["./foo/bar"])
   end
-  
+
   def testDotDot()
     setup("foo/", "foo/bar/", "foo/z")
     assertGlob("foo/bar/..", ["foo/bar/.."])
@@ -173,7 +173,7 @@ class FileUtilSuite is Suite
     assertGlob("foo/bar/../z", ["foo/bar/../z"])
     assertGlob("foo/bar/../y", [])
   end
-  
+
   def testPatternInOnlyComponent()
     setup("a.c", "a.d", "foo.c", "a.cc", "dir.c/")
     assertGlob("*.c", ["a.c", "dir.c", "foo.c"])
@@ -181,18 +181,18 @@ class FileUtilSuite is Suite
     assertGlob("a.?", ["a.c", "a.d"])
     assertGlob("*.x", [])
   end
-  
+
   def testPatternInLastComponent()
     setup("foo/", "foo/a,c", "foo/a,d", "foo/foo,c", "foo/a,cc", "foo/,c")
     assertGlob("foo/*,c", ["foo/a,c", "foo/foo,c", "foo/,c"])
   end
-  
+
   def testPatternInInitialComponent()
     setup("foo/", "x/", "zy.x", "foo/a", "x/a", "foo/b")
     assertGlob("*/a", ["foo/a", "x/a"])
     assertGlob("*/?", ["foo/a", "x/a", "foo/b"])
   end
-  
+
   def testRepeatedDirectorySeparators()
     -- foo//bar etc. file names
     setup("foo/", "foo/bar")
@@ -205,27 +205,27 @@ class FileUtilSuite is Suite
     end
     assertGlob("*//bar", ["foo//bar"])
   end
-  
+
   def testDoubleAsterisk()
     setup("a/", "b/", "a/b/", "a/b/c/", "a/f", "b/f", "a/b/f", "a/b/c/f")
     assertGlob("**/f", ["a/f", "b/f", "a/b/f", "a/b/c/f"])
     assertGlob("a/**/f", ["a/f", "a/b/f", "a/b/c/f"])
     assertGlob("a//**//f", ["a//f", "a//b//f", "a//b//c//f"])
   end
-  
+
   def testDoubleAsteriskAtEnd()
     setup("a.txt", "a/", "a/b/", "a/x", "a/b/y")
     assertGlob("**", ["a", "a.txt", Join("a", "b"), Join("a", "b", "y"),
                       Join("a", "x")])
     assertGlob("a/**", ["a/b", Join("a/b", "y"), "a/x"])
   end
-  
+
   def testTryingToAccessFileAsDirectory()
     setup("a")
     assertGlob("a/b", [])
     assertGlob("*a/b", [])
   end
-  
+
   def testFilesStartingWithDot()
     setup(".xy", "xy")
     assertGlob(".xy", [".xy"])
@@ -236,7 +236,7 @@ class FileUtilSuite is Suite
     assertGlob(".*", [".xy"])
     assertGlob("?*", ["xy"])
   end
-  
+
   def testDirectoriesStartingWithDot()
     setup(".d/", "a/", ".d/x", "a/y")
     assertGlob(".d/*", [".d/x"])
@@ -246,7 +246,7 @@ class FileUtilSuite is Suite
     assertGlob("*a/*", ["a/y"])
     assertGlob("**", ["a", Join("a", "y")])
   end
-  
+
   def testCase()
     setup("d/", "F", "d/Fo")
     if self.caseInsensitive
@@ -260,7 +260,7 @@ class FileUtilSuite is Suite
       assertGlob("*/fo", [])
     end
   end
-  
+
   def testAltSeparators()
     if AltSeparator != nil
       setup("d/", "d/a.x", "d/b.x")
@@ -286,16 +286,16 @@ class FileUtilSuite is Suite
 
   -- Helpers
   ----------
-  
-  
+
+
   private def assertMatch(pattern, path)
     Assert(FnMatch(pattern, path))
   end
-  
+
   private def assertNotMatch(pattern, path)
     Assert(not FnMatch(pattern, path))
   end
-  
+
   private def assertGlob(pattern, result)
     var d = CurrentDir()
     ChangeDir(self.tmpDir)
@@ -305,7 +305,7 @@ class FileUtilSuite is Suite
       ChangeDir(d)
     end
   end
-  
+
   private def assertGlobA(pattern, result)
     var d = CurrentDir()
     ChangeDir(self.tmpDir)
@@ -315,7 +315,7 @@ class FileUtilSuite is Suite
       ChangeDir(d)
     end
   end
-  
+
   private def translate(path)
     var np = ""
     for ch in path
@@ -329,7 +329,7 @@ class FileUtilSuite is Suite
     end
     return np
   end
-  
+
   private def translateAll(a)
     var r = []
     for s in a
@@ -356,7 +356,7 @@ class FileUtilSuite is Suite
       end
     end
   end
-      
+
   def tearDown()
     for f in self.tempFiles
       Remove(f)
@@ -367,7 +367,7 @@ class FileUtilSuite is Suite
     self.tempDirs = []
     self.tempFiles = []
   end
-  
+
   private var tempDirs = []
   private var tempFiles = []
 end

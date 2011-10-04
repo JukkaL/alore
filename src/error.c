@@ -237,7 +237,7 @@ AToken *AGenerateParseError(AToken *tok)
         AGenerateError(tok->lineNumber, ErrInvalidUtf8Sequence);
     else
         AGenerateError(tok->lineNumber, ErrParseErrorBefore, tok);
-    
+
     while (tok->type != TT_NEWLINE && tok->type != TT_EOF)
         tok = AAdvanceTok(tok);
 
@@ -318,7 +318,7 @@ Assize_t AFormatMessage(char *buf, Assize_t bufLen, const char *fmt, ...)
 {
     va_list args;
     Assize_t n;
-    
+
     va_start(args, fmt);
     n = AFormatMessageVa(buf, bufLen, fmt, args);
     va_end(args);
@@ -337,7 +337,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
 
     /* Make sure that there will be enough room for the null terminator. */
     maxLen--;
-    
+
     while (*fmt != '\0' && i < maxLen) {
         if (*fmt != '%')
             msg[i++] = *fmt++;
@@ -354,12 +354,12 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                 i = CopyFullyQualifiedId(msg, i, maxLen,
                                          va_arg(args, ASymbolInfo *));
                 break;
-                
+
             case 'm':
                 /* Module name */
                 i = ACopyModName(msg, i, maxLen, va_arg(args, AModuleId *));
                 break;
-                
+
             case 't':
                 /* Token */
                 i = CopyToken(msg, i, maxLen, va_arg(args, AToken *));
@@ -389,12 +389,12 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                     char method[128];
                     int createNum;
                     int memberInitializerNum;
-                    
+
                     createNum = AValueToType(
                         AGlobalByNum(func->sym->num))->create;
                     memberInitializerNum = AValueToType(
                         AGlobalByNum(func->sym->num))->memberInitializer;
-                    
+
                     /* Is the current function the constructor of the class? */
                     if (func == AValueToFunction(AGlobalByNum(createNum)) ||
                         func == AValueToFunction(
@@ -416,7 +416,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
             case 'M': {
                 /* Member name */
                 int key = va_arg(args, int);
-                
+
                 if (key == AM_NONE)
                     i = CopyString(msg, i, maxLen, "(none)");
                 else if (key == AM_INITIALIZER)
@@ -432,7 +432,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
             case 'd': {
                 /* Integer */
                 /* IDEA: This is brain-dead. Use sprintf instead. */
-                
+
                 char str[MAX_INT_DIGITS];
                 int num = va_arg(args, int);
                 int strInd = MAX_INT_DIGITS;
@@ -454,7 +454,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                     str[--strInd] = '-';
 
                 i = CopyString(msg, i, maxLen, str + strInd);
-                
+
                 break;
             }
 
@@ -471,7 +471,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                 /* Type of value */
                 AValue val = va_arg(args, AValue);
                 char type[256];
-                
+
                 if (AIsInt(val))
                     strcpy(type, "Int");
                 else if (AIsFloat(val))
@@ -517,11 +517,11 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                                        ARealTypeSymbol(sym));
                 } else
                     strcpy(type, "Object");
-                
+
                 i = CopyString(msg, i, maxLen, type);
                 break;
             }
-                
+
             case '%':
                 /* Literal '%' */
                 msg[i++] = '%';
@@ -544,11 +544,11 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
 static Assize_t CopyId(char *buf, Assize_t i, Assize_t max, ASymbolInfo *sym)
 {
     Assize_t result;
-    
+
     ALockInterpreter();
     result = CopyString(buf, i, max, (char *)AGetSymbolName(sym));
     AUnlockInterpreter();
-    
+
     return result;
 }
 
@@ -597,7 +597,7 @@ static Assize_t CopyFullyQualifiedId(char *buf, Assize_t i, Assize_t max,
 static Assize_t CopyToken(char *msg, Assize_t i, Assize_t max, AToken *tok)
 {
     ATokenType type = tok->type;
-    
+
     if (type == TT_ID || type == TT_ID_EXPOSED
         || AIsAlphaOperator(type) || AIsReservedWord(type)) {
         if (i < max)
@@ -614,13 +614,13 @@ static Assize_t CopyToken(char *msg, Assize_t i, Assize_t max, AToken *tok)
         case TT_NEWLINE:
             i = CopyString(msg, i, max, EndOfLine);
             break;
-            
+
         case TT_LITERAL_INT:
         case TT_LITERAL_FLOAT:
         case TT_ERR_INVALID_NUMERIC:
             i = CopyString(msg, i, max, NumericLiteral);
             break;
-            
+
         case TT_LITERAL_STRING:
         case TT_ERR_STRING_UNTERMINATED:
             i = CopyString(msg, i, max, StringLiteral);
@@ -641,7 +641,7 @@ static Assize_t CopyToken(char *msg, Assize_t i, Assize_t max, AToken *tok)
 
             /* During parsing if we see an unrecognized character, it should
                have been reported earlier and should not end up here. */
-            
+
             i = CopyString(msg, i, max, "<unknown>");
             break;
         }
@@ -668,12 +668,12 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                             void *data)
 {
     char buffer[AError_STRING_MAX_LEN];
-    
+
     char *prevFile = "";
     ASymbolInfo *prevClass = NULL;
     ASymbolInfo *prevFunction = NULL;
     int prevMember = AM_NONE;
-    
+
     ACompileError *curErr = AFirstError;
     ACompileError *lastErr = ALastError;
 
@@ -698,7 +698,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                             return FALSE;
                         first = FALSE;
                     }
-            
+
                     prevFile = file;
                 }
 
@@ -706,7 +706,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                     /* Display type context. */
                     ATypeInfo *type = AValueToType(
                         AGlobalByNum(curErr->class_->num));
-                    
+
                     if (curErr->member != AM_NONE && !type->isInterface) {
                         if (curErr->class_ != prevClass
                             || curErr->member != prevMember) {
@@ -727,7 +727,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                                 return FALSE;
                         }
                     }
-                    
+
                     prevClass = curErr->class_;
                     prevFunction = curErr->function;
                     prevMember = curErr->member;
@@ -743,7 +743,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                                           ErrAtTopLevel, file);
                         if (!display(buffer, data))
                             return FALSE;
-                
+
                         prevFunction = curErr->function;
                         prevClass = NULL;
                     }
@@ -758,7 +758,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
 
             if (!display(buffer, data))
                 return FALSE;
-            
+
             /* Advance to the next message and exit loop if none available. */
             if (curErr == lastErr)
                 break;
@@ -779,7 +779,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
 static char *TrimFileName(char *fnam)
 {
     /* FIX: unix specific */
-    
+
     while (fnam[0] == '.' && A_IS_DIR_SEPARATOR(fnam[1]))
         fnam += 2;
 

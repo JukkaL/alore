@@ -52,7 +52,7 @@ unsigned char *AStrToInt(AThread *t, const unsigned char *beg,
     /* Convert to integer. Check overflow. */
     for (str = beg; str != end && AIsDigit(*str); str++) {
         int digit = *str - '0';
-        
+
         if (num >= (A_SHORT_INT_MAX + 1) / 10
             && (num > (A_SHORT_INT_MAX + 1) / 10
                 || digit > ((A_SHORT_INT_MAX + 1) -
@@ -100,7 +100,7 @@ unsigned char *AStrToInt(AThread *t, const unsigned char *beg,
 
     while (str != end && AIsDigit(*str))
         str++;
-    
+
     *valPtr = AError;
     return (unsigned char *)str;
 }
@@ -118,7 +118,7 @@ unsigned char *AStrToFloat(AThread *t, const unsigned char *beg,
     const unsigned char *str;
 
     /* Check that the input is a valid Alore floating point literal. */
-    
+
     str = beg;
 
     /* Skip whitespace at the beginning of the string. */
@@ -177,15 +177,15 @@ unsigned char *AStrToFloat(AThread *t, const unsigned char *beg,
                as a null-terminated string. */
             memcpy(buf, beg, str - beg);
             buf[str - beg] = '\0';
-            
+
             /* Convert the string to a floating point number. We have already
                checked the string to be valid, so we don't bother checking that
                the call succeeds. */
             num = strtod(buf, NULL);
-            
+
             /* strtod may update errno. */
             errno = 0;
-        
+
             *val = ACreateFloat(t, num);
         }
     }

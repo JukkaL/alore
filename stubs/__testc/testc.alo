@@ -297,34 +297,34 @@ end
 class BinaryData
   def set(x)
   end
-  
+
   def get()
   end
 end
 
-    
+
 class BinaryData2 is BinaryData
   var x
   var y
   var z
-  
+
   def set2(a, b)
   end
-  
+
   def get2()
   end
 end
 
-                    
+
 class BinaryDataNonInit
   def set(x)
   end
-  
+
   def get()
   end
 end
 
-    
+
 class RecursionClassC
   def infiniteRecursion()
   end

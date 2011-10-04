@@ -115,10 +115,10 @@ AToken *AParseSingleAssignExpression(AToken *tok, ABool *isErr)
 {
     AExpression expr;
     int oldNumLocalsActive = ANumLocalsActive;
-    
+
     tok = ParseSubExpression(tok, PR_SINGLE, &expr, 0, FALSE);
     ACreateOpcode(&expr);
-    
+
     ANumLocalsActive = oldNumLocalsActive;
 
     *isErr = expr.type == ET_ERROR;
@@ -186,12 +186,12 @@ AToken *AParseLogicalExpression(AToken *tok, ABool cond, ABranchList **branch)
     }
 
     expr.finalBranch->next = expr.branch[cond];
-    
+
     if (cond == TRUE)
         AToggleBranches(expr.branch[0]);
     else
         AToggleBranches(expr.finalBranch);
-    
+
     ASetBranches(expr.branch[1 - cond], AGetCodeIndex());
 
     *branch = expr.finalBranch;
@@ -214,16 +214,16 @@ AToken *AParseAssignmentOrExpression(AToken *tok)
     int oldNumLocalsActive = ANumLocalsActive;
 
     AEmitLineNumber(tok);
-    
+
     /* We may need to know the number of temporary variables used when
        evaluating the expresion. */
     ANumLocals = ANumLocalsActive;
-    
+
     tok = ParseSubExpression(tok, PR_VALUE, &lvalue, 0, TRUE);
 
     if (tok->type == TT_ASSIGN) {
         /* Assignment statement */
-        
+
         ANumLocalsActive = ANumLocals;
 
         /* Skip '='. */
@@ -245,7 +245,7 @@ AToken *AParseAssignmentOrExpression(AToken *tok)
         if (AIsArrayExpression(lvalue.type) ||
             AIsTupleExpression(lvalue.type)) {
             /* Multiple assignment */
-            
+
             unsigned saveSize;
 
             AUnemitArrayOrTupleCreate();
@@ -262,12 +262,12 @@ AToken *AParseAssignmentOrExpression(AToken *tok)
             AIsRvalue = FALSE;
 
             ARestoreCode(saveSize);
-            
+
             AToggleMultipleAssignment(lvalue.type, lvalue.num, oldCodeIndex,
                                       saveSize);
         } else {
             /* Single assignment */
-            
+
             if (lvalue.type == ET_LOCAL_LVALUE) {
                 /* Simple case - the lvalue is a local variable. */
                 tok = AParseAssignExpression(tok, TRUE);
@@ -277,7 +277,7 @@ AToken *AParseAssignmentOrExpression(AToken *tok)
                 int num;
                 int saveSize;
                 AOpcode assignOpcode;
-                
+
                 ACreateOpcode(&lvalue);
                 assignOpcode = AGetPrevOpcode();
                 ATogglePreviousInstruction();
@@ -307,7 +307,7 @@ AToken *AParseAssignmentOrExpression(AToken *tok)
            modifying them to store their result in the stack frame. */
         if (lvalue.type == ET_LOGICAL)
             AConvertToLocalExpression(&lvalue);
-        
+
         if (AIsPartialExpression(lvalue.type)) {
             if (AIsCallOpcode(AGetPrevOpcode()))
                 AEmitDestination(A_NO_RET_VAL);
@@ -342,10 +342,10 @@ static AToken *ParseOperatorAssignment(AExpression *lvalue, AToken *tok)
     /* Determine the operator based on the next token (OPER_PLUS if the token
        is +=, etc.) */
     operator = OperatorTypeFromOperatorAssignmentToken(tok);
-    
+
     /* Skip op= token. */
     tok = AAdvanceTok(tok);
-    
+
     /* Check if we have a valid lvalue expression. */
     if (!AIsLvalueExpression(lvalue->type)) {
         AGenerateError(tok->lineNumber, ErrInvalidLvalue);
@@ -360,38 +360,38 @@ static AToken *ParseOperatorAssignment(AExpression *lvalue, AToken *tok)
         lvalue->type = ET_LOCAL_LVALUE;
         lvalue->num = 0;
     }
-        
+
     if (!AIsArrayExpression(lvalue->type) &&
         !AIsTupleExpression(lvalue->type)) {
         /* Non-array lvalue */
-        
+
         if (lvalue->type == ET_LOCAL_LVALUE) {
             /* The target is a local value. */
             AOperandType leftType, rightType;
-            
+
             /* Parse the right operand expression. */
             tok = ParseSubExpression(tok, PR_VALUE, &rvalue, 0, FALSE);
 
             if (AIsComplexExpression(rvalue.type) || rvalue.type == ET_LOGICAL)
                 AConvertToLocalExpression(&rvalue);
-            
+
             /* Figure out operand types. */
             leftType = rightType = A_OT_LOCAL;
             if (AIsGlobalExpression(rvalue.type))
                 rightType = A_OT_GLOBAL;
             else if (rvalue.type == ET_INT)
                 rightType = A_OT_INT;
-            
+
             AEmitBinaryOperation(operator, leftType, lvalue->num, rightType,
                                  rvalue.num);
-            
+
             AEmitAssignmentDestination(lvalue->num);
         } else {
             /* The target is an array index, member access or exposed local
                variable expression. */
             AOperandType leftType, rightType;
             int rvalueTargetOpcodeIndex;
-            
+
             /* Make sure that we won't overwrite the temporary operand values
                for the previous rvalue opcode (such as array base and index),
                so that we can reuse the operands later when creating the
@@ -410,24 +410,24 @@ static AToken *ParseOperatorAssignment(AExpression *lvalue, AToken *tok)
             }
 
             rvalueTargetOpcodeIndex = AGetPrevOpcodeIndex();
-            
+
             /* Parse the right operand expression. */
             tok = ParseSubExpression(tok, PR_VALUE, &rvalue, 0, FALSE);
 
             if (AIsComplexExpression(rvalue.type) || rvalue.type == ET_LOGICAL)
                 AConvertToLocalExpression(&rvalue);
-            
+
             /* Figure out operand types. */
             leftType = rightType = A_OT_LOCAL;
             if (AIsGlobalExpression(rvalue.type))
                 rightType = A_OT_GLOBAL;
             else if (rvalue.type == ET_INT)
                 rightType = A_OT_INT;
-            
+
             AEmitBinaryOperation(operator, leftType, lvalue->num, rightType,
                                  rvalue.num);
             AEmitAssignmentDestination(lvalue->num);
-            
+
             EmitAssignmentOpcodeForOperatorAssignment(rvalueTargetOpcodeIndex,
                                                       lvalue->num);
         }
@@ -445,7 +445,7 @@ static AToken *ParseOperatorAssignment(AExpression *lvalue, AToken *tok)
 static AOperator OperatorTypeFromOperatorAssignmentToken(AToken *tok)
 {
     ATokenType type = tok->type;
-    
+
     switch (type) {
     case TT_ASSIGN_ADD:
         return OPER_PLUS;
@@ -564,19 +564,19 @@ AToken *AParseCaseExpression(AToken *tok, int num, int *skipIndex)
 
     for (;;) {
         ABranchList *tmp;
-        
+
         tok = ParseSubExpression(tok, PR_SINGLE, &expr, 0, FALSE);
-        
+
         if (AIsComplexExpression(expr.type))
             AConvertToLocalExpression(&expr);
-        
+
         if (AIsGlobalExpression(expr.type))
             getOpcode = OP_GET_LG;
         else if (expr.type == ET_INT)
             getOpcode = OP_GET_LI;
         else
             getOpcode = OP_GET_LL;
-        
+
         AEmitOpcode2Args(getOpcode, num, expr.num); /* FIX */
 
         if (tok->type != TT_COMMA)
@@ -589,14 +589,14 @@ AToken *AParseCaseExpression(AToken *tok, int num, int *skipIndex)
 
         tok = AAdvanceTok(tok);
     }
-        
+
     *skipIndex = AGetCodeIndex();
     AEmitOpcodeArg(OP_NEQ, 0);
 
     ASetBranches(trueBranches, AGetCodeIndex());
-    
+
     ANumLocalsActive = oldNumLocalsActive;
-    
+
     if (tok->type != TT_NEWLINE)
         tok = AGenerateExpressionParseError(tok);
 
@@ -667,7 +667,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
     case TT_SCOPEOP: {
         ASymbolInfo *sym;
-        
+
         tok = AParseQuotedGlobalVariable(tok, &sym, FALSE);
 
         if (sym->type != ID_ERR_PARSE) {
@@ -680,7 +680,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
             result->type = ET_ERROR;
             return tok;
         }
-        
+
         goto NoLex;
     }
 
@@ -700,7 +700,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
         if ((tok + 1)->type == TT_DOT) {
             ASymbolInfo *sym;
-            
+
             tok = AAdvanceTok(AAdvanceTok(tok));
             if (tok->type != TT_ID) {
                 result->type = ET_ERROR;
@@ -725,7 +725,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
             left.type = ET_LOCAL;
             left.num  = 3;
         }
-        
+
         break;
 
     case TT_SUPER: {
@@ -751,7 +751,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
            fail. */
         left.type = ET_LOCAL_LVALUE;
         left.num = 0;
-        
+
         if (ACurClass == NULL) {
             AGenerateError(tok->lineNumber, ErrSuperUsedInNonMemberFunction);
             break;
@@ -771,7 +771,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
         /* Search all the superclasses for the member. */
         while (ASuperType(type) != NULL) {
             unsigned method;
-            
+
             type = type->super;
 
             method = ALookupMemberTable(type, MT_METHOD_PUBLIC, member);
@@ -781,7 +781,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 break;
             } else {
                 unsigned read, write;
-                
+
                 read = ALookupMemberTable(type, MT_VAR_GET_PUBLIC, member);
                 if (read != -1) {
                     type = ASuperType(AType);
@@ -796,13 +796,13 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                         left.type = ET_PARTIAL_LVALUE;
                     else
                         left.type = ET_PARTIAL;
-                    
+
                     AEmitPrivateMemberRead(read, write);
                     break;
                 }
             }
         }
-        
+
         if (left.type == ET_LOCAL_LVALUE)
             AGenerateError(tok->lineNumber, ErrUndefinedInSuperClass, tok);
 
@@ -811,10 +811,10 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
     case TT_LITERAL_INT:
         /* Integer constant */
-            
+
         left.type = ET_INT;
         left.num = tok->info.num;
-        
+
         break;
 
     case TT_LITERAL_FLOAT:
@@ -849,10 +849,10 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
         operator = tok->type - TT_FIRST_OPERATOR;
         operatorPrecedence = (operator == OPER_NOT) ? PR_NOT : PR_UNARY;
-        
+
         tok = ParseSubExpression(AAdvanceTok(tok), operatorPrecedence,
                                  &operand, depth + 1, allowCast);
-        
+
         if (operand.type == ET_ERROR) {
             result->type = ET_ERROR;
             return tok;
@@ -866,7 +866,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                     return tok;
                 }
             }
-            
+
             left.branch[TRUE]  = operand.branch[FALSE];
             left.branch[FALSE] = operand.branch[TRUE];
             left.finalBranch   = operand.finalBranch;
@@ -917,7 +917,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
     case TT_LBRACKET:
         /* Array creation */
-        
+
         tok = AAdvanceTok(tok);
         if (tok->type == TT_RBRACKET) {
             /* Create an empty array. */
@@ -934,7 +934,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 left = *result;
             } else {
                 /* Create a single-element array. */
-                
+
                 AExpressionType type =
                     !AIsRvalue && AIsLvalueExpression(left.type) ?
                     ET_ARRAY_LVALUE : ET_ARRAY;
@@ -943,12 +943,12 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 /* We might have an extra local value active, at least if the
                    item expression is a member reference. Fix it. */
                 ANumLocalsActive = oldNumLocalsActive;
-                
+
                 AConvertToLocalExpression(&left);
 
                 if (type == ET_ARRAY_LVALUE)
                     ARecordAssignment(0);
-                
+
                 AEmitArrayCreate(oldNumLocalsActive, 1);
 
                 if (type == ET_ARRAY_LVALUE && isLocal)
@@ -992,7 +992,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
     /* Use the following label to avoid implicit token advance operation.
        IDEA: This is very ugly and error-prone. */
-    
+
   NoLex:
 
     for (;;) {
@@ -1021,7 +1021,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
             operator = OperatorIdFromTokenType(tok->type);
             operatorPrecedence = ABinaryPrecedence[operator];
-            
+
             /* Return if precendence is not high enough or if the operator
                might actually introduce a type annotation. */
             if (operatorPrecedence < prec) {
@@ -1051,7 +1051,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 result->type = ET_ERROR;
                 return tok;
             }
-            
+
             if (AIsComplexExpression(right.type) || right.type == ET_LOGICAL)
                 AConvertToLocalExpression(&right);
 
@@ -1082,7 +1082,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
             AEmitBinaryOperation(operator,
                                  leftType, left.num, rightType, right.num);
-            
+
             if (AIsComparisonOperator(operator)) {
                 left.type = ET_LOGICAL;
                 left.branch[TRUE]  = NULL;
@@ -1149,7 +1149,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
             int operatorPrecedence = ABinaryPrecedence[tok->type -
                                                      TT_FIRST_OPERATOR];
             ABool cond = (tok->type == TT_AND);
-            
+
             if (operatorPrecedence < prec) {
                 *result = left;
                 return tok;
@@ -1177,7 +1177,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                     return tok;
                 }
             }
-            
+
             left.finalBranch->next = left.branch[1 - cond];
             AMergeBranches(left.finalBranch, right.branch[1 - cond]);
 
@@ -1187,7 +1187,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
             break;
         }
-            
+
         case TT_LPAREN: {
             /* Function call */
 
@@ -1210,7 +1210,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                     tok = AAdvanceTok(tok);
                     isVarArg = TRUE;
                 }
-                
+
                 tok = ParseSubExpression(tok, PR_SINGLE, &arg, depth + 1,
                                          TRUE);
 
@@ -1264,14 +1264,14 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 AEmitMemberCall(type, left.num, left.sym->num, numArgs,
                                 isVarArg, quickArgs,
                                 ANumLocalsActive - numArgs);
-            
+
             ANumLocalsActive = oldNumLocalsActive;
-            
+
             left.type = ET_PARTIAL;
-            
+
             break;
         }
-            
+
         case TT_LBRACKET: {
             /* Array indexing */
 
@@ -1294,7 +1294,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 }
             } else
                 tok = AAdvanceTok(tok);
-            
+
             if (index.type == ET_ERROR) {
                 result->type = ET_ERROR;
                 return tok;
@@ -1315,7 +1315,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
 
             break;
         }
-            
+
         case TT_DOT:
             tok = AAdvanceTok(tok);
 
@@ -1323,7 +1323,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 result->type = ET_ERROR;
                 return AGenerateParseError(tok);
             }
-            
+
             if (!AIsLocalExpression(left.type))
                 AConvertToLocalExpression(&left);
 
@@ -1351,7 +1351,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                                        oldNumLocalsActive, FALSE);
 
         default:
-            
+
             *result = left;
             return tok;
         }
@@ -1406,7 +1406,7 @@ void AConvertToLocalExpression(AExpression *expr)
         expr->num = AGetLocalVariable();
         expr->type = ET_LOCAL;
     }
-    
+
     AEmitDestination(expr->num);
 }
 
@@ -1423,7 +1423,7 @@ void AConvertToValueExpression(AExpression *expr)
     AToggleBranches(expr->branch[FALSE]);
     ASetBranches(expr->branch[FALSE], AGetCodeIndex());
     AEmitOpcode(OP_ASSIGN_FALSEL); /* FIX */
-    
+
     expr->type = ET_PARTIAL;
 }
 
@@ -1457,7 +1457,7 @@ ABranchList *ACreateBranchList(void)
         AGenerateOutOfMemoryError();
         return NULL;
     }
-    
+
     branch->next = NULL;
     branch->data = AGetPrevOpcodeIndex();
 
@@ -1584,7 +1584,7 @@ static ABool FindMemberVariable(ASymbolInfo *id)
                     else
                         id->info.memberValue = item | A_MEMBER_PRIVATE |
                                                A_MEMBER_DIRECT_VARIABLE;
-                    
+
                     id->sym = ACurClass;
                     return TRUE;
                 }
@@ -1594,7 +1594,7 @@ static ABool FindMemberVariable(ASymbolInfo *id)
             id->sym = ACurClass;
             return TRUE;
         }
-        
+
         /* Search public and private readable variables. */
         item = ALookupMemberTable(type, MT_VAR_GET_PUBLIC, key);
         if (item == -1) {
@@ -1631,19 +1631,19 @@ static ABool FindMemberVariable(ASymbolInfo *id)
 static void CreateMemberAccess(ASymbolInfo *sym, AExpression *result)
 {
     unsigned member = sym->info.memberValue;
-    
+
     if (member & A_MEMBER_PRIVATE) {
         if (member & A_MEMBER_DIRECT_METHOD) {
             result->type = ET_MEMBER_FUNCTION;
             result->num  = AGetMemberValue(member);
         } else {
             unsigned memberValue;
-            
+
             if (member & A_MEMBER_CONSTANT)
                 result->type = ET_PARTIAL;
             else
                 result->type = ET_PARTIAL_LVALUE;
-            
+
             memberValue = AGetMemberValue(member);
             if (member & A_MEMBER_DIRECT_VARIABLE)
                 AEmitDirectMemberRead(memberValue);
@@ -1672,35 +1672,35 @@ static AToken *ParseExpressionList(AToken *tok, AExpression *left,
     int numElem = 1;
     ABool isLvalue = !AIsRvalue;
     ABool isLocal = TRUE;
-    
+
     for (;;) {
         if (!AIsLvalueExpression(left->type))
             isLvalue = FALSE;
-        
+
         if (!AIsLocalExpression(left->type))
             isLocal = FALSE;
-        
+
         ANumLocalsActive = oldNumLocalsActive + numElem - 1;
         AConvertToLocalExpression(left);
-        
+
         if (isLvalue) {
             if (numElem <= A_MAX_MULTI_ASSIGN)
                 ARecordAssignment(numElem - 1);
             else
                 isLvalue = FALSE;
         }
-        
+
         if (tok->type != TT_COMMA)
             break;
-        
+
         tok = AAdvanceTok(tok);
-                
+
         if (tok->type == TT_RPAREN || tok->type == TT_ASSIGN
             || tok->type == TT_RBRACKET || tok->type == TT_EOF)
             break;
-        
+
         numElem++;
-        
+
         tok = ParseSubExpression(tok, PR_SINGLE, left, depth + 1, allowCast);
     }
 
@@ -1708,9 +1708,9 @@ static AToken *ParseExpressionList(AToken *tok, AExpression *left,
         AEmitArrayCreate(oldNumLocalsActive, numElem);
     else
         AEmitTupleCreate(oldNumLocalsActive, numElem);
-    
+
     ANumLocalsActive = oldNumLocalsActive;
-    
+
     if (isLvalue && isLocal)
         result->type = isArray ? ET_ARRAY_LOCAL_LVALUE : ET_TUPLE_LOCAL_LVALUE;
     else if (isLvalue)
@@ -1718,7 +1718,7 @@ static AToken *ParseExpressionList(AToken *tok, AExpression *left,
     else
         result->type = isArray ? ET_ARRAY : ET_TUPLE;
     result->num  = numElem;
-    
+
     return tok;
 }
 

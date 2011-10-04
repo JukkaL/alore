@@ -9,35 +9,35 @@ import checker
 
 class SubtypingSuite is Suite
   private var fx
-  
+
   def setUp()
     self.fx = TypeFixture()
   end
-  
+
   def testTrivialCases()
     for simple in fx.void, fx.a, fx.o, fx.b
       assertSubtype(simple, simple)
     end
   end
-  
+
   def testInstanceSubtyping()
     assertProperSubtype(fx.a, fx.o)
     assertProperSubtype(fx.b, fx.o)
     assertProperSubtype(fx.b, fx.a)
-    
+
     assertNotSubtype(fx.a, fx.d)
     assertNotSubtype(fx.b, fx.c)
   end
-  
+
   def testSimpleGenericInstanceSubtyping()
     assertSubtype(fx.ga, fx.ga)
     assertSubtype(fx.hab, fx.hab)
-    
+
     assertNotSubtype(fx.ga, fx.g2a)
     assertNotSubtype(fx.ga, fx.gb)
     assertNotSubtype(fx.gb, fx.ga)
   end
-  
+
   def testGenericRangeSubtyping()
     assertEquivalent(fx.gba, fx.gaa)
     assertEquivalent(fx.gba, fx.gbb)
@@ -45,99 +45,99 @@ class SubtypingSuite is Suite
     assertEquivalent(fx.gaa, fx.gbo)
     assertUnrelated(fx.gaa, fx.gbb)
     assertUnrelated(fx.gbb, fx.gao)
-    
+
     assertEquivalent(fx.ga, fx.gaa)
     assertEquivalent(fx.ga, fx.gba)
     assertEquivalent(fx.ga, fx.gao)
     assertEquivalent(fx.ga, fx.gbo)
     assertUnrelated(fx.gb, fx.gao)
-    
+
     -- FIX incomparable ranges
   end
-  
+
   def testGenericSubtypingWithInheritance()
     assertSubtype(fx.gsab, fx.gb)
     assertNotSubtype(fx.gsab, fx.ga)
   end
-  
+
   def testGenericSubtypingWithInheritanceAndRanges()
     assertSubtype(Instance(fx.gsi, [fx.a, fx.b], [fx.a, fx.o]), fx.go)
     assertSubtype(Instance(fx.gsi, [fx.a, fx.b], [fx.a, fx.o]), fx.ga)
     assertNotSubtype(Instance(fx.gsi, [fx.a, fx.b], [fx.a, fx.a]), fx.go)
   end
-  
+
   def testInterfaceSubtyping()
     assertSubtype(fx.e, fx.f)
     assertEquivalent(fx.f, fx.f)
     assertNotSubtype(fx.a, fx.f)
   end
-  
+
   def testGenericInterfaceSubtyping()
     var fx2 = InterfaceTypeFixture()
-    
+
     assertSubtype(fx2.m1, fx2.gfa)
     assertNotSubtype(fx2.m1, fx2.gfb)
-    
+
     assertSubtype(fx2.m2, fx2.gfa)
     assertSubtype(fx2.m2, fx2.gfb)
-  
+
     assertEquivalent(fx2.gfa, fx2.gfa)
   end
-  
+
   def testBasicCallableSubtyping()
     assertProperSubtype(fx.callable(fx.o, fx.d), fx.callable(fx.a, fx.d))
     assertProperSubtype(fx.callable(fx.d, fx.b), fx.callable(fx.d, fx.a))
-    
+
     assertUnrelated(fx.callable(fx.a, fx.a), fx.callable(fx.a, fx.void))
-    
+
     assertUnrelated(fx.callable(fx.a, fx.a, fx.a), fx.callable(fx.a, fx.a))
   end
-  
+
   def testDefaultArgCallableSubtyping()
     assertProperSubtype(fx.callableDefault(1, fx.a, fx.d, fx.a),
                         fx.callable(fx.a, fx.d, fx.a))
-                        
+
     assertProperSubtype(fx.callableDefault(1, fx.a, fx.d, fx.a),
                         fx.callable(fx.a, fx.a))
-                        
+
     assertProperSubtype(fx.callableDefault(0, fx.a, fx.d, fx.a),
                         fx.callableDefault(1, fx.a, fx.d, fx.a))
-                        
+
     assertUnrelated(fx.callableDefault(1, fx.a, fx.d, fx.a),
                     fx.callable(fx.d, fx.d, fx.a))
-                        
+
     assertUnrelated(fx.callableDefault(0, fx.a, fx.d, fx.a),
                     fx.callableDefault(1, fx.a, fx.a, fx.a))
 
     assertUnrelated(fx.callableDefault(1, fx.a, fx.a),
                     fx.callable(fx.a, fx.a, fx.a))
   end
-  
+
   def testVarArgCallableSubtyping()
     assertProperSubtype(fx.callableVarArg(0, fx.a, fx.a),
                         fx.callableVarArg(0, fx.b, fx.a))
-                        
+
     assertUnrelated(fx.callableVarArg(0, fx.a, fx.a),
                     fx.callable(fx.a, fx.a))
-                        
+
     assertProperSubtype(fx.callableVarArg(0, fx.a, fx.a),
                         fx.callable(fx.a))
-                        
+
     assertProperSubtype(fx.callableVarArg(1, fx.a, fx.d, fx.a),
                         fx.callable(fx.a, fx.a))
-                        
+
     assertProperSubtype(fx.callableVarArg(0, fx.a, fx.d, fx.a),
                         fx.callable(fx.a, fx.a))
   end
-  
+
   def testTypeCallableSubtyping()
     assertProperSubtype(fx.callableType(fx.d, fx.a), fx.stdType)
-    
+
     assertProperSubtype(fx.callableType(fx.o, fx.b), fx.callable(fx.d, fx.a))
-    
+
     assertProperSubtype(fx.callableType(fx.a, fx.b), fx.callable(fx.a, fx.b))
   end
-  
+
   -- IDEA: Maybe add these test cases (they are tested pretty well in type
   --       checker tests already):
   --  * more interface subtyping test cases
@@ -148,25 +148,25 @@ class SubtypingSuite is Suite
   --  * nil type
   --  * dynamic type
   --  * generic function types
-  
+
   private def assertSubtype(s, t)
     Assert(IsSubtype(s, t), "{} not subtype of {}".format(s, t))
   end
-  
+
   private def assertNotSubtype(s, t)
     Assert(not IsSubtype(s, t), "{} subtype of {}".format(s, t))
   end
-  
+
   private def assertProperSubtype(s, t)
     assertSubtype(s, t)
     assertNotSubtype(t, s)
   end
-  
+
   private def assertEquivalent(s, t)
     assertSubtype(s, t)
     assertSubtype(t, s)
   end
-  
+
   private def assertUnrelated(s, t)
     assertNotSubtype(s, t)
     assertNotSubtype(t, s)

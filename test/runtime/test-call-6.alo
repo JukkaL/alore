@@ -11,22 +11,22 @@ class CallSuite6 is Suite
   def testMethodVarArgs()
     var i = TestClass()
     var j = 0
-    
+
     while j < 1000
       j += 1
-  
+
       var a4 = (1, 2, 3, 4)
       VerifyArrays(i.Method4(1, 2, 3, 4), a4)
       VerifyArrays(i.Method4(1, 2, 3, 4, *[]), a4)
       VerifyArrays(i.Method4(1, 2, *(3, 4)), a4)
       VerifyArrays(i.Method4(*(1, 2, 3, 4)), a4)
-  
+
       VerifyArrays(i.Method12(1), (1, 3))
       VerifyArrays(i.Method12(1, 2), (1, 2))
       VerifyArrays(i.Method12(1, 2, *[]), (1, 2))
       VerifyArrays(i.Method12(1, *[2]), (1, 2))
       VerifyArrays(i.Method12(*(1, 2)), (1, 2))
-  
+
       VerifyArrays(i.Method12v(1), (1, 3))
       VerifyArrays(i.Method12v(1, 2), (1, 2))
       VerifyArrays(i.Method12v(1, 2, 3, 4, 5), (1, 2, 3, 4, 5))
@@ -35,30 +35,30 @@ class CallSuite6 is Suite
       VerifyArrays(i.Method12v(1, 2, 3, *(4, 5, 6)), (1, 2, 3, 4, 5, 6))
     end
   end
-  
+
   -- Test calling with * and an Array subclass.
   def testVarArgsWithArraySubClass()
     var c = ArraySubType2()
     c.append(1)
     c.append(2)
     c.append(3)
-  
+
     VerifyArrays(TestClass().Method4(5, *c), (5, 1, 2, 3))
     VerifyArrays(F3(*c), (1, 2, 3))
-  
+
     var i = ConstructorTest(*c)
     Assert(i.i == 1 and i.j == 2 and i.k == 3)
-  
+
     var m = TestClass().Method4
     VerifyArrays(m(5, *c), (5, 1, 2, 3))
   end
-  
+
   def testReturn()
     -- IDEA: Perhaps more test cases to test different possibilities of
     -- exceptions.
     Assert(FuncRet() == 7)
     FuncRet()
-  
+
     AssertEqual(FuncNoRet(), nil)
   end
 end

@@ -73,17 +73,17 @@ ABool AScan(AModuleId *module, AToken *tok)
 #ifdef HAVE_JIT_COMPILER
     AIsJitModule = AIsJitModuleId(module);
 #endif
-    
+
     if (module->numParts > 0)
         ACurModule = module->id[module->numParts - 1];
     else
         ACurModule = ACurMainModule;
 
     Imports = NULL;
-    
+
     VariableDefTokens = NULL;
     VariableDefTokensSize = 0;
-    
+
     /* Find all global definitions. Don't care about errors. */
     while (tok->type != TT_EOF) {
         switch (tok->type) {
@@ -98,7 +98,7 @@ ABool AScan(AModuleId *module, AToken *tok)
                 tok = AAdvanceTok(tok);
             tok = AAdvanceTok(tok);
             break;
-            
+
         case TT_PRIVATE:
             isPrivate = TRUE;
             tok = AAdvanceTok(tok);
@@ -108,7 +108,7 @@ ABool AScan(AModuleId *module, AToken *tok)
         case TT_CONST:
             tok = ScanVariableDefinition(tok, isPrivate);
             break;
-            
+
         case TT_SUB:
         case TT_DEF: {
             /* Function definition. */
@@ -130,7 +130,7 @@ ABool AScan(AModuleId *module, AToken *tok)
             ClearForLoopAnnotations(tok);
 
             /* Fall through */
-            
+
         case TT_IF:
         case TT_WHILE:
         case TT_REPEAT:
@@ -139,7 +139,7 @@ ABool AScan(AModuleId *module, AToken *tok)
             /* Block start token. Scan until end of block. */
             AToken *start = tok;
             EncounteredAnonFunc = FALSE;
-            
+
             tok = ScanBlock(tok);
 
             /* Scan exposed variables if there is an anonymous function used
@@ -150,7 +150,7 @@ ABool AScan(AModuleId *module, AToken *tok)
 
             break;
         }
-           
+
         case TT_CLASS:
         case TT_INTERFACE:
             tok = ScanTypeDefinition(tok, isPrivate);
@@ -167,12 +167,12 @@ ABool AScan(AModuleId *module, AToken *tok)
 
         isPrivate = FALSE;
     }
-    
+
     /* We're done. */
 
     AFreeUnresolvedNameList(Imports);
     AFreeStatic(VariableDefTokens);
-    
+
     ADebugVerifyMemory();
     ADebugCompilerMsg(("End scan"));
 
@@ -197,7 +197,7 @@ static AToken *ScanVariableDefinition(AToken *tok, ABool isPrivate)
 
     if (tok->type != TT_NEWLINE)
         tok = ScanExpressionUntilNewline(tok, FALSE);
-    
+
     return AAdvanceTok(tok);
 }
 
@@ -211,7 +211,7 @@ static AToken *ScanMemberVariableDefinition(AToken *tok, ATypeInfo *type,
 
     defType = tok->type;
     oldNumVars = type->numVars;
-    
+
     /* Skip "var" or "const". */
     tok = AAdvanceTok(tok);
 
@@ -225,15 +225,15 @@ static AToken *ScanMemberVariableDefinition(AToken *tok, ATypeInfo *type,
         if (sym != NULL) {
             key = sym->num;
             item = type->numVars++;
-        
+
             AAddMember(MT_VAR_GET_PUBLIC + isPrivate, key, item);
             if (defType == TT_VAR)
                 AAddMember(MT_VAR_SET_PUBLIC + isPrivate, key, item);
         }
-        
+
         if ((tok + 1)->type != TT_COMMA)
             break;
-        
+
         tok = AAdvanceTok(AAdvanceTok(tok));
     }
 
@@ -255,18 +255,18 @@ static AToken *ScanFunctionDefinition(AToken *tok, ABool isPrivate)
 {
     /* Skip "def". */
     tok = AAdvanceTok(tok);
-    
+
     if (tok->type == TT_ID) {
         ASymbolInfo *fun;
-        
+
         /* Main function is always private. */
         if (strcmp(tok->info.sym->str, "Main") == 0)
             isPrivate = TRUE;
-        
+
         /* FIX: what if out of mem? */
         fun = AAddGlobalVariable(tok->info.sym, ACurModule, ID_GLOBAL_DEF,
                                  isPrivate);
-        
+
         tok = ScanFunctionArguments(AAdvanceTok(tok), fun);
     }
 
@@ -280,14 +280,14 @@ static AToken *ScanMethodDefinition(AToken *tok, ATypeInfo *type,
 {
     ATokenType t1, t2;
     unsigned gvar;
-    
+
     /* Skip "def". */
     tok = AAdvanceTok(tok);
 
     t1 = tok->type;
 
     gvar = AAddConstGlobalValue(AZero);
-    
+
     if (t1 == TT_ID) {
         unsigned member;
         AToken *idTok = tok;
@@ -323,7 +323,7 @@ static AToken *ScanMethodDefinition(AToken *tok, ATypeInfo *type,
     }
 
     tok = AClearTypeAnnotation(tok);
-    
+
     /* FIX skip until newline? */
 
     if (isInterface)
@@ -340,18 +340,18 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
 {
     /* Is this the first signature for this function? */
     ABool isFirst = TRUE;
-    
+
     for (;;) {
         /* Clear and skip any <...> after function name. */
         tok = AClearGenericAnnotation(tok);
-        
+
         if (tok->type == TT_LPAREN) {
             int minArgs = 0;
             int maxArgs = 0;
-            
+
             do {
                 tok = AAdvanceTok(tok);
-                
+
                 if (tok->type == TT_ASTERISK) {
                     maxArgs = (maxArgs + 1) | A_VAR_ARG_FLAG;
                     tok = AAdvanceTok(tok);
@@ -366,7 +366,7 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
                         minArgs++;
                 } else
                     break;
-                
+
                 tok = AClearTypeAnnotationUntilSeparator(tok);
             } while (tok->type == TT_COMMA);
 
@@ -376,7 +376,7 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
                 fun->info.global.minArgs = minArgs;
                 fun->info.global.maxArgs = maxArgs;
             }
-            
+
             if (tok->type == TT_RPAREN)
                 tok = AAdvanceTok(tok);
         } else {
@@ -389,7 +389,7 @@ static AToken *ScanFunctionArguments(AToken *tok, ASymbolInfo *fun)
                 fun->info.global.maxArgs = A_VAR_ARG_FLAG;
             }
         }
-        
+
         tok = AClearTypeAnnotationUntilSeparator(tok);
 
         if (tok->type != TT_OR)
@@ -453,12 +453,12 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
                                     isPrivate);
         if (class_ == NULL)
             return tok;
-        
+
         ADebugCompilerMsg(("Scan type '%q'", class_));
         ADebugVerifyMemory();
 
         isInherited = FALSE;
-        
+
         type = ACreateTypeInfo(ACompilerThread, class_, isInterface);
         if (type == NULL) {
             AGenerateOutOfMemoryError();
@@ -484,11 +484,11 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
            dependant modules have been scanned. */
         if (tok->type == TT_IS || tok->type == TT_IMPLEMENTS) {
             int numInterfaces;
-            
+
             isInherited = tok->type == TT_IS;
             /* FIX: errors? */
             tok = ParseAndStoreInheritanceInfo(type, tok, &numInterfaces);
-            
+
             /* FIX: out of memory? */
             if (numInterfaces > 0)
                 AAllocateInterfacesInTypeInfo(type, numInterfaces);
@@ -509,26 +509,26 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
 
     while (tok->type != TT_NEWLINE)
         tok = AAdvanceTok(tok);
-    
+
     /* Skip newline. */
     tok = AAdvanceTok(tok);
 
     isPrivateMember = FALSE;
     InitList = NULL;
     HasCreate = FALSE;
-    
+
     while (tok->type != TT_END && tok->type != TT_EOF) {
         switch (tok->type) {
         case TT_PRIVATE:
             isPrivateMember = TRUE;
             tok = AAdvanceTok(tok);
             continue;
-            
+
         case TT_VAR:
         case TT_CONST:
             tok = ScanMemberVariableDefinition(tok, type, isPrivateMember);
             break;
-            
+
         case TT_SUB:
         case TT_DEF: {
             AToken *funcStart = tok;
@@ -536,13 +536,13 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
 
             tok = ScanMethodDefinition(tok, type, isPrivateMember, class_,
                                        isInterface);
-            
+
             /* Scan exposed variables if there is an anonymous function
                used within the method. Mark exposed variable tokens in var
                definitions with different token type (TT_ID_EXPOSED). */
             if (EncounteredAnonFunc)
                 ScanExposedVariableDefinitions(funcStart);
-            
+
             break;
         }
 
@@ -566,7 +566,7 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
         int createNum;
         AIntList *n;
         int i;
-        
+
         AEnterSection();
 
         AEmitAbsoluteLineNumber(tok);
@@ -576,7 +576,7 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
             AEmitOpcode2Args(OP_ASSIGN_LV, n->data, i);
             i++;
         }
-        
+
         AEmitOpcode(OP_RET);
         ANumLocals = i;
         ANumLocalsActive = i;
@@ -587,14 +587,14 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
             AGenerateOutOfMemoryError();
             return tok;
         }
-        
+
         AAddMember(MT_METHOD_PUBLIC, AM_CREATE, createNum);
         class_->info.global.minArgs = i - 4;
         class_->info.global.maxArgs = i - 4;
 
         AFreeIntList(InitList);
     }
-    
+
     ABuildTypeInfoMembers(type);
 
     /* The type is now ready to be used, unless we ran out of memory. In the
@@ -659,7 +659,7 @@ static AToken *ScanExpressionFragment(AToken *tok, ABool stopAtAs)
             } else
                 prev[i++] = tok->type;
             break;
-            
+
         case TT_RPAREN:
         case TT_RBRACKET:
             if (i == 0)
@@ -679,7 +679,7 @@ static AToken *ScanExpressionFragment(AToken *tok, ABool stopAtAs)
             if (i == 0 && stopAtAs)
                 return tok;
             break;
-            
+
         case TT_SUB:
         case TT_DEF:
             /* Toggle flag to indicate that we have encountered an anonymous
@@ -696,7 +696,7 @@ static AToken *ScanExpressionFragment(AToken *tok, ABool stopAtAs)
             if (tok->type == TT_EOF)
                 return tok;
         }
-        
+
         tok = AAdvanceTok(tok);
     }
 
@@ -736,7 +736,7 @@ static AToken *ScanBlock(AToken *tok)
             ClearForLoopAnnotations(tok);
 
             /* Fall through */
-            
+
         case TT_IF:
         case TT_WHILE:
         case TT_SWITCH:
@@ -766,7 +766,7 @@ static AToken *ScanBlock(AToken *tok)
         }
     }
 }
-    
+
 
 ASymbolInfo *AAddGlobalVariable(ASymbol *sym, ASymbolInfo *module,
                               AIdType type, ABool isPrivate)
@@ -875,13 +875,13 @@ AUnresolvedNameList *AAddUnresolvedName(AUnresolvedNameList *list, AToken *tok)
         tok = AAdvanceTok(tok);
     } else if (tok->type != TT_ID)
         return list;
-    
+
     name = AAllocStatic(sizeof(AUnresolvedNameList));
     if (name == NULL) {
         AGenerateOutOfMemoryError();
         return list;
     }
-    
+
     i = 0;
     while (tok->type == TT_ID && i <= A_MODULE_NAME_MAX_PARTS) {
         name->name[i] = tok->info.sym;
@@ -921,7 +921,7 @@ AUnresolvedNameList *AAddUnresolvedNameStr(AUnresolvedNameList *list,
 AUnresolvedNameList *ACloneUnresolvedNameList(AUnresolvedNameList *list)
 {
     /* FIX: Check out of memory conditions. */
-    
+
     AUnresolvedNameList *head;
 
     if (list == NULL)
@@ -982,7 +982,7 @@ static void AddPotentiallyExposedLocalVariable(AToken *tok)
     while (ANumLocalsActive >= VariableDefTokensSize) {
         AToken **toks;
         int newSize;
-        
+
         newSize = AMax(MIN_VARIABLE_DEF_TOKENS_SIZE,
                        VariableDefTokensSize * 2);
         toks = AGrowStatic(VariableDefTokens, newSize * sizeof(AToken *));
@@ -995,7 +995,7 @@ static void AddPotentiallyExposedLocalVariable(AToken *tok)
             VariableDefTokensSize = newSize;
         }
     }
-    
+
     AAddLocalVariableSymbol(tok->info.sym, ID_LOCAL, ANumLocalsActive);
 
     VariableDefTokens[ANumLocalsActive] = tok;
@@ -1020,7 +1020,7 @@ static void AddFunctionArgumentVariables(AToken *tok)
        function expression. */
     if (AIsDefToken(tok->type))
         tok = AAdvanceTok(tok);
-    
+
     /* Skip function name if present. */
     if (tok->type == TT_ID)
         tok = AAdvanceTok(tok);
@@ -1028,7 +1028,7 @@ static void AddFunctionArgumentVariables(AToken *tok)
     /* Skip and clear generic function type arguments if present. */
     if (tok->type == TT_LT)
         tok = AClearGenericAnnotation(tok);
-    
+
     if (tok->type == TT_LPAREN) {
         /* Ordinary argument list */
         tok = AAdvanceTok(tok);
@@ -1036,10 +1036,10 @@ static void AddFunctionArgumentVariables(AToken *tok)
         for (;;) {
             if (tok->type == TT_ASTERISK)
                 tok = AAdvanceTok(tok);
-            
+
             if (tok->type != TT_ID)
                 break;
-            
+
             AddPotentiallyExposedLocalVariable(tok);
 
             /* Skip until next comma or right paren. This will skip any
@@ -1078,7 +1078,7 @@ static void ScanExposedVariableDefinitions(AToken *tok)
     ATokenType prev;
 
     ABlockDepth = 1;
-    
+
     FunDepthBlockDepth[AFunDepth] = 0;
 
     ANumLocalsActive = 0;
@@ -1102,7 +1102,7 @@ static void ScanExposedVariableDefinitions(AToken *tok)
        as exposed. */
     while (tok->type != TT_EOF && ABlockDepth > 0) {
         /* tok points to the first token of a statement or a newline. */
-        
+
         switch (tok->type) {
         case TT_VAR:
             tok = AddVariableList(AAdvanceTok(tok));
@@ -1113,12 +1113,12 @@ static void ScanExposedVariableDefinitions(AToken *tok)
             if (tok->type == TT_ID && (tok + 1)->type == TT_IS)
                 AddPotentiallyExposedLocalVariable(tok);
             break;
-            
+
         case TT_FOR:
             ABlockDepth++;
             tok = AddVariableList(AAdvanceTok(tok));
             break;
-            
+
         case TT_IF:
         case TT_WHILE:
         case TT_REPEAT:
@@ -1127,7 +1127,7 @@ static void ScanExposedVariableDefinitions(AToken *tok)
             /* Block start token (must be matched by a block end token) */
             ABlockDepth++;
             break;
-            
+
         case TT_END:
         case TT_UNTIL:
             /* Block end token */
@@ -1150,27 +1150,27 @@ static void ScanExposedVariableDefinitions(AToken *tok)
             case TT_SUB:
             case TT_DEF:
                 /* Anonymous function */
-                
+
                 ABlockDepth++;
                 /* Check that depth does not overflow. */
                 if (AFunDepth < A_MAX_ANON_SUB_DEPTH) {
                     AFunDepth++;
                     FunDepthBlockDepth[AFunDepth] = ABlockDepth;
-                    
+
                     AddFunctionArgumentVariables(tok);
                     /* tok still points to the start of the function header so
                        that any default argument expressions will be processed
                        next. */
                     break;
                 }
-                
+
             case TT_ID: {
                 /* Identifier (potentially a reference to an exposed local
                    variable) */
                 ASymbolInfo *sym;
-                
+
                 sym = tok->info.sym->info;
-                
+
                 /* Process all references to exposed local variables. */
                 if (AIsLocalId(sym->type) && IsDefinedBelowCurrentDef(sym)) {
                     /* An identifier after :: or . and before :: does not
@@ -1182,7 +1182,7 @@ static void ScanExposedVariableDefinitions(AToken *tok)
                         VariableDefTokens[sym->num]->type = TT_ID_EXPOSED;
                     }
                 }
-                
+
                 break;
             }
             }

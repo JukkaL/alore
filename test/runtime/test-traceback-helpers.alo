@@ -14,19 +14,19 @@ class TracebackClass
       return 1 + "a"
     end
   end
-  
+
   def base1()
     base2()
   end
-  
+
   def base2()
     [1, 2][3]
   end
-  
+
   def overload()
     return self + 1
   end
-  
+
   def _add(x)
     return nil + x
   end
@@ -37,7 +37,7 @@ class TracebackDerivedClass is TracebackClass
   def base1()
     callBase2()
   end
-  
+
   def callBase2()
     base2()
   end
@@ -46,7 +46,7 @@ end
 
 class RaiseConstructorExceptionClass
   var mvar = 1
-  
+
   def create()
     raise TypeError()
   end
@@ -55,7 +55,7 @@ end
 
 class RaiseMemberInitializerExceptionClass
   var mvar = 1 / 0
-  
+
   def create()
   end
 end
@@ -176,7 +176,7 @@ class ComplexTraceback2
       ComplexTraceback2(False).complexTraceback3()
     end
   end
-  
+
   def complexTraceback3()
     ComplexTraceback4()
   end
@@ -236,7 +236,7 @@ class InOperatorClass
   def overload()
     return nil in self
   end
-  
+
   def _in(x)
     1 / 0
   end

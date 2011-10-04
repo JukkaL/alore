@@ -18,7 +18,7 @@ class BooleanSuite is Suite
     Assert(not f)
     Assert(f == False)
   end
-    
+
   def testInvalidBooleans()
     var nerr = 0
     try
@@ -31,7 +31,7 @@ class BooleanSuite is Suite
       nerr = 1
     end
     Assert(nerr == 1)
-    
+
     var o = OpOverloadTest()
     try
       if o == 2
@@ -43,7 +43,7 @@ class BooleanSuite is Suite
       nerr = 2
     end
     Assert(nerr == 2)
-    
+
     try
       if 2 in o
         nerr = -11
@@ -54,7 +54,7 @@ class BooleanSuite is Suite
       nerr = 3
     end
     Assert(nerr == 3)
-    
+
     try
       while nil
         nerr = -11
@@ -63,7 +63,7 @@ class BooleanSuite is Suite
       nerr = 4
     end
     Assert(nerr == 4)
-    
+
     try
       repeat
         nerr += 1
@@ -73,21 +73,21 @@ class BooleanSuite is Suite
     end
     Assert(nerr == 15)
   end
-  
+
   def testBooleanStr()
     AssertEqual(Str(True), "True")
     AssertEqual(Str(False), "False")
   end
-  
+
   def testConstructor()
     AssertRaises(ValueError, def (); Boolean(); end)
   end
-  
+
   def testType()
     Assert(True is Boolean)
     Assert(False is Boolean)
   end
-  
+
   def testBooleanMembers()
     Assert(HasMember(True, "_eq"))
     Assert(HasMember(True, "_str"))
@@ -104,7 +104,7 @@ private class OpOverloadTest
   def _eq(x)
     return nil
   end
-  
+
   def _in(x)
     return nil
   end

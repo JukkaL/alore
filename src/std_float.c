@@ -45,7 +45,7 @@ AValue AStdFloat(AThread *t, AValue *frame)
                 replacement that works better (for example, one that used to
                 be implemented in strtonum.c). */
         f = strtod(s, &end);
-        
+
         if (end == s) {
             /* Even though strtod failed, s might represent a valid special
                float value such as "inf". */
@@ -61,7 +61,7 @@ AValue AStdFloat(AThread *t, AValue *frame)
             else
                 ret = ACreateFloat(t, f);
         }
-        
+
         AFreeCStrFromString(s);
 
         return ret;
@@ -174,13 +174,13 @@ AValue AFloatHashValue(double f)
 {
     unsigned long hash;
     int i;
-    
+
     union {
         double f;
         unsigned long arr[sizeof(double) / sizeof(unsigned long)];
     } v;
     v.f = f;
-    
+
     hash = v.arr[0];
     for (i = 1; i < sizeof(double) / sizeof(unsigned long); i++)
         hash = 33 * hash + v.arr[i];
@@ -207,12 +207,12 @@ AValue APowFloatInt(AThread *t, AValue fval, AValue ival)
 
 /* If s is a valid representation of an infinity or a nan, store the relevant
    value (infinity or nan) to *f and return TRUE. Otherwise, return FALSE.
-   
+
    NOTE: May modify the contents of s. */
 static ABool TryConvertStrToSpecialFloat(char *s, double *f)
 {
     int l;
-    
+
     /* Spaces and tabs are ignored at the start and at the end of the
        string so strip them. */
     while (*s == ' ' || *s == '\t')
@@ -239,6 +239,6 @@ static ABool TryConvertStrToSpecialFloat(char *s, double *f)
         *f = a * a - a * a;
         return TRUE;
     }
-    
+
     return FALSE;
 }

@@ -86,7 +86,7 @@ const Separator = nil as Str
 const AltSeparator = nil as Str
 const PathSeparator = nil as Str
 
-def SetPerm(path as Str, owner as Str, other = owner as Str, 
+def SetPerm(path as Str, owner as Str, other = owner as Str,
             group = other as Str)
 end
 

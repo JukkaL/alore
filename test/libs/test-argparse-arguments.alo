@@ -13,57 +13,57 @@ class ArgparseArgumentsSuite is Suite
     Assert(a1.hasKey("--exclude"))
     Assert(not a1.hasKey("-y"))
     Assert(not a1.hasKey("--foo-bar"))
-    
+
     var a2 = args(["--exclude"])
     Assert(a1.hasKey("-x"))
-    
+
     var a3 = args(["-x", "-y1"])
     Assert(a3.hasKey("-x"))
     Assert(a3.hasKey("-y"))
-    
+
     var a4 = args(["--long", "foo"])
     Assert(a4.hasKey("--long"))
   end
-  
+
   def testIndexing()
     var a1 = args(["-x"])
     AssertEqual(a1["-x"], nil)
     AssertEqual(a1["--exclude"], nil)
-    
+
     var a2 = args(["--exclude"])
     AssertEqual(a2["--exclude"], nil)
-    
+
     var a3 = args(["-x", "-y1"])
     AssertEqual(a3["-y"], "1")
-    
+
     var a4 = args(["--long", "foo", "-yxab"])
     AssertEqual(a4["--long"], "foo")
     AssertEqual(a4["-y"], "xab")
-    
+
     AssertRaises(KeyError, def (); a1["-y"]; end)
   end
-  
+
   def testIndexingMultiValuedOption()
     var a1 = args(["-y1", "-y2"])
     AssertEqual(a1["-y"], "2")
   end
-  
+
   def testRest()
     AssertEqual(args([]).rest, [])
     AssertEqual(args(["-x"]).rest, [])
-    
+
     AssertEqual(args(["x"]).rest, ["x"])
     AssertEqual(args(["x", "yy"]).rest, ["x", "yy"])
-    
+
     AssertEqual(args(["-x", "foo"]).rest, ["foo"])
-    
+
     AssertEqual(args(["-y", "1"]).rest, [])
     AssertEqual(args(["-y", "1", "foo"]).rest, ["foo"])
     AssertEqual(args(["-y", "1", "foo", "bar"]).rest, ["foo", "bar"])
-    
+
     AssertEqual(args(["-y", "1", "-x", "foo", "bar"]).rest, ["foo", "bar"])
   end
-  
+
   def testGet()
     var a1 = args(["-x", "--long", "1"])
     AssertEqual(a1.get("-y", "2"), "2")
@@ -71,33 +71,33 @@ class ArgparseArgumentsSuite is Suite
     AssertEqual(a1.get("--exclude", "2"), nil)
     AssertEqual(a1.get("--long", "2"), "1")
   end
-  
+
   def testValues()
     var a1 = args(["-x", "--long", "1"])
     AssertEqual(a1.values(), [nil, "1"])
   end
-  
+
   def testValuesWithArg()
     var a1 = args(["-x", "--long", "1"])
     AssertEqual(a1.values("-x"), [])
     AssertEqual(a1.values("--long"), ["1"])
-    
+
     var a2 = args(["-x", "-x"])
     AssertEqual(a2.values("-x"), [nil, nil])
     AssertEqual(a2.values("--exclude"), [nil, nil])
-    
+
     var a3 = args(["-x", "--long=3", "--long", "1", "-x"])
     AssertEqual(a3.values("--long"), ["3", "1"])
     AssertEqual(a3.values("-x"), [nil, nil])
-    
+
     AssertRaises(KeyError, "'-y'", def (); a3.values("-y"); end)
   end
-  
+
   def testItems()
     var a1 = args(["-x", "--long", "1", "-yO"])
     AssertEqual(a1.items(), [("-x", nil), ("--long", "1"), ("-y", "O")])
   end
-  
+
   def testStrConversion()
     var a1 = args(["-x", "--long", "1", "foo", "bar"])
     AssertEqual(Str(a1), "Arguments(['-x', '--long' : '1'], " +
@@ -105,31 +105,31 @@ class ArgparseArgumentsSuite is Suite
     var a2 = args([])
     AssertEqual(Str(a2), "Arguments([], [])")
   end
-  
+
   def testIteration()
     var a1 = args(["-x", "--long", "1", "foo", "bar"])
     AssertEqual(Array(a1), [("-x", nil), ("--long", "1")])
-    
+
     var a2 = args([])
     AssertEqual(Array(a2), [])
   end
-  
+
   def testLength()
     var a1 = args(["-x", "--long", "1", "foo", "bar"])
     AssertEqual(a1.length(), 2)
-    
+
     var a2 = args(["-x", "-x", "--long", "1", "foo", "bar"])
     AssertEqual(a2.length(), 3)
   end
-    
+
   def testKeys()
     var a1 = args(["-x", "--long", "1", "foo", "bar"])
     AssertEqual(a1.keys(), ["-x", "--long"])
-    
+
     var a2 = args(["-x", "-x", "--long", "1", "foo", "bar"])
     AssertEqual(a2.keys(), ["-x", "--long"])
   end
-  
+
   private def args(args, desc = ["-x --exclude", "-y N", "--long L"])
     var p = ArgumentParser(*desc)
     return p.parse(args)

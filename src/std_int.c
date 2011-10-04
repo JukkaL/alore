@@ -65,7 +65,7 @@ AValue AStdInt(AThread *t, AValue *frame)
         }
 
         num = 0;
-        
+
         if (ind < end && AIsDigit(buf[ind])) {
             /* Process digits until we find a non-digit character or until
                the int is too long to be represented as a short int. */
@@ -129,11 +129,11 @@ AValue AStdInt(AThread *t, AValue *frame)
 
         ind = 0;
         end = AGetWideStrLen(AValueToWideStr(frame[0]));
-        
+
       Wide:
 
         n = ASubStr(t, frame[0], ind, end);
-        
+
         end -= ind;
         ind = 0;
 
@@ -165,7 +165,7 @@ AValue AStdInt(AThread *t, AValue *frame)
     }
 
   HandleLongInt:
-    
+
     {
         /* Perform string-to-int conversion when the result is a long int. */
         ALongInt *li;
@@ -182,17 +182,17 @@ AValue AStdInt(AThread *t, AValue *frame)
 
             if (!AIsDigit(ch))
                 break;
-            
+
             li = AMulAddSingle(t, li, 10, ch - '0');
             if (li == NULL)
                 return AError;
-            
+
             ind++;
         } while (ind < end);
 
         if (isNeg)
             ASetLongIntSign(li);
-        
+
         return ALongIntToValue(li);
     }
 }
@@ -256,12 +256,12 @@ static AValue RadixInt(AThread *t, AValue *frame)
     int i, j;
     int radix = AGetInt(t, frame[1]);
     ABool isNeg;
-    
+
     if (radix < 2 || radix > 36)
         return ARaiseValueError(t, "Invalid radix");
-    
+
     frame[1] = AZero;
-    
+
     AExpectStr(t, frame[0]);
 
     /* Skip initial whitespace. */
@@ -283,7 +283,7 @@ static AValue RadixInt(AThread *t, AValue *frame)
     for (; i < AStrLen(frame[0]); i++) {
         int ch = AStrItem(frame[0], i);
         int digit;
-        
+
         if (AIsDigit(ch))
             digit = ch - '0';
         else if (ch >= 'a' && ch <= 'z')
@@ -330,7 +330,7 @@ AValue AIntDivMod(AThread *t, ASignedValue left, ASignedValue right,
 
     if (right == AZero)
         return ARaiseArithmeticErrorND(t, AMsgDivisionByZero);
-    
+
     if (left < 0) {
         if (right < 0) {
             if (left == AIntToValue(A_SHORT_INT_MIN)
@@ -341,7 +341,7 @@ AValue AIntDivMod(AThread *t, ASignedValue left, ASignedValue right,
             quot = AIntToValue(-AValueToInt(left) / -AValueToInt(right));
         } else
             quot = -AIntToValue(-AValueToInt(left) / AValueToInt(right));
-        
+
     } else {
         if (right < 0)
             quot = -(left / -AValueToInt(right));
@@ -436,7 +436,7 @@ AInt64 AGetInt64(AThread *t, AValue val)
     else if (AIsLongInt(val)) {
         AInt64 i;
         int n;
-        
+
         if (ALongIntLen(val) > 4
             || (ALongIntLen(val) == 4 &&
                 (AGetLongIntDigit(val, 3) > 0x8000)))
@@ -448,7 +448,7 @@ AInt64 AGetInt64(AThread *t, AValue val)
             if (AGetLongIntDigit(val, n) > 0 || !AIsNegLongInt(val))
                 return ARaiseValueError(t, AMsgOutOfRange);
         }
-        
+
         i = 0;
         for (n = ALongIntLen(val) - 1; n >= 0; n--)
             i = (i << 16) + AGetLongIntDigit(val, n);
@@ -461,7 +461,7 @@ AInt64 AGetInt64(AThread *t, AValue val)
     else if (AIsLongInt(val)) {
         AInt64 i;
         int n;
-        
+
         if (ALongIntLen(val) > 2
             || (ALongIntLen(val) == 2 &&
                 (AGetLongIntDigit(val, 1) > 0x80000000U)))
@@ -470,7 +470,7 @@ AInt64 AGetInt64(AThread *t, AValue val)
             if (AGetLongIntDigit(val, 0) > 0 || !AIsNegLongInt(val))
                 return ARaiseValueError(t, AMsgOutOfRange);
         }
-        
+
         i = 0;
         for (n = ALongIntLen(val) - 1; n >= 0; n--)
             i = (i << 32) + AGetLongIntDigit(val, n);
@@ -494,10 +494,10 @@ AIntU64 AGetIntU64(AThread *t, AValue val)
     } else if (AIsLongInt(val)) {
         AIntU64 i;
         int n;
-        
+
         if (AIsNegLongInt(val) || ALongIntLen(val) > 4)
             return ARaiseValueError(t, AMsgOutOfRange);
-        
+
         i = 0;
         for (n = ALongIntLen(val) - 1; n >= 0; n--)
             i = (i << 16) + AGetLongIntDigit(val, n);
@@ -512,10 +512,10 @@ AIntU64 AGetIntU64(AThread *t, AValue val)
     } else if (AIsLongInt(val)) {
         AIntU64 i;
         int n;
-        
+
         if (AIsNegLongInt(val) || ALongIntLen(val) > 2)
             return ARaiseValueError(t, AMsgOutOfRange);
-        
+
         i = 0;
         for (n = ALongIntLen(val) - 1; n >= 0; n--)
             i = (i << 32) + AGetLongIntDigit(val, n);
@@ -534,7 +534,7 @@ AValue AMakeInt(AThread *t, int i)
 #if A_VALUE_BITS != 32 && A_VALUE_BITS != 64
     error! /* FIX */;
 #endif
-    
+
 #if A_VALUE_BITS == 32
     /* 32-bit values */
     if (i <= A_SHORT_INT_MAX && i >= A_SHORT_INT_MIN)
@@ -583,7 +583,7 @@ AValue AMakeInt64(AThread *t, AInt64 i)
         AValue v = AMakeLongInt(t, 4, FALSE);
         ABool neg = i < 0;
         AInt64 ui = i < 0 ? -i : i;
-        
+
         ASetLongIntDigit(v, 0, ui & 0xffff);
         ASetLongIntDigit(v, 1, (ui >> 16) & 0xffff);
         ASetLongIntDigit(v, 2, (ui >> 32) & 0xffff);
@@ -597,7 +597,7 @@ AValue AMakeInt64(AThread *t, AInt64 i)
         AValue v = AMakeLongInt(t, 2, FALSE);
         ABool neg = i < 0;
         AInt64 ui = i < 0 ? -i : i;
-        
+
         ASetLongIntDigit(v, 0, ui & 0xffffffffU);
         ASetLongIntDigit(v, 1, ui >> 32);
         return ANormalize(t, AValueToLongInt(v), neg);

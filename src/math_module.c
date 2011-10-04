@@ -63,10 +63,10 @@ static AValue MathArcTan(AThread *t, AValue *frame)
 {
     double arg2;
     double arg = AGetFloat(t, frame[0]);
-    
+
     if (AIsDefault(frame[1]))
         return AMakeFloat(t, atan(arg));
-    
+
     arg2 = AGetFloat(t, frame[1]);
     if (arg == 0.0 && arg2 == 0.0)
         return ARaiseValueError(t, "Invalid argument values");

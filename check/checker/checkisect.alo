@@ -8,7 +8,7 @@ import types
 def CheckIntersectionType(type as Intersection, msg as MessageBuilder,
                           basic as BasicTypes, context as Context)
   var items = type.items()
-  
+
   for i in 0 to items.length()
     for j in 0 to items.length()
       if i < j
@@ -26,11 +26,11 @@ private def CheckIntersectionItemPair(item1 as Callable, item2 as Callable,
                                       basic as BasicTypes,
                                       context as Context)
   var isOverlapping = True
-  
+
   if IsSameType(item1.retType, item2.retType)
     isOverlapping = False
   end
-  
+
   for i in 0 to Min(item1.argTypes.length(), item2.argTypes.length())
     var arg1 = EraseType(item1.argTypes[i], basic)
     var arg2 = EraseType(item2.argTypes[i], basic)
@@ -38,7 +38,7 @@ private def CheckIntersectionItemPair(item1 as Callable, item2 as Callable,
       isOverlapping = False
     end
   end
-  
+
   if isOverlapping
     msg.functionVariantsOverlap(n1, n2, context)
   end

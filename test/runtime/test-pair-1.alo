@@ -10,7 +10,7 @@ class PairSuite is Suite
     var a, b = r.left, r.right
     Assert(a == 1)
     Assert(b == 3)
-    
+
     var r2 = ("a" : 5.5 : True)
     a, b = r2.left, r2.right
     Assert(a == "a")
@@ -18,7 +18,7 @@ class PairSuite is Suite
     Assert(a == 5.5)
     Assert(b == True)
   end
-  
+
   def testErrors()
     var r = (2 : 3)
     var nerr = 0
@@ -29,7 +29,7 @@ class PairSuite is Suite
     end
     Assert(nerr == 1)
   end
-  
+
   def testCompare()
     var p1 = (1 : 3)
     var p2 = (1 : 3)
@@ -37,26 +37,26 @@ class PairSuite is Suite
     var p4 = (2 : 3)
     var p5 = ("a" : (4, 5, (6, 7)))
     var p6 = ("a" : (4, 5, (6, 7)))
-    
+
     Assert(p1 == p1)
     Assert(p1 == p2)
     Assert(p1 != p3)
     Assert(p1 != p4)
     Assert(p1 != p5)
     Assert(p5 == p6)
-  
+
     Assert([p1] == [p1])
     Assert([p1] == [p2])
     Assert([p1] != [p3])
   end
-  
+
   def testMembers()
     var p = (4 : "foo")
     for m in "left", "right", "_eq", "_hash", "_str"
       Assert(HasMember(p, m))
     end
     Assert(not HasMember(p, "foo"))
-    
+
     AssertEqual(p.left, 4)
     AssertEqual(p.right, "foo")
     AssertEqual(p._eq(4 : "foo"), True)

@@ -21,7 +21,7 @@ int athread_create(athread_t *ptr, void *(*func)(void *), void *param)
 {
     pthread_attr_t attr;
     int result;
-    
+
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     result = pthread_create(ptr, &attr, func, param);

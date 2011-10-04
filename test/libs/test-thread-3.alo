@@ -16,11 +16,11 @@ class ThreadSuite3 is Suite
     Thread(Trash)
     Thread(Trash)
     Thread(Trash)
-  
+
     -- Allocate lots of memory.
     Trash()
     Trash()
-  
+
     Ok()
   end
 end

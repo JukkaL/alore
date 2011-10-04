@@ -19,7 +19,7 @@ class LineContinuationSuite is Suite
                 3, 1)
     AssertEqual(2 **
                 3, 8)
-    
+
     AssertEqual(1 ==
                 3, False)
     AssertEqual(1 !=
@@ -32,7 +32,7 @@ class LineContinuationSuite is Suite
                 3, False)
     AssertEqual(1 >=
                 3, False)
-                
+
     AssertEqual(1 is
                 Int, True)
     AssertEqual(1 in
@@ -41,13 +41,13 @@ class LineContinuationSuite is Suite
                 2, 1 to 2)
     AssertEqual(1 :
                 2, 1 : 2)
-                
+
     AssertEqual(True and
                 False, False)
     AssertEqual(False or
                 True, True)
   end
-  
+
   def testPunctuators()
     AssertEqual((
                  1, 2), (1, 2))
@@ -56,42 +56,42 @@ class LineContinuationSuite is Suite
     AssertEqual([1,
                  2], [1, 2])
   end
-  
+
   def testAssignment()
     var a =
       1
     AssertEqual(a, 1)
-    
+
     a +=
       1
     AssertEqual(a, 2)
-    
+
     a *=
       3
     AssertEqual(a, 6)
-    
+
     a -=
       4
     AssertEqual(a, 2)
-    
+
     a **=
       3
     AssertEqual(a, 8)
-    
+
     a /=
       2
     AssertEqual(a, 4.0)
   end
-  
+
   def testMultipleNewlines()
     var a =    1   +      -- Comment
-    
+
                           -- Comment
-                          
+
                  3
     AssertEqual(a, 4)
   end
-  
+
   def testSemicolonAfterGt()
     -- The > operator has special behavior, since it is often at line end in
     -- annotations. Therefore ignoring the line break is done in the parser

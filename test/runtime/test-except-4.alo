@@ -28,30 +28,30 @@ class ExceptSuite4 is Suite
       end
       i += 1
     end
-  
+
     Assert(j == 10000)
-  
+
     Ok()
   end
-  
+
   -- Return statement in finally
   def testT2()
     var depth = ContextDepth()
     var i = FuncRetInFinally()
     Assert(i == 13)
-  
+
     i = FuncRetInFinally2()
     Assert(i == 19)
     Assert(ContextDepth() == depth)
-  
+
     Ok()
   end
-  
+
   -- Exception stress test
   def testT3()
     var i = 1
     g = 0
-  
+
     while i < 1000 -- FIX: was 4000
       var j = 0
       try
@@ -61,7 +61,7 @@ class ExceptSuite4 is Suite
         j = 1
       end
       Assert(j == 1)
-  
+
       j = 0
       try
         RecurseExcept(i)
@@ -69,7 +69,7 @@ class ExceptSuite4 is Suite
         j = 1
       end
       Assert(j == 1)
-  
+
       j = 0
       try
         MultipleExcept(i)
@@ -77,16 +77,16 @@ class ExceptSuite4 is Suite
         j = 1
       end
       Assert(j == 1)
-  
+
       i += i + 3
     end
-  
+
     -- FIX: Is the number ok?
     AssertEqual(g, 3984) -- Note: was 16248 and 524092
-  
+
     Ok()
   end
-  
+
   -- Test returning from finally statement to C code.
   def testReturnToCFromFinally()
     CallTrace(returnFromFinally)

@@ -392,14 +392,14 @@ class IntSuite is Suite
         AssertRaises(ArithmeticError, def (); base**exp; end)
       end
     end
-    
+
     AssertRaises(ArithmeticError, def (); (-1)**2.0; end)
 
     VerifyFloats(2**-2.0, 0.25)
     VerifyFloats(2**-98726985769283746592783649875.0, 0.0)
     VerifyFloats(0**0.0, 1.0)
   end
-  
+
   def testMembers()
     var i = 1
     for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow",
@@ -407,7 +407,7 @@ class IntSuite is Suite
       AssertEqual(HasMember(i, m), True)
     end
     AssertEqual(HasMember(i, "foo"), False)
-    
+
     AssertEqual(i._add(2), 3)
     AssertEqual(i._add(2.0), 3)
     AssertEqual(i._add(OpOverload()), 0)
@@ -431,23 +431,23 @@ class IntSuite is Suite
     AssertEqual(1._gt(0.5), True)
     AssertEqual(1._gt(2), False)
     AssertEqual(1._hash(), Hash(1))
-    
+
     AssertEqual(12._float(), 12)
     Assert(12._float() is Float)
-    
+
     AssertEqual(12._str(), "12")
-    
+
     var m
     m = i._add
     AssertEqual(m(2), 3)
     AssertEqual(Repr(m), "_add of Int")
     m = i._neg
     AssertEqual(m(), -1)
-    
+
     m = GetMember(i, "_neg")
     AssertEqual(m(), -1)
   end
-  
+
   def testInterface()
     Assert(1 is Comparable)
   end

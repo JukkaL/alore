@@ -17,7 +17,7 @@
 static AValue StringIsDigit(AThread *t, AValue *frame)
 {
     /* IDEA: Maybe this should be implemented for unicode. */
-    
+
     int ch = AGetCh(t, frame[0]);
     if (ch >= '0' && ch <= '9')
         return ATrue;
@@ -104,7 +104,7 @@ AValue GetRegularExpression(AThread *t, AValue regExpStr, AValue *flagVal,
                 return ARaiseValueErrorND(t, NULL);
         }
     }
-            
+
     /* First try to find the regular expression from the t with given
        flags and regExpStr. */
     for (i = 0; i < A_NUM_CACHED_REGEXPS; i++) {
@@ -114,7 +114,7 @@ AValue GetRegularExpression(AThread *t, AValue regExpStr, AValue *flagVal,
             goto FoundRegExp;
         }
     }
-    
+
     /* Otherwise compile the regular expression. */
     regExp = ACompileRegExp(t, regExpStr, flags);
     if (AIsError(regExp))
@@ -130,11 +130,11 @@ AValue GetRegularExpression(AThread *t, AValue regExpStr, AValue *flagVal,
         t->regExp[i * 2 + 1] = t->regExp[i * 2 - 1];
         t->regExpFlags[i]    = t->regExpFlags[i - 1];
     }
-    
+
     t->regExp[0] = regExpStr;
     t->regExp[1] = regExp;
     t->regExpFlags[0] = flags;
-    
+
     return regExp;
 }
 #endif
@@ -154,7 +154,7 @@ static AValue IntToStr(AThread *t, AValue *frame)
 
     if (radix < 2 || radix > 36)
         return ARaiseValueError(t, "Invalid radix");
-    
+
     minWidth = 0;
     if (!AIsDefault(frame[2]))
         minWidth = AGetInt(t, frame[2]);
@@ -164,7 +164,7 @@ static AValue IntToStr(AThread *t, AValue *frame)
         ABool sign = n < 0;
         char buf[N + 2];
         int i = 0;
-        
+
         if (sign)
             n = -n;
 

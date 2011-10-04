@@ -14,10 +14,10 @@ class ThreadSuite1 is Suite
     while i < 4000
       var t = Thread(ThreadFunc0)
       Assert(t.join() == 7)
-  
+
       t = Thread(def (); ThreadFuncNoRet01v(2, 3, 4); end)
       t.join()
-  
+
       t = Thread(def (); ThreadFuncExcept3(1, 2, 3); end)
       var k = 0
       try
@@ -26,10 +26,10 @@ class ThreadSuite1 is Suite
         k = 1
       end
       Assert(k == 1)
-  
+
       i += 1
     end
-  
+
     Ok()
   end
 end

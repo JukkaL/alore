@@ -24,27 +24,27 @@ def Analyse(programText          as Str,
             isTypeCheck = False  as Boolean) as
                 (Array<AloreFile>, SymbolTable, TypeInfoMap, Map<Node, Typ>)
   var path = DefaultLibPath()
-  
+
   if programFnam != "main"
     path.insertAt(0, FixPath(DirName(programFnam)))
   end
-  
+
   if not useFullStd
     -- Use stub std module.
     path.insertAt(0, ModulePath("testchk/data/lib-stub"))
   end
-  
+
   if altLibPath != nil
     path.insertAt(0, altLibPath)
   end
-  
+
   -- InitializeNormalize()
-  
+
   var analysis = Analysis(path, isTypeCheck)
-  
+
   -- Ignore current directory prefix in error messages.
   analysis.errors.setIgnorePrefix(CurrentDir())
-  
+
   return analysis.process(WaitingFile((programFnam, nil, [], analysis),
                                       programText))
 end
@@ -54,16 +54,16 @@ end
 private def DefaultLibPath() as Array<Str>
   -- IDEA: Make this more portable.
   var path = [] as <Str>
-  
+
   -- Add ALOREPATH environment variable to library path, if defined.
   var pathEnv = GetEnv("ALOREPATH")
   if pathEnv != nil
     path.append(pathEnv)
   end
-  
+
   -- Add library stubs directory.
   path.append(ModulePath("../stubs"))
-  
+
   -- Determine the location of the lib directory and add it.
   if IsInstalled()
     -- This copy has been installed.
@@ -78,7 +78,7 @@ private def DefaultLibPath() as Array<Str>
     -- Running in a build directory.
     path.append(ModulePath("../lib"))
   end
-  
+
   -- Add fallback path that can be used if we have a broken installation.
   if Platform != "windows"
     path.append("/usr/local/lib/alore")
@@ -92,16 +92,16 @@ end
 -- opposed to running in a build directory).
 private def IsInstalled() as Boolean
   -- IDEA: Make this more portable.
-  
+
   var pp = NormPath(DirName(sys::ProgramPath))
-  
+
   -- If running in a build directory, the program directory looks like this:
   --   .../check
   -- When installed, it looks like this:
   --   .../share/alore/check
   -- or
   --   .../share/check (Windows)
-  
+
   return pp.endsWith(Join("share", "alore", "check")) or
          pp.endsWith(Join("share", "check"))
 end
@@ -127,36 +127,36 @@ class Analysis
     self.semAnal = SemanticAnal(libPath, self.errors)
     self.checker = TypeChecker(self.errors, self.semAnal.symtable)
   end
-  
+
   def process(initialState as State) as (Array<AloreFile>, SymbolTable,
                                          TypeInfoMap, Map<Node, Typ>)
     self.states.append(initialState)
-    
+
     while True
       var next = nextAvailableState()
       if next == nil
         break
       end
-      
+
       self.errors.setImportContext(next.importContext)
       next.process()
     end
-    
+
     self.semAnal.symtable.cleanup()
-    
+
     if self.errors.isErrors()
       self.errors.raiseError()
     end
-    
+
     var trees = [] as <AloreFile>
     for state in self.states
       trees.append((state as ParsedFile).tree)
     end
-    
+
     return trees, self.semAnal.symtable, self.semAnal.types,
            self.checker.typeMap
   end
-  
+
   def nextAvailableState() as State
     var i = self.states.length() - 1
     while i >= 0
@@ -167,11 +167,11 @@ class Analysis
     end
     return nil
   end
-  
+
   def hasModule(name as Str) as Boolean
     return self.moduleFiles.hasKey(name)
   end
-  
+
   def fileState(path as Str) as Constant
     for s in self.states
       if s.path == path
@@ -180,7 +180,7 @@ class Analysis
     end
     return UnseenState
   end
-  
+
   def moduleState(name as Str) as Constant
     if not hasModule(name)
       return UnseenState
@@ -203,13 +203,13 @@ private def ModulePath(dir as Str) as Str
 
   -- Assume program is in the check/ directory (e.g. check.alo).
   var basePath = DirName(ProgramPath)
-  
+
   if BaseName(ProgramPath) == "test.alo"
     -- When called by the test runner, the basePath will point to test/.
     -- Convert it to point to check/ instead.
     basePath = Join(DirName(basePath), "check")
   end
-  
+
   return FixPath(NormPath(Join(basePath, dir)))
 end
 

@@ -23,7 +23,7 @@ private def FormatDateTime(cl as Type, d as IDateTime, f as Str) as Str
   var l = [] as <Str>
   var symbols = FormatSymbolMap[cl]
   var is12Hour = False
-  
+
   -- Check if we should use 12 hour clock (if there's something resembling
   -- [../..] in the string).
   var i = 0
@@ -36,7 +36,7 @@ private def FormatDateTime(cl as Type, d as IDateTime, f as Str) as Str
     end
     i += 1
   end
-  
+
   i = 0
   while i < f.length()
     if f[i] in symbols

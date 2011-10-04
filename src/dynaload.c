@@ -38,7 +38,7 @@ ABool AInitializeDynamicModuleCompilation(void)
     ModuleBuf = AAllocStatic(ModuleBufSize * sizeof(AValue));
 
     DynamicCompiledModules = NULL;
-    
+
     return ModuleBuf != NULL;
 }
 
@@ -67,9 +67,9 @@ ABool AAddDynamicImportedModule(ASymbolInfo *sym)
         ModuleBuf = newBuf;
         ModuleBufSize *= 2;
     }
-    
+
     symVal = APtrToIntValue(sym);
-    
+
     i = AFirstDynamicModule;
     while (i != 0) {
         ADynaModule *mod = AValueToPtr(AGlobalByNum(i + 1));
@@ -97,11 +97,11 @@ ABool AEndDynamicModuleCompilation(int firstVar, int firstConst)
 
     modSize = sizeof(ADynaModule) - sizeof(AValue) + ModuleBufIndex *
               sizeof(AValue);
-    
+
     mod = AAllocUnmovable(modSize);
     if (mod == NULL)
         return FALSE;
-    
+
     AInitValueBlockOld(&mod->header, modSize - sizeof(AValue));
 
     mod->symbol = APtrToIntValue(ACurModule);
@@ -116,7 +116,7 @@ ABool AEndDynamicModuleCompilation(int firstVar, int firstConst)
 
     DynamicCompiledModules = AAddIntList(DynamicCompiledModules,
                                          AFirstDynamicModule);
-    
+
     return ASetConstGlobalValue(ACompilerThread, AFirstDynamicModule + 1,
                                AValueBlockToValue(mod));
 }
@@ -152,13 +152,13 @@ void AFreeDynamicModule(int modNum)
         AFirstDynamicModule = AGetNextModule(modNum);
     else {
         int i;
-        
+
         for (i = AFirstDynamicModule;
              AGetNextModule(i) != modNum; i = AGetNextModule(i));
 
         ASetNextModule(i, AGetNextModule(modNum));
     }
-    
+
     mod = AGetModuleInfo(modNum);
     sym = AIntValueToPtr(mod->symbol);
 

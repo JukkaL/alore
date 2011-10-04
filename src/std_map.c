@@ -63,13 +63,13 @@ AValue AMapCreate(AThread *t, AValue *frame)
 
     if (AIsError(AMapInitialize(t, frame)))
         return AError;
-    
+
     frame[2] = frame[0];
     for (i = 0; i < AArrayLen(frame[1]); i++) {
         AGetPair(t, AArrayItem(frame[1], i), frame + 3, frame + 4);
         AMap_set(t, frame + 2);
     }
-    
+
     return frame[0];
 }
 
@@ -79,7 +79,7 @@ AValue AMapCreate(AThread *t, AValue *frame)
 AValue AMapInitialize(AThread *t, AValue *frame)
 {
     AValue a;
-    
+
     /* NOTE: Assume that the AMakeInt call doesn't cause gc. */
     ASetMemberDirect(t, frame[0], MAP_SIZE, AMakeInt(t, INITIAL_MAP_CAPACITY));
     a = AMakeFixArray(t, INITIAL_MAP_CAPACITY * 2, EmptyMarker);
@@ -114,7 +114,7 @@ static AValue MapLookup(AThread *t, AValue *frame, AValue def)
     hash = AStdHash(t, frame + 2);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], MAP_SIZE)) - 1;
     i &= size;
@@ -176,7 +176,7 @@ AValue AMap_set(AThread *t, AValue *frame)
     hash = AStdHash(t, frame + 3);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], MAP_SIZE)) - 1;
     i &= size;
@@ -194,12 +194,12 @@ AValue AMap_set(AThread *t, AValue *frame)
 
     SetFixArray_M(t, frame[3], i * 2, frame + 1);
     SetFixArray_M(t, frame[3], i * 2 + 1, frame + 2);
-    
+
     AValueToInstance(frame[0])->member[MAP_LEN] += AIntToValue(1);
-    
+
     if (AValueToInt(AMemberDirect(frame[0], MAP_LEN)) * 3 >= size * 2 + 2)
         ResizeMap(t, frame);
-    
+
     return ANil;
 }
 
@@ -228,7 +228,7 @@ static void ResizeMap(AThread *t, AValue *frame)
 
     if (newSize > A_SHORT_INT_MAX)
         ARaiseValueError(t, "Map size overflow");
-    
+
     ASetMemberDirect(t, frame[0], MAP_SIZE, AMakeInt(t, newSize));
     a = AMakeFixArray(t, 2 * newSize, EmptyMarker);
     if (AIsError(a))
@@ -262,7 +262,7 @@ AValue AMapHasKey(AThread *t, AValue *frame)
     hash = AStdHash(t, frame + 2);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], MAP_SIZE)) - 1;
     i &= size;
@@ -298,7 +298,7 @@ AValue AMapRemove(AThread *t, AValue *frame)
     hash = AStdHash(t, frame + 2);
     if (AIsError(hash))
         return AError;
-        
+
     i = HashToInt(t, hash);
     size = AValueToInt(AMemberDirect(frame[0], MAP_SIZE)) - 1;
     i &= size;
@@ -329,7 +329,7 @@ AValue AMapItems(AThread *t, AValue *frame)
     Assize_t n = AValueToInt(MapLen_M(frame[0]));
     Assize_t size = AValueToInt(AMemberDirect(frame[0], MAP_SIZE));
     Assize_t i, j;
-    
+
     frame[1] = AMakeArray(t, n);
     frame[2] = AMemberDirect(frame[0], MAP_A);
 
@@ -344,7 +344,7 @@ AValue AMapItems(AThread *t, AValue *frame)
             j++;
         }
     }
-    
+
     return frame[1];
 }
 
@@ -366,7 +366,7 @@ AValue AMapKeys(AThread *t, AValue *frame)
             j++;
         }
     }
-    
+
     return dst;
 }
 
@@ -388,7 +388,7 @@ AValue AMapValues(AThread *t, AValue *frame)
             j++;
         }
     }
-    
+
     return dst;
 }
 
@@ -403,7 +403,7 @@ AValue AMap_str(AThread *t, AValue *frame)
     ABool first = TRUE;
 
     repr = AGlobal(t, "std::Repr");
-    
+
     frame[1] = AMemberDirect(frame[0], MAP_A);
     n = AFixArrayLen(frame[1]);
     frame[2] = AMakeArray(t, 0);
@@ -434,7 +434,7 @@ AValue AMap_str(AThread *t, AValue *frame)
 
     str = AMakeStr(t, ")");
     AAppendArray(t, frame[2], str);
-    
+
     return AJoin(t, frame[2], ADefault);
 }
 
@@ -473,7 +473,7 @@ AValue AMapIterHasNext(AThread *t, AValue *frame)
             return ATrue;
         }
     }
-    
+
     return AFalse;
 }
 

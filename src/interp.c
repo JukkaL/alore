@@ -97,13 +97,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
        therefore it is not written using very readable or maintainable coding
        practices. Much functionality is inlined manually, and several
        operations are implemented using low-level operations.
-    
+
        IMPORTANT: Direct exceptions should generally not be raised in the
        interpreter main loop, since the opcode index is not always updated (to
        improve performance). This also means that C API functions are not used
        in the interpreter main loop. Any Alore-level functions called within
        the interpreter main loop can, of course, raise direct exceptions. */
-    
+
     A_INITIALIZE_INTERPRETER
 
     /* Instruction pointer. Before each interpreter main loop interation points
@@ -111,7 +111,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
     register AOpcode *ip A_IP_REG;
     /* Pointer to the stack frame of the currently executing function. */
     register AValue *stack A_STACK_REG;
-    
+
     AExceptionType exception;
     unsigned numArgs;
     unsigned member;
@@ -130,7 +130,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
     args = t->tempStackPtr;
 
   LoopTop:
-    
+
     A_BEGIN_INTERPRETER_LOOP;
 
 #ifdef A_DEBUG
@@ -148,12 +148,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
        ip{2}. */
 
     A_BEGIN_INTERPRETER_LOOP_2
-    
+
     A_OPCODE(OP_NOP) {
         /* Do nothing */
         A_END_OPCODE;
     }
-    
+
     A_OPCODE(OP_ASSIGN_IL) {
         /* int{1} -> lvar{2} */
         stack[ip[2]] = ip[1];
@@ -177,7 +177,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
     A_OPCODE(OP_ASSIGN_ML) {
         /* lvar{1}.member{2} -> lvar{3} */
-        
+
         AValue val = stack[ip[1]];
         unsigned key = ip[2];
 
@@ -194,7 +194,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             ATypeInfo *type = AGetInstanceType(inst);
             AMemberHashTable *table = AGetMemberTable(type, MT_VAR_GET_PUBLIC);
             AMemberNode *node;
-            
+
             node = &table->item[key & table->size];
 
             /* Search the get hash table. */
@@ -236,23 +236,23 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ip += 4;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_VL) {
         /* self.slot{1} -> lvar{2} */
         stack[ip[2]] = AValueToInstance(stack[3])->member[ip[1]];
         ip += 3;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_MDL) {
         /* self.slot-or-getter{1} -> lvar{3} */
-        
+
         /* Notes:
             -  ip[2] is ignored; it is used by the OP_ASSIGN_LMD opcode
                variant.
             - If the instruction refers to a getter, ip[1] has A_VAR_METHOD
               flag set. */
-        
+
         if (ip[1] & A_VAR_METHOD) {
             /* Call getter method. */
             numArgs = 1;
@@ -267,7 +267,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         }
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_EL) {
         /* lvar{1}[0] -> lvar{2}
 
@@ -277,13 +277,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ip += 3;
         A_END_OPCODE;
     }
-    
+
     A_OPCODE(OP_ASSIGN_FL) {
         /* self.method{1} -> lvar{2} */
         AValue bound = ACreateBoundMethod(t, stack[3], ip[1]);
         if (AIsError(bound))
             goto ExceptionRaised;
-        
+
         stack[ip[2]] = bound;
         ip += 3;
         A_END_OPCODE;
@@ -312,10 +312,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ip += 3;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_LM) {
         /* lvar{3} -> lvar{1}.member{2} */
-        
+
         AValue val = stack[ip[1]];
         unsigned key = ip[2];
 
@@ -374,11 +374,11 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 }
             }
         }
-            
+
         ip += 4;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_LV) {
         /* lvar{2} -> self.slot{1} */
         AInstance *inst;
@@ -394,11 +394,11 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             exception = EX_MEMORY_ERROR;
             goto RaiseException;
         }
-        
+
         ip += 3;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_LMD) {
         /* lvar{3} -> self.slot-or-setter{2} */
 
@@ -425,17 +425,17 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                                    stack + ip[3] - A_NO_RET_VAL))
                 goto ExceptionRaised;
         }
-        
+
         ip += 4;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_LE) {
         /* lvar{2} -> lvar{1}[0]
 
            Assign a local variable to an exposed local variable. Assume lvar{1}
            is a FixArray object. */
-        
+
         ABool result;
         AFixArray *a = AValueToFixArray(stack[ip[1]]);
 
@@ -445,9 +445,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             exception = EX_MEMORY_ERROR;
             goto RaiseException;
         }
-        
+
         ip += 3;
-        
+
         A_END_OPCODE;
     }
 
@@ -457,7 +457,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ip += 2;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_ASSIGN_PL) {
         /* offset{2} -> lvar{1} */
         stack[ip[1]] = AIntToValue(ABranchTarget(ip + 2) -
@@ -468,9 +468,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
     A_OPCODE(OP_LEAVE_FINALLY) {
         /* leave_finally lvar{1}, int{2}, offset{3} */
-        
+
         AValue val = stack[ip[1]];
-            
+
         if (val == AZero) {
             /* Continue excecution normally -- finally block was entered
                on the normal path of execution. */
@@ -487,7 +487,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                as the result of a break statement? */
             if (AIsShortInt(val)) {
                 AOpcode *base = AValueToFunction(stack[1])->code.opc;
-                
+
                 if (AValueToInt(val) < ip - base + 3 + ip[3] -
                                       A_DISPLACEMENT_SHIFT) {
                     t->contextIndex -= AValueToInt(stack[ip[1] + 2]);
@@ -507,12 +507,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             } else {
                 /* Go to the next finally block in the finally chain. */
                 unsigned local = ip[1];
-                
+
                 /* Pop thread contexts. */
                 t->contextIndex -= ip[2];
 
                 ip = ABranchTarget(ip + 3);
-                
+
                 /* Pass on the state values. */
                 stack[ip[-1]] = stack[local];
                 stack[ip[-1] + 1] = stack[local + 1];
@@ -611,7 +611,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ip += 2;
         A_END_OPCODE;
     }
-            
+
     A_OPCODE(OP_MINUS_LL) {
         /* -lvar{1} -> lvar{2} */
         AValue val = stack[ip[1]];
@@ -635,10 +635,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 ip += 2;
                 goto MethodCall;
             }
-            
+
             if (AIsError(val))
                 goto ExceptionRaised;
-            
+
             stack[ip[2]] = val;
         } else {
             if (val == AIntToValue(A_SHORT_INT_MIN)) {
@@ -660,25 +660,25 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         t->stackPtr = ANextFrame(stack, stack[0]);
         return ANil;
     }
-    
+
     {
         AValue index;
         AValue item;
-        
+
         A_OPCODE(OP_AGET_LLL) {
             /* lvar{1}[lvar{2}] -> lvar{3} */
             base = stack[ip[1]];
             ip += 2;
             goto GetItem;
         }
-            
+
         A_OPCODE(OP_AGET_GLL) {
             /* gvar{1}[lvar{2}] -> lvar{3} */
             base = AGlobalVars[ip[1]];
             ip += 2;
             goto GetItem;
         }
-            
+
       GetItem:
 
         /* Indexing operation base[lvar{0}] -> lvar{1} */
@@ -719,7 +719,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 res = ASubArrayND(t, base, AValueToInt(lo), AValueToInt(hi));
                 if (AIsError(res))
                     goto ExceptionRaised;
-                
+
                 stack[ip[1]] = res;
                 ip += 2;
                 A_END_OPCODE;
@@ -746,12 +746,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             /* IDEA: No need inline this here, at least not this much. */
             unsigned char ch;
             AWideChar wch;
-            
+
             if (AIsNarrowStr(base)) {
                 if (AIsShortInt(index)) {
                     ABool result;
                     AString *s;
-                    
+
                     s = AValueToStr(base);
 
                     /* Check that index is within range. */
@@ -781,9 +781,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
                     item = AStrToValue(s);
                 } else {
-                    
+
                   TrySubStr:
-                    
+
                     if (AIsPair(index)) {
                         AMixedObject *pair = AValueToMixedObject(index);
                         AValue lo = pair->data.pair.head;
@@ -793,7 +793,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                             lo = AZero;
                         if (AIsNil(hi))
                             hi = AIntToValue(A_SLICE_END);
-                        
+
                         if (!AIsShortInt(lo) || !AIsShortInt(hi)) {
                             exception = AErrorId(
                                 EX_TYPE_ERROR,
@@ -814,7 +814,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             } else if (AIsSubStr(base)) {
                 if (AIsShortInt(index)) {
                     ASubString *ss;
-                    
+
                     ss = AValueToSubStr(base);
 
                     if (index >= ss->len) {
@@ -841,7 +841,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 if (AIsShortInt(index)) {
                     ABool result;
                     AWideString *s;
-                    
+
                     s = AValueToWideStr(base);
 
                     /* Check that index is within range. */
@@ -867,7 +867,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                         exception = EX_MEMORY_ERROR;
                         goto RaiseException;
                     }
-                    
+
                     AInitNonPointerBlock(&s->header, sizeof(AWideChar));
                     s->elem[0] = wch;
 
@@ -913,21 +913,21 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         AValue index;
         AValue base;
         AValue *itemPtr;
-            
+
         A_OPCODE(OP_ASET_LLL) {
             /* lvar{3} -> lvar{1}[lvar{2}] */
             base = stack[ip[1]];
             ip += 2;
             goto SetItem;
         }
-            
+
         A_OPCODE(OP_ASET_GLL) {
             /* lvar{3} -> gvar{1}[lvar{2}] */
             base = AGlobalVars[ip[1]];
             ip += 2;
             goto SetItem;
         }
-            
+
       SetItem:
 
         index = stack[ip[0]];
@@ -947,9 +947,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     exception = EX_MEMORY_ERROR;
                     goto RaiseException;
                 }
-                    
+
                 ip += 2;
-                    
+
                 A_END_OPCODE;
             } else if (AIsShortInt(index) &&
                        (-index - AIntToValue(1)) < i->member[A_ARRAY_LEN]) {
@@ -964,9 +964,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     exception = EX_MEMORY_ERROR;
                     goto RaiseException;
                 }
-                    
+
                 ip += 2;
-                    
+
                 A_END_OPCODE;
             } else if (AIsShortInt(index) || AIsLongInt(index)) {
                 exception = EX_INDEX_ERROR;
@@ -996,7 +996,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         unsigned argCnt;
         AValue funcVal;
         AInstance *instance;
-        
+
         A_OPCODE(OP_CALL_L) {
             /* Call lvar{1} int{2} args... -> lvar{} */
             funcVal = stack[ip[1]];
@@ -1015,7 +1015,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
         A_OPCODE(OP_CALL_M) {
             /* Call member{1} int{2} lvar{3} args... -> lvar{} */
-            
+
             /* Call member function. lvar{3} is the base object and the first
                argument. */
 
@@ -1040,7 +1040,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
                 /* Get the initial node in a hash chain. */
                 node = &table->item[key & table->size];
-                
+
                 while (node->key != key) {
                     if (node->next == NULL) {
                         if (type->super == NULL) {
@@ -1065,10 +1065,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 }
 
                 funcVal = AGlobalByNum(node->item);
-            
+
                 ip += 3;
             }
-            
+
           Call:
 
             /* Stack frame format:
@@ -1105,7 +1105,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 /* Store the return opcode address. */
                 stack[2] = AMakeInterpretedOpcodeIndex(
                     ip + argCnt - AValueToFunction(stack[1])->code.opc);
-                
+
                 func = AValueToFunction(funcVal);
 
                 stackFrameSize = func->stackFrameSize;
@@ -1115,7 +1115,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                                          EM_TOO_MANY_RECURSIVE_CALLS);
                     goto RaiseException;
                 }
-                
+
                 /* Initialize the header of the new stack frame. */
                 newStack[2] = A_COMPILED_FRAME_FLAG;
                 newStack[1] = funcVal;
@@ -1154,7 +1154,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
                     /* Call the function */
                     retVal = func->code.cfunc(t, newStack + 3);
-                    
+
                     if (!AIsError(retVal)) {
                         if (ip[0] < A_NO_RET_VAL)
                             stack[ip[0]] = retVal;
@@ -1166,7 +1166,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     }
 
                     t->stackPtr = stack;
-                    
+
                     ip++;
                 } else {
                     /* Update stack frame. */
@@ -1187,7 +1187,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     exception = AErrorId(EX_VALUE_ERROR, EM_CALL_INTERFACE);
                     goto RaiseException;
                 }
-                
+
                 funcVal = AGlobalByNum(type->create);
 
                 /* Create the instance. */
@@ -1200,7 +1200,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     if (instance == NULL)
                         goto ExceptionRaised;
                 }
-                
+
                 AInitInstanceBlock(&instance->type, type);
                 AInitInstanceData(instance, type);
 
@@ -1209,13 +1209,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 /* Store the return opcode address. */
                 stack[2] = AMakeInterpretedOpcodeIndex(
                     ip + argCnt - AValueToFunction(stack[1])->code.opc);
-                
+
                 func = AValueToFunction(funcVal);
 
                 stackFrameSize = func->stackFrameSize;
                 /* FIX: handle underflow? */
                 newStack = APreviousFrame(stack, stackFrameSize);
-                
+
                 if (newStack < t->stack) {
                     exception = AErrorId(EX_RUNTIME_ERROR,
                                          EM_TOO_MANY_RECURSIVE_CALLS);
@@ -1250,12 +1250,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
                 /* Record stack pointer. */
                 t->stackPtr = newStack;
-                
+
                 if (AIsCompiledFunction(func)) {
                     AValue retVal;
-                    
+
                     ip += argCnt;
-                    
+
                     /* Call the function */
                     retVal = func->code.cfunc(t, newStack + 3);
 
@@ -1309,14 +1309,14 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 ARaiseInvalidCallableErrorND(t, funcVal);
                 goto ExceptionRaised;
             }
-            
+
             A_END_OPCODE;
         }
     }
 
     A_OPCODE(OP_RAISE_L) {
         /* raise lvar{1} */
-        
+
         AValue val = stack[ip[1]];
 
         if (AIsOfType(val, AGlobalByNum(AStdExceptionNum)) != A_IS_TRUE) {
@@ -1324,7 +1324,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 "Exception must be derived from std::Exception (not %T)", val);
             goto ExceptionRaised;
         }
-        
+
         /* Record state information related to the raised exception. */
         t->exception = val;
         t->uncaughtExceptionStackPtr = stack;
@@ -1338,7 +1338,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         AValue retVal;
 
       RET_L_Opcode:
-        
+
 #ifdef HAVE_JIT_COMPILER
         /* If the current function is not part of the JIT compiler, compile
            it. */
@@ -1357,25 +1357,25 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             ADebugPrint(("\n"));
         }
 #endif
-        
+
         stack = ANextFrame(stack, stack[0]);
         t->stackPtr = stack;
 
         if (!AIsInterpretedFrame(stack))
             return retVal;
-        
+
         ip = AGetFrameIp(stack);
-        
+
         /* Does the caller expect a return value? */
         if (ip[-1] < A_NO_RET_VAL)
             stack[ip[-1]] = retVal;
-        
+
         A_END_OPCODE;
     }
 
     A_OPCODE(OP_RET) {
         /* return nil */
-        
+
 #ifdef HAVE_JIT_COMPILER
         /* If the current function is not part of the JIT compiler, compile
            it. */
@@ -1388,12 +1388,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
         stack = ANextFrame(stack, stack[0]);
         t->stackPtr = stack;
-        
+
         if (!AIsInterpretedFrame(stack))
             return ANil;
-        
+
         ip = AGetFrameIp(stack);
-        
+
         /* Does the caller expect a return value? */
         if (ip[-1] < A_NO_RET_VAL)
             stack[ip[-1]] = ANil;
@@ -1410,10 +1410,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         int n;
 
         /* IDEA: Optimize if ip[2] == 0? */
-        
+
         /* Number of exposed variables to store in the object */
         n = ip[2];
-        
+
         /* Allocate FixArray containing exposed variable containers used by
            the anonymous function. */
         a = AAlloc(t, sizeof(AValue) + n * sizeof(AValue));
@@ -1423,7 +1423,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         for (i = 0; i < n; i++)
             a->elem[i] = stack[ip[3 + i]];
         stack[ip[3 + n]] = AFixArrayToValue(a);
-        
+
         /* Construct anonymous function object. */
         inst = AAlloc(t, sizeof(AValue) * 3);
         if (inst == NULL)
@@ -1433,9 +1433,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         inst->member[A_ANON_EXPOSED_VARS] = stack[ip[3 + n]];
         inst->member[A_ANON_IMPLEMENTATION_FUNC] = AGlobalByNum(ip[1]);
         stack[ip[3 + n]] = AInstanceToValue(inst);
-        
+
         ip += 4 + n;
-        
+
         A_END_OPCODE;
     }
 
@@ -1443,17 +1443,17 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         /* Create a value container that is used to store the value of an
            exposed local variable. It is actually a FixArray object with
            length 1. */
-        
+
         AFixArray *a = AAlloc(t, sizeof(AValue) * 2);
         if (a == NULL)
             goto ExceptionRaised;
         AInitValueBlock(&a->header, 1 * sizeof(AValue));
         a->elem[0] = stack[ip[1]];
-        
+
         stack[ip[1]] = AFixArrayToValue(a);
-        
+
         ip += 2;
-        
+
         A_END_OPCODE;
     }
 
@@ -1477,7 +1477,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
            For ranges, store lower bound at lvar{1} + 1 and upper bound at
            lvar{1} + 2.
-           
+
            Otherwise, store iterator object at lvar{1} + 1. */
         AValue collection = stack[ip[2]];
 
@@ -1512,7 +1512,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto RaiseException;
             }
         }
-        
+
         ip = ABranchTarget(ip + 3);
 
         A_END_OPCODE;
@@ -1560,7 +1560,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             }
         } else {
             /* Int / LongInt range */
-            
+
             AValue res = ACompareOrder(t, v1, stack[ip[1] + 2], OPER_LT);
             if (AIsError(res))
                 goto ExceptionRaised;
@@ -1623,7 +1623,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             ARaiseInvalidBooleanErrorND(t, stack[ip[1]]);
             goto ExceptionRaised;
         }
-        
+
         A_END_OPCODE;
     }
 
@@ -1637,7 +1637,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             ARaiseInvalidBooleanErrorND(t, stack[ip[1]]);
             goto ExceptionRaised;
         }
-        
+
         A_END_OPCODE;
     }
 
@@ -1647,7 +1647,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ABool result;
         int start;
         int i;
-        
+
         array = AZero; /* Initialize to avoid a warning. */
         len = ip[1];
         AMakeUninitArray_M(t, len, array, result);
@@ -1660,9 +1660,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         for (i = 0; i < len; i++)
             ASetArrayItemNewGen(array, i, stack[start + i]);
         stack[ip[3]] = array;
-        
+
         ip += 4;
-        
+
         A_END_OPCODE;
     }
 
@@ -1672,7 +1672,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ABool result;
         int start;
         int i;
-        
+
         tuple = AZero; /* Initialize to avoid a warning. */
         len = ip[1];
         AMakeUninitTuple_M(t, len, tuple, result);
@@ -1685,9 +1685,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         for (i = 0; i < len; i++)
             ASetTupleItemNewGen(tuple, i, stack[start + i]);
         stack[ip[3]] = tuple;
-        
+
         ip += 4;
-        
+
         A_END_OPCODE;
     }
 
@@ -1706,12 +1706,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 exception = ExpandErrorId(ATupleLen(val), num);
                 goto RaiseException;
             }
-            
+
             for (i = 0; i < num; i++)
                 stack[ip[3 + i]] = ATupleItem(val, i);
-            
+
             ip += 3 + num;
-            
+
             A_END_OPCODE;
         } else if (AIsArraySubType(val)) {
             num = ip[2];
@@ -1719,12 +1719,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 exception = ExpandErrorId(AArrayLen(val), num);
                 goto RaiseException;
             }
-            
+
             for (i = 0; i < num; i++)
                 stack[ip[3 + i]] = AArrayItem(val, i);
-            
+
             ip += 3 + num;
-            
+
             A_END_OPCODE;
         } else {
             ARaiseTypeErrorND(t, "Array or Tuple expected (but %T found)",
@@ -1738,7 +1738,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             ip = ABranchTarget(ip + 2);
         else
             ip += 3;
-        
+
         A_END_OPCODE;
     }
 
@@ -1746,7 +1746,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         AOpcode opcode;
         AValue left;
         AValue right;
-            
+
         A_OPCODE(OP_ADD_LLL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1760,7 +1760,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-        
+
         A_OPCODE(OP_SUB_LLL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1774,7 +1774,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-            
+
         A_OPCODE(OP_EQ_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1792,7 +1792,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-        
+
         A_OPCODE(OP_NEQ_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1810,7 +1810,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-            
+
         A_OPCODE(OP_LT_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1828,7 +1828,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-            
+
         A_OPCODE(OP_GTE_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1846,7 +1846,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-        
+
         A_OPCODE(OP_GT_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1864,7 +1864,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-            
+
         A_OPCODE(OP_LTE_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1882,7 +1882,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 goto ArithmeticOpcode;
             }
         }
-            
+
         A_OPCODE(OP_GET_LL) {
             left  = stack[ip[1]];
             right = stack[ip[2]];
@@ -1892,7 +1892,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_LI) {
             left  = stack[ip[1]];
             right = ip[2];
@@ -1902,7 +1902,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_LG) {
             left  = stack[ip[1]];
             right = AGlobalVars[ip[2]];
@@ -1912,7 +1912,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_IL) {
             left  = ip[1];
             right = stack[ip[2]];
@@ -1922,13 +1922,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_II) {
             left  = ip[1];
             right = ip[2];
             goto IntOper;
         }
-            
+
         A_OPCODE(OP_GET_IG) {
             left  = ip[1];
             right = AGlobalVars[ip[2]];
@@ -1938,7 +1938,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_GL) {
             left  = AGlobalVars[ip[1]];
             right = stack[ip[2]];
@@ -1948,7 +1948,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_GI) {
             left  = AGlobalVars[ip[1]];
             right = ip[2];
@@ -1958,7 +1958,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             else
                 goto NonIntOper;
         }
-            
+
         A_OPCODE(OP_GET_GG) {
             left  = AGlobalVars[ip[1]];
             right = AGlobalVars[ip[2]];
@@ -1978,7 +1978,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         switch (*ip) {
         case OP_ADD_L: {
             AValue sum;
-                
+
           IntAdd:
 
             sum = left + right;
@@ -1991,13 +1991,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             stack[ip[1]] = sum;
             ip += 2;
-            
+
             break;
         }
 
         case OP_SUB_L: {
             AValue dif;
-                
+
           IntSub:
 
             dif = left - right;
@@ -2010,13 +2010,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             stack[ip[1]] = dif;
             ip += 2;
-            
+
             break;
         }
 
         case OP_MUL_L: {
             AValue prod;
-            
+
             if (AHi(left) == 0 && AHi(right) == 0) {
                 prod = AValueToInt(left) * (ASignedValue)right;
                 if ((ASignedValue)prod >= 0)
@@ -2034,7 +2034,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-            
+
         case OP_DIV_L: {
             AValue quot;
 
@@ -2054,7 +2054,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-            
+
         case OP_IDV_L: {
             AValue quot;
             AValue mod;
@@ -2068,7 +2068,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-            
+
         case OP_MOD_L: {
             /* FIX: Perhaps check if can use bitwise and..? */
             AValue mod;
@@ -2078,10 +2078,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             stack[ip[1]] = mod;
             ip += 2;
-            
+
             break;
         }
-            
+
         case OP_IN_L:
         case OP_NOT_IN_L:
             /* "in" not suported for ints. */
@@ -2107,15 +2107,15 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 exception = EX_MEMORY_ERROR;
                 goto RaiseException;
             }
-            
+
             AInitValueBlock(&pair->header, 3 * sizeof(AValue));
             pair->type = A_PAIR_ID;
             pair->data.pair.head = t->tempStack[0];
             pair->data.pair.tail = t->tempStack[1];
-            
+
             stack[ip[1]] = AMixedObjectToValue(pair);
             ip+= 2;
-            
+
             break;
         }
 
@@ -2135,7 +2135,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             t->tempStack[0] = left;
             t->tempStack[1] = right;
-            
+
             AAlloc_M(t, AGetBlockSize(sizeof(AMixedObject)), rng, result);
 
             if (!result) {
@@ -2144,12 +2144,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 /* IDEA: Combine all similar exception raise statements into
                          a single goto destination. */
             }
-            
+
             AInitValueBlock(&rng->header, 3 * sizeof(AValue));
             rng->type = A_RANGE_ID;
             rng->data.range.start = t->tempStack[0];
             rng->data.range.stop = t->tempStack[1];
-            
+
             stack[ip[1]] = AMixedObjectToValue(rng);
             ip += 2;
 
@@ -2160,10 +2160,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             AValue power = APowInt(t, left, right);
             if (AIsError(power))
                 goto ExceptionRaised;
-            
+
             stack[ip[1]] = power;
             ip += 2;
-            
+
             break;
         }
 
@@ -2190,7 +2190,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             } else
                 ip += 2;
             break;
-                
+
         case OP_GTE:
             if ((ASignedValue)left >= (ASignedValue)right) {
                 ip = ABranchTarget(ip + 1);
@@ -2198,7 +2198,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             } else
                 ip += 2;
             break;
-            
+
         case OP_GT:
             if ((ASignedValue)left > (ASignedValue)right) {
                 ip = ABranchTarget(ip + 1);
@@ -2206,7 +2206,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             } else
                 ip += 2;
             break;
-                
+
         case OP_LTE:
             if ((ASignedValue)left <= (ASignedValue)right) {
                 ip = ABranchTarget(ip + 1);
@@ -2231,10 +2231,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         switch (opcode) {
         case OP_ADD_L: {
             AValue sum;
-            
+
             for (;;) {
                 AValue temp;
-                
+
                 if (AIsFloat(left) && AIsFloat(right)) {
                     double result = AValueToFloat(left) + AValueToFloat(right);
                     if (t->heapPtr == t->heapEnd
@@ -2273,17 +2273,17 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     unsigned char *rightStr;
                     int leftLen;
                     int rightLen;
-                    
+
                     if (AIsNarrowStr(left)) {
                         AString *res;
                         int blockSize;
                         int resultLen;
-                        
+
                         leftLen = AGetStrLen(AValueToStr(left));
                         leftStr = AValueToStr(left)->elem;
 
                       NarrowLeft:
-                        
+
                         if (AIsNarrowStr(right)) {
                             rightLen = AGetStrLen(AValueToStr(right));
                             rightStr = AValueToStr(right)->elem;
@@ -2299,15 +2299,15 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                             rightLen = AValueToInt(subStr->len);
                         } else
                             goto ConcatWide;
-                        
+
                         resultLen = leftLen + rightLen;
                         blockSize = AGetBlockSize(sizeof(AValue) + resultLen);
-                        
+
                         if (t->heapPtr + blockSize > t->heapEnd
                             || A_NO_INLINE_ALLOC) {
                             t->tempStack[0] = left;
                             t->tempStack[1] = right;
-                            
+
                             res = AAlloc(t, blockSize);
                             if (res == NULL)
                                 goto ExceptionRaised;
@@ -2319,7 +2319,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                                 leftStr = AGetStrElem(t->tempStack[0]);
                             else
                                 leftStr = AGetSubStrElem(t->tempStack[0]);
-                            
+
                             if (AIsNarrowStr(right))
                                 rightStr = AGetStrElem(t->tempStack[1]);
                             else
@@ -2328,35 +2328,35 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                             res = (AString *)t->heapPtr;
                             t->heapPtr += blockSize;
                         }
-                        
+
                         AInitNonPointerBlock(&res->header, resultLen);
-                        
+
                         ACopyMem(res->elem, leftStr, leftLen);
                         ACopyMem(res->elem + leftLen, rightStr, rightLen);
-                        
+
                         sum = AStrToValue(res);
                         break;
                     }
-                    
+
                     if (AIsSubStr(left)) {
                         ASubString *subStr;
 
                         subStr = AValueToSubStr(left);
-                        
+
                         if (AIsWideStr(subStr->str))
                             goto ConcatWide;
 
                         leftStr = AValueToStr(subStr->str)->elem +
                                   AValueToInt(subStr->ind);
                         leftLen = AValueToInt(subStr->len);
-                        
+
                         goto NarrowLeft;
                     }
-                    
+
                     if (AIsWideStr(left)) {
 
                       ConcatWide:
-                        
+
                         sum = AConcatWideStrings(t, left, right);
                         if (AIsError(sum))
                             goto ExceptionRaised;
@@ -2374,22 +2374,22 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 left = ACoerce(t, OPER_PLUS, left, right, &temp);
                 if (AIsError(left))
                     goto ExceptionRaised;
-                
+
                 right = temp;
             }
 
             stack[ip[1]] = sum;
             ip += 2;
-            
+
             break;
         }
-                
+
         case OP_SUB_L: {
             AValue dif;
-            
+
             for (;;) {
                 AValue temp;
-                
+
                 if (AIsFloat(left) && AIsFloat(right)) {
                     double result = AValueToFloat(left) - AValueToFloat(right);
                     if (t->heapPtr == t->heapEnd
@@ -2413,7 +2413,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     ip++;
                     goto MethodCall;
                 }
-            
+
                 if (AIsLongInt(left) && AIsLongInt(right)) {
                     dif = ASubLongInt(t, left, right);
                     if (AIsError(dif))
@@ -2424,16 +2424,16 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 left = ACoerce(t, OPER_MINUS, left, right, &temp);
                 if (AIsError(left))
                     goto ExceptionRaised;
-                
+
                 right = temp;
             }
 
             stack[ip[1]] = dif;
             ip += 2;
-            
+
             break;
         }
-                
+
         case OP_EQ:
             if (AIsConstant(left)) {
                 if (left == right) {
@@ -2488,16 +2488,16 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             if (AIsError(res))
                 goto ExceptionRaised;
-            
+
             if (res != AZero) {
                 ip = ABranchTarget(ip + 1);
                 PERIODIC_INTERPRETER_CHECK;
             } else
                 ip += 2;
-            
+
             break;
         }
-                
+
         case OP_GTE: {
             AValue res;
 
@@ -2506,16 +2506,16 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             if (AIsError(res))
                 goto ExceptionRaised;
-            
+
             if (res != AZero) {
                 ip = ABranchTarget(ip + 1);
                 PERIODIC_INTERPRETER_CHECK;
             } else
                 ip += 2;
-            
+
             break;
         }
-            
+
         case OP_GT: {
             AValue res;
 
@@ -2524,16 +2524,16 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             if (AIsError(res))
                 goto ExceptionRaised;
-            
+
             if (res != AZero) {
                 ip = ABranchTarget(ip + 1);
                 PERIODIC_INTERPRETER_CHECK;
             } else
                 ip += 2;
-            
+
             break;
         }
-                
+
         case OP_LTE: {
             AValue res;
 
@@ -2542,16 +2542,16 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             if (AIsError(res))
                 goto ExceptionRaised;
-            
+
             if (res != AZero) {
                 ip = ABranchTarget(ip + 1);
                 PERIODIC_INTERPRETER_CHECK;
             } else
                 ip += 2;
-            
+
             break;
         }
-                
+
         case OP_IN_L: {
             AValue res;
 
@@ -2565,10 +2565,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 PERIODIC_INTERPRETER_CHECK;
             } else
                 ip += 2;
-            
+
             break;
         }
-            
+
         case OP_NOT_IN_L: {
             AValue res;
 
@@ -2582,16 +2582,16 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 PERIODIC_INTERPRETER_CHECK;
             } else
                 ip += 2;
-            
+
             break;
         }
-                
+
         case OP_IS_L: {
             /* IDEA: IsResult is inconsistent with other return values
                      (CompareOrder). */
-            
+
             AIsResult res = AIsOfType(left, right);
-                
+
             if (res == A_IS_TRUE) {
                 ip = ABranchTarget(ip + 1);
                 PERIODIC_INTERPRETER_CHECK;
@@ -2603,10 +2603,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             }
             break;
         }
-                
+
         case OP_IS_NOT_L: {
             AIsResult res = AIsOfType(left, right);
-            
+
             if (res == A_IS_FALSE) {
                 ip = ABranchTarget(ip + 1);
                 PERIODIC_INTERPRETER_CHECK;
@@ -2618,13 +2618,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             }
             break;
         }
-        
+
         case OP_MUL_L: {
             AValue prod;
-            
+
             for (;;) {
                 AValue temp;
-                
+
                 if (AIsFloat(left) && AIsFloat(right)) {
                     double result = AValueToFloat(left) * AValueToFloat(right);
                     if (t->heapPtr == t->heapEnd
@@ -2657,7 +2657,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     ip++;
                     goto MethodCall;
                 }
-            
+
                 if (AIsLongInt(left) && AIsLongInt(right)) {
                     prod = AMultiplyLongInt(t, left, right);
                     if (AIsError(prod))
@@ -2695,20 +2695,20 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                         goto ExceptionRaised;
                     break;
                 }
-                
+
                 left = ACoerce(t, OPER_MUL, left, right, &temp);
                 if (AIsError(left))
                     goto ExceptionRaised;
-                
+
                 right = temp;
             }
 
             stack[ip[1]] = prod;
             ip += 2;
-            
+
             break;
         }
-            
+
         case OP_DIV_L: {
             AValue quot;
 
@@ -2767,13 +2767,13 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-            
+
         case OP_IDV_L: {
             AValue quot;
 
             /* IDEA: If right is small enough, use ADivModSignle for improved
                      performance. */
-            
+
             for (;;) {
                 AValue temp;
 
@@ -2783,7 +2783,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                         goto ExceptionRaised;
                     break;
                 }
-                
+
                 if (AIsInstance(left)) {
                     member = AM_IDIV;
                     args[0] = left;
@@ -2799,12 +2799,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                                             EM_DIVISION_BY_ZERO);
                         goto RaiseException;
                     }
-                    
+
                     quot = ACreateFloat(t, floor(AValueToFloat(left) /
                                                      AValueToFloat(right)));
                     if (AIsError(quot))
                         goto ExceptionRaised;
-                    
+
                     break;
                 }
 
@@ -2813,7 +2813,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                                         EM_DIVISION_BY_ZERO);
                     goto RaiseException;
                 }
-            
+
                 left = ACoerce(t, OPER_IDIV, left, right, &temp);
                 if (AIsError(left))
                     goto ExceptionRaised;
@@ -2826,7 +2826,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-            
+
         case OP_MOD_L: {
             AValue mod;
 
@@ -2875,7 +2875,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                                         EM_DIVISION_BY_ZERO);
                     goto RaiseException;
                 }
-            
+
                 left = ACoerce(t, OPER_MOD, left, right, &temp);
                 if (AIsError(left))
                     goto ExceptionRaised;
@@ -2888,10 +2888,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-                
+
         case OP_PAIR_L:
             goto CreatePair;
-                
+
         case OP_RNG_L:
             goto CreateRange;
 
@@ -2930,7 +2930,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                         goto ExceptionRaised;
                     break;
                 }
-                
+
                 if (AIsInstance(left)) {
                     member = AM_POW;
                     args[0] = left;
@@ -2952,7 +2952,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             break;
         }
-            
+
           InitForRange:
         case OP_FOR_L:
             /* Initialize for loop over a range. */
@@ -2977,9 +2977,9 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     stack[ip[1] + 1] = right;
                 }
             }
-            
+
             ip = ABranchTarget(ip + 2);
-            
+
             break;
         }
 
@@ -2988,18 +2988,18 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
     A_OPCODE(OP_TRY) {
         int val;
-        
+
         if ((val = AHandleException(t))) {
             if (val == 2) /* IDEA: Use symbolic constant! */
                 goto ExceptionRaised;
-            
+
             /* Unwind the stack. Invariant: The current stack
                frame is the next stack frame with an active indirect try
                statement, i.e. stack frames below the original frame can be
                skipped without having to pop from the context stack. */
             stack = t->stackPtr;
             ip = AGetFrameIp(stack) - 1;
-            
+
             goto ExceptionRaised;
         }
         ip++;
@@ -3021,7 +3021,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         /* args[0] = potential instance to be called
            args[1..numArgs-1] = arguments
            member = member id to call */
-        
+
         AInstance *inst;
         ATypeInfo *type;
         AMemberHashTable *table;
@@ -3031,7 +3031,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             ARaiseMethodCallExceptionND(t, member, args, numArgs - 1);
             goto ExceptionRaised;
         }
-        
+
         inst = AValueToInstance(args[0]);
         type = AGetInstanceType(inst);
         table = AGetMemberTable(type, MT_METHOD_PUBLIC);
@@ -3051,12 +3051,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     funcVal = AGetInstanceDataMember(t, inst, member);
                     if (!AIsError(funcVal)) {
                         int i;
-                        
+
                         for (i = 1; i < numArgs; i++)
                             args[i - 1] = args[i];
-                        
+
                         numArgs--;
-                        
+
                         goto FunctionCall;
                     } else {
                         ARaiseMethodCallExceptionND(t, member, args,
@@ -3071,10 +3071,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             } else
                 node = node->next;
         }
-            
+
         funcVal = AGlobalByNum(node->item);
     }
-    
+
   FunctionCall:
     {
         /* Call a function. */
@@ -3082,20 +3082,20 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         /* numArgs = number of arguments (1..2)
            funcVal = callee
            args[]  = arguments */
-        
+
         int i;
         AInstance *instance;
 
         *t->tempStack = funcVal;
-        
+
         if (!AAllocTempStack_M(t, numArgs))
             goto ExceptionRaised;
-        
+
         if (AIsInterrupt && AHandleInterrupt(t))
             goto ExceptionRaised;
 
         funcVal = *t->tempStack;
-        
+
         if (AIsGlobalFunction(funcVal)) {
             AFunction *func;
             AValue *newStack;
@@ -3107,7 +3107,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             /* Store the return opcode address. */
             stack[2] = AMakeInterpretedOpcodeIndex(
                 ip - AValueToFunction(stack[1])->code.opc);
-            
+
             func = AValueToFunction(funcVal);
 
             stackFrameSize = func->stackFrameSize;
@@ -3141,10 +3141,10 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
             /* Record stack pointer. */
             t->stackPtr = newStack;
-            
+
             if (AIsCompiledFunction(func)) {
                 AValue retVal;
-                    
+
                 /* Call the function */
                 retVal = func->code.cfunc(t, newStack + 3);
 
@@ -3185,7 +3185,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             AInitInstanceData(instance, type);
 
           CallWithInstance2:
-            
+
             for (i = numArgs; i > 0; i--)
                 args[i] = args[i - 1];
 
@@ -3231,12 +3231,12 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         stack[2] = AMakeInterpretedOpcodeIndex(
             ip - AValueToFunction(stack[1])->code.opc);
     }
-    
+
     exception = EX_RAISED;
     goto RaiseException;
 
   RaiseException:
-    
+
     {
         /* exception == type of exception (one of EX_x contansts in interp.h)
            thread->exception == raised instance, if exception == EX_RAISED
@@ -3264,7 +3264,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                             AGetErrorMessageFromId(exception)]);
                 break;
             }
-            
+
             if (ip != NULL)
                 stack[2] = AMakeInterpretedOpcodeIndex(
                     ip - AValueToFunction(stack[1])->code.opc);
@@ -3280,7 +3280,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         /* Unwind the stack a frame at a time. */
         for (;;) {
             t->stackPtr = stack;
-            
+
             /* Have we reached the top of the stack? */
             if (stack[0] == AZero) {
                 /* We have reached the top of the whole stack => the main
@@ -3290,7 +3290,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 AFunction *func;
                 unsigned codeInd;
                 int handlerInd;
-                
+
                 /* Process a stack frame. It is either a C function or Alore
                    function stack frame. This is the normal case. */
 
@@ -3315,15 +3315,15 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     goto LoopTop;
                 } else if (handlerInd == -2)
                     goto ExceptionRaised;
-                
+
                 stack = ANextFrame(stack, stack[0]);
-                
+
                 /* Is the current stack frame based on a compiled function? */
                 if (!AIsInterpretedFrame(stack)) {
                     t->stackPtr = stack;
                     return AError;
                 }
-                    
+
                 ip = AGetFrameIp(stack) - 1;
             } else {
                 /* Skip stack frame without any additional processing. When a
@@ -3343,27 +3343,27 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
 
         /* Change the current function invocation to a compiled one. */
         stack[2] = A_COMPILED_FRAME_FLAG;
-        
+
         /* Transfer the execution of the current function invocation to the
            compiled function. The value returned by TransferControl is the
            return value of the invocation. */
         retVal = ATransferControl(t, stack, ip);
-        
+
         /* Perform function return processing (similar to RET/RET_L). */
         stack = ANextFrame(stack, stack[0]);
         t->stackPtr = stack;
-        
+
         if (!AIsInterpretedFrame(stack))
             return retVal;
-        
+
         ip = AGetFrameIp(stack);
-        
+
         if (AIsError(retVal))
             goto ExceptionRaised;
-        
+
         if (ip[-1] < A_NO_RET_VAL)
             stack[ip[-1]] = retVal;
-        
+
         goto LoopTop;
     }
 #endif

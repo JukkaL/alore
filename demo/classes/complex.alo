@@ -5,14 +5,14 @@ import complex
 def Main() as void
   var c1 = Complex(0.5, -2.0)
   var c2 = Complex(1.5, 3.0)
-  
+
   Print(c1, '+', c2, '==', c1 + c2)
   Print(c1, '+', 1.5, '==', c1 + 1.5)
   Print(1.5, '+', c1, '==', 1.5 + c1)
-  
+
   Print(c1, '-', c2, '==', c1 - c2)
   Print(c1, '*', c2, '==', c1 * c2)
   Print(c1, '/', c2, '==', c1 / c2)
-  
+
   Print('|{}|'.format(c1), '==', c1.abs())
 end
