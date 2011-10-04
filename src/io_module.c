@@ -604,8 +604,11 @@ static AValue StreamRead(AThread *t, AValue *frame)
         inst = AValueToInstance(frame[0]);
         
         /* Mark the input buffer empty if it's fully consumed. */
-        if (lenWanted >= len)
+        if (lenWanted >= len) {
             inst->member[A_STREAM_INPUT_BUF] = AZero;
+            inst->member[A_STREAM_INPUT_BUF_IND] = AZero;
+            inst->member[A_STREAM_INPUT_BUF_END] = AZero;
+        }
 
         /* Have we read enough? */
         if (lenWanted <= len) {

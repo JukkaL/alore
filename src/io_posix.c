@@ -659,8 +659,10 @@ AValue AFileSeek(AThread *t, AValue *frame)
     inst = AValueToInstance(frame[0]);
 
     /* Discard input buffer if input stream. */
-    if (inst->member[A_STREAM_MODE] & A_MODE_INPUT)
+    if (inst->member[A_STREAM_MODE] & A_MODE_INPUT) {
         inst->member[A_STREAM_INPUT_BUF] = AZero;
+        inst->member[A_STREAM_INPUT_BUF_END] = AZero;
+    }
 
 #ifdef A_HAVE_POSIX
     {
