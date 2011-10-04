@@ -83,6 +83,43 @@ tmp/a/b.alo: In member "create" of class "B":
 tmp/a/b.alo, line 4: "B" has no member "x"
 
 
--- test long import paths
+-- Nested imports
+-- --------------
+
+
+[case testMessagesWithNestedImports]
+import a
+[file a/a.alo]
+module a
+import b
+[file b/a.alo]
+module b
+var c = Object() as C
+class C; end
+[out]
+In module imported in tmp/a/a.alo, line 2,
+                   in main, line 1:
+tmp/b/a.alo, line 2: Incompatible types in assignment
+
+
+[case testMessagesWithNestedImports2]
+import a
+[file a/a.alo]
+module a
+import b
+[file b/a.alo]
+module b
+import c
+[file c/a.alo]
+module c
+var c = Object() as C
+class C; end
+[out]
+In module imported in tmp/b/a.alo, line 2,
+                   in tmp/a/a.alo, line 2,
+                   in main, line 1:
+tmp/c/a.alo, line 2: Incompatible types in assignment
+
+
 -- test circular module dependencies
 -- test name shadowing
