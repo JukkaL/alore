@@ -16,10 +16,10 @@
 --  * semanal-overriding.txt
 --  * semanal-super.txt
 
-      
+
 -- Setter
 -- ------
-      
+
 [case testSetterArgument]
 class A
   def f
@@ -152,10 +152,10 @@ AloreFile:1(
       Getter
       Private)))
 
-      
+
 -- Member initialization
 -- ---------------------
-      
+
 [case testConstInitializationInCreate]
 class A
   const a
@@ -344,7 +344,7 @@ AloreFile:1(
     VarDef:2(
       Var(a)
       Private)))
-      
+
 [case testDefaultConstructorWithPrivate2]
 class A
   var a

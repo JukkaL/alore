@@ -378,7 +378,7 @@ file.alo, line 7: Parse error before string literal
 [case testInvalidGetterAnnotations]
 class A
   def d as 1
-  end  
+  end
 end
 [out]
 file.alo: In member "d" of class "A":
@@ -387,7 +387,7 @@ file.alo, line 2: Parse error before numeric literal
 [case testInvalidSetterAnnotations]
 class A
   def d = x as 1
-  end  
+  end
 end
 [out]
 file.alo: In member "d" of class "A":
@@ -418,7 +418,7 @@ end
 def f()
   for x as 1 in 1, 2
     1 "X"
-  end 
+  end
 end
 [out]
 file.alo, line 1: Parse error before numeric literal

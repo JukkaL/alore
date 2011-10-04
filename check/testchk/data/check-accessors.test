@@ -78,7 +78,7 @@ class A
   def x = y as B
     var a = y as A -- Fail
     var b = y as B
-  end  
+  end
   def x as B
   end
 end
@@ -346,7 +346,7 @@ class A
     x = b     -- Fail
     var a as A
     a = x
-    x = a    
+    x = a
   end
 
   private def x as A
@@ -368,7 +368,7 @@ class A
     self.x = b   -- Fail
     var a as A
     a = self.x
-    self.x = a    
+    self.x = a
   end
 
   private def x as A

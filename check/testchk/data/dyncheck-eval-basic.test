@@ -2,7 +2,7 @@
 --
 -- Each test case consists of at least two sections.
 -- The first section contains [case NAME] followed by the input code, while
--- the second section contains [out] followed by the output from evaluation. 
+-- the second section contains [out] followed by the output from evaluation.
 
 
 [case testInvalidReturnValueType]

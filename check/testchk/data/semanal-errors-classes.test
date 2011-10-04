@@ -173,7 +173,7 @@ class c
   def f()
     a = 1
     b = 1
-  end  
+  end
 end
 [out]
 main: In member "f" of class "c":
@@ -343,11 +343,11 @@ class A
   def a()
     1.create
     1.create = 1
-    
+
     self.create()
     create()
   end
-  
+
   def create()
   end
 end

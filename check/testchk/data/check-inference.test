@@ -101,7 +101,7 @@ main, line 3: Incompatible types in assignment
 def f() as void
   var a = g
   nil(a) -- Fail
-  a.x()  
+  a.x()
 end
 
 var g
@@ -245,7 +245,7 @@ def f() as void
   a = b   -- Fail
   a = B() -- Fail
   b = A() -- Fail
-  
+
   a = A()
   b = B()
 end
@@ -297,18 +297,18 @@ main, line 3: Incompatible types in assignment
 [case testInferringMultipleLvarDefinitionWithArrayRvalue]
 def f() as void
   var a, b = [] as <C>
-  var c, d, e = [] as <D>  
+  var c, d, e = [] as <D>
   a = D() -- Fail
   b = D() -- Fail
   c = C() -- Fail
   b = c   -- Fail
-  
+
   a = C()
   b = C()
   c = D()
   d = D()
-  e = D() 
-  
+  e = D()
+
   a = b
   c = d
   d = e
@@ -370,13 +370,13 @@ main, line 2: Incompatible types in assignment
 main, line 3: Incompatible types in assignment
 
 [case testUnderspecifiedInferenceResult]
--- Inferred type returned by a function has range [bottom, ...] => cannot 
--- choose a type 
+-- Inferred type returned by a function has range [bottom, ...] => cannot
+-- choose a type
 def ff() as void
   var x = f() -- Fail
 end
 
-g(nil) -- Ok 
+g(nil) -- Ok
 f()    -- Ok because not used to infer local variable type
 
 f() as <A>

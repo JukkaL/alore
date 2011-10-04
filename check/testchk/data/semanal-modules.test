@@ -11,7 +11,7 @@
 -- Module test cases
 -- -----------------
 
-        
+
 [case testIgnoringModulePrivateNameAlias]
 import a
 import b

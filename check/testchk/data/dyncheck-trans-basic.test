@@ -2,10 +2,10 @@
 --
 -- Each test case consists of at least two sections.
 -- The first section contains [case NAME] followed by the input code, while
--- the second section contains [out] followed by the output from the 
+-- the second section contains [out] followed by the output from the
 -- transformation.
 
--- Note that the test cases use a pretty-printed output syntax that is not 
+-- Note that the test cases use a pretty-printed output syntax that is not
 -- valid Alore code.
 
 
@@ -241,7 +241,7 @@ class C is B
 end
 
 [case testOverridingStaticWithStatic]
--- IDEA: This could be optimized by simply overriding f`A (no need for 
+-- IDEA: This could be optimized by simply overriding f`A (no need for
 --       wrappers)
 class A
   def f(a as A) as B
@@ -265,7 +265,7 @@ class B is A
 end
 
 [case testOverridingDynamicWithDynamic]
--- IDEA: This could be optimized by simply overriding f`A (no need for 
+-- IDEA: This could be optimized by simply overriding f`A (no need for
 --       wrappers)
 class A
   def f(a as dynamic) as dynamic
@@ -489,7 +489,7 @@ class A
 class A
   var a as A
   var d as dynamic
-  
+
   def create(a as A, d as dynamic)
     self.a = a
     self.d = d
@@ -505,7 +505,7 @@ class A
   def d* as dynamic
     return self.d
   end
-  
+
   def create(a as A, d as dynamic)
     self.a = a
     self.d = d
@@ -516,7 +516,7 @@ end
 class A
   def create(b as B)
   end
-  
+
   def f(b as B) as A
     return A(b)
   end
@@ -527,7 +527,7 @@ end
 class A
   def create(b as B)
   end
-  
+
   def f`A(b as B) as A
     return A(b)
   end
@@ -798,7 +798,7 @@ a.m = a
 class A
   var m as A
   var d as dynamic
-  
+
   def f() as void
     m = m
     d = d

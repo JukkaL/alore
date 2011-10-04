@@ -175,7 +175,7 @@ main, line 3: Incompatible types in assignment
 [case testMemberVariableInitialization]
 class A
   var a = B() as A -- Fail
-  var b = A() as A  
+  var b = A() as A
 end
 class B
 end
@@ -220,9 +220,9 @@ class A
     self.y             -- Fail
     self.y = A()       -- Fail
     var a = self.x as A
-    self.x = A()    
+    self.x = A()
   end
-  
+
   var x = A() as A
 end
 class B
@@ -551,8 +551,8 @@ var d = C() as D  -- Fail
     d = B()      -- Fail
     d = A()      -- Fail
     d = D2()     -- Fail
-var a = D() as A 
-    a = D2() 
+var a = D() as A
+    a = D2()
 var b = D() as B
     b = D2()
 

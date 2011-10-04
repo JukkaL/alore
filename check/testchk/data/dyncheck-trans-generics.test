@@ -2,10 +2,10 @@
 --
 -- Each test case consists of at least two sections.
 -- The first section contains [case NAME] followed by the input code, while
--- the second section contains [out] followed by the output from the 
+-- the second section contains [out] followed by the output from the
 -- transformation.
 
--- Note that the test cases use a pretty-printed output syntax that is not 
+-- Note that the test cases use a pretty-printed output syntax that is not
 -- valid Alore code.
 
 

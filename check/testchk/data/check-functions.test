@@ -817,7 +817,7 @@ end
 class B is A
   def f(x as X) or
        (x as A)
-  end      
+  end
 end
 
 class A

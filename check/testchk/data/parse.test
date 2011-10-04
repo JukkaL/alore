@@ -74,7 +74,7 @@ AloreFile:1(
 [case testParseClass]
 class Foo
   var x
-  
+
   def foo(y)
     self.x
   end
@@ -94,7 +94,7 @@ AloreFile:1(
           MemberExpr:5(
             SelfExpr()
             x))))))
-            
+
 [case testParseArray]
 def Main()
   var a
@@ -540,7 +540,7 @@ AloreFile:1(
       Var(y)
       Var(z))
     Type:1(def (dynamic, X?, dynamic))))
-    
+
 [case testFuncAnnotWithIntersectionType]
 def isect(a as Str, b = 1 as Int) or
       <T>(a as T) as T
@@ -622,7 +622,7 @@ class A
   def m(x as Int) or
        (x as Str)
   end
-  
+
   def g() as Int
   end
 end
@@ -693,7 +693,7 @@ AloreFile:1(
 [case testSimpleMemberVariableAnnot]
 class A
   var x as Int
-  
+
   const x, y as (Int, Str)
 end
 [out]

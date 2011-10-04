@@ -429,11 +429,11 @@ main, line 4: Argument 2 to "f" has incompatible type "A"
 [case testIntersectionTypesAndVarArgs]
 b = f()        -- Fail (1)
 b = f(a)       -- Fail
-b = f(a, b)    -- Fail 
+b = f(a, b)    -- Fail
 a = f(b)       -- Fail
 a = f(b, b)    -- Fail (5)
 b = f(a, *[b]) -- Fail
-b = f(*())     -- Fail 
+b = f(*())     -- Fail
 b = f(*(a,))   -- Fail
 b = f(*(a, b)) -- Fail
 a = f(*(b,))   -- Fail (10)

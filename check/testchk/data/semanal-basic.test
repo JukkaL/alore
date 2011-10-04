@@ -229,7 +229,7 @@ AloreFile:1(
           NameExpr(a [l])
           NameExpr(b [l]))))))
 
-          
+
 -- Encoding test cases
 -- -------------------
 
@@ -257,7 +257,7 @@ AloreFile:1(
 
 -- Function test cases
 -- -------------------
-                      
+
 [case testFunctionArguments]
 def f(a, b = a, c = b, *d)
   [a, b, c, d]

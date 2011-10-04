@@ -1,4 +1,4 @@
--- Test cases for runtime (dynamic) checking transformation and generic 
+-- Test cases for runtime (dynamic) checking transformation and generic
 -- inheritance.
 --
 -- See dyncheck-trans-basic.test for an overview of the file format.

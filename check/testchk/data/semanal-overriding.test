@@ -7,10 +7,10 @@
 -- starting with "----" that are not ignored. The first two dashes of these
 -- lines are interpreted as escapes and removed.
 
-            
+
 -- Test cases for overriding
 -- -------------------------
-            
+
 [case testSuperMethodRefWithInvalidArgCount]
 class A
   def f(x)

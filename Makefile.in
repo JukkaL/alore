@@ -309,7 +309,7 @@ lib/libaunicode.a: src/unicode_module.o src/unicode_names.o
 
 lib/socket@SOEXT@: src/socket_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/socket_module_dyn.o $(IMPLIB) \
-	  $(MOD_LDFLAGS) 
+	  $(MOD_LDFLAGS)
 
 lib/libasocket.a: src/socket_module.o
 	ar rc $@ src/socket_module.o
@@ -317,7 +317,7 @@ lib/libasocket.a: src/socket_module.o
 
 lib/serversocket@SOEXT@: src/serversocket_module_dyn.o $(IMPLIB)
 	$(LD_SHARED) -o $@ src/serversocket_module_dyn.o $(IMPLIB) \
-	  $(MOD_LDFLAGS) 
+	  $(MOD_LDFLAGS)
 
 lib/libaserversocket.a: src/serversocket_module.o
 	ar rc $@ src/serversocket_module.o

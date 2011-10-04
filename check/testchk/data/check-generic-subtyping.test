@@ -1,4 +1,4 @@
--- Test cases for the type checker related to subtyping (inheritance and 
+-- Test cases for the type checker related to subtyping (inheritance and
 -- interfaces) with generics.
 --
 -- Each test case consists of at least two sections.
@@ -260,12 +260,12 @@ end
 
 class A<T>
   var v = nil as T
-  
+
   def p as T
   end
   def p = x as T
-  end  
- 
+  end
+
   def f(a as T)
   end
 end
@@ -287,7 +287,7 @@ main, line 5: Incompatible types in assignment
 class A is B<C>
   def f(a as D) -- Fail
   end
-  
+
   def g(a as C)
   end
 end
@@ -295,7 +295,7 @@ end
 class B<T>
   def f(a as T)
   end
-  
+
   def g(a as T)
   end
 end
@@ -310,7 +310,7 @@ main, line 2: Argument 1 of "f" incompatible with supertype "B"
 class A<T> is B
   def f(a as T) -- Fail
   end
-  
+
   def g(a as C)
   end
 end
@@ -318,7 +318,7 @@ end
 class B
   def f(a as C)
   end
-  
+
   def g(a as C)
   end
 end
@@ -334,7 +334,7 @@ main, line 2: Argument 1 of "f" incompatible with supertype "B"
 class A<T, S> is B<S>
   def f(a as T) -- Fail
   end
-  
+
   def g(a as S)
   end
 end
@@ -342,7 +342,7 @@ end
 class B<T>
   def f(a as T)
   end
-  
+
   def g(a as T)
   end
 end
@@ -356,9 +356,9 @@ main, line 2: Argument 1 of "f" incompatible with supertype "B"
 [case testOverridingMemberVarInGenericTypeInheritingGenericType]
 class A<T, S> is B<S>
   def a as T -- Fail
-  end  
+  end
   def b = x as T -- Fail
-  end  
+  end
   def c as S
   end
   def d = x as S
@@ -383,9 +383,9 @@ main, line 4: Type of "b" incompatible with supertype "B"
 [case testOverridingAccessorsInGenericTypeInheritingGenericType]
 class A<T, S> is B<S>
   def a as T -- Fail
-  end  
+  end
   def b = x as T -- Fail
-  end  
+  end
   def c as S
   end
   def d = x as S
@@ -419,7 +419,7 @@ main, line 4: Type of "b" incompatible with supertype "B"
 class A<T, S> is B<S>
   def f(a as T) -- Fail
   end
-  
+
   def g(a as S)
   end
 end
@@ -430,7 +430,7 @@ end
 class C<T, U, V>
   def f(a as V)
   end
-  
+
   def g(a as V)
   end
 end
@@ -542,7 +542,7 @@ class A<T, S> is B<S>
     super.a = t  -- Fail
     t = super.b  -- Fail
     super.f(t)   -- Fail
-    
+
     super.a = s
     s = super.b
     super.f(s)
@@ -551,10 +551,10 @@ end
 
 class B<T>
   var a as T
-  
+
   def b as T
   end
-  
+
   def f(a as T)
   end
 end
@@ -573,7 +573,7 @@ class A<T, S> is B<S>
     super.a = t  -- Fail
     t = super.b  -- Fail
     super.f(t)   -- Fail
-    
+
     super.a = s
     s = super.b
     super.f(s)
@@ -585,10 +585,10 @@ end
 
 class C<T, U, V>
   var a as V
-  
+
   def b as V
   end
-  
+
   def f(a as V)
   end
 end
@@ -760,7 +760,7 @@ class A implements I<C>
   def f(a as D) -- Fail
   end
   def g(a as C)
-  end  
+  end
 end
 
 interface I<T>
@@ -781,7 +781,7 @@ class A implements I<C>
   end
   def b = x as D -- Fail
   end
-  
+
   var c as C
   def d as C
   end
@@ -812,7 +812,7 @@ main, line 5: Type of "b" incompatible with supertype "I"
 [case testImplementingMethodWithMultipleInterfaceInstances]
 class A implements I<C>, I<D>
   def f(a as C) -- Fail
-  end  
+  end
   def g(a as D) -- Fail
   end
   def h(a as C) or -- Fail
@@ -1194,7 +1194,7 @@ var a as A
 var c as C
 var d as D
 
-class A implements I<C>, I<D> 
+class A implements I<C>, I<D>
   -- Note: missing implementations
 end
 

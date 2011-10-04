@@ -5,8 +5,8 @@
 -- the second section contains [out] followed by the output from the type
 -- checker.
 --
--- The first line of input code should be a regexp in comment that describes 
--- the information to dump (prefix with ----). The regexp is matched against 
+-- The first line of input code should be a regexp in comment that describes
+-- the information to dump (prefix with ----). The regexp is matched against
 -- the following items:
 --
 --   * each name of an expression node
@@ -185,7 +185,7 @@ NameExpr(9) : A
 [case testFunctionCall]
 ---- CallExpr
 f(
-  A(), 
+  A(),
   B())
 def f(a as A, b as B) as (A, B)
 end
@@ -476,7 +476,7 @@ NameExpr(10) : C
 --   indexing
 --   super expression
 --   anonymous function
---   type application 
+--   type application
 --     with array
 --     with pair
 --     with tuple

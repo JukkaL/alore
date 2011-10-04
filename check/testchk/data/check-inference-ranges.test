@@ -555,7 +555,7 @@ var ab as A<B>
 class A<T>
   def g(a as A<T>) as (A<T>, A<T>) -- Two T's in the return type: collapse
   end
-  
+
   def h(a as A<T>) as (A<T>, A<B>)
   end
 end

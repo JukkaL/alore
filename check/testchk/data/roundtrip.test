@@ -47,7 +47,7 @@ var x = std ::  Object
   x  --hello
 
 [case testThisModuleNameExpressions]
-var x 
+var x
   :: x  --hello
 
 [case testSimpleLiterals]
@@ -233,10 +233,10 @@ def(x,y=1,*z);end
 
 [case testMemberAccessExpression]
   (1  + 2 )  .   y
-  
+
 [case testMemberAccessLvalue]
   (1  + 2 )  .   y  = 3
-  
+
 [case testMemberAccessLvalueInParens]
  (  ( 1  .   y )  )  = 3
 
@@ -295,7 +295,7 @@ class X
 
   def x = y -- hello
     2
-  end  
+  end
 end
 
 [case testPrivateGetterAndSetter]
@@ -607,7 +607,7 @@ end
    2
 
 
-  
+
 -- Type annotations
 -- ----------------
 

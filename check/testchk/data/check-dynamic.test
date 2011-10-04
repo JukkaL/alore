@@ -468,7 +468,7 @@ class A
     x = a
     a = x
   end
-  
+
   var x
   var a as A
 end
@@ -482,7 +482,7 @@ class A
     y = a
     a = y
   end
-  
+
   var x, y
   var a as A
 end
@@ -496,7 +496,7 @@ class A
     a.x = a
     a = a.x
   end
-  
+
   var x
   var a as A
 end
@@ -510,7 +510,7 @@ class A
     self.x = self.a
     self.a = self.x
   end
-  
+
   const x
   const a as A
 end
@@ -695,9 +695,9 @@ class A
   def g() as void
     a = f(a)
   end
-  
+
   def f(x)
-  end  
+  end
 end
 
 g1 = a.f
@@ -718,7 +718,7 @@ class A
   def f()
     a()
   end
-  
+
   def g(x, y = a())
     a()
   end
@@ -736,9 +736,9 @@ class A is B
   end
 end
 
-class B  
+class B
   def f(x)
-  end  
+  end
 end
 
 g1 = a.f
@@ -758,7 +758,7 @@ class A
   def f
     a()
   end
-  
+
   def g() as void
     a = f
   end
@@ -773,11 +773,11 @@ a.f = a
 class A
   def f
   end
-  
+
   def f = x
     a()
   end
-  
+
   def g() as void
     f = a
   end
@@ -924,7 +924,7 @@ end
 class B
   def f
   end
-  
+
   def f = x
   end
 end
@@ -1054,7 +1054,7 @@ a = a.f(b)
 class A is B
   def f(x as dynamic) as dynamic
   end
-  
+
   def g(x as dynamic)
   end
 end
@@ -1076,7 +1076,7 @@ a = a.f(b)
 class A is B
   def f(x)
   end
-  
+
   def g(x)
   end
 end
@@ -1241,7 +1241,7 @@ class A
   def b as A        -- Fail
   end
   def b = x as dynamic
-  end  
+  end
 end
 [out]
 main: In member "a" of class "A":
@@ -1258,7 +1258,7 @@ class A
   def b as A        -- Fail
   end
   def b = x
-  end  
+  end
 end
 [out]
 main: In member "a" of class "A":
@@ -1275,7 +1275,7 @@ class A
   def b as (A, B)
   end
   def b = x as (A, B)
-  end  
+  end
 end
 class B; end
 [out]
@@ -1291,7 +1291,7 @@ class A
   def b as def (A, B) as A
   end
   def b = x as def (A, B) as A
-  end  
+  end
 end
 class B; end
 [out]

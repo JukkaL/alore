@@ -124,7 +124,7 @@ main, line 1: Incompatible types in assignment
 
 [case testInterfacesInCasts]
 a = o as I -- Fail
-b = i as B -- Ok; a subclass of B might implement I 
+b = i as B -- Ok; a subclass of B might implement I
 i = b as I -- Ok; a subclass of B might implement I
 
 i = o as I
@@ -168,9 +168,9 @@ main, line 2: "Type" not callable
 class A implements I
   def f(x as B) as A -- Fail
   end
-  
+
   def g(x as A) as A
-  end  
+  end
 end
 
 interface I
@@ -188,7 +188,7 @@ class A implements I, J
   def f(x as B) as A -- Fail
   end
   def g(x as A) as B -- Fail
-  end  
+  end
   def h() as B -- Not related to any interface
   end
 end
@@ -267,7 +267,7 @@ interface I
   def x as A
   def x = v as A
   def y as A
-  def y = v as A  
+  def y = v as A
 end
 
 class B; end
@@ -303,7 +303,7 @@ interface I
 end
 interface J
   def y as A
-  def y = v as A  
+  def y = v as A
 end
 
 class B; end
@@ -338,7 +338,7 @@ class A implements I
   end
   def y as A
   end
-  def y = v as A  
+  def y = v as A
   end
 end
 
@@ -346,7 +346,7 @@ interface I
   def x as A
   def x = v as A
   def y as A
-  def y = v as A  
+  def y = v as A
 end
 
 class B; end
@@ -527,9 +527,9 @@ end
 [case testDeepHierarchyWithInterfacesAndDynamic]
 class A is B
   def c as C -- Fail
-  end  
+  end
   def v as C -- Fail
-  end  
+  end
   def v = x as C -- Fail
   end
   def f(x as C) -- Fail
@@ -539,9 +539,9 @@ end
 class B implements I
   def c
   end
-  
+
   var v
-  
+
   def f(x)
   end
 end
@@ -566,7 +566,7 @@ main, line 8: Argument 1 of "f" incompatible with supertype "I"
 [case testDeepHierarchyWithInterfacesAndDynamic]
 class A implements I
   def c as C -- Fail
-  end  
+  end
   var v as C -- Fail
   def f(x as C) -- Fail
   end

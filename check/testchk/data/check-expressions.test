@@ -717,10 +717,10 @@ var b as Boolean
 class A
   def _lt(x as A) as Object
   end
-  
+
   def _gt(x as A) as Object
   end
-  
+
   def _in(x as A) as Object
   end
 end

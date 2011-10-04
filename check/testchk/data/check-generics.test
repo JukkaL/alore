@@ -261,7 +261,7 @@ main, line 3: Incompatible types in assignment
 [case testGenericTypeBody1]
 class A<T>
   var a as T
-  
+
   def f(b as T) as T
     f(x)                 -- Fail
     var d = self as A<B> -- Fail
@@ -280,7 +280,7 @@ main, line 6: Incompatible types in assignment
 [case testGenericTypeBody2]
 class A<T>
   var a as T
-  
+
   def b as T
     return a
     return x -- Fail
@@ -358,7 +358,7 @@ var c as C
 class A<S, T>
   def _add(a as S) as T
   end
-  
+
   def _get(i as T) as S
   end
 end
@@ -385,7 +385,7 @@ var ac as A<C>
 class A<T>
   def _get(i as B) as T
   end
-  
+
   def _set(i as B, v as T)
   end
 end
@@ -411,7 +411,7 @@ var ac as A<C>
 class A<T>
   def _get(i as B) as T
   end
-  
+
   def _set(i as C, v as T)
   end
 end
@@ -1149,7 +1149,7 @@ main, line 2: Incompatible types in assignment
 main, line 3: Incompatible types in assignment
 
 
--- casts 
+-- casts
 -- is expressions
 -- clashes between type variable names
 -- test reverse add, mul and compare for int and float

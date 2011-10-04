@@ -207,7 +207,7 @@ AC_DEFINE_UNQUOTED([DYNAMIC_C_MODULE_EXTENSION], ["$SOEXT"],
 # Determine file system case sensitivity.
 AC_MSG_CHECKING(for case insensitive file names)
 echo > confCaSe.x
-if test -f confcAsE.X; then 
+if test -f confcAsE.X; then
   AC_DEFINE(HAVE_CASE_INSENSITIVE_FILE_NAMES, 1,
             [Define to 1 if you have case insensitive file names.])
   AC_MSG_RESULT(yes)

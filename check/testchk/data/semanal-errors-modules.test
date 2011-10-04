@@ -233,7 +233,7 @@ a::Object
 module a
 [out]
 main, line 2: "a::Object" undefined
-   
+
 [case testUndefinedPartiallyQualifiedName]
 import a::b
 b::X

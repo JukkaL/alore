@@ -180,7 +180,7 @@ class B
   private def b as A
   end
   private def b = x as A
-  end  
+  end
 end
 [out]
 main: In member "f" of class "A":
