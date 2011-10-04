@@ -7,7 +7,7 @@ Copyright (c) 2010-2011 Jukka Lehtosalo
 What's Alore?
 -------------
 
-Alore is an object-oriented general-purpose programming language with an 
+Alore is an object-oriented general-purpose programming language with an
 optional static type system.
 
 
@@ -35,7 +35,7 @@ under /usr/local:
   make install
 
 (or "sudo make install", depending on your configuration)
-  
+
 Now you can run an Alore program using the Alore interpreter:
 
   alore program.alo
@@ -44,14 +44,14 @@ Now you can run an Alore program using the Alore interpreter:
 Quick start (Windows)
 ---------------------
 
-The easiest way to use Alore in Windows is to download the Windows installer 
-from http://www.alorelang.org/ and use it to install Alore. 
+The easiest way to use Alore in Windows is to download the Windows installer
+from http://www.alorelang.org/ and use it to install Alore.
 
 You may also wish to add c:\Alore to your PATH (assuming you used the default
 target folder when installing). Do it like this in Command prompt:
 
   C:\>set path=%path%;c:\alore
-  
+
 Now you can run an Alore program using the Alore interpreter:
 
   C:\Work>alore program.alo
@@ -62,8 +62,8 @@ Building from source code (Windows)
 
 Alternatively, you can build Alore from source code:
 
- 1. Install MinGW and MSYS (http://www.mingw.org/). These are free software 
-    products that provide the GCC C compiler and a lightweight Unix-like build 
+ 1. Install MinGW and MSYS (http://www.mingw.org/). These are free software
+    products that provide the GCC C compiler and a lightweight Unix-like build
     environment for Windows.
  2. Start MSYS shell.
  3. Change to the source package root directory (that also contains
@@ -81,8 +81,8 @@ under c:\Alore:
 Release notes
 -------------
 
-Alore is still pre-beta software. Although Alore developers try to avoid 
-unnecessary changes that break compatibility, this may happen occasionally. 
+Alore is still pre-beta software. Although Alore developers try to avoid
+unnecessary changes that break compatibility, this may happen occasionally.
 Documentation may not always be up-to-date.
 
 See also "Known bugs and limitations" below.
@@ -105,14 +105,14 @@ a single binary using the alorec tool:
   alorec program.alo
 
 This creates the executable "program" (or "program.exe"). You need to have
-a supported C compiler (gcc) installed and in your PATH. 
+a supported C compiler (gcc) installed and in your PATH.
 
-In Windows you can use MinGW (see above); you may have to add C:\MinGW\bin to 
+In Windows you can use MinGW (see above); you may have to add C:\MinGW\bin to
 your PATH (the exact location of MinGW files may differ in your configuration):
 
   C:\>set path=%path%;c:\mingw\bin
 
-NOTE: The source code of your program is directly included in the generated 
+NOTE: The source code of your program is directly included in the generated
       executable file.
 
 
@@ -139,7 +139,7 @@ On other operating systems, the standard C build environment is supported.
 Documentation
 -------------
 
-The documentation for the latest Alore release is available online at 
+The documentation for the latest Alore release is available online at
 http://www.alorelang.org/doc/.
 
 You can build the documentation from sources using make:
@@ -152,7 +152,7 @@ The documentation is generated in directory doc/html.
 Giving feedback
 ---------------
 
-Any comments (good or bad) about Alore and suggestions for future improvements 
+Any comments (good or bad) about Alore and suggestions for future improvements
 are gladly accepted. Send feedback to jukka.lehtosalo@iki.fi.
 
 

@@ -13,24 +13,24 @@ module complex
 import math
 
 
-class Complex implements Addable<Float, Complex>, 
+class Complex implements Addable<Float, Complex>,
                          Multipliable<Float, Complex>
   const re as Float
   const im as Float
-  
+
   def create(re as Float, im as Float)
     self.re = Float(re)
     self.im = Float(im)
   end
-  
+
   def abs() as Float
     return Sqrt(self.re**2 + self.im**2)
   end
-  
+
   def conj() as Complex
     return Complex(self.re, -self.im)
   end
-  
+
   def _str() as Str
     if self.im >= 0
       return "({} + {}j)".format(self.re, self.im)
@@ -38,7 +38,7 @@ class Complex implements Addable<Float, Complex>,
       return "({} - {}j)".format(self.re, -self.im)
     end
   end
-  
+
   def _eq(n as Object) as Boolean
     if n is Complex
       var c = (n as Complex)
@@ -48,27 +48,27 @@ class Complex implements Addable<Float, Complex>,
     else
       return False
     end
-  end  
-  
+  end
+
   def _add(n as Complex) as Complex or
           (n as Float) as Complex
     var c = Coerce(n)
     return Complex(self.re + c.re, self.im + c.im)
   end
-  
+
   def _sub(n as Complex) as Complex or
           (n as Float) as Complex
     var c = Coerce(n)
     return Complex(self.re - c.re, self.im - c.im)
   end
-  
+
   def _mul(n as Complex) as Complex or
           (n as Float) as Complex
     var c = Coerce(n)
     return Complex(self.re * c.re - self.im * c.im,
                    self.im * c.re + self.re * c.im)
   end
-  
+
   def _div(n as Complex) as Complex or
           (n as Float) as Complex
     var c = Coerce(n)

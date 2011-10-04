@@ -4,7 +4,7 @@ Alore ChangeLog
 0.6.0 (January 2011)
 
  * Use "def" keyword instead "sub" to define functions.
- 
+
    "sub" is still supported as an alternative for compatibility with
    earlier Alore versions, but it will be dropped in a future Alore
    release. This may break existing programs that use "def" as an
@@ -21,12 +21,12 @@ Alore ChangeLog
 
  * Added several features in preparation for the upcoming optional type
    system.
-   
+
    These are of limited use in dynamically-typed programs. Some existing
    programs may be broken due to the addition of new keywords.
 
    The documentation of these new features is still incomplete.
-   
+
    * Added interfaces and bind declarations.
    * Added cast expressions, including the dynamic cast expression.
    * Added std::CastError.
@@ -47,7 +47,7 @@ Alore ChangeLog
 
  * Made re::MatchResult public so that it can be referred to in type
    declarations.
-   
+
  * Fixed a few parser bugs.
 
 0.5.0 (October 2010)
