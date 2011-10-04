@@ -612,6 +612,8 @@ static AValue StreamRead(AThread *t, AValue *frame)
 
         /* Have we read enough? */
         if (lenWanted <= len) {
+            /* We have read enough. */
+            
             /* Update the buffer index (this is ok even if there is no
                buffer). */
             inst->member[A_STREAM_INPUT_BUF_IND] = AIntToValue(ind +
