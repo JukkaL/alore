@@ -35,12 +35,16 @@ methods for actually processing data.
       constructor.
 @end      
 
-@fun read([size as Int]) as Str
-@desc Read up to a specified number of characters from the stream and return
-      them as a string. Read less than <i>size</i> characters only if the end 
-      of stream was encountered. If the number
-      of characters is not specified, read until the end of the stream.
+@fun read() as Str
+@desc Read the rest of the stream contents, until reaching the end of the
+      stream. Close the stream and return the contents that were read.
       Return an empty string at the end of stream.
+@end
+
+@fun read(size as Int) as Str
+@desc Read up to the specified number of characters from the stream and return
+      them as a string. Read less than <i>size</i> characters only if the end 
+      of stream was encountered.
 @end
 
 @fun readLn() as Str

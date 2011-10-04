@@ -109,6 +109,13 @@ class MemoryStreamSuite is Suite
     var data = "1234567abcd" * 12345
     var s = MemoryStream(data)
     AssertEqual(s.read(), data)
+    s = MemoryStream()
+    s.write("foo" * 100)
+    s.write("bar" * 100)
+    s.seek(0)
+    AssertEqual(s.read(), "foo" * 100 + "bar" * 100)
+    -- read() closes the stream.
+    AssertRaises(IoError, def (); s.eof(); end)
   end
   
   -- Test checking for the end of stream.
@@ -231,7 +238,7 @@ class MemoryStreamSuite is Suite
     s.flush()
     s.write(d[100:])
     s.seek(0)
-    AssertEqual(s.read(), d)
+    AssertEqual(s.read(2000), d)
     s.seek(1)
     AssertEqual(s.read(511), d[1:512])
     s.seek(511)

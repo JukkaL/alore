@@ -635,7 +635,8 @@ static AValue StreamRead(AThread *t, AValue *frame)
 
 
 /* Read all the contents of a stream and return them as a single string.
-   frame[0] is the stream, frame[1..2] are temporary locations.  */
+   Finally close the stream. frame[0] is the stream, frame[1..2] are
+   temporary locations.  */
 static AValue StreamReadAll(AThread *t, AValue *frame)
 {
     AInstance *inst;
@@ -692,7 +693,15 @@ static AValue StreamReadAll(AThread *t, AValue *frame)
     }
 
     /* Join all the read blocks. */
-    return AJoin(t, frame[2], ADefault);
+    frame[2] = AJoin(t, frame[2], ADefault);
+    if (AIsError(frame[2]))
+        return AError;
+
+    /* Finally close the stream for convenience. */
+    if (AIsError(ACallMethodByNum(t, AM_CLOSE, 0, frame)))
+        return AError;
+    
+    return frame[2];
 }
 
 

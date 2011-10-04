@@ -223,7 +223,7 @@ private def TestReadAll(*a)
     var r = ReadStream(a, *m)
     var s2 = r.read()
     Assert(s == s2)
-    Assert(r.eof())
+    AssertRaises(IoError, def (); r.eof(); end)
     
     -- Read all but the first character of the stream in one operation.
     r = ReadStream(a, *m)
