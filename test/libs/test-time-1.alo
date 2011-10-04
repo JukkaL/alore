@@ -19,7 +19,7 @@ class TimeSuite is Suite
     Assert(d.day == 31)
     Assert(d.month == 12)
     Assert(d.year == 2099)
-    Assert(d.weekday == 4) 
+    Assert(d.weekday == 4)
   end
   
   def testDateFromStr()
@@ -27,7 +27,7 @@ class TimeSuite is Suite
     AssertEqual(d.day, 9)
     AssertEqual(d.month, 7)
     AssertEqual(d.year, 2004)
-    AssertEqual(d.weekday, 5) 
+    AssertEqual(d.weekday, 5)
     
     d = Date("1900-01-01")
     Assert(d.day == 1)
@@ -95,12 +95,12 @@ class TimeSuite is Suite
 
     d = Date(2004, 13, 1)
     Assert(d.day == 1)
-    Assert(d.month == 1)    
+    Assert(d.month == 1)
     Assert(d.year == 2005)
 
     d = Date(2004, 0, 31)
     Assert(d.day == 31)
-    Assert(d.month == 12)    
+    Assert(d.month == 12)
     Assert(d.year == 2003)
   end
   
@@ -590,15 +590,15 @@ class TimeSuite is Suite
     
     AssertEqual(DateTime("2000-01-01 00:12:13").format("h:mm [am/pm]"),
            "12:12 am")
-    Assert(DateTime("2000-01-01 01:12:33").format("h:mm [am/pm]") == 
+    Assert(DateTime("2000-01-01 01:12:33").format("h:mm [am/pm]") ==
            "1:12 am")
-    Assert(DateTime("2000-01-01 10:12:33").format("hh:mm [am/pm]") == 
+    Assert(DateTime("2000-01-01 10:12:33").format("hh:mm [am/pm]") ==
            "10:12 am")
-    Assert(DateTime("2000-01-01 12:12:33").format("hh:mm [am/pm]") == 
+    Assert(DateTime("2000-01-01 12:12:33").format("hh:mm [am/pm]") ==
            "12:12 pm")
-    Assert(DateTime("2000-01-01 13:12:13").format("hh:mm [am/pm]") == 
+    Assert(DateTime("2000-01-01 13:12:13").format("hh:mm [am/pm]") ==
            "01:12 pm")
-    Assert(DateTime("2000-01-01 23:12:13").format("hh:mm [A.M./P.M.]") == 
+    Assert(DateTime("2000-01-01 23:12:13").format("hh:mm [A.M./P.M.]") ==
            "11:12 P.M.")
   end
   
@@ -648,7 +648,7 @@ class TimeSuite is Suite
     Assert(DateTime("2003-05-06 04:12:12") <= DateTime("2003-05-06 04:12:12"))
     Assert(DateTime("2003-05-06 04:12:12") >= DateTime("2003-05-06 04:12:12"))
     
-    Assert(DateTime(2003, 5, 6, 4, 12, 12.03) < 
+    Assert(DateTime(2003, 5, 6, 4, 12, 12.03) <
            DateTime(2003, 5, 6, 4, 12, 12.04))
     Assert(DateTime(2003, 5, 6, 4, 12, 12.000005) > DateTime(
                                                2003, 5, 6, 4, 12, 12.000004))
@@ -670,10 +670,10 @@ class TimeSuite is Suite
   end
   
   def testIgnoreNonRelevantCharsInParse()
-    Assert(Date("-d h H m s p P W 1999-10-10", 
+    Assert(Date("-d h H m s p P W 1999-10-10",
                 "-d h H m s p P W YYYY-MM-DD") == Date("1999-10-10"))
     Assert(Time("Y M D W H p P 00:00:01", "Y M D W H p P hh:mm:ss") == Time(1))
-    Assert(DateTime("-d W H p P 2000-01-01 00:00:01", 
+    Assert(DateTime("-d W H p P 2000-01-01 00:00:01",
            "-d W H p P YYYY-MM-DD hh:mm:ss") == DateTime(2000, 1, 1, 0, 0, 1))
   end
   
@@ -696,7 +696,7 @@ class TimeSuite is Suite
     t = Time("", "")
     AssertEqual(t, Time(0))
     
-    -- Missing year, month, day, hour or minute in Date or DateTime 
+    -- Missing year, month, day, hour or minute in Date or DateTime
     -- construction is an error.
     AssertRaises(ValueError, DateTime, ("01-01 12:30", "MM-DD hh:mm"))
     AssertRaises(ValueError, DateTime, ("2001-01 12:30", "YYYY-DD hh:mm"))
@@ -793,10 +793,10 @@ end
 private def AssertTime(t, d, h, m, s)
   if t.day != d or t.hour != h or t.minute != m or t.second != s
     raise AssertionFailure(
-      "Assertion failed ({} != {}d {00}:{00}:{00.######})".format(t, d, h, m, 
+      "Assertion failed ({} != {}d {00}:{00}:{00.######})".format(t, d, h, m,
              s))
   end
-  if not t.day is Int or not t.hour is Int or not t.minute is Int or 
+  if not t.day is Int or not t.hour is Int or not t.minute is Int or
      not t.second is Float
      raise AssertionFailure("Invalid member type in Time object")
    end

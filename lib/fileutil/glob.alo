@@ -22,7 +22,7 @@ def Glob(pattern as Str) as Array<Str>
 end
 
 
--- Split a pattern into an array of components. Components are separated by 
+-- Split a pattern into an array of components. Components are separated by
 -- the path separator in the patter.
 --
 --   SplitPattern("a/*.txt") == ["a/", "*.txt"]
@@ -35,7 +35,7 @@ private def SplitPattern(pattern as Str) as Array<Str>
   
   var components = [] as <Str>
   var i = 0
-  while Separator in pattern[i:] or (AltSeparator != nil and 
+  while Separator in pattern[i:] or (AltSeparator != nil and
                                      AltSeparator in pattern[i:])
     var j = pattern.find(Separator, i) + 1
     if AltSeparator != nil
@@ -69,7 +69,7 @@ end
 --   dirEntries  If not nil, the directory entries of the next component to
 --               process. The caller may provide this (when available) to avoid
 --               repeatedly reading directory contents.
-private def GlobRecurse(base as Str, components as Array<Str>, 
+private def GlobRecurse(base as Str, components as Array<Str>,
                         dirEntries = nil as Array<Str>) as Array<Str>
   -- Have we already processed all components?
   if components == []
@@ -127,7 +127,7 @@ private def GlobRecurse(base as Str, components as Array<Str>,
       -- Process entries, recursively descending into directories.
       for e in entries2
         if pattern != "**"
-          -- Process all directories (including symlinks to directories) 
+          -- Process all directories (including symlinks to directories)
           -- recursively if not using **.
           if IsDir(e)
             ret.extend(GlobRecurse(e + sep, components[1:]))
@@ -139,7 +139,7 @@ private def GlobRecurse(base as Str, components as Array<Str>,
           end
         end
       end
-      -- ** also matches an empty directory sequence. To handle this case, 
+      -- ** also matches an empty directory sequence. To handle this case,
       -- call recursively and reuse the current entries.
       if pattern == "**"
         ret.extend(GlobRecurse(base, components[1:], entries))

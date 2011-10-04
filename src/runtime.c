@@ -211,7 +211,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
                 do {
                     if (instType == type)
                         return A_IS_TRUE;
-                    instType = instType->super;             
+                    instType = instType->super;
                 } while (instType != NULL);
                 return A_IS_FALSE;
             } else if (val != ANil && typeVal == AGlobalByNum(AStdObjectNum))
@@ -227,7 +227,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
             } else if (val == ANil)
                 return A_IS_FALSE;
             else
-                instType = InternalType(val);                
+                instType = InternalType(val);
             
             /* Interface type inclusion checking. */
             do {
@@ -240,7 +240,7 @@ AIsResult AIsOfType(AValue val, AValue typeVal)
                         iface = iface->super;
                     } while (iface != NULL);
                 }
-                instType = instType->super;                    
+                instType = instType->super;
             } while (instType != NULL);
             return A_IS_FALSE;
         }
@@ -413,7 +413,7 @@ AValue AIsEqual(AThread *t, AValue left, AValue right)
 
   StringComparison:
 
-    {   
+    {
         int result = ACompareStrings(left, right);
         if (result == 0)
             return AIntToValue(1);
@@ -544,7 +544,7 @@ AValue ACompareOrder(AThread *t, AValue left, AValue right,
 
   StringComparison:
 
-    {   
+    {
         int result = ACompareStrings(left, right);
         if (result < 0)
             return BoolToIntValue(ALtSatisfiesOp(operator));
@@ -593,7 +593,7 @@ AValue ACoerce(AThread *t, AOperator op, AValue left, AValue right,
             *t->tempStack = AZero;
         } else if (!AIsLongInt(right))
             goto Fail;
-    } else if (AIsShortInt(left)) {     
+    } else if (AIsShortInt(left)) {
         if (AIsFloat(right)) {
             *t->tempStack = right;
             left = ACreateFloat(t, AValueToInt(left));

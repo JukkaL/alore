@@ -183,7 +183,7 @@ AValue ARaiseValueError(AThread *t, const char *fmt, ...)
     va_start(args, fmt);
     ARaiseByNumFmtVa(t, AErrorClassNum[EX_VALUE_ERROR], fmt, args);
     va_end(args);
-    ADispatchException(t);    
+    ADispatchException(t);
     return AError;
 }
 
@@ -194,7 +194,7 @@ AValue ARaiseKeyError(AThread *t, const char *fmt, ...)
     va_start(args, fmt);
     ARaiseByNumFmtVa(t, AErrorClassNum[EX_KEY_ERROR], fmt, args);
     va_end(args);
-    ADispatchException(t);    
+    ADispatchException(t);
     return AError;
 }
 
@@ -255,7 +255,7 @@ int AMemberNum(AThread *t, const char *member)
   Fail:
     
     AUnlockInterpreter();
-    return ARaiseMemoryError(t); 
+    return ARaiseMemoryError(t);
 }
 
 
@@ -571,7 +571,7 @@ Assize_t ALen(AThread *t, AValue s)
     if (AIsArray(s))
         return AArrayLen(s);
     else {
-        AValue *arg = AAllocTemp(t, s);        
+        AValue *arg = AAllocTemp(t, s);
         AValue ret = ACallMethodByNum(t, AM_LENGTH, 0, arg);
         AFreeTemp(t);
         if (AIsError(ret))
@@ -659,7 +659,7 @@ AValue AGetItem(AThread *t, AValue s, AValue index)
             AAlloc_M(t, AGetBlockSize(sizeof(AValue) + sizeof(AWideChar)), str,
                     result);
             if (!result)
-                return ARaiseMemoryError(t);            
+                return ARaiseMemoryError(t);
             AInitNonPointerBlock(&str->header, sizeof(AWideChar));
             str->elem[0] = AStrItem(s, i);
             
@@ -767,7 +767,7 @@ AValue AAdd(AThread *t, AValue a, AValue b)
         sum = a + b;
         if (!AIsAddOverflow(sum, a, b))
             return sum;
-        else 
+        else
             sum = ACreateLongIntFromIntND(t, AValueToInt(a) + AValueToInt(b));
     } else if (AIsInstance(a))
         return InstanceOp(t, a, b, AM_ADD);
@@ -779,7 +779,7 @@ AValue AAdd(AThread *t, AValue a, AValue b)
         a = ACoerce(t, OPER_PLUS, a, b, (t->tempStack + 1));
         if (AIsError(a))
             sum = AError;
-        else {        
+        else {
             b = t->tempStack[1];
             
             if (AIsLongInt(a) && AIsLongInt(b))
@@ -1188,7 +1188,7 @@ AValue AAllocContainer(AThread *t, AValue initValue)
     container->elem[0] = AZero;
 
     /* Store the initial value. */
-    tmp[1] = AFixArrayToValue(container);    
+    tmp[1] = AFixArrayToValue(container);
     ASetFixArrayItem(t, tmp[1], 0, tmp[0]);
     
     ret = tmp[1];
@@ -1255,7 +1255,7 @@ AValue AHash(AThread *t, AValue object)
     AValue *frame = AAllocTemps(t, 3);
 
     frame[0] = object;
-    hash = AStdHash(t, frame);    
+    hash = AStdHash(t, frame);
     
     AFreeTemps(t, 3);
 

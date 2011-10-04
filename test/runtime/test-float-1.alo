@@ -129,7 +129,7 @@ class FloatSuite is Suite
 
     VerifyFloats(123456.123 - 6.123, 123450.0, 1e-7)
 
-    VerifyFloats(987654321987654321, 987654321980000000.0 + 7654321.0, 1e5, 
+    VerifyFloats(987654321987654321, 987654321980000000.0 + 7654321.0, 1e5,
                  False)
 
     Assert(0 == -0)
@@ -242,7 +242,7 @@ class FloatSuite is Suite
     Assert(2.0**100000 > 0)
     
     Assert(IsInf((-2.0)**2001))
-    Assert((-2.0)**2001 < 0)    
+    Assert((-2.0)**2001 < 0)
   end
   
   -- Test float**longint.
@@ -257,7 +257,7 @@ class FloatSuite is Suite
   
   def testMembers()
     var f = 1.5
-    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow", 
+    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow",
              "_eq", "_lt", "_gt", "_hash", "_int", "_str", "_repr"
       AssertEqual(HasMember(f, m), True)
     end

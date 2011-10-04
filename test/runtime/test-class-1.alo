@@ -10,7 +10,7 @@ class ClassSuite1 is Suite
   def testMemberVars()
     var i = MemberTest()
   
-    Assert(i.puv == nil)  
+    Assert(i.puv == nil)
     i.WritePuv(3)
     Assert(i.ReadPuv() == 3)
   

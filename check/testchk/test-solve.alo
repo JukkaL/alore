@@ -55,8 +55,8 @@ class SolveSuite is Suite
   def testNoConstraintsForVar()
     assertSolve(["T"], [], [(fx.nilt, fx.o)])
     assertSolve(["T", "S"], [], [(fx.nilt, fx.o), (fx.nilt, fx.o)])
-    assertSolve(["T", "S"], 
-                [supc(fx.s, fx.a)], 
+    assertSolve(["T", "S"],
+                [supc(fx.s, fx.a)],
                 [(fx.nilt, fx.o), (fx.a, fx.o)])
   end
   
@@ -90,7 +90,7 @@ class SolveSuite is Suite
   end
   
   def testBothNormalAndDynamicTypesInResults()
-    -- If one of the bounds is dynamic, we promote the other bound to dynamic 
+    -- If one of the bounds is dynamic, we promote the other bound to dynamic
     -- as well, since otherwise the type range does not make sense.
     assertSolve(["T"], [supc(fx.t, fx.a),
                         subc(fx.t, fx.dyn)], [(fx.dyn, fx.dyn)])

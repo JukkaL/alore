@@ -21,7 +21,7 @@ class CallSuite7 is Suite
   end
   
   def testCallFunctionFromCDifferentStackBlock()
-    -- Allocate enough stack variables that the current stack block will 
+    -- Allocate enough stack variables that the current stack block will
     -- overflow.
     var a1
     var a2

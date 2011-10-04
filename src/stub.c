@@ -32,7 +32,7 @@ static int PathCmp(const char *p1, const char *p2, int n);
 
 
 #ifdef __MINGW32__
-/* Disable cmd line argument wildcard expansion by mingw CRT. Doing it 
+/* Disable cmd line argument wildcard expansion by mingw CRT. Doing it
    automatically by the program is not idiomatic in Windows and would cause
    confusion. */
 int _CRT_glob = 0;

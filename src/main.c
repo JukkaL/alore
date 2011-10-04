@@ -61,7 +61,7 @@ static ABool ParseSize(const char *s, Asize_t *size);
 
 
 #ifdef __MINGW32__
-/* Disable cmd line argument wildcard expansion by mingw CRT. Doing it 
+/* Disable cmd line argument wildcard expansion by mingw CRT. Doing it
    automatically by the program is not idiomatic in Windows and would cause
    confusion. */
 int _CRT_glob = 0;
@@ -183,7 +183,7 @@ static void ParseOptions(int *argcp, char ***argvp, AOptions *options)
         case 't':
             /* Perform type checking before running the program. */
             options->typeCheckAndRun = TRUE;
-            break;            
+            break;
 
         case '-':
             /* Long argument with -- prefix. */
@@ -413,7 +413,7 @@ static void GetCheckerPath(char *path)
         ;
     path[i] = '\0';
 
-#ifndef A_HAVE_WINDOWS    
+#ifndef A_HAVE_WINDOWS
     /* Unix-like operating systems */
 
     /* Are we running an installed copy? */

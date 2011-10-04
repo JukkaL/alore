@@ -14,15 +14,15 @@ import os
 --       Var(x)))
 private class StrConv is NodeVisitor<Str>
   -- Convert an array of items to a multiline pretty-printed string. The tag
-  -- is produced from the type name of obj and its line number. See 
-  -- util::DumpTagged for a description of the nodes argument. 
+  -- is produced from the type name of obj and its line number. See
+  -- util::DumpTagged for a description of the nodes argument.
   private def dump(nodes, obj)
     return DumpTagged(nodes, ShortType(obj) + ":" + Str(obj.line))
   end
   
   -- Return an array in a format suitable for dump() that represents the
   -- arguments and the body of a function. The caller can then decorate the
-  -- array with information specific to methods, global functions or 
+  -- array with information specific to methods, global functions or
   -- anonymous functions.
   private def funcHelper(o)
     var a = []
@@ -68,7 +68,7 @@ private class StrConv is NodeVisitor<Str>
     end
     -- Omit path to special file with name "main". This is used to simplify
     -- test case descriptions; the file "main" is used by default in many test
-    -- cases. 
+    -- cases.
     if o.path != nil and o.path != "main"
       -- Insert path. Normalize directory separators to / to unify test case
       -- output in all platforms.
@@ -309,7 +309,7 @@ private class StrConv is NodeVisitor<Str>
   
   def visitNameExpr(o)
     var n = o.name
-    if o.kind == Gdef or (o.fullName != o.name and 
+    if o.kind == Gdef or (o.fullName != o.name and
                           o.fullName != nil)
       -- Append fully qualified name for global references.
       n += " [{}]".format(o.fullName)
@@ -380,7 +380,7 @@ private class StrConv is NodeVisitor<Str>
     return dump([Str(o.type)], o)
   end
 
-  -- These are for convenience. These node types are not defined in the parser 
+  -- These are for convenience. These node types are not defined in the parser
   -- module.
   def visitFilterNode(o)
   end

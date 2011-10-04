@@ -32,7 +32,7 @@ class MathSuite is Suite
     
     AssertFloatEqual(Cos(1.0), 0.540302305)
     AssertFloatEqual(Cos(-90), -0.44807361)
-  end 
+  end
   
   def testTan()
     AssertFloatEqual(Tan(0), 0)
@@ -141,7 +141,7 @@ class MathSuite is Suite
     AssertFloatEqual(Log(0.079), -2.53830742)
   end
   
-  def testLogError()    
+  def testLogError()
     AssertRaises(ValueError, Log, [0])
     AssertRaises(ValueError, Log, [-1.2])
   end

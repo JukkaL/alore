@@ -7,7 +7,7 @@ import lex
 import string
 
 
--- Return a representation of a token that can be used in a parse error 
+-- Return a representation of a token that can be used in a parse error
 -- message.
 private def TokenRepr(tok as Token) as Str
   if tok is Break
@@ -61,7 +61,7 @@ def UnwrapParens(node as Node) as Node
 end
 
 
--- Convert an expression node to the corresponding lvalue node. For 
+-- Convert an expression node to the corresponding lvalue node. For
 -- MemberLvalues, also initialize the isInit member with the argument value.
 --
 -- Perform the following conversions:
@@ -74,14 +74,14 @@ end
 private def ToLvalue(lv as Node, isInit = False as Boolean) as Node
   var n = lv
   if lv is MemberExpr
-    var n2 = MemberLvalue((lv as MemberExpr).expr, 
+    var n2 = MemberLvalue((lv as MemberExpr).expr,
                           (lv as MemberExpr).name)
     n2.isInit = isInit
     n = n2
   elif lv is NameExpr
     n = NameLvalue((lv as NameExpr).name)
   elif lv is IndexExpr
-    n = IndexLvalue((lv as IndexExpr).base, 
+    n = IndexLvalue((lv as IndexExpr).base,
                     (lv as IndexExpr).index)
   elif lv is SuperExpr
     n = SuperLvalue((lv as SuperExpr).name)

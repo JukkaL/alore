@@ -335,7 +335,7 @@ ABool ACreateTracebackArray(AThread *t)
     for (i = 0; i < len; ) {
         if (AIsInterpretedFrame(stack))
             ip = AGetFrameIp(stack) - 1;
-#ifdef HAVE_JIT_COMPILER        
+#ifdef HAVE_JIT_COMPILER
         else if (stack[2] != A_COMPILED_FRAME_FLAG) {
             /* Get the ip from a JIT compiled function. We must first map
                the compiled function to the original, interpreted form. */
@@ -422,7 +422,7 @@ ABool ACreateTracebackArray(AThread *t)
                            AError_TRACEBACK, &TMP[1]))
         goto Fail;
 
-    t->exception = TMP[0];    
+    t->exception = TMP[0];
     t->tempStackPtr -= 3;
     
     t->stackPtr = oldStackPtr;

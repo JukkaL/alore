@@ -115,7 +115,7 @@ void ABuildTypeInfoMembers(ATypeInfo *type)
         blockSize = sizeof(AMemberHashTable) + tableSize * sizeof(AMemberNode);
 
         /* Large tables must be unmovable, since they may contain pointers
-           between nodes that are not seen by the gc. */           
+           between nodes that are not seen by the gc. */
         if (tableSize >= 1)
             table = AAllocUnmovable(blockSize);
         else
@@ -272,7 +272,7 @@ static void UpdateTypeExtDataMember(ATypeInfo *type)
     while (cur != NULL) {
         if (cur->extDataMember != -1) {
             type->extDataMember = cur->extDataMember;
-            break;        
+            break;
         }
         cur = ASuperType(cur);
     }
@@ -614,7 +614,7 @@ void ACheckSetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
     /* Check if there is a variable or a constant with the same name. */
     if (GetMemberCount(type->memberTable[MT_VAR_GET_PRIVATE - isPrivate],
                        key) > 0
-        || GetMemberVariableCount(type->memberTable[MT_VAR_GET_PUBLIC + 
+        || GetMemberVariableCount(type->memberTable[MT_VAR_GET_PUBLIC +
                                                     isPrivate],
                                   key, FALSE) > 0)
         AGenerateError(tok->lineNumber, ErrRedefined, tok);
@@ -662,7 +662,7 @@ void ACheckGetterDefinition(ATypeInfo *type, unsigned key, ABool isPrivate,
             GetMemberCount(type->memberTable[MT_METHOD_PRIVATE], key) > 0))
         AGenerateError(tok->lineNumber, ErrRedefined, tok);
 
-    /* Check if there are variables or contant definitions with the same 
+    /* Check if there are variables or contant definitions with the same
        name. */
     if (GetMemberVariableCount(type->memberTable[MT_VAR_GET_PUBLIC +
                                                  isPrivate], key, FALSE) > 0
@@ -867,7 +867,7 @@ ABool AAllocateInterfacesInTypeInfo(ATypeInfo *type, unsigned numInterfaces)
         return FALSE;
 
     /* Initialize block header. */
-    AInitNonPointerBlockOld(block, dataSize);    
+    AInitNonPointerBlockOld(block, dataSize);
     /* Copy values from the old list block. */
     for (i = 0; i < type->numInterfaces; i++)
         *AInterfaceListPtr(ANonPointerBlockToValue(block), i) =

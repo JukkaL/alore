@@ -37,7 +37,7 @@ class ExceptSuite3 is Suite
       finally
         i += 1
       end
-      Fail()        
+      Fail()
     end
   
     Assert(i == 3)
@@ -355,7 +355,7 @@ class ExceptSuite3 is Suite
     Ok()
   end
   
-  -- Test break within two try statements, the outermost having a finally 
+  -- Test break within two try statements, the outermost having a finally
   -- statement.
   def testBreakInTwoDeepTry()
     var i = 0
@@ -376,7 +376,7 @@ class ExceptSuite3 is Suite
     Assert(i == 1)
   end
   
-  -- Test return within two try statements, the outermost having a finally 
+  -- Test return within two try statements, the outermost having a finally
   -- statement.
   def testReturnInTwoDeepTry()
     var a = [0]

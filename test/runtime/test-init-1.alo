@@ -5,7 +5,7 @@ module runtime
 import unittest
 
 
--- This variables are initilized by top-level statements (V1 to 1, V2 to 2, 
+-- This variables are initilized by top-level statements (V1 to 1, V2 to 2,
 -- etc.).
 private var V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11
 

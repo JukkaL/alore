@@ -38,7 +38,7 @@ class JoinSuite is Suite
   end
   
   def testFunctionTypes()
-    assertJoin(callable(fx.a, fx.b), callable(fx.a, fx.b), 
+    assertJoin(callable(fx.a, fx.b), callable(fx.a, fx.b),
                callable(fx.a, fx.b))
                
     assertJoin(callable(fx.a, fx.b), callable(fx.b, fx.b), fx.o)
@@ -65,7 +65,7 @@ class JoinSuite is Suite
   
   def testNil()
     -- Any type t joined with nil results in t.
-    for t in NilType(), fx.a, fx.o, UnboundType("x"), fx.t, tuple(), 
+    for t in NilType(), fx.a, fx.o, UnboundType("x"), fx.t, tuple(),
              callable(fx.a, fx.b), fx.dyn
       assertJoin(t, NilType(), t)
     end
@@ -128,7 +128,7 @@ class JoinSuite is Suite
   def testGenericsWithMultipleArgs()
     assertJoin(fx.hab, fx.hab, fx.hab)
     assertJoin(fx.hab, fx.haa, fx.o)
-    assertJoin(fx.hab, fx.hbb, fx.o)    
+    assertJoin(fx.hab, fx.hbb, fx.o)
   end
   
   def testGenericsWithRanges()
@@ -167,18 +167,18 @@ class JoinSuite is Suite
   end
   
   def testGenericsWithInheritanceAndRanges()
-    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
+    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                fx.gba, fx.gaa)
-    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
+    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                fx.gbb, fx.o)
   end
   
   def testGenericsWithInheritanceAndSharedSupertypeAndRanges()
-    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
-               Instance(fx.gs2i, [fx.b], [fx.a]), 
+    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
+               Instance(fx.gs2i, [fx.b], [fx.a]),
                fx.gaa)
-    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
-               Instance(fx.gs2i, [fx.b], [fx.b]), 
+    assertJoin(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
+               Instance(fx.gs2i, [fx.b], [fx.b]),
                fx.o)
   end
   
@@ -198,7 +198,7 @@ class JoinSuite is Suite
   end
   
   def testCallablesWithDynamic()
-    assertJoin(callable(fx.a, fx.a,   fx.dyn, fx.a), 
+    assertJoin(callable(fx.a, fx.a,   fx.dyn, fx.a),
                callable(fx.a, fx.dyn, fx.a,   fx.dyn),
                callable(fx.a, fx.dyn, fx.dyn, fx.dyn))
   end
@@ -231,7 +231,7 @@ class JoinSuite is Suite
     assertJoin(fx.f, fx.f3, fx.f)
   end
   
-  def testJoinInterfaceAndClassTypes()    
+  def testJoinInterfaceAndClassTypes()
     assertJoin(fx.o, fx.f, fx.o)
     assertJoin(fx.a, fx.f, fx.o)
     
@@ -256,7 +256,7 @@ class JoinSuite is Suite
     
     assertJoin(fx.m1, fx.m2, fx.gfa)
     
-    assertJoin(fx.m2, fx.m3, fx.err)    
+    assertJoin(fx.m2, fx.m3, fx.err)
   end
   
   def testSimpleTypeObjects()
@@ -264,11 +264,11 @@ class JoinSuite is Suite
     var t2 = typeCallable(fx.b, fx.b)
     
     assertJoin(t1, t1, t1)
-    Assert(JoinTypes(t1, t1, fx.basic).isTypeObj)    
+    Assert(JoinTypes(t1, t1, fx.basic).isTypeObj)
     
     assertJoin(t1, t2, fx.stdType)
     assertJoin(t1, fx.stdType, fx.stdType)
-    assertJoin(fx.stdType, fx.stdType, fx.stdType)    
+    assertJoin(fx.stdType, fx.stdType, fx.stdType)
   end
   
   def testIntersectionTypeObjects()
@@ -277,7 +277,7 @@ class JoinSuite is Suite
     var i = Intersection(t1, t2)
     
     assertJoin(i, i, i)
-    Assert(JoinTypes(i, i, fx.basic).isTypeObj)    
+    Assert(JoinTypes(i, i, fx.basic).isTypeObj)
     
     assertJoin(t1, i, fx.stdType)
     assertJoin(i, fx.stdType, fx.stdType)
@@ -310,7 +310,7 @@ class JoinSuite is Suite
   
   -- FIX function types + varargs and default args
   
-  private def assertJoin(s, t, join) 
+  private def assertJoin(s, t, join)
     assertSimpleJoin(s, t, join)
     assertSimpleJoin(t, s, join)
   end
@@ -333,13 +333,13 @@ class JoinSuite is Suite
     return TupleType(a)
   end
   
-  -- callable(a1, ..., an, r) constructs a callable with argument types 
+  -- callable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r.
   private def callable(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], False)
   end
   
-  -- typeCallable(a1, ..., an, r) constructs a callable with argument types 
+  -- typeCallable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r, and which represents a type.
   private def typeCallable(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], True)

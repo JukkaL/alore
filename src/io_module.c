@@ -382,7 +382,7 @@ AValue AStreamWrite(AThread *t, AValue *frame)
             }
         } else if (inst->member[A_STREAM_BUF_MODE] ==
                    A_BUFMODE_LINE_BUFFERED) {
-            /* If we wrote a newline character, flush the buffer. */        
+            /* If we wrote a newline character, flush the buffer. */
             if (AIsWideStr(inst->member[A_STREAM_OUTPUT_BUF])) {
                 for (i = origBufInd / sizeof(AWideChar);
                      i < bufInd / sizeof(AWideChar); i++) {
@@ -475,8 +475,8 @@ AValue AStreamWrite(AThread *t, AValue *frame)
 
 AValue AStreamWriteLn(AThread *t, AValue *frame)
 {
-    /* FIX: What if e.g. _write causes another call to write while the 
-            writeLn is active? The flag causes it behave like a writeLn 
+    /* FIX: What if e.g. _write causes another call to write while the
+            writeLn is active? The flag causes it behave like a writeLn
             call... */
     AValueToInstance(frame[0])->member[A_STREAM_MODE] |= A_MODE_WRITELINE;
     
@@ -580,7 +580,7 @@ static AValue StreamRead(AThread *t, AValue *frame)
                         return frame[2];
                 }
 
-                inst = AValueToInstance(frame[0]);               
+                inst = AValueToInstance(frame[0]);
                 continue;
             }
         }
@@ -1107,12 +1107,12 @@ static AValue StreamFillInputBuffer(AThread *t, AValue *frame)
         inst = AValueToInstance(frame[0]);
 
         /* Figure out the preferred size of the buffer. */
-#ifdef A_HAVE_POSIX    
+#ifdef A_HAVE_POSIX
         if (inst->member[A_STREAM_BUF_MODE] == A_BUFMODE_BUFFERED)
             frame[1] = AIntToValue(A_IO_BUFFER_SIZE);
         else
             frame[1] = AIntToValue(A_IO_LINE_BUFFER_SIZE);
-#else    
+#else
         if (inst->member[A_STREAM_BUF_MODE] == A_BUFMODE_BUFFERED)
             frame[1] = AIntToValue(A_IO_BUFFER_SIZE);
         else if (inst->member[A_STREAM_BUF_MODE] == A_BUFMODE_LINE_BUFFERED)

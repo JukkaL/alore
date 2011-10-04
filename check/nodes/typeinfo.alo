@@ -45,11 +45,11 @@ class TypeInfo is Node
   
   
   -- Construct a TypeInfo.
-  def create(vars as Map<Str, Var>, 
-             methods as Map<Str, FuncDef>, 
-             getters as Map<Str, FuncDef>, 
-             setters as Map<Str, FuncDef>, 
-             defn as TypeDef, 
+  def create(vars as Map<Str, Var>,
+             methods as Map<Str, FuncDef>,
+             getters as Map<Str, FuncDef>,
+             setters as Map<Str, FuncDef>,
+             defn as TypeDef,
              hasImplicitCreate as Boolean)
     self.fullName = defn.fullName
     self.isInterface = defn.isInterface
@@ -99,7 +99,7 @@ class TypeInfo is Node
   end
   
   def hasPublicWritableMember(name as Str) as Boolean
-    return (hasPublicVar(name) and not getVar(name).isConst) or 
+    return (hasPublicVar(name) and not getVar(name).isConst) or
       hasPublicSetter(name)
   end
   
@@ -268,7 +268,7 @@ class TypeInfo is Node
   end
   
   -- Return an Array of interfaces that are either directly implemented by the
-  -- type or that are the supertypes of other interfaces in the array. Omit 
+  -- type or that are the supertypes of other interfaces in the array. Omit
   -- interfaces that are bound to the type.
   def allDirectlyImplementedInterfaces() as Array<TypeInfo>
     var a = [] as <TypeInfo>
@@ -314,7 +314,7 @@ class TypeInfo is Node
     if self.base != nil
       base = "Base({})".format(self.base.fullName)
     end
-    return DumpTagged(["Name({})".format(self.fullName),    
+    return DumpTagged(["Name({})".format(self.fullName),
                        base,
                        "Interfaces" : interfaces,
                        "Vars" : self.vars.keys(),

@@ -7,7 +7,7 @@
 
 module url
 
--- See RFC 2396 (http://www.ietf.org/rfc/rfc2396.txt) for additional 
+-- See RFC 2396 (http://www.ietf.org/rfc/rfc2396.txt) for additional
 -- information.
 --
 -- Note: This module does not fully follow the spec to make the API simpler and
@@ -16,7 +16,7 @@ module url
 --    based naming is not supported.
 --  * Opaque URLs are not supported. In URLs that do not have a slash after the
 --    scheme, the portion after the scheme is usually taken as the path.
---  * The URL parser does not accept some invalid URLs but may accept some. 
+--  * The URL parser does not accept some invalid URLs but may accept some.
 --    Error reporting is not entirely consistent.
 --
 -- IPv6 addresses are not supported at all.
@@ -159,7 +159,7 @@ class Url
   
   def _repr() as Str
     return "Url(scheme={}, netLocation={}, path={}, query={}, fragment={})".
-      format(Repr(scheme), Repr(netLocation), Repr(path), Repr(query), 
+      format(Repr(scheme), Repr(netLocation), Repr(path), Repr(query),
              Repr(fragment))
   end
   
@@ -174,7 +174,7 @@ end
 
 
 def UrlEncode(s as Str) as Str
-  return Subst(s, "[^a-zA-Z0-9\-._]", 
+  return Subst(s, "[^a-zA-Z0-9\-._]",
                def (m)
                  var ch = m.group(0)
                  if ch == " "
@@ -183,7 +183,7 @@ def UrlEncode(s as Str) as Str
                    return "%" + IntToStr(Ord(ch), 16, 2)
                  else
                    raise ValueError("Character code larger than 255")
-                 end    
+                 end
                end)
 end
 
@@ -195,7 +195,7 @@ end
 
 
 def RawUrlEncode(s as Str, keep = "" as Str) as Str
-  return Subst(s, "[^a-zA-Z0-9\-._]", 
+  return Subst(s, "[^a-zA-Z0-9\-._]",
                def (m)
                  var ch = m.group(0)
                  if ch in keep

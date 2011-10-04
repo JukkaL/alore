@@ -1,7 +1,7 @@
 module nodes
 
 
--- Empty base class for parse tree node visitors. The T type argument 
+-- Empty base class for parse tree node visitors. The T type argument
 -- specifies the return type of the visit methods. As all methods defined here
 -- return nil by default, subclasses do not always need to override all the
 -- methods.
@@ -37,8 +37,8 @@ class NodeVisitor<T>
 
   -- Visit a block. Unlike other methods, this does not correspond to a
   -- specific class, but an array of Nodes. All block statements and function
-  -- definitions call this method to visit the component statements 
-  -- instead of iterating over them directly.  
+  -- definitions call this method to visit the component statements
+  -- instead of iterating over them directly.
   def visitBlock(o as Array<Node>) as T
   end
   

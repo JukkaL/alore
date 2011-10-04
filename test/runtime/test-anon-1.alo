@@ -1,4 +1,4 @@
--- Test cases for anonymous functions that do not access exposed local 
+-- Test cases for anonymous functions that do not access exposed local
 -- variables or member variables.
 
 module runtime
@@ -194,7 +194,7 @@ class AnonFuncSuite is Suite
   end
   
   def testArrayLiteral()
-    var a = [6, 7, def () 
+    var a = [6, 7, def ()
                      return [1+2]
                    end, 8]
     AssertEqual(a[0], 6)
@@ -249,7 +249,7 @@ class AnonFuncSuite is Suite
     except ArithmeticError
       G1 += 8
     end
-    AssertEqual(G1, 1 + 2 + 4 + 8)      
+    AssertEqual(G1, 1 + 2 + 4 + 8)
   end
   
   def testBasicArguments()
@@ -297,12 +297,12 @@ class AnonFuncSuite is Suite
   
   def testInvalidArgCount()
     var f = def ()
-    end    
+    end
     AssertRaises(ValueError, f, [1])
     
     f = def (x)
       return x + 1
-    end    
+    end
     AssertRaises(ValueError, f, [])
   end
   
@@ -320,7 +320,7 @@ class AnonFuncSuite is Suite
     AssertType(Function, f)
   end
   
-  -- Test trivial nested anonymous functions that do not access local 
+  -- Test trivial nested anonymous functions that do not access local
   -- variables defined in outer scopes.
   def testNestedAnonymousFunctions()
     var f = def ()
@@ -332,7 +332,7 @@ class AnonFuncSuite is Suite
     AssertEqual(f()(), 33)
   end
   
-  -- Test multiple nested anonymous functions that do not access local 
+  -- Test multiple nested anonymous functions that do not access local
   -- variables defined in outer scopes.
   def testMultipleNestedAnonymousFunctions()
     var f1 = def ()
@@ -362,7 +362,7 @@ class AnonFuncSuite is Suite
     end
     for i in 0 to 10000
       body()
-    end  
+    end
   end
 end
 

@@ -11,7 +11,7 @@ class CgiSuite is Suite
   def testHtml()
     AssertEqual(Html(""), "")
     AssertEqual(Html("foo bar"), "foo bar")
-    AssertEqual(Html("&<>+/-'""ä\u0000\u1234"), 
+    AssertEqual(Html("&<>+/-'""ä\u0000\u1234"),
                            "&amp;&lt;&gt;+/-'&quot;ä\u0000\u1234")
   end
   

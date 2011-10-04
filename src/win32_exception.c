@@ -54,7 +54,7 @@ AValue ARaiseWin32Exception(AThread *t, int classNum)
     case ERROR_WRITE_FAULT:
     case ERROR_READ_FAULT:
         msg = "Input/output error";
-        break;        
+        break;
     case ERROR_BAD_LENGTH:
     case ERROR_INVALID_PARAMETER:
         msg = "Invalid argument";
@@ -76,14 +76,14 @@ AValue ARaiseWin32Exception(AThread *t, int classNum)
         break;
     case ERROR_SHARING_BUFFER_EXCEEDED:
         msg = "Resource overflow";
-        break;        
+        break;
     case ERROR_HANDLE_DISK_FULL:
     case ERROR_DISK_FULL:
         msg = "No space left on device";
-        break;        
+        break;
     case ERROR_NOT_SUPPORTED:
         msg = "Not supported";
-        break;        
+        break;
     case ERROR_REM_NOT_LIST:
     case ERROR_BAD_NETPATH:
     case ERROR_NETWORK_BUSY:
@@ -111,7 +111,7 @@ AValue ARaiseWin32Exception(AThread *t, int classNum)
         break;
     case ERROR_ALREADY_EXISTS:
         msg = "File exists";
-        break;        
+        break;
     default:
         sprintf(buf, "Error %d", (int)errNum);
         msg = buf;

@@ -86,7 +86,7 @@ private class ParserHelper
     
     -- If the option does not start with -- but has more than 2 characters,
     -- it must be of form '-xyz', i.e. multiple short options (the previous
-    -- is equivalent to '-x', '-y', '-z') or a short option with value 
+    -- is equivalent to '-x', '-y', '-z') or a short option with value
     -- (equivalent to to '-x', 'yz').
     if not opt.startsWith("--") and opt.length() > 2
       return findLongShortOpt(opt)
@@ -162,7 +162,7 @@ private class ParserHelper
       var opt2 = "-" + c
       var found = False
       for o in self.normOpts
-        if opt2 in o 
+        if opt2 in o
           found = True
           if not needsArg(opt2)
             res.append((opt2, nil))
@@ -192,7 +192,7 @@ end
 -- and a set of options that require an argument.
 --
 -- Example:
---   NormalizeOptions(['-f --foo X']) == ([['-f', '--foo']], 
+--   NormalizeOptions(['-f --foo X']) == ([['-f', '--foo']],
 --                                        Set(['-f', '--foo']))
 private def NormalizeOptions(opts as Array<Str>) as
                                                (Array<Array<Str>>, Set<Str>)

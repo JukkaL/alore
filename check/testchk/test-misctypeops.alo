@@ -49,13 +49,13 @@ class TypeOpsSuite is Suite
   end
   
   def testRangeCheckWithCallableTypes()
-    assertRangeVars(callable(["T"], callable([], fx.a, fx.a, fx.a)), 
+    assertRangeVars(callable(["T"], callable([], fx.a, fx.a, fx.a)),
                     [True])
-    assertRangeVars(callable(["T"], callable([], fx.tf, fx.a, fx.a)), 
+    assertRangeVars(callable(["T"], callable([], fx.tf, fx.a, fx.a)),
                     [False])
-    assertRangeVars(callable(["T"], callable([], fx.a, fx.tf, fx.a)), 
+    assertRangeVars(callable(["T"], callable([], fx.a, fx.tf, fx.a)),
                     [False])
-    assertRangeVars(callable(["T"], callable([], fx.a, fx.a, fx.tf)), 
+    assertRangeVars(callable(["T"], callable([], fx.a, fx.a, fx.tf)),
                     [False])
   end
   
@@ -75,7 +75,7 @@ class TypeOpsSuite is Suite
   
   def testRangeCheckWithMultipleGenericFunctionVars()
     assertRangeVars(callable(["T", "S"], tuple(fx.gt, fx.sf)), [True, False])
-    assertRangeVars(callable(["S", "T"], tuple(fx.gtf2, fx.sf1)), 
+    assertRangeVars(callable(["S", "T"], tuple(fx.gtf2, fx.sf1)),
                                                          [False, True])
   end
   
@@ -107,7 +107,7 @@ class TypeOpsSuite is Suite
   
   
   def testTrivialExpand()
-    for t in fx.a, fx.o, fx.t, fx.void, fx.nilt, tuple(fx.a), 
+    for t in fx.a, fx.o, fx.t, fx.void, fx.nilt, tuple(fx.a),
              callable([], fx.a, fx.a), fx.dyn
       assertExpand(t, [], t)
       assertExpand(t, [], t)
@@ -149,7 +149,7 @@ class TypeOpsSuite is Suite
       if item.right is Tuple
         lowerBounds[name] = item.right[0]
         upperBounds[name] = item.right[1]
-      else 
+      else
         lowerBounds[name] = item.right
       end
     end
@@ -167,7 +167,7 @@ class TypeOpsSuite is Suite
   
   
   def testTrivialCollapse()
-    for t in fx.a, fx.o, fx.t, fx.void, fx.nilt, tuple(fx.a), 
+    for t in fx.a, fx.o, fx.t, fx.void, fx.nilt, tuple(fx.a),
              callable([], fx.a, fx.a), fx.dyn, fx.err
       assertCollapse(t, t)
     end
@@ -185,7 +185,7 @@ class TypeOpsSuite is Suite
     assertCollapse(tuple(fx.ga), tuple(fx.ga))
     assertCollapse(tuple(fx.gbo, fx.gaa), tuple(fx.gb, fx.ga))
     
-    assertCollapse(callable([], fx.gbo, fx.gaa), 
+    assertCollapse(callable([], fx.gbo, fx.gaa),
                    callable([], fx.gb, fx.ga))
   end
   
@@ -208,7 +208,7 @@ class TypeOpsSuite is Suite
   
   
   def testTrivialReplace()
-    for t in fx.a, fx.o, fx.void, fx.nilt, tuple(fx.a), 
+    for t in fx.a, fx.o, fx.void, fx.nilt, tuple(fx.a),
              callable([], fx.a, fx.a), fx.dyn, fx.err
       assertReplace(t, t)
     end
@@ -257,7 +257,7 @@ class TypeOpsSuite is Suite
   
   def testEraseWithTypeObject()
     assertErase(fx.callableType(fx.a, fx.b), fx.stdFunction)
-  end   
+  end
   
   private def assertErase(orig, result)
     AssertEqual(Str(EraseType(orig, fx.basic)), Str(result))
@@ -320,7 +320,7 @@ class TypeOpsSuite is Suite
     return TupleType(a)
   end
   
-  -- callable(args, a1, ..., an, r) constructs a callable with argument types 
+  -- callable(args, a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r and type arguments vars.
   private def callable(vars, *a)
     var tv = []

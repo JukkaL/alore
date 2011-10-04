@@ -30,7 +30,7 @@ static int GetMemberKeyByValue(AThread *t, AValue val)
     int i;
 
     id = AAllocCStrFromString(t, val, buf, 64);
-    if (id == NULL) 
+    if (id == NULL)
         ADispatchException(t);
 
     /* Verify that the id has the correct form. */

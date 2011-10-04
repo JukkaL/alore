@@ -59,9 +59,9 @@ class CompileErrorTestCase is TestCase
         var m = Load(InputFileName)
         raise AssertionFailure("No errors reported")
       except e is CompileError
-        -- Verify that there was a compile error and that the error messages 
+        -- Verify that there was a compile error and that the error messages
         -- are equivalent.
-        AssertStringArraysEqual(output, e.errorMessages, 
+        AssertStringArraysEqual(output, e.errorMessages,
                                 "Invalid compiler output")
       end
     finally

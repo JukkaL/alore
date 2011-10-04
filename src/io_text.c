@@ -76,7 +76,7 @@ AValue ATextStreamCreate(AThread *t, AValue *frame)
     
     /* Prepare for constructing decoder and encoder objects. */
     frame[4] = frame[2];
-    if (isStrict) 
+    if (isStrict)
         numArgs = 0;
     else {
         frame[5] = AGlobalByNum(AUnstrictNum);
@@ -101,7 +101,7 @@ AValue ATextStreamCreate(AThread *t, AValue *frame)
     frame[1] = AGlobal(t, "io::Input");
     frame[2] = AGlobal(t, "io::Output");
     frame[3] = buffering;
-    frame[4] = ADefault;    
+    frame[4] = ADefault;
     return AStreamCreate(t, frame);
 }
 
@@ -211,7 +211,7 @@ AValue ATextStreamClose(AThread *t, AValue *frame)
            lost, but it's probably better than the alternatives. */
         
         /* Record the exception. */
-        isError = TRUE;        
+        isError = TRUE;
         frame[2] = t->exception;
     }
     

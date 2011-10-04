@@ -1,6 +1,6 @@
 module parser
 
--- Alore parser. Constructs a parse tree based on a string representing a 
+-- Alore parser. Constructs a parse tree based on a string representing a
 -- source file. Performs only minimal semantic checks.
 
 import lex
@@ -112,7 +112,7 @@ private class Parser
       if currentTokenStr() == "encoding"
         var encodingTok = expect("encoding")
         var name = expectType(Name)
-        var br = expectBreak()      
+        var br = expectBreak()
         var node = Encoding(name.str).setLine(encodingTok)
         setRepr(node, EncodingRepr(encodingTok, name, br))
         return node as Encoding
@@ -230,8 +230,8 @@ private class Parser
     return defs
   end
   
-  def parseFunction(isMethod = False as Boolean, 
-                    isPrivate = False as Boolean, 
+  def parseFunction(isMethod = False as Boolean,
+                    isPrivate = False as Boolean,
                     privToken = None as Token) as FuncDef
     self.isFunction = True
     try
@@ -253,7 +253,7 @@ private class Parser
       var node = FuncDef(name, args, init, body, isVarArg, isGetter, isSetter,
                          isPrivate, type)
       var defTok, nameTok, argReprs = toks
-      setRepr(node, FuncRepr(privToken, defTok, nameTok, argReprs, defBr, 
+      setRepr(node, FuncRepr(privToken, defTok, nameTok, argReprs, defBr,
                              endTok, endBr))
       return node
     finally
@@ -262,17 +262,17 @@ private class Parser
     end
   end
   
-  def parseFunctionHeader(isPrivate as Boolean, privToken as Token, 
-                          isMethod as Boolean, 
+  def parseFunctionHeader(isPrivate as Boolean, privToken as Token,
+                          isMethod as Boolean,
                           isInterface = False as Boolean) as
-                            (Str, 
-                             Array<Var>, 
-                             Array<Node>, 
-                             Boolean, 
-                             Boolean, 
+                            (Str,
+                             Array<Var>,
+                             Array<Node>,
                              Boolean,
-                             Annotation, 
-                             Boolean, 
+                             Boolean,
+                             Boolean,
+                             Annotation,
+                             Boolean,
                              (Token, Token, dynamic))
     var args, init, isVarArg as (Array<Var>, Array<Node>, Boolean)
     var isGetter = False
@@ -310,16 +310,16 @@ private class Parser
           init = []
         end
         type = parseAnnotation()
-        argReprs = [FuncArgsRepr(lseparator, 
-                                 None, 
-                                 [argTok], [], 
+        argReprs = [FuncArgsRepr(lseparator,
+                                 None,
+                                 [argTok], [],
                                  [], None, [], None)]
       else
         -- Ordinary function/method
         args, init, isVarArg, type, argReprs = parseArgs(isInterface)
       end
       
-      if not currentToken() is Break      
+      if not currentToken() is Break
         parseError()
       end
     except ParseError
@@ -329,7 +329,7 @@ private class Parser
       end
     end
     
-    return name, args, init, isVarArg, isGetter, isSetter, type, isError, 
+    return name, args, init, isVarArg, isGetter, isSetter, type, isError,
            (defTok, nameTok, argReprs)
   end
   
@@ -403,10 +403,10 @@ private class Parser
 
       var endTok, endBr = expectEnd()
       
-      var node = TypeDef(name, defs, base, implement, isInterface, binds, 
+      var node = TypeDef(name, defs, base, implement, isInterface, binds,
                          isPrivateDef, typeVars, baseTypes)
-      setRepr(node, TypeDefRepr(privToken, typeTok, nameTok, isTok, 
-                                implementsTok, commas, headerBr, bindToks, 
+      setRepr(node, TypeDefRepr(privToken, typeTok, nameTok, isTok,
+                                implementsTok, commas, headerBr, bindToks,
                                 bindBrs, endTok, endBr))
       return node
     finally
@@ -416,7 +416,7 @@ private class Parser
   end
   
   def parseSuperType()
-    if (currentToken() is Name and currentTokenStr() != "void") or 
+    if (currentToken() is Name and currentTokenStr() != "void") or
        currentTokenStr() == "::"
       var t
       t, self.ind = ParseType(self.tok, self.ind)
@@ -508,7 +508,7 @@ private class Parser
           parseFunctionHeader(isPrivate, privToken, True, True)
       var defBr = expectBreak()
       if not isError
-        var node = FuncDef(name, args, init, [], isVarArg, isGetter, isSetter, 
+        var node = FuncDef(name, args, init, [], isVarArg, isGetter, isSetter,
                            isPrivate, type)
         var defTok, nameTok, argReprs = toks
         setRepr(node, FuncRepr(privToken, defTok, nameTok, argReprs, defBr,
@@ -523,7 +523,7 @@ private class Parser
   end
   
   -- Parse function arguments.
-  def parseArgs(isInterface = False as Boolean) as 
+  def parseArgs(isInterface = False as Boolean) as
                     (Array<Var>,     -- Arguments
                      Array<Node>,    -- Initialisation expressions (or nil)
                      Boolean,        -- Varargs?
@@ -538,7 +538,7 @@ private class Parser
           (Array<Var>, Array<Node>, Boolean, Annotation)
       
       skip()
-      nextArgs, nextInit, nextIsVarArg, nextAnn, argRepr = 
+      nextArgs, nextInit, nextIsVarArg, nextAnn, argRepr =
         parseArgsItem(True, True)
         
       var n1 = argReprs[0].argNames
@@ -547,7 +547,7 @@ private class Parser
       -- The argument names in the signature must match the first signature.
       for i in 0 to Min(n1.length(), n2.length())
         if n1[i].str != n2[i].str
-          self.errors.report(n2[i].line, 
+          self.errors.report(n2[i].line,
             "Name of argument ""{}"" does not match initial signature".
               format(n2[i].str))
         end
@@ -556,14 +556,14 @@ private class Parser
       argReprs.append(argRepr)
       
       var intersection = Intersection(annotation.type as FunctionLike,
-                                      nextAnn.type as FunctionLike, 
+                                      nextAnn.type as FunctionLike,
                                       nil,
                                       annotation.line)
       annotation = Annotation(intersection, annotation.line)
     end
     
     if annotation == nil and currentTokenStr() == "or"
-      self.errors.report(currentToken().line, 
+      self.errors.report(currentToken().line,
                     "Type signature expected when using ""or""")
       skipUntilBreak()
     end
@@ -571,10 +571,10 @@ private class Parser
     return args, init, isVarArg, annotation, argReprs
   end
   
-  -- Parse a function type signature, potentially prefixed with type variable 
-  -- specification within <...>. This function has to be called once per item 
+  -- Parse a function type signature, potentially prefixed with type variable
+  -- specification within <...>. This function has to be called once per item
   -- to parse intersection types.
-  def parseArgsItem(isInterface = False as Boolean, 
+  def parseArgsItem(isInterface = False as Boolean,
                     forceType = False as Boolean) as
                         (Array<Var>,
                          Array<Node>,
@@ -596,7 +596,7 @@ private class Parser
     
     var annotation = nil as Annotation
     -- Are there any type annotations?
-    if retType != nil or argTypes != [nil] * argTypes.length() or 
+    if retType != nil or argTypes != [nil] * argTypes.length() or
        typeVars.items != [] or forceType
       -- Yes. Construct a type for the function signature.
       var type = constructFunctionType(argTypes, minArgs, isVarArg, retType,
@@ -610,8 +610,8 @@ private class Parser
       orTok = currentToken()
     end
     
-    return args, init, isVarArg, annotation, 
-           FuncArgsRepr(lparen, rparen, argNames, commas, assigns, asterisk, 
+    return args, init, isVarArg, annotation,
+           FuncArgsRepr(lparen, rparen, argNames, commas, assigns, asterisk,
                         asToks, orTok)
   end
   
@@ -709,10 +709,10 @@ private class Parser
     end
   end
   
-  def constructFunctionType(argTypes as Array<Typ>, minArgs as Int, 
-                            isVarArg as Boolean, retType as Typ, 
+  def constructFunctionType(argTypes as Array<Typ>, minArgs as Int,
+                            isVarArg as Boolean, retType as Typ,
                             typeVars as TypeVars, line as Int) as Callable
-    -- Complete the type annotation by replacing omitted types with 
+    -- Complete the type annotation by replacing omitted types with
     -- dynamic/void.
     argTypes = argTypes.copy()
     for i in 0 to argTypes.length()
@@ -730,9 +730,9 @@ private class Parser
   -- Parsing statements
   ---------------------
   
-  -- Parse variable/constant definition. This function is used for parsing 
+  -- Parse variable/constant definition. This function is used for parsing
   -- global, local and member variable definitions.
-  def parseVarDef(kind as Constant, isConst as Boolean, isPrivate as Boolean, 
+  def parseVarDef(kind as Constant, isConst as Boolean, isPrivate as Boolean,
                   privToken as Token) as VarDef
     var tok as Token
     if isConst
@@ -1054,7 +1054,7 @@ private class Parser
     
     var cases = [] as <Array<Node>>
     var bodies = [] as <Array<Node>>
-    var caseToks, caseBrs, caseCommas = [] as <Token>, [] as <Token>, 
+    var caseToks, caseBrs, caseCommas = [] as <Token>, [] as <Token>,
                                         [] as <Array<Token>>
     
     while currentTokenStr() == "case"
@@ -1095,7 +1095,7 @@ private class Parser
       var finallyBr = expectBreak()
       var finallyBody = parseBlock()
       var endTok, endBr = expectEnd()
-      var node = TryFinallyStmt(body, finallyBody)    
+      var node = TryFinallyStmt(body, finallyBody)
       setRepr(node, TryFinallyStmtRepr(tryTok, tryBr, finallyTok, finallyBr,
                                        endTok, endBr))
       return node
@@ -1104,7 +1104,7 @@ private class Parser
       var vars = [] as <Var>
       var types = [] as <NameExpr>
       var handlers = [] as <Array<Node>>
-      var exceptToks, nameToks, isToks, exceptBrs = 
+      var exceptToks, nameToks, isToks, exceptBrs =
           [] as <Token>, [] as <Token>, [] as <Token>, [] as <Token>
       repeat
         exceptToks.append(expect("except"))
@@ -1229,7 +1229,7 @@ private class Parser
           end
         case ","
           -- The comma operator is used to build tuples. Comma also separates
-          -- array items and function arguments, but in this case the 
+          -- array items and function arguments, but in this case the
           -- precedence is too low to build a tuple.
           if Precedence[","] > prec
             expr = parseTupleExpr(expr, allowCast)
@@ -1241,7 +1241,7 @@ private class Parser
           if currentToken() is Op
             var op = currentTokenStr()
             if op == ":" and peek().str == "]"
-              -- Probably an expression of form a[b:] or a[:]; let the caller 
+              -- Probably an expression of form a[b:] or a[:]; let the caller
               -- handle it.
               break
             else
@@ -1520,7 +1520,7 @@ private class Parser
     var defTok = skip()
     
     var args, init, isVarArg, type, argReprs, defBr as
-        (Array<Var>, Array<Node>, Boolean, Annotation, Array<FuncArgsRepr>, 
+        (Array<Var>, Array<Node>, Boolean, Annotation, Array<FuncArgsRepr>,
          Token)
     try
       args, init, isVarArg, type, argReprs = parseArgs()
@@ -1534,7 +1534,7 @@ private class Parser
     
     if not isError
       var node = FuncExpr(args, init, body, isVarArg, type)
-      setRepr(node, FuncRepr(None, defTok, None, argReprs, defBr, endTok, 
+      setRepr(node, FuncRepr(None, defTok, None, argReprs, defBr, endTok,
                              None))
       return node
     else
@@ -1723,14 +1723,14 @@ private class Parser
     var lp, rp = parenRepr(node)
     node = UnwrapParens(node)
     var lv = ToLvalue(node)
-    -- Reuse original textual representation, but add any surrounding 
+    -- Reuse original textual representation, but add any surrounding
     -- parentheses.
     setRepr(lv, LvalueRepr(lp, rp, node.repr))
     return lv
   end
   
   -- If e is a ParenExpr, return an array of left-paren tokens (more that one
-  -- if nested parens) and an array of corresponding right-paren tokens. 
+  -- if nested parens) and an array of corresponding right-paren tokens.
   -- Otherwise, return [], [].
   def parenRepr(e as Node) as (Array<Token>, Array<Token>)
     if e is ParenExpr

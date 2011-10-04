@@ -3,7 +3,7 @@ module codegen
 -- Regression test cases for the bytecode compiler. These cover special cases
 -- that have caused problems in earlier versions.
 --
--- IDEA: Maybe combine with the parser module and rename to compiler or 
+-- IDEA: Maybe combine with the parser module and rename to compiler or
 --       something similar; codegen implies that this is more specialized than
 --       really makes sense.
 
@@ -22,7 +22,7 @@ class CodeGenRegressionsSuite is Suite
   end
 
   -- For a class with an implemented interface, the implicit Object superclass
-  -- was not set. This also resulted in the _eq method to be sometimes 
+  -- was not set. This also resulted in the _eq method to be sometimes
   -- ignored.
   def testObjectSuperclassWithImplements()
     AssertEqual(ObjectSuperclassWithInterfaceRegression.supertype(), Object)

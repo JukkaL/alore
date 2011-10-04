@@ -11,7 +11,7 @@ def FnMatch(pattern as Str, path as Str) as Boolean
 end
 
 
-private def FnMatchRecursive(p as Str, pi as Int, s as Str, si as Int) as 
+private def FnMatchRecursive(p as Str, pi as Int, s as Str, si as Int) as
                                Boolean
   while pi < p.length()
     if p[pi] == "*"

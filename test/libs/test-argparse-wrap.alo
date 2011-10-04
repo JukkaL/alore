@@ -43,18 +43,18 @@ class ArgparseWrapSuite is Suite
   end
   
   def testTwoWordsPerLine()
-    AssertEqual(wrap("hello foo bar zar ba ra", 9), 
+    AssertEqual(wrap("hello foo bar zar ba ra", 9),
                 ["hello foo", "bar zar", "ba ra"])
   end
   
   def testRetainWhiteSpace()
-    AssertEqual(wrap("  hello   foo  bar", 9), 
+    AssertEqual(wrap("  hello   foo  bar", 9),
                 ["  hello", "foo  bar"])
   end
   
   def testStripWhiteSpaceAtEnd()
     AssertEqual(wrap("x       "),  ["x"])
-    AssertEqual(wrap("hello foo bar              ", 8), 
+    AssertEqual(wrap("hello foo bar              ", 8),
                 ["hello", "foo bar"])
   end
   
@@ -63,9 +63,9 @@ class ArgparseWrapSuite is Suite
   end
   
   def testSplitLongLineGeneral()
-    AssertEqual(wrap("foo 123456789 ab c", 6), 
+    AssertEqual(wrap("foo 123456789 ab c", 6),
                 ["foo", "123456", "789 ab", "c"])
-    AssertEqual(wrap("foo 123456789 abcd", 6), 
+    AssertEqual(wrap("foo 123456789 abcd", 6),
                 ["foo", "123456", "789", "abcd"])
   end
   
@@ -134,5 +134,5 @@ class ArgparseWrapSuite is Suite
     else
       return t.wrap(s, width)
     end
-  end    
+  end
 end

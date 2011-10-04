@@ -24,7 +24,7 @@ end
 -- Return a boolean indicating whether a call expression has a (potentially)
 -- compatible number of arguments for calling a function. Varargs at caller are
 -- not checked.
-private def IsValidArgc(nargs as Int, isVarArg as Boolean, 
+private def IsValidArgc(nargs as Int, isVarArg as Boolean,
                         callable as Callable) as Boolean
   if isVarArg
     if callable.isVarArg
@@ -46,7 +46,7 @@ end
 --
 -- Return (fixed argument types, type of the rest of the arguments). Return
 -- (nil, nil) if the last (vararg) argument had an invalid type. If the vararg
--- argument was not an array (nor dynamic), the last item in the returned 
+-- argument was not an array (nor dynamic), the last item in the returned
 -- tuple is nil.
 private def ExpandCallerVarArgs(argTypes as Array<Typ>, fixedArgc as Int) as
                                   (Array<Typ>, Typ)
@@ -56,7 +56,7 @@ private def ExpandCallerVarArgs(argTypes as Array<Typ>, fixedArgc as Int) as
     var itemType as Typ
     if argTypes[-1] is Dynamic
       itemType = Dynamic()
-    elif argTypes[-1] is Instance and 
+    elif argTypes[-1] is Instance and
          (argTypes[-1] as Instance).type.fullName == "std::Array"
       -- Array.
       itemType = (argTypes[-1] as Instance).args[0]
@@ -101,21 +101,21 @@ private def SelfType(type as TypeInfo) as Instance
 end
 
 
--- Map type variables in a type defined in a supertype context to be valid 
+-- Map type variables in a type defined in a supertype context to be valid
 -- in the subtype context. Assume that the type is unique; if more than
 -- one type are possible, return one of the alternatives.
 --
 -- FIX: This functions seems to be unused. Either use it or remove it.
-def MapTypeFromSupertype(type as Typ, subInfo as TypeInfo, 
+def MapTypeFromSupertype(type as Typ, subInfo as TypeInfo,
                          superInfo as TypeInfo) as Typ
   -- Create the type of self in subtype, of form t<a1, ...>.
   var instType = SelfType(subInfo)
   -- Map the type of self to supertype. This gets us a description of the
   -- supertype type variables in terms of subtype variables, i.e. t<t1, ...>
-  -- so that any type variables in tN are to be interpreted in subtype 
+  -- so that any type variables in tN are to be interpreted in subtype
   -- context.
   var instTypes = MapInstanceToSupertypes(instType, superInfo)
-  -- Finally expand the type variables in type with those in the previously 
+  -- Finally expand the type variables in type with those in the previously
   -- constructed type. Note that both type and instType may have type
   -- variables, but in type they are interpreterd in supertype context while
   -- in instType they are interpreted in subtype context. This works even if
@@ -124,10 +124,10 @@ def MapTypeFromSupertype(type as Typ, subInfo as TypeInfo,
 end
 
 
--- Find the original overridden definition of a member (highest type in the 
+-- Find the original overridden definition of a member (highest type in the
 -- subclass hierarchy that defines it). If member was first defined in the
 -- specified type, return nil.
-def FindOriginalMemberDefinition(type as TypeInfo, 
+def FindOriginalMemberDefinition(type as TypeInfo,
                                  member as Str) as AccessorNode
   var n = nil as AccessorNode
   while type.base != nil

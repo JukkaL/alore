@@ -12,8 +12,8 @@ import string
 import math
 
 
-class Time implements Comparable<Time>, Addable<Time, Time>, 
-                      Addable<DateTime, DateTime>, Multipliable<Int, Time>, 
+class Time implements Comparable<Time>, Addable<Time, Time>,
+                      Addable<DateTime, DateTime>, Multipliable<Int, Time>,
                       Multipliable<Float, Time>
   -- Supported calling conventions:
   --   create()
@@ -21,7 +21,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
   --   create(str, format)
   --   create(days, hours, minutes, seconds)
   --   create(seconds)
-  def create(arg1 = nil as Str, arg2 = nil as Str, arg3 = nil as X, 
+  def create(arg1 = nil as Str, arg2 = nil as Str, arg3 = nil as X,
              arg4 = nil as X) or
             (arg1 as Int, arg2 as Int, arg3 as Int, arg4 as Int) or
             (arg1 as Int, arg2 as Int, arg3 as Int, arg4 as Float) or
@@ -45,7 +45,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
       secs, nsecs = NormalizeTime(days, mins, hours, sec)
     elif arg1 != nil
       if arg2 != nil
-        secs, nsecs = NormalizeTime(arg1 as Int, arg2 as Int, arg3 as Int, 
+        secs, nsecs = NormalizeTime(arg1 as Int, arg2 as Int, arg3 as Int,
                                     Float(arg4))
       else
         secs, nsecs = NormalizeTime(0, 0, 0, Float(arg1))
@@ -116,7 +116,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
   def _eq(x as Object) as Boolean
     if x is Time
       var t = (x as Time)
-      return t.day == day and t.hour == hour and t.minute == minute and 
+      return t.day == day and t.hour == hour and t.minute == minute and
              t.second == second
     else
       return False
@@ -136,8 +136,8 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
     if x is DateTime
       return x + self as dynamic
     else
-      return Time(x.day, x.hour, x.minute, 
-                  x.second + secs + nsecs / 1e9) as dynamic               
+      return Time(x.day, x.hour, x.minute,
+                  x.second + secs + nsecs / 1e9) as dynamic
     end
   end
   
@@ -165,7 +165,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
   
   -- Total number of seconds (Int). The sign is the same as of the time value.
   private const secs as Int
-  -- Nanooseconds (integer between -10**9 and 10**9, not inclusive). The sign 
+  -- Nanooseconds (integer between -10**9 and 10**9, not inclusive). The sign
   -- is the same as of the time value.
   private const nsecs as Int
   
@@ -175,7 +175,7 @@ class Time implements Comparable<Time>, Addable<Time, Time>,
 end
 
 
-private def NormalizeTime(d as Int, h as Int, m as Int, s as Float) as 
+private def NormalizeTime(d as Int, h as Int, m as Int, s as Float) as
                                                               (Int, Int)
   -- Integral part of total number of seconds.
   var secs = Int(d * 86400 + h * 3600 + m * 60 + Int(Trunc(s)))

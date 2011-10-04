@@ -218,7 +218,7 @@ static int AllocGlobalBlock(void)
             return -1;
     }
 
-    result = AFreeGlobalBlock;    
+    result = AFreeGlobalBlock;
     AFreeGlobalBlock = AValueToInt(AGlobalVars[result]);
 
     for (i = 0; i < A_GLOBAL_BUCKET_SIZE; i++)

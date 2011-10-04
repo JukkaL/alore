@@ -40,7 +40,7 @@ typedef enum {
 
 #if !defined(__GNUC__) || defined(A_DEBUG) || defined(A_NO_GCC_EXTENSIONS)
 #  define A_INITIALIZE_INTERPRETER
-#  define A_BEGIN_INTERPRETER_LOOP for (;;) { 
+#  define A_BEGIN_INTERPRETER_LOOP for (;;) {
 #  define A_BEGIN_INTERPRETER_LOOP_2 switch (*ip) {
 #  define A_OPCODE(name) case name:
 #  define A_END_OPCODE break

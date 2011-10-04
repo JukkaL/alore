@@ -512,7 +512,7 @@ static ABool MatchName(const char *str, const char *mask)
                 return FALSE;
 #else
             /* Case insensitive matching. */
-            /* IDEA: What about case insensitive matching for character codes 
+            /* IDEA: What about case insensitive matching for character codes
                over 127? */
             int cm = *mask;
             int cs = *str;
@@ -740,7 +740,7 @@ AValue AOsSetEnv(AThread *t, AValue *frame)
 
 /* Parse a string that represents file permissions (it contains some of r/w/x
    or is empty), and convert it to a bitwise integer representation (lowest
-   bit set => 'x', bit 2 set => 'w', bit 3 set => 'r'). */   
+   bit set => 'x', bit 2 set => 'w', bit 3 set => 'r'). */
 static int PermBits(AThread *t, const char *str)
 {
     int bits = 0;

@@ -1,4 +1,4 @@
-encoding latin1 
+encoding latin1
 
 module libs
 
@@ -35,19 +35,19 @@ const Utf16BeCases = [
   (" \ufedc", "\x00 \xfe\xdc"),
 ]
 
--- Test cases for various 8-bit codecs. Only a few sample characters are 
+-- Test cases for various 8-bit codecs. Only a few sample characters are
 -- tested.
 const EightBitInfo = [
   (Iso8859_2, "\u0080\u0094\u0106\u0110\u02d9" : "\x80\x94\xc6\xd0\xff", ""),
-  (Iso8859_3, "\u0080\u0094\u00ca\u0120\u02d9" : "\x80\x94\xca\xd5\xff", 
+  (Iso8859_3, "\u0080\u0094\u00ca\u0120\u02d9" : "\x80\x94\xca\xd5\xff",
     "\xf0"),
   (Iso8859_4, "\u0080\u0094\u00c6\u0110\u02d9" : "\x80\x94\xc6\xd0\xff", ""),
   (Iso8859_5, "\u0080\u0094\u0426\u0430\u045f" : "\x80\x94\xc6\xd0\xff", ""),
-  (Iso8859_6, "\u0080\u0094\u0646\u0650\u0652" : "\x80\x94\xe6\xf0\xf2", 
+  (Iso8859_6, "\u0080\u0094\u0646\u0650\u0652" : "\x80\x94\xe6\xf0\xf2",
     "\xff"),
-  (Iso8859_7, "\u0080\u20ac\u039a\u03a5\u03ce" : "\x80\xa4\xca\xd5\xfe", 
+  (Iso8859_7, "\u0080\u20ac\u039a\u03a5\u03ce" : "\x80\xa4\xca\xd5\xfe",
     "\xff"),
-  (Iso8859_8, "\u0080\u0094\u05d7\u05e1\u200f" : "\x80\x94\xe7\xf1\xfe", 
+  (Iso8859_8, "\u0080\u0094\u05d7\u05e1\u200f" : "\x80\x94\xe7\xf1\xfe",
     "\xff"),
   (Iso8859_9, "\u0080\u0094\u00c6\u011e\u00ff" : "\x80\x94\xc6\xd0\xff", ""),
   (Iso8859_10, "\u0080\u0094\u00c6\u00d0\u0138" : "\x80\x94\xc6\xd0\xff", ""),
@@ -81,7 +81,7 @@ class CodecsSuite is Suite
     end
   end
   
-  def testUtf8PartialDecode()    
+  def testUtf8PartialDecode()
     var c = Utf8.decoder()
     AssertEqual(c.decode("\u00c2"), "")
     AssertEqual(c.unprocessed(), "\u00c2")
@@ -118,7 +118,7 @@ class CodecsSuite is Suite
     AssertEqual(c.unprocessed(), "")
   end
   
-  def testUtf8DecodeErrors()    
+  def testUtf8DecodeErrors()
     assertDecodeError(Utf8, "\x80", "\ufffd")
     assertDecodeError(Utf8, "<\x80>", "<\ufffd>")
     assertDecodeError(Utf8, "<\x80\x80>", "<\ufffd\ufffd>")
@@ -140,7 +140,7 @@ class CodecsSuite is Suite
     AssertEqual(Latin1, Iso8859_1)
     assertEncode("föö bär", Latin1, "föö bär")
     assertEncode(WSS("0123456789"), Latin1, "0123456789")
-    assertDecode("föö bär", Latin1, "föö bär")    
+    assertDecode("föö bär", Latin1, "föö bär")
     assertDecode(WSS("0123456789"), Latin1, "0123456789")
   end
   
@@ -179,7 +179,7 @@ class CodecsSuite is Suite
   end
   
   def testUtf16()
-    -- Only a simple test; the Utf16 encoding is equivalent to either Utf16Le 
+    -- Only a simple test; the Utf16 encoding is equivalent to either Utf16Le
     -- or Utf16Be.
     var c = Utf16.encoder()
     Assert(c.encode("x") in ["\u0000x", "x\u0000"])
@@ -336,7 +336,7 @@ class CodecsSuite is Suite
       var c2 = codec.decoder(s)
       AssertEqual(c.decode(unhexify(fixed + a[0])), c2.decode(unhexify(fixed)))
       var unp = unhexify(a[0])
-      AssertEqual(c.unprocessed(), unp)    
+      AssertEqual(c.unprocessed(), unp)
       for i in 1 to a.length() - 1
         unp += unhexify(a[i])
         AssertEqual(c.decode(unhexify(a[i])), "")

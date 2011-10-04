@@ -1,7 +1,7 @@
 module checker
 
 -- Facilities and constants for generating error messages during type checking.
--- The type checker itself does not deal with message string literals to 
+-- The type checker itself does not deal with message string literals to
 -- improve code clarity and to allow localization (in future).
 
 import types
@@ -35,7 +35,7 @@ const IncompatibleTypes =
   "Incompatible types" as Str
 const IncompatibleTypesInAssignment =
   "Incompatible types in assignment" as Str
-const CreateMustNotHaveReturnType = 
+const CreateMustNotHaveReturnType =
   "Cannot define return type for ""create""" as Str
 const GetterTypeIncompatibleWithSetter =
   "Type of getter incompatible with setter" as Str
@@ -49,7 +49,7 @@ const IncompatiblePairItemType =
   "Incompatible Pair item type" as Str
 const InvalidTypeApplicationTargetType =
   "Invalid type application target type" as Str
-const IncompatibleTupleItemType = 
+const IncompatibleTupleItemType =
   "Incompatible tuple item type" as Str
 const NeedAnnotationForLocalVar =
   "Need type annotation for local variable" as Str
@@ -62,7 +62,7 @@ const IncompatibleArrayVarArgs =
 
 
 -- Helper class for reporting type checker error messages with parameters.
--- The methods of this class need to be provided with the context within a 
+-- The methods of this class need to be provided with the context within a
 -- file; the errors member manages the wider context.
 --
 -- IDEA: Support a "verbose mode" that includes full information about types
@@ -86,8 +86,8 @@ class MessageBuilder
   end
 
   -- Convert a type to a relatively short string that is suitable for error
-  -- messages. Mostly behave like formatSimple below, but never return an 
-  -- empty string.  
+  -- messages. Mostly behave like formatSimple below, but never return an
+  -- empty string.
   def format(type as Typ) as Str
     var s = formatSimple(type)
     if s != ""
@@ -103,8 +103,8 @@ class MessageBuilder
     end
   end
   
-  -- Convert simple types to string that is suitable for error messages, 
-  -- otherwise return "". Try to keep the length of the result relatively 
+  -- Convert simple types to string that is suitable for error messages,
+  -- otherwise return "". Try to keep the length of the result relatively
   -- short to avoid overly long error messages.
   --
   -- Examples:
@@ -162,7 +162,7 @@ class MessageBuilder
       -- information. No need to mention the type explicitly in a message.
       return ""
     end
-  end  
+  end
 
   -- Specific operations
   ----------------------
@@ -171,15 +171,15 @@ class MessageBuilder
   -- get some information as arguments, and they build an error message based
   -- on them.
   
-  -- Report a missing or non-accessible member. 
+  -- Report a missing or non-accessible member.
   -- The type argument is the base type. If member corresponds to an operator,
   -- use the corresponding operator name in the messages. Return type Dynamic.
   --
   -- If inversion == Inverted, use inverted operator names
   -- (member _lt means ">=" and member _gt means "<=").
-  def hasNoMember(type as Typ, member as Str, context as Context, 
+  def hasNoMember(type as Typ, member as Str, context as Context,
                   inversion = nil as Constant) as Typ
-    if type is Instance and 
+    if type is Instance and
        ((type as Instance).type.hasReadableMember(member) and
         not (type as Instance).type.hasPublicReadableMember(member))
       fail("""{}"" is private in {}".format(member, format(type)), context)
@@ -203,7 +203,7 @@ class MessageBuilder
             unsupportedLeftOperand(op, type, context)
             break
           end
-        end          
+        end
       end
     elif member == "_neg"
       -- Unary negation.
@@ -224,13 +224,13 @@ class MessageBuilder
   
   -- Report unsupported operand types for a binary operation.
   -- Types can be Typ objects or strings.
-  def unsupportedOperandTypes(op as Str, leftType as dynamic, 
+  def unsupportedOperandTypes(op as Str, leftType as dynamic,
                               rightType as dynamic, context as Context)
     if leftType is Void or rightType is Void
       checkVoid(leftType, context)
       checkVoid(rightType, context)
       return
-    end     
+    end
     
     var leftStr as Str
     if leftType is Str
@@ -267,14 +267,14 @@ class MessageBuilder
     return Dynamic()
   end
   
-  -- Report an error about an incompatible type argType for argument n when 
+  -- Report an error about an incompatible type argType for argument n when
   -- calling a value with type callee. If the callee represents a method that
   -- corresponds to an operator, use the corresponding operator name in the
-  -- messages. 
+  -- messages.
   --
   -- If inversion == Inverted, use inverted operator names
   -- (member _lt means ">=" and member _gt means "<=").
-  def incompatibleArgument(n as Int, callee as Callable, argType as Typ, 
+  def incompatibleArgument(n as Int, callee as Callable, argType as Typ,
                            context as Context, inversion = nil as Constant)
     var target = ""
     if callee.name != nil
@@ -333,7 +333,7 @@ class MessageBuilder
                                                baseStr), context)
   end
 
-  def invalidArgumentCount(callee as Callable, numArgs as Int, 
+  def invalidArgumentCount(callee as Callable, numArgs as Int,
                            context as Context)
     if numArgs < callee.argTypes.length()
       tooFewArguments(callee, context)
@@ -371,7 +371,7 @@ class MessageBuilder
     end
   end
   
-  def noVariantMatchesArguments(intersection as Intersection, 
+  def noVariantMatchesArguments(intersection as Intersection,
                                 context as Context)
     if intersection.name != nil
       fail("No variant of {} matches argument types".format(
@@ -407,31 +407,31 @@ class MessageBuilder
     end
   end
   
-  def typeIncompatibleWithSupertype(name as Str, supertype as TypeInfo, 
+  def typeIncompatibleWithSupertype(name as Str, supertype as TypeInfo,
                                     context as Context)
     fail("Type of ""{}"" incompatible with supertype ""{}""".format(
          name, supertype.name), context)
   end
   
-  def signatureIncompatibleWithSupertype(name as Str, supertype as Str, 
+  def signatureIncompatibleWithSupertype(name as Str, supertype as Str,
                                          context as Context)
     fail("Signature of ""{}"" incompatible with supertype ""{}""".format(
            name, supertype), context)
   end
   
-  def argumentIncompatibleWithSupertype(argNum as Int, name as Str, 
+  def argumentIncompatibleWithSupertype(argNum as Int, name as Str,
                                         supertype as Str, context as Context)
     fail("Argument {} of ""{}"" incompatible with supertype ""{}""".
          format(argNum, name, supertype), context)
   end
   
-  def returnTypeIncompatibleWithSupertype(name as Str, supertype as Str, 
+  def returnTypeIncompatibleWithSupertype(name as Str, supertype as Str,
                                           context as Context)
     fail("Return type of ""{}"" incompatible with supertype ""{}""".
          format(name, supertype), context)
   end
   
-  def methodExpectedAsOperatorImplementation(type as Typ, member as Str, 
+  def methodExpectedAsOperatorImplementation(type as Typ, member as Str,
                                              context as Context)
     fail("Expected operator method ""{}"" in {}".format(
       member, format(type)), context)
@@ -442,7 +442,7 @@ class MessageBuilder
          context)
   end
   
-  def incompatibleTypeApplication(expectedArgCount as Int, 
+  def incompatibleTypeApplication(expectedArgCount as Int,
                                   actualArgCount as Int, context as Context)
     if expectedArgCount == 0
       fail("Type application targets a non-generic function", context)
@@ -460,7 +460,7 @@ class MessageBuilder
          context)
   end
   
-  def couldNotInferTypeArguments(calleeType as Callable, n as Int, 
+  def couldNotInferTypeArguments(calleeType as Callable, n as Int,
                                  context as Context)
     if calleeType.name != nil and n > 0
       fail("Cannot infer type argument {} of {}".format(
@@ -489,7 +489,7 @@ class MessageBuilder
   
   def incompleteTypeVarMatch(member as Str, context as Context)
     fail("""{}"" has incomplete match to supertype type variable".format(
-           member), context)  
+           member), context)
   end
   
   -- If type is void, report an error such as ".. does not return a value"
@@ -516,7 +516,7 @@ end
 
 
 -- If the argument is the name of a method (of form method "x" of "y"), return
--- the type portion in quotes (e.g. "y"). If the argument is the name of a 
+-- the type portion in quotes (e.g. "y"). If the argument is the name of a
 -- function (of form function "x"), return the function name portion (e.g.
 -- "x"). Otherwise, return the string unmodified.
 private def ExtractType(name as Str) as Str

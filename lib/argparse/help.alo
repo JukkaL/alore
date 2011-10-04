@@ -27,7 +27,7 @@ def HelpColumnWidth(opts as Array<Str>, help as Array<Pair<Str, Str>>) as Int
 end
 
 
-def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>, 
+def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>,
              firstColumnWidth as Int) as Str
   var nopts = NormalizeHelpOptions(opts, help)
 
@@ -59,7 +59,7 @@ def HelpText(opts as Array<Str>, help as Array<Pair<Str, Str>>,
       end
       
       -- Format the entire text for this set of option synonyms.
-      if argText.length() <= firstColumnWidth - 4 or 
+      if argText.length() <= firstColumnWidth - 4 or
            (argText + helpText).length() <= MaxWidth - 4
         var fmt = "-{}:".format(firstColumnWidth - 4)
         a.append(("  {" + fmt + "}  {}").format(argText, helpText))
@@ -153,11 +153,11 @@ end
 
 
 -- FIX better name
-private def NormalizeHelpOptions(opts as Array<Str>, 
+private def NormalizeHelpOptions(opts as Array<Str>,
                                  help as Array<Pair<Str, Str>>) as
                                                        Array<Array<Str>>
   var res = [] as <Array<Str>>
-  for o in opts    
+  for o in opts
     var a, name = SplitDescription(o)
     if name != nil
       for i in 0 to a.length()

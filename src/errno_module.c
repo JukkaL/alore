@@ -36,7 +36,7 @@ static AValue ErrnoToCode(AThread *t, AValue *frame)
     if (AIsNil(result))
         return ARaiseValueError(t, "No matching code");
     else
-        return result;        
+        return result;
 }
 
 
@@ -81,14 +81,14 @@ AValue AErrnoToConstant(AThread *t, AValue value)
             return ErrnoConstFromId(AErrnoTable[i].errnoId);
     }
 
-    return ANil;    
+    return ANil;
 }
 
 
 /* Convert an errno symbolic const to a an errno number. Always raise a direct
    exception. */
 AValue AConstantToErrno(AThread *t, AValue value)
-{    
+{
     int i;
     int errnoId;
     
@@ -205,7 +205,7 @@ AValue ARaiseErrnoExceptionByNum(AThread *t, int classNum, const char *path)
 
     if (AIsError(ret))
         return ret;
-    else        
+    else
         return ARaiseValue(t, ret);
 }
 

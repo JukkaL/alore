@@ -11,9 +11,9 @@ class TypeAnalyser is TypeVisitor<Typ>
   private const pushVar as def (Str, Int)
   private const popVar  as def ()
 
-  def create(lookupFunc  as def (Str, Context) as SymbolTableNode, 
-             failFunc    as def (Str, Context), 
-             pushVarFunc as def (Str, Int), 
+  def create(lookupFunc  as def (Str, Context) as SymbolTableNode,
+             failFunc    as def (Str, Context),
+             pushVarFunc as def (Str, Int),
              popVarFunc  as def ())
     self.lookup = lookupFunc
     self.fail = failFunc
@@ -28,7 +28,7 @@ class TypeAnalyser is TypeVisitor<Typ>
         if t.args.length() > 0
           fail("Type variable ""{}"" used with arguments".format(t.name), t)
         end
-        return TypeVar(t.name, sym.tvarId, False, t.line, 
+        return TypeVar(t.name, sym.tvarId, False, t.line,
                        TypeVarRepr(t.repr.components[0]))
       elif sym.kind != Gdef or not sym.node is TypeInfo
         var name = sym.fullName
@@ -55,9 +55,9 @@ class TypeAnalyser is TypeVisitor<Typ>
         return t
       else
         -- Ok; analyse arguments and construct Instance type. Upper bounds are
-        -- never present at this stage, as they are only used during type 
+        -- never present at this stage, as they are only used during type
         -- inference.
-        return Instance(sym.node as TypeInfo, 
+        return Instance(sym.node as TypeInfo,
                         analArray(t.args), nil, nil, t.line, t.repr)
       end
     else
@@ -88,7 +88,7 @@ class TypeAnalyser is TypeVisitor<Typ>
     end
     
     var res = Callable(analArray(t.argTypes), t.minArgs, t.isVarArg,
-                       t.retType.accept(self), t.isTypeObj, t.name, 
+                       t.retType.accept(self), t.isTypeObj, t.name,
                        analVarDefs(t.variables), analBoundVars(t.boundVars),
                        t.line, t.repr)
     

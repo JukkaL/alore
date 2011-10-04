@@ -137,8 +137,8 @@ end
 -- consider interface-type results for non-interface types.
 --
 -- Return ErrorType if the result is ambiguous.
-private def JoinInstances(t as Instance, s as Instance, 
-                          allowInterfaces as Boolean, 
+private def JoinInstances(t as Instance, s as Instance,
+                          allowInterfaces as Boolean,
                           basic as BasicTypes) as Typ
   if t.type == s.type
     -- Simplest case: join two types with the same base type (but  potentially
@@ -170,8 +170,8 @@ private def JoinInstances(t as Instance, s as Instance,
 end
 
 
-private def JoinInstancesViaSupertype(t as Instance, s as Instance, 
-                                      allowInterfaces as Boolean, 
+private def JoinInstancesViaSupertype(t as Instance, s as Instance,
+                                      allowInterfaces as Boolean,
                                       basic as BasicTypes) as Typ
   var res = s
   for mapped in MapInstanceToSupertypes(t, t.type.base)
@@ -184,7 +184,7 @@ private def JoinInstancesViaSupertype(t as Instance, s as Instance,
     -- Now the result must be an Instance, so the cast below cannot fail.
     res = join as Instance
   end
-  if res.type == basic.object.type and 
+  if res.type == basic.object.type and
      not t.type.isInterface and allowInterfaces
     return JoinInstancesAsInterface(t, s, basic)
   else
@@ -194,13 +194,13 @@ end
 
 
 -- Compute join of two instances with a preference to an interface type result.
--- Return Object if no common interface type is found and ErrorType if the 
+-- Return Object if no common interface type is found and ErrorType if the
 -- result type is ambiguous.
 --
 -- Interface type result is expected in the following cases:
 --  * exactly one of t or s is an interface type
 --  * neither t nor s is an interface type, and neither is subtype of the other
-private def JoinInstancesAsInterface(t as Instance, s as Instance, 
+private def JoinInstancesAsInterface(t as Instance, s as Instance,
                                      basic as BasicTypes) as Typ
   var tIfaces = ImplementedInterfaces(t)
   var sIfaces = ImplementedInterfaces(s)
@@ -209,7 +209,7 @@ private def JoinInstancesAsInterface(t as Instance, s as Instance,
   
   for ti in tIfaces
     for si in sIfaces
-      -- Join of two interface types is always an Instance type (either 
+      -- Join of two interface types is always an Instance type (either
       -- another interface type or Object), so the cast below is safe.
       var j = (JoinTypes(ti, si, basic) as Instance)
       if j.type != basic.object.type
@@ -270,7 +270,7 @@ end
 
 
 private def CombineGenericInstances(
-              t as Instance, s as Instance, 
+              t as Instance, s as Instance,
               default as Instance, basic as BasicTypes) as Instance or
               
              (t as Instance, s as Instance,
@@ -305,7 +305,7 @@ private def CombineGenericInstances(
 end
 
 
--- Return True if t and s are equivalent and have identical numbers of 
+-- Return True if t and s are equivalent and have identical numbers of
 -- arguments, default arguments and varargs.
 private def IsSimilarCallables(t as Callable, s as Callable) as Boolean
   return t.argTypes.length() == s.argTypes.length() and
@@ -314,7 +314,7 @@ private def IsSimilarCallables(t as Callable, s as Callable) as Boolean
 end
 
 
-private def CombineSimilarCallables(t as Callable, s as Callable, 
+private def CombineSimilarCallables(t as Callable, s as Callable,
                                     basic as BasicTypes) as Callable
   var argTypes = [] as <Typ>
   for i in 0 to t.argTypes.length()

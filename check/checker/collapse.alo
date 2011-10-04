@@ -76,11 +76,11 @@ private class CollapseTypeVisitor is TypeVisitor<Typ>
   end
   
   def visitIntersection(t as Intersection) as Typ
-    return Intersection(collapse(t.item1) as FunctionLike, 
+    return Intersection(collapse(t.item1) as FunctionLike,
                         collapse(t.item2) as FunctionLike)
   end
 
-  -- Helper to collapse a type.  
+  -- Helper to collapse a type.
   private def collapse(t as Typ) as Typ
     return t.accept(self)
   end

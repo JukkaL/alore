@@ -11,9 +11,9 @@ def ParseType(tok as Array<Token>, index as Int) as (Typ, Int)
 end
 
 
--- Parse type variables and optional bounds (<...>). Return (bounds, index 
+-- Parse type variables and optional bounds (<...>). Return (bounds, index
 -- after bounds).
-def ParseTypeVariables(tok as Array<Token>, index as Int, 
+def ParseTypeVariables(tok as Array<Token>, index as Int,
                        isFunc as Boolean) as (TypeVars, Int)
   var p = TypeParser(tok, index)
   return p.parseTypeVariables(isFunc), p.index()
@@ -158,9 +158,9 @@ private class TypeParser
       retType = parseType()
     end
 
-    var repr = CallableRepr(defTok, lparen, commas, assigns, asterisk, 
+    var repr = CallableRepr(defTok, lparen, commas, assigns, asterisk,
                             rparen, asTok)
-    return Callable(argTypes, minArgs, isVarArg, retType, False, nil, vars, 
+    return Callable(argTypes, minArgs, isVarArg, retType, False, nil, vars,
                     [], line, repr)
   end
 
@@ -201,7 +201,7 @@ private class TypeParser
       rangle = expect(">")
     end
 
-    return UnboundType(name, args, line, UnboundTypeRepr(components, langle, 
+    return UnboundType(name, args, line, UnboundTypeRepr(components, langle,
                                                          commas, rangle))
   end
 
@@ -222,7 +222,7 @@ private class TypeParser
 
       if currentTokenStr() != ","
         break
-      end    
+      end
       commas.append(skip())
 
       -- Trailing comma is only allowed for single-item tuples.

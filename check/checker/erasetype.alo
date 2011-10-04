@@ -46,7 +46,7 @@ private class EraseTypeVisitor is TypeVisitor<Typ>
   end
   
   def visitInstance(t as Instance) as Typ
-    return Instance(t.type, [Dynamic()] * t.args.length(), nil, nil, t.line, 
+    return Instance(t.type, [Dynamic()] * t.args.length(), nil, nil, t.line,
                     t.repr)
   end
   

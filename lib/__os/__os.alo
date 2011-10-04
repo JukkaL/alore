@@ -11,7 +11,7 @@ private const Sep = Separator
 
 
 -- Split a path into drive and path components. Return tuple (drive, path).
--- If there is no drive in the path or if the current platform does not 
+-- If there is no drive in the path or if the current platform does not
 -- use drive specifiers, return ''.
 def SplitDrive(path)
   if Platform == 'windows' and path.length() >= 2 and path[1] == ':' and
@@ -25,7 +25,7 @@ end
 
 -- Normalize extra directory separators, '.' and '..' within a path.
 --
--- Since symbolic links are ignored, the returned path may point to a 
+-- Since symbolic links are ignored, the returned path may point to a
 -- different target from the original.
 def NormPath(path)
   -- Remember the drive portion of the path.
@@ -37,7 +37,7 @@ def NormPath(path)
   end
   var absolute = path.startsWith(Sep)
   -- An UNC path has exactly 2 separators as a prefix.
-  var unc = drive == '' and path.startsWith(Sep + Sep) and 
+  var unc = drive == '' and path.startsWith(Sep + Sep) and
             not path.startsWith(Sep * 3)
   var components = path.split(Sep)
   var res = []
@@ -65,7 +65,7 @@ end
 
 -- Return path as an absolute path.
 --
--- Since symbolic links are ignored, the returned path may point to a 
+-- Since symbolic links are ignored, the returned path may point to a
 -- different target from the original.
 def AbsPath(path)
   if Platform != 'windows'
@@ -105,7 +105,7 @@ def ExpandUser(path)
 end
 
 
--- Create a directory, also creating any needed parent directories. If the 
+-- Create a directory, also creating any needed parent directories. If the
 -- path is already a directory, do nothing.
 def MakeDirs(path)
   -- IDEA: There is a race condition if multiple threads/processes try to

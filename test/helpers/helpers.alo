@@ -1,6 +1,6 @@
 module helpers
 
--- This file contains some utility functions and classes, some of which might 
+-- This file contains some utility functions and classes, some of which might
 -- be obsolete.
 
 import iohelpers
@@ -63,7 +63,7 @@ end
 -- List of objects that contains all object types.
 const ObjList = (55, 1000000000000, [1, 2], "foo", Chr(3000), NarrowSubStr(),
                  WideSubStr(), Base, Array, 1.0, 1 to 4, Ord, VerifyArrays,
-                 Base().foo, nil, True, Base(), Derived(), "a" : 2, 
+                 Base().foo, nil, True, Base(), Derived(), "a" : 2,
                  SymbolicConst)
 
 

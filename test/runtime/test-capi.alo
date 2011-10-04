@@ -64,7 +64,7 @@ class CApiSuite is Suite
     Assert(AGetInt64(0) == "0")
     Assert(AGetInt64(1) == "1")
     Assert(AGetInt64(-1) == "-1")
-    for i in maxInt, minInt, minPosLong, maxNegLong, 2**31 - 1, -2**31, 
+    for i in maxInt, minInt, minPosLong, maxNegLong, 2**31 - 1, -2**31,
              2**31, -2**31 - 1, 2**63 - 1, -2**63, 2**40, 2**50
       AssertEqual(AGetInt64(i), Str(i))
     end
@@ -117,7 +117,7 @@ class CApiSuite is Suite
     end
     if not Is64BitArch
       for i in maxInt, minPosLong
-        AssertEqual(AMakeIntU(i), i)        
+        AssertEqual(AMakeIntU(i), i)
       end
     end
   end
@@ -188,7 +188,7 @@ class CApiSuite is Suite
   def testAMakeStrUtf8()
     AssertEqual(AMakeStrUtf8(""), "")
     AssertEqual(AMakeStrUtf8("foo bar\u0001\u007f"), "foo bar\u0001\u007f")
-    AssertEqual(AMakeStrUtf8(Encode("hääyö\uffff\u1234", Utf8)), 
+    AssertEqual(AMakeStrUtf8(Encode("hääyö\uffff\u1234", Utf8)),
                              "hääyö\uffff\u1234")
                              
     AssertEqual(AMakeStrUtf8("a" * 3000), "a" * 3000)
@@ -333,13 +333,13 @@ class CApiSuite is Suite
   
   def testAIsExceptionType()
     Assert(AIsExceptionType(Raiser(IoError), "std::IoError"))
-    AssertRaises(IoError, AIsExceptionType, 
+    AssertRaises(IoError, AIsExceptionType,
                 [Raiser(IoError), "std::ValueError"])
     Assert(AIsExceptionType(Raiser(TypeError), "std::TypeError"))
     Assert(AIsExceptionType(Raiser(TypeError), "std::ValueError"))
-    AssertRaises(TypeError, AIsExceptionType, 
+    AssertRaises(TypeError, AIsExceptionType,
                 [Raiser(TypeError), "std::IoError"])
-    AssertRaises(ValueError, AIsExceptionType, 
+    AssertRaises(ValueError, AIsExceptionType,
                 [Raiser(ValueError), "std::TypeError"])
   end
   
@@ -553,7 +553,7 @@ class CApiSuite is Suite
     AssertEqual(AGetItem(s, nil:2), "fo")
     AssertEqual(AGetItem(s, 0:-1), "fo")
     var m = Map(("foo", 1) : ("bar", 2))
-    AssertEqual(AGetItem(m, ("foo", 1)), ("bar", 2))    
+    AssertEqual(AGetItem(m, ("foo", 1)), ("bar", 2))
     
     var t = (2, 3, 4)
     AssertEqual(AGetItem(t, 0), 2)

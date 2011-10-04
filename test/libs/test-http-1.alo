@@ -15,7 +15,7 @@ import os
 --  - test additional protocol errors
 
 
-private const Method, Path, Body, RequestHeaders, Auth, InData, OutData, 
+private const Method, Path, Body, RequestHeaders, Auth, InData, OutData,
               Headers, Content, Version, Status, Reason, ReadMode, IsOpen
 
 private const BasicRead, ChunkRead, LineRead, CloseRead
@@ -71,15 +71,15 @@ class HttpSuite is Suite
   
   def testBasicGet()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
                            "Content-Length: 3", "", "foo"],
-                  Headers: ["content-length" : "3", 
+                  Headers: ["content-length" : "3",
                             "content-type" : "text/html"])
   end
   
   def testBasicPost()
     assertRequest(Method: "POST", Body: "foobar",
-                  InData: ["POST / HTTP/1.1", "Host: localhost:8080", 
+                  InData: ["POST / HTTP/1.1", "Host: localhost:8080",
                           "Content-Length: 6", ""],
                   OutData: ["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
                   Headers: ["content-length" : "3"])
@@ -87,11 +87,11 @@ class HttpSuite is Suite
   
   def testChunkedEncoding()
     assertRequest(Path: ["/foo.x?bar=zar&y"],
-                  InData: ["GET /foo.x?bar=zar&y HTTP/1.1", 
-                          "Host: localhost:8080", 
+                  InData: ["GET /foo.x?bar=zar&y HTTP/1.1",
+                          "Host: localhost:8080",
                           ""],
-                  OutData: ["HTTP/1.1 200 OK", "Transfer-Encoding: chunked", 
-                            "", "a;", "1234567890", "3;xx", "foo", "0;", 
+                  OutData: ["HTTP/1.1 200 OK", "Transfer-Encoding: chunked",
+                            "", "a;", "1234567890", "3;xx", "foo", "0;",
                             "chunk", "", ""],
                   Headers: ["transfer-encoding" : "chunked"],
                   Content: "1234567890foo")
@@ -99,15 +99,15 @@ class HttpSuite is Suite
   
   def testBasicAuthentication()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                  OutData: ["HTTP/1.1 401 Authorization Required", 
+                  OutData: ["HTTP/1.1 401 Authorization Required",
                            "Content-Length: 3", "", "foo"],
                   Headers: ["content-length" : "3"],
                   Status: 401,
                   Reason: "Authorization Required")
     assertRequest(Auth: ["user", "passw"],
-                  InData: ["GET / HTTP/1.1", "Host: localhost:8080", 
+                  InData: ["GET / HTTP/1.1", "Host: localhost:8080",
                          "Authorization: Basic dXNlcjpwYXNzdw==", ""],
-                  OutData: ["HTTP/1.1 200 OK", 
+                  OutData: ["HTTP/1.1 200 OK",
                            "Content-Length: 4", "", "bart"],
                   Headers: ["content-length" : "4"],
                   Content: "bart")
@@ -116,7 +116,7 @@ class HttpSuite is Suite
   def testRequestHeaders()
     assertRequest(RequestHeaders: ["User-Agent": "XAZ-bar/2.11 alore/0.0.1",
                                    "Referer": "http://www.xxx/"],
-                  InData: ["GET / HTTP/1.1", "Host: localhost:8080", 
+                  InData: ["GET / HTTP/1.1", "Host: localhost:8080",
                           "User-Agent: XAZ-bar/2.11 alore/0.0.1",
                           "Referer: http://www.xxx/", ""],
                   OutData: ["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"],
@@ -139,20 +139,20 @@ class HttpSuite is Suite
   def testMultipleRequests()
     assertRequest(Path: ["/", "/foo.html"],
                   InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                          ["GET /foo.html HTTP/1.1", 
+                          ["GET /foo.html HTTP/1.1",
                           "Host: localhost:8080", ""]],
-                  OutData: [["HTTP/1.1 200 OK", "Content-Length: 3", "", 
+                  OutData: [["HTTP/1.1 200 OK", "Content-Length: 3", "",
                              "foo"],
                           ["HTTP/1.1 200 OK", "Content-Length: 3", "", "zar"]],
-                  Headers: [["content-length" : "3"], 
+                  Headers: [["content-length" : "3"],
                             ["content-length" : "3"]],
                   Content: ["foo", "zar"])
 
     assertRequest(Path: ["/", "/foo.html"],
                   InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                          ["GET /foo.html HTTP/1.1", 
+                          ["GET /foo.html HTTP/1.1",
                            "Host: localhost:8080", ""]],
-                  OutData: [["HTTP/1.1 200 OK", "Transfer-Encoding: chunked", 
+                  OutData: [["HTTP/1.1 200 OK", "Transfer-Encoding: chunked",
                             "", "3;", "foo", "0;", "chunk", "", ""],
                           ["HTTP/1.1 200 OK", "Content-Length: 3", "", "zar"]],
                   Headers: [["Transfer-Encoding" : "chunked"],
@@ -162,18 +162,18 @@ class HttpSuite is Suite
   
   def testLongResponse()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
                            "Content-Length: 30000", "", "foo" * 10000],
-                  Headers: ["content-length" : "30000", 
+                  Headers: ["content-length" : "30000",
                             "content-type" : "text/html"],
                   Content: "foo" * 10000)
   end
   
   def testDifferentReadModes()
     assertRequest(InData: ["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
                            "Content-Length: 30001", "", "<" + "foo" * 10000],
-                  Headers: ["content-length" : "30001", 
+                  Headers: ["content-length" : "30001",
                             "content-type" : "text/html"],
                   Content: "<" + "foo" * 10000,
                   ReadMode: ChunkRead)
@@ -190,12 +190,12 @@ class HttpSuite is Suite
                   
     assertRequest(Path: ["/", "/foo.html"],
                   InData: [["GET / HTTP/1.1", "Host: localhost:8080", ""],
-                          ["GET /foo.html HTTP/1.1", 
+                          ["GET /foo.html HTTP/1.1",
                           "Host: localhost:8080", ""]],
-                  OutData: [["HTTP/1.1 200 OK", "Content-Length: 3000", "", 
+                  OutData: [["HTTP/1.1 200 OK", "Content-Length: 3000", "",
                             "foo" * 1000],
                           ["HTTP/1.1 200 OK", "Content-Length: 3", "", "zar"]],
-                  Headers: [["content-length" : "3000"], 
+                  Headers: [["content-length" : "3000"],
                             ["content-length" : "3"]],
                   Content: ["fo", "za"],
                   ReadMode: CloseRead)
@@ -205,7 +205,7 @@ class HttpSuite is Suite
   def testInvalidResponse()
     var ss = ServerSocket(8080)
     var t = Thread(def ()
-                    runServer(ss, [["GET / HTTP/1.1", "Host: localhost:8080", 
+                    runServer(ss, [["GET / HTTP/1.1", "Host: localhost:8080",
                                      ""]],
                               [["Invalid response"]], nil)
                    end)
@@ -219,9 +219,9 @@ class HttpSuite is Suite
   def testInvalidCalls()
     var ss = ServerSocket(8080)
     var t = Thread(def ()
-                     runServer(ss, [["GET / HTTP/1.1", "Host: localhost:8080", 
+                     runServer(ss, [["GET / HTTP/1.1", "Host: localhost:8080",
                                     ""]],
-                        [["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"]], 
+                        [["HTTP/1.1 200 OK", "Content-Length: 3", "", "foo"]],
                         nil)
                    end)
     var h = Http("localhost", 8080)
@@ -238,11 +238,11 @@ class HttpSuite is Suite
   -- Test simulated connection through a proxy.
   def testProxy()
     assertRequest(Path: ["http://www.foobar.com/"],
-                  InData: ["GET http://www.foobar.com/ HTTP/1.1", 
+                  InData: ["GET http://www.foobar.com/ HTTP/1.1",
                           "Host: www.foobar.com", ""],
-                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html", 
+                  OutData: ["HTTP/1.1 200 OK", "Content-Type: text/html",
                            "Content-Length: 3", "", "foo"],
-                  Headers: ["content-length" : "3", 
+                  Headers: ["content-length" : "3",
                             "content-type" : "text/html"])
   end
   
@@ -264,8 +264,8 @@ class HttpSuite is Suite
   end
   
   private def assertRequest(*args)
-    var m = Map(Method: "GET", Path: ["/"], Body: nil, Auth: nil, 
-                Content: "foo", Version: "1.1", Status: 200, Reason: "OK", 
+    var m = Map(Method: "GET", Path: ["/"], Body: nil, Auth: nil,
+                Content: "foo", Version: "1.1", Status: 200, Reason: "OK",
                 RequestHeaders: nil, ReadMode: BasicRead, IsOpen: True)
     for p in args
       m[p.left] = p.right

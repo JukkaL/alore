@@ -140,7 +140,7 @@ class Request is Map<Str, Str>
   end
   
   private def parseMultipart(boundary as Str, len as Int)
-    var s = RawStdIn.read(len)    
+    var s = RawStdIn.read(len)
     for part in ParseParts(s, boundary)
       var m = Message(part)
       var disp, opts = ParseHeader(m["Content-Disposition"])
@@ -202,7 +202,7 @@ class UploadInfo
 end
 
 
--- Parse a multipart message into parts.  
+-- Parse a multipart message into parts.
 private def ParseParts(s as Str, boundaryId as Str) as Array<Str>
   var boundary = "--" + boundaryId + CR + LF
   var endBoundary = "--" + boundaryId + "--"

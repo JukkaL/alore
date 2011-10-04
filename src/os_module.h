@@ -1,4 +1,4 @@
-/* os_module.h - 
+/* os_module.h -
 
    Copyright (c) 2010-2011 Jukka Lehtosalo
 

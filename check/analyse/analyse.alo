@@ -15,12 +15,12 @@ import set
 
 
 -- Analyse a program represented as a string semantically and optionally type
--- check the program. Return the annotated parse trees (one per file), the 
+-- check the program. Return the annotated parse trees (one per file), the
 -- symbol table and the type map.
-def Analyse(programText          as Str, 
-            programFnam = "main" as Str, 
-            useFullStd = True    as Boolean, 
-            altLibPath = nil     as Str, 
+def Analyse(programText          as Str,
+            programFnam = "main" as Str,
+            useFullStd = True    as Boolean,
+            altLibPath = nil     as Str,
             isTypeCheck = False  as Boolean) as
                 (Array<AloreFile>, SymbolTable, TypeInfoMap, Map<Node, Typ>)
   var path = DefaultLibPath()
@@ -45,7 +45,7 @@ def Analyse(programText          as Str,
   -- Ignore current directory prefix in error messages.
   analysis.errors.setIgnorePrefix(CurrentDir())
   
-  return analysis.process(WaitingFile((programFnam, nil, [], analysis), 
+  return analysis.process(WaitingFile((programFnam, nil, [], analysis),
                                       programText))
 end
 
@@ -107,7 +107,7 @@ private def IsInstalled() as Boolean
 end
 
 
--- Class for performing semantic analysis and type checking of an Alore 
+-- Class for performing semantic analysis and type checking of an Alore
 -- program.
 class Analysis
   const isTypeCheck as Boolean      -- Do we perform a type check?
@@ -138,7 +138,7 @@ class Analysis
         break
       end
       
-      self.errors.setImportContext(next.importContext)      
+      self.errors.setImportContext(next.importContext)
       next.process()
     end
     
@@ -153,7 +153,7 @@ class Analysis
       trees.append((state as ParsedFile).tree)
     end
     
-    return trees, self.semAnal.symtable, self.semAnal.types, 
+    return trees, self.semAnal.symtable, self.semAnal.types,
            self.checker.typeMap
   end
   

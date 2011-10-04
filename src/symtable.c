@@ -24,7 +24,7 @@ static int NumSyms;
 ASymbol **ASym;
 
 /* FIX: Should these be defined in this file? */
-ASymbol *AMainSymbol;   
+ASymbol *AMainSymbol;
 ASymbol *AUtf8Symbol;
 ASymbol *AAsciiSymbol;
 ASymbol *ALatin1Symbol;

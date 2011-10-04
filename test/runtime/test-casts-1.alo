@@ -43,10 +43,10 @@ class CastsSuite is Suite
   end
   
   def testCastErrorMessage()
-    AssertRaises(CastError, "Cannot cast Int to Float", 
+    AssertRaises(CastError, "Cannot cast Int to Float",
                   def (); 1 as Float; end)
-    AssertRaises(CastError, 
-            "Cannot cast runtime::CastsSuite to unittest::AssertionFailure", 
+    AssertRaises(CastError,
+            "Cannot cast runtime::CastsSuite to unittest::AssertionFailure",
             def (); self as AssertionFailure; end)
   end
   

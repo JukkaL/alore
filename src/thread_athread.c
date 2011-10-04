@@ -61,7 +61,7 @@ static int FreezeDepth;
 #define NextInd(ind) (((ind) + 1) & (A_THREAD_ARG_BUFFER_SIZE - 1))
 
 
-/* Size of the data in thread data block (not including the block header) */ 
+/* Size of the data in thread data block (not including the block header) */
 #define THREAD_DATA_SIZE (sizeof(athread_mutex_t) + sizeof(athread_cond_t))
 
 /* Return pointer to the thread mutex when given the pointer to the thread data
@@ -319,7 +319,7 @@ static void *BeginNewThread(void *voidThread)
         inst->member[A_THREAD_STATE] = AIntToValue(1);
 
         if (AIsError(stack[4])) {
-            inst->member[A_THREAD_STATE] = AIntToValue(2);     
+            inst->member[A_THREAD_STATE] = AIntToValue(2);
             stack[4] = t->exception;
             ACreateTracebackArray(t); /* FIX: is this ok..? */
             inst = AValueToInstance(stack[3]);
@@ -621,7 +621,7 @@ AValue AThreadJoin(AThread *t, AValue *frame)
     athread_mutex_unlock(mutex);
     
     /* If there was an exception, raise it. Otherwise, return the thread
-       return value or no return value. */    
+       return value or no return value. */
     if (inst->member[A_THREAD_STATE] == AIntToValue(2)) {
         t->exception = inst->member[A_THREAD_RET_VAL];
         t->uncaughtExceptionStackPtr = t->stackPtr;

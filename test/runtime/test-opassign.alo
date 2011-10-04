@@ -1,7 +1,7 @@
 module runtime
 
 -- Test suite for statements of the form "expr += expr", "expr *= 2", etc.
--- 
+--
 -- Test cases for compile errors are defined in file "data/compile-errors.txt".
 
 import unittest
@@ -190,9 +190,9 @@ class OperatorAssignmentSuite is Suite
       1 -- 3
     i -=
       1 -- 2
-    i *= 
+    i *=
       2 -- 4
-    i **= 
+    i **=
       2 -- 16
     i /=
       2 -- 8.0
@@ -214,5 +214,5 @@ class OperatorAssignmentSuite is Suite
   
   private def prop = new
     _prop = new + 2
-  end    
+  end
 end

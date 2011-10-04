@@ -1,6 +1,6 @@
 module testparser
 
--- Test cases for parsing cast expressions. 
+-- Test cases for parsing cast expressions.
 --
 -- See also runtime::CastsSuite.
 
@@ -41,10 +41,10 @@ class ParseCastsSuite is Suite
   def testCastInLvalue()
     var a = [4]
     a[0 as Int] = 22
-    AssertRaises(CastError, def (); a[0 as Float] = 22; end)    
+    AssertRaises(CastError, def (); a[0 as Float] = 22; end)
     
     a[0 as Int], a[0 as Int] = 22, 22
-    AssertRaises(CastError, def (); a[0 as Float], a[0] = 22, 22; end)    
+    AssertRaises(CastError, def (); a[0 as Float], a[0] = 22, 22; end)
     AssertRaises(CastError, def (); a[0], a[0 as Float] = 22, 22; end)
   end
   

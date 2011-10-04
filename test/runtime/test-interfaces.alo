@@ -100,7 +100,7 @@ class InterfacesSuite is Suite
     Assert(not 1.1 is BindBuiltIns)
   end
   
-  -- Test querying the interfaces when using interface binding using 
+  -- Test querying the interfaces when using interface binding using
   -- Type interfaces().
   def testQueryingInterfaces()
     AssertEqual(CBind2.interfaces(), [Bind2])
@@ -133,7 +133,7 @@ end
 class Cif5 implements ::If1, helpers::HelperInterface
 end
 
-class Cif6 implements HelperInterface, helpers::HelperInterface, 
+class Cif6 implements HelperInterface, helpers::HelperInterface,
                       HelperInterface, If2, ::If2, If2, If2, If2
 end
 

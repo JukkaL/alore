@@ -25,7 +25,7 @@ private interface X
 end
 
 
-class DateTime implements IDateTime, Comparable<DateTime>, 
+class DateTime implements IDateTime, Comparable<DateTime>,
                           Addable<Time, DateTime>
   -- Supported calling conventions:
   --   create()
@@ -33,7 +33,7 @@ class DateTime implements IDateTime, Comparable<DateTime>,
   --   create(str)
   --   create(str, format)
   -- IDEA replace the last two with (Date, Time)
-  def create(arg1 = nil as Str, arg2 = nil as Str, arg3 = nil as X, 
+  def create(arg1 = nil as Str, arg2 = nil as Str, arg3 = nil as X,
              arg4 = nil as X, arg5 = nil as X, arg6 = nil as X) or
              (arg1 as Int, arg2 as Int, arg3 as Int, arg4 as Int, arg5 as Int,
               arg6 as Int) or
@@ -109,10 +109,10 @@ class DateTime implements IDateTime, Comparable<DateTime>,
   end
   
   def _eq(x as Object) as Boolean
-    if x is DateTime 
+    if x is DateTime
       var dt = (x as DateTime)
-      return dt.year == year and dt.month == month and 
-             dt.day == day and dt.hour == hour and dt.minute == minute and 
+      return dt.year == year and dt.month == month and
+             dt.day == day and dt.hour == hour and dt.minute == minute and
              dt.second == second
     else
       return False
@@ -120,18 +120,18 @@ class DateTime implements IDateTime, Comparable<DateTime>,
   end
   
   def _lt(x as DateTime) as Boolean
-    return (year, month, day, hour, minute, second) < 
+    return (year, month, day, hour, minute, second) <
            (x.year, x.month, x.day, x.hour, x.minute, x.second)
   end
   
   def _gt(x as DateTime) as Boolean
-    return (year, month, day, hour, minute, second) > 
+    return (year, month, day, hour, minute, second) >
            (x.year, x.month, x.day, x.hour, x.minute, x.second)
   end
   
   def _add(x as Time) as DateTime
     if not x is DateTime
-      return DateTime(year, month, day + x.day, hour + x.hour, 
+      return DateTime(year, month, day + x.day, hour + x.hour,
                       minute + x.minute, second + x.second)
     else
       raise TypeError("Time value expected")
@@ -142,7 +142,7 @@ class DateTime implements IDateTime, Comparable<DateTime>,
           (x as Time) as DateTime
     if x is DateTime
       var d = (x as DateTime)
-      return Time(date - Date(d.year, d.month, d.day), hour - d.hour, 
+      return Time(date - Date(d.year, d.month, d.day), hour - d.hour,
                   minute - d.minute, second - d.second) as dynamic
     else
       return self + -(x as Time) as dynamic

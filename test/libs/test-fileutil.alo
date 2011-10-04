@@ -215,7 +215,7 @@ class FileUtilSuite is Suite
   
   def testDoubleAsteriskAtEnd()
     setup("a.txt", "a/", "a/b/", "a/x", "a/b/y")
-    assertGlob("**", ["a", "a.txt", Join("a", "b"), Join("a", "b", "y"), 
+    assertGlob("**", ["a", "a.txt", Join("a", "b"), Join("a", "b", "y"),
                       Join("a", "x")])
     assertGlob("a/**", ["a/b", Join("a/b", "y"), "a/x"])
   end
@@ -273,7 +273,7 @@ class FileUtilSuite is Suite
   end
 
 
-  -- Ideas for additional unit tests:  
+  -- Ideas for additional unit tests:
   --  * symbolic links
   --  * complex patterns
   --  * Windows specific things:

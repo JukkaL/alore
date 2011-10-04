@@ -53,7 +53,7 @@ private def GetTempDir()
       raise IoError("No temp directory found")
     end
     
-    return TempDir  
+    return TempDir
   finally
     TempMutex.unlock()
   end

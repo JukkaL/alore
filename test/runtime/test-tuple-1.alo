@@ -269,7 +269,7 @@ class TupleSuite is Suite
     
   def testMembers()
     var t = (2, 3)
-    for m in "length", "_get", "_eq", "_lt", "_gt", "_in", "_str", "_hash", 
+    for m in "length", "_get", "_eq", "_lt", "_gt", "_in", "_str", "_hash",
              "iterator"
       AssertEqual(HasMember(t, m), True)
     end

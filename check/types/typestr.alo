@@ -1,7 +1,7 @@
 module types
 
 
--- Visitor for pretty-printing types into strings. Do not preserve original 
+-- Visitor for pretty-printing types into strings. Do not preserve original
 -- formatting.
 --
 -- Notes:
@@ -9,7 +9,7 @@ module types
 --  - Include implicit bound type variables of callables.
 --  - Represent unbound types as Foo? or Foo?<...>.
 --  - Represent the nil type as Nil.
---  - Represent intersection types as item1 /\ item2. 
+--  - Represent intersection types as item1 /\ item2.
 class TypeStrVisitor is TypeVisitor<Str>
   def visitUnboundType(t)
     var s = t.name + "?"
@@ -111,7 +111,7 @@ class TypeStrVisitor is TypeVisitor<Str>
     if t.items.length() == 1
       s += ","
     end
-    return "({})".format(s)      
+    return "({})".format(s)
   end
   
   def visitIntersection(t)
@@ -133,6 +133,6 @@ class TypeStrVisitor is TypeVisitor<Str>
         res.append(Str(t))
       end
     end
-    return ', '.join(res)    
+    return ', '.join(res)
   end
 end

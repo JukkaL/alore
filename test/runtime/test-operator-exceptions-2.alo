@@ -125,7 +125,7 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, opMsg("+", True, 1), def (); 1 + True; end)
     AssertRaises(TypeError, opMsg("+", True, 1.1), def (); 1.1 + True; end)
     
-    AssertRaises(TypeError, "Can only concatenate Array (not Str) to Array", 
+    AssertRaises(TypeError, "Can only concatenate Array (not Str) to Array",
                  def (); [] + "x"; end)
   end
   
@@ -165,7 +165,7 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, opMsg("*", True, 1), def (); 1 * True; end)
     AssertRaises(TypeError, opMsg("*", True, 1.1), def (); 1.1 * True; end)
     
-    AssertRaises(TypeError, "Int expected (but Str found)", 
+    AssertRaises(TypeError, "Int expected (but Str found)",
                  def (); [] * "x"; end)
   end
   
@@ -214,13 +214,13 @@ class OperatorExceptionMessagesSuite is Suite
     AssertRaises(TypeError, opMsg("<=", True, 1.1), def (); 1.1 >= True; end)
     
     -- Array/Tuple have special messages.
-    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)",
                  def (); [] < "x"; end)
-    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)",
                  def (); [] > "x"; end)
-    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)",
                  def (); () < "x"; end)
-    AssertRaises(TypeError, "Array or Tuple expected (but Str given)", 
+    AssertRaises(TypeError, "Array or Tuple expected (but Str given)",
                  def (); () > "x"; end)
   end
   
@@ -259,7 +259,7 @@ class OperatorExceptionMessagesSuite is Suite
     assertBinOpMessage("and", 1, True, "Invalid type for boolean (Int)")
     assertBinOpMessage("and", True, "x", "Invalid type for boolean (Str)")
     assertBinOpMessage("and", nil, True, "Invalid type for boolean (nil)")
-    assertBinOpMessage("and", User(), True, 
+    assertBinOpMessage("and", User(), True,
                        "Invalid type for boolean (runtime::User)")
   end
   
@@ -272,7 +272,7 @@ class OperatorExceptionMessagesSuite is Suite
   def testInc()
     AssertRaises(TypeError, "Unsupported operand types for + (nil and Int)",
                  def (); var x; x += 1; end)
-    AssertRaises(TypeError, 
+    AssertRaises(TypeError,
                  "Unsupported operand types for + (runtime::User and Int)",
                  def (); var x = User(); x += 1; end)
   end
@@ -280,23 +280,23 @@ class OperatorExceptionMessagesSuite is Suite
   def testDec()
     AssertRaises(TypeError, "Unsupported operand types for - (nil and Int)",
                  def (); var x; x -= 1; end)
-    AssertRaises(TypeError, 
+    AssertRaises(TypeError,
                  "Unsupported operand types for - (runtime::User and Int)",
                  def (); var x = User(); x -= 1; end)
   end
   
   def testNot()
-    AssertRaises(TypeError, "Invalid type for boolean (Int)", 
+    AssertRaises(TypeError, "Invalid type for boolean (Int)",
                  def (); if not 1; end; end)
-    AssertRaises(TypeError, "Invalid type for boolean (runtime::User)", 
+    AssertRaises(TypeError, "Invalid type for boolean (runtime::User)",
                  def (); var x = not User(); end)
   end
   
   def testNeg()
     AssertRaises(TypeError, "Invalid operand type for unary - (Str)",
                  def (); -"x"; end)
-    AssertRaises(TypeError, 
-                 "Invalid operand type for unary - (runtime::User)", 
+    AssertRaises(TypeError,
+                 "Invalid operand type for unary - (runtime::User)",
                  def (); var x = -User(); end)
   end
   
@@ -318,7 +318,7 @@ class OperatorExceptionMessagesSuite is Suite
                  def (); "x"[1.1]; end)
   end
  
-  def testIndexingWithInvalidSliceType()                 
+  def testIndexingWithInvalidSliceType()
     var msg = "Slice index neither Int nor nil"
     AssertRaises(TypeError, msg,
                  def ()
@@ -393,8 +393,8 @@ class OperatorExceptionMessagesSuite is Suite
                  def (); for x in 0 to 1.0; end; end)
   end
 
-  -- Test invalid return value from overloaded comparison operator method 
-  -- (e.g. _eq).  
+  -- Test invalid return value from overloaded comparison operator method
+  -- (e.g. _eq).
   def testInvalidOverloadedComparison()
     var o = InvalidOverload()
     AssertRaises(TypeError, "Boolean expected (but Int found)",
@@ -417,7 +417,7 @@ class OperatorExceptionMessagesSuite is Suite
                  def (); 1 <= o; end)
   end
   
-  -- Test invalid return value from the _in method when using the "in" 
+  -- Test invalid return value from the _in method when using the "in"
   -- operator.
   def testInvalidOverloadedIn()
     AssertRaises(TypeError, "Boolean expected (but nil found)",
@@ -425,7 +425,7 @@ class OperatorExceptionMessagesSuite is Suite
   end
   
   def testInvalidVarArgsArgument()
-    AssertRaises(TypeError, 
+    AssertRaises(TypeError,
                  "Array or Tuple value expected after * (Str found)",
                  def (); Int(*'x'); end)
   end
@@ -473,9 +473,9 @@ class OperatorExceptionMessagesSuite is Suite
     else
       return "???"
     end
-  end  
+  end
   
-  private const opMap = Map("in" : """in""", 
+  private const opMap = Map("in" : """in""",
                             "is" : """is""",
                             "<" : "< or >=",
                             ">=" : "< or >=",

@@ -25,8 +25,8 @@ class ArgparseUsageSuite is Suite
   end
   
   def testWrappingToMultipleLines()
-    assertUsage(["--opt1", "--opt2", "--opt3", "--opt4", "--opt5", "--opt6", 
-                 "--opt7", "--opt8"], 
+    assertUsage(["--opt1", "--opt2", "--opt3", "--opt4", "--opt5", "--opt6",
+                 "--opt7", "--opt8"],
     "test.alo [--opt1] [--opt2] [--opt3] [--opt4] [--opt5] [--opt6] [--opt7]" +
     LF + "          [--opt8] ...")
   end

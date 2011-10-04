@@ -13,7 +13,7 @@
 #include "config.h"
 
 
-/* Check if compiling under Windows. */ 
+/* Check if compiling under Windows. */
 #ifdef _WIN32
 #define A_HAVE_WINDOWS
 #endif
@@ -209,7 +209,7 @@ typedef unsigned long long AIntU64;
 typedef int AAtomicInt;
 
 
-/* Does the >> operator on signed operands maintain the sign bit? 
+/* Does the >> operator on signed operands maintain the sign bit?
    FIX: Check this in the configure script */
 #define A_HAVE_ARITHMETIC_SHIFT_RIGHT
 

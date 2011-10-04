@@ -728,7 +728,7 @@ static AModuleDef *FinishCTypeDefs(AModuleDef *def, ATypeInfo *type)
 {
     for (; def->type != MD_END_TYPE; def++) {
         switch (def->type) {
-        case MD_VAR:            
+        case MD_VAR:
         case MD_EMPTY_CONST:
             if (def->numPtr != NULL)
                 *def->numPtr = type->totalNumVars;
@@ -844,7 +844,7 @@ ABool ACreateAndInitializeModule(char *name, AModuleDef *def)
 {
     if (!ACreateModule(def, FALSE))
         return FALSE;
-    return AInitializeModule(name, FALSE);            
+    return AInitializeModule(name, FALSE);
 }
 
 
@@ -942,7 +942,7 @@ static ABool HasFinalizerMethod(AModuleDef *def)
         if (def->type == MD_METHOD && strcmp(def->str, "#f") == 0)
             return TRUE;
     }
-    return FALSE;    
+    return FALSE;
 }
 
 
@@ -951,7 +951,7 @@ static ABool HasFinalizerMethod(AModuleDef *def)
    AFormatMessage(). */
 void AReportModuleError(ASymbolInfo *module, const char *format, ...)
 {
-    char buf[1024], buf2[1024];    
+    char buf[1024], buf2[1024];
     va_list args;
     
     va_start(args, format);

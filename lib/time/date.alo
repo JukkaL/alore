@@ -36,7 +36,7 @@ class Date implements Comparable<Date>, Addable<Int, Date>
       self.year, self.month, self.day = tuple[0], tuple[1], tuple[2]
     elif arg1 != nil
       if arg2 is Int
-        self.year, self.month, self.day = 
+        self.year, self.month, self.day =
           NormalizeDate(arg1 as Int, arg2 as Int, arg3 as Int)
       else
         raise ValueError("Invalid types")
@@ -93,7 +93,7 @@ class Date implements Comparable<Date>, Addable<Int, Date>
         end
       else
         raise ValueError("Invalid week rule")
-    end 
+    end
     d += (7 - wday)
     while self > d
       d += 7
@@ -139,7 +139,7 @@ class Date implements Comparable<Date>, Addable<Int, Date>
   
   --def _eq(x as Object) as Boolean
   def _eq(x)
-    if x is Date 
+    if x is Date
       var d = (x as Date)
       return day == d.day and month == d.month and year == d.year
     else
@@ -148,12 +148,12 @@ class Date implements Comparable<Date>, Addable<Int, Date>
   end
   
   def _lt(d as Date) as Boolean
-    return year < d.year or (year == d.year and 
+    return year < d.year or (year == d.year and
       (month < d.month or (month == d.month and day < d.day)))
   end
   
   def _gt(d as Date) as Boolean
-    return year > d.year or (year == d.year and 
+    return year > d.year or (year == d.year and
       (month > d.month or (month == d.month and day > d.day)))
   end
   
@@ -166,15 +166,15 @@ end
 private const MonthShortNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as Array<Str>
   
-private const MonthNames = ["January", "February", "March", "April", "May", 
-  "June", "July", "August", "September", "October", "November", 
+private const MonthNames = ["January", "February", "March", "April", "May",
+  "June", "July", "August", "September", "October", "November",
   "December"] as Array<Str>
 
 private const WeekdayShortNames = [
   "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as Array<Str>
 
 private const WeekdayNames = [
-  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
+  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
   "Sunday"] as Array<Str>
 
 
@@ -209,7 +209,7 @@ end
 
 
 private const MonthDays = Map(
-  1 : 31, 3 : 31, 4 : 30, 5 : 31, 6 : 30, 7 : 31, 8 : 31, 9 : 30, 10 : 31, 
+  1 : 31, 3 : 31, 4 : 30, 5 : 31, 6 : 30, 7 : 31, 8 : 31, 9 : 30, 10 : 31,
   11 : 30, 12 : 31) as Map<Int, Int>
 
 

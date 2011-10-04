@@ -16,19 +16,19 @@ private const MonthShortNameToNum = Map("jan" : 1, "feb" : 2, "mar" : 3,
   "nov" : 11, "dec" : 12) as Map<Str, Int>
 
 private const MonthNameToNum = Map("january" : 1, "february" : 2, "march" : 3,
-  "april" : 4, "may" : 5, "june" : 6, "july" : 7, "august" : 8, 
-  "september" : 9, "october" : 10, "november" : 11, "december" : 12) as 
+  "april" : 4, "may" : 5, "june" : 6, "july" : 7, "august" : 8,
+  "september" : 9, "october" : 10, "november" : 11, "december" : 12) as
     Map<Str, Int>
 
 
-private const ParseSymbolMap = 
-  Map(Date : Set(["Y", "M", "D"]), 
+private const ParseSymbolMap =
+  Map(Date : Set(["Y", "M", "D"]),
       Time : Set(["d", "h", "m", "s"]),
-      DateTime : Set(["Y", "M", "D", "h", "m", "s"])) as 
+      DateTime : Set(["Y", "M", "D", "h", "m", "s"])) as
         Map<Type, Set<Str>>
 
 
-private def ParseDateTime(t as Type, s as Str, f as Str) as 
+private def ParseDateTime(t as Type, s as Str, f as Str) as
                                       (Int, Int, Int, Int, Int, Int, Float)
   var year = nil  as Int
   var month = nil as Int
@@ -68,7 +68,7 @@ private def ParseDateTime(t as Type, s as Str, f as Str) as
         case "Y"
           if n == 2
             year, si = ParseInt(s, si, 2, 2)
-            if year > 68 
+            if year > 68
               year += 1900
             else
               year += 2000
@@ -124,7 +124,7 @@ private def ParseDateTime(t as Type, s as Str, f as Str) as
                 if si < s.length() and s[si] == f[fi + n]
                   si += 1
                   var actFract = 0
-                  while si + actFract < s.length() and 
+                  while si + actFract < s.length() and
                         IsDigit(s[si + actFract])
                     actFract += 1
                   end
@@ -146,7 +146,7 @@ private def ParseDateTime(t as Type, s as Str, f as Str) as
         neg = True
         si += 1
       end
-    elif f[fi] == "\" 
+    elif f[fi] == "\"
       if fi + 1 >= f.length()
         raise ValueError("Invalid format ({})".format(f))
       elif f[fi + 1] != s[si]
@@ -219,7 +219,7 @@ private def ParseDateTime(t as Type, s as Str, f as Str) as
     return nil, nil, nil, days, hour, minute, second
   elif t == DateTime
     -- Raise error if any of the values is uninitialized.
-    for v, vs in [(year, "Year"), (month, "Month"), (day, "Day"), 
+    for v, vs in [(year, "Year"), (month, "Month"), (day, "Day"),
                   (hour, "Hour"), (minute, "Minute")]
       if v == nil
         raise ValueError("{} missing in format ({})".format(vs, f))
@@ -236,9 +236,9 @@ end
 
 
 private def VerifyDateRange(year as Int, month as Int, day as Int)
-  if year < 1 or year > 9999 
+  if year < 1 or year > 9999
     raise ValueError("Year outside range")
-  elif month < 1 or month > 12 
+  elif month < 1 or month > 12
     raise ValueError("Month outside range")
   elif day < 1 or day > DaysInMonth(year, month)
     raise ValueError("Day outside range")
@@ -246,7 +246,7 @@ private def VerifyDateRange(year as Int, month as Int, day as Int)
 end
 
 
-private def VerifyTimeRange(hour as Int, minute as Int, second as Float, 
+private def VerifyTimeRange(hour as Int, minute as Int, second as Float,
                             is12Hour as Boolean)
   if hour < -23 or hour > 23
     raise ValueError("Hour outside range")

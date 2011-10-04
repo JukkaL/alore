@@ -44,7 +44,7 @@ private def ParseAmPm(s as Str, i as Int) as (Str, Str, Int)
     close += 1
   end
   
-  var am = s[i + 1:slash] 
+  var am = s[i + 1:slash]
   var pm = s[slash + 1:close]
   
   if close >= s.length() or am == pm or am == "" or pm == ""

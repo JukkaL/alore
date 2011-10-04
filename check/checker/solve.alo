@@ -5,9 +5,9 @@ module checker
 import types
 
 
--- Solve type constraints. Return tuple (lower bound, upper bound) for each 
+-- Solve type constraints. Return tuple (lower bound, upper bound) for each
 -- type variable or nil if the variable could not be solved.
-def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>, 
+def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
                      basic as BasicTypes) as Array<(Typ, Typ)>
   -- Collect a list of constraints for each type variable.
   var cmap = Map() as <Int, Array<Constraint>>
@@ -24,7 +24,7 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
     var bottom = nil as Typ
     var top = nil    as Typ
     
-    -- Process each contraint separely, and calculate the lower and upper 
+    -- Process each contraint separely, and calculate the lower and upper
     -- bounds based on constraints. Note that we assume that the contraint
     -- targets do not have contraint references.
     for c in cmap.get(tvar, [])
@@ -51,7 +51,7 @@ def SolveConstraints(vars as Array<Int>, constraints as Array<Constraint>,
       end
     end
       
-    if bottom == nil 
+    if bottom == nil
       if top is Void
         bottom = Void()
       else

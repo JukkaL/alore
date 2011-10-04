@@ -3,7 +3,7 @@ module output
 import nodes
 
 
--- Parse tree Node visitor that outputs the original source code. You can 
+-- Parse tree Node visitor that outputs the original source code. You can
 -- implement custom transformations by subclassing this class.
 class OutputVisitor is NodeVisitor
   private var result = [] -- Array<Str>
@@ -73,7 +73,7 @@ class OutputVisitor is NodeVisitor
     end
   end
   
-  def typeVars(v) 
+  def typeVars(v)
     -- IDEA: Combine this with typeVars in outputtype.alo.
     if v != nil and v.repr != nil
       var r = v.repr
@@ -242,7 +242,7 @@ class OutputVisitor is NodeVisitor
       node(o.types[i])
       token(o.index[i].repr.comma)
     end
-    token(r.inTok); node(o.expr); 
+    token(r.inTok); node(o.expr);
     token(r.forBr)
     nodes(o.body); token(r.endTok); token(r.endBr)
   end
@@ -445,7 +445,7 @@ class OutputVisitor is NodeVisitor
 
   -- Output a string.
   def str(s)
-    if self.omitNextSpace 
+    if self.omitNextSpace
       if s.startsWith(' ')
         s = s[1:]
       end

@@ -55,8 +55,8 @@ class Http
     self.password = password
   end
   
-  def request(method as Str, url as Str, 
-              headers = [] as Array<Pair<Str, Str>>, 
+  def request(method as Str, url as Str,
+              headers = [] as Array<Pair<Str, Str>>,
               body = "" as Str)
     -- Method and location must not be empty.
     if method == "" or method == nil
@@ -116,9 +116,9 @@ class Http
       open = False
     end
     
-    -- HTTP 1.1 (and later) may use the "Connection: close" header to deny 
+    -- HTTP 1.1 (and later) may use the "Connection: close" header to deny
     -- additional requests.
-    if version != "1.0" and version >= "1" and 
+    if version != "1.0" and version >= "1" and
        headers.hasKey("connection") and
        headers["connection"].lower().find("close") >= 0
       open = False
@@ -150,7 +150,7 @@ class Http
     -- Ignore any responses with 1xx status codes.
     
     return m.group(1), Int(m.group(2)), m.group(3).strip(), HttpHeaders(a)
-  end  
+  end
   
   def close() as void
     socket.close()
@@ -176,7 +176,7 @@ class HttpResponse is Stream
   private var len as Int
   private var chunked = False as Boolean
   
-  def create(version as Str, status as Int, reason as Str, 
+  def create(version as Str, status as Int, reason as Str,
              headers as HttpHeaders, socket as Socket)
     super.create(Input, Narrow, Buffered)
     self.version = version

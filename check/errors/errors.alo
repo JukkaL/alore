@@ -9,7 +9,7 @@ import os
 -- Representation of a single error message.
 private class ErrorInfo
   -- Description of a sequence of imports that refer to the source file
-  -- related to this error. Each item is a (path, line number) tuple. 
+  -- related to this error. Each item is a (path, line number) tuple.
   const importCtx        as Array<(Str, Int)>
   -- The source file that was the source of this error.
   const file             as Str
@@ -52,7 +52,7 @@ class Errors
   private var typeName = nil         as Str
   -- Is the current type an interface?
   private var isInterface = False    as Boolean
-  -- Short name of current function or member (or nil). 
+  -- Short name of current function or member (or nil).
   private var functionOrMember = nil as Str
   
   def create() as void
@@ -111,8 +111,8 @@ class Errors
   
   -- Report a message at the given line using the current error context.
   def report(line as Int, message as Str)
-    var info = ErrorInfo(importContext(), self.file, self.typeName, 
-                         self.isInterface, self.functionOrMember, 
+    var info = ErrorInfo(importContext(), self.file, self.typeName,
+                         self.isInterface, self.functionOrMember,
                          line, message)
     self.errorInfo.append(info)
   end
@@ -159,7 +159,7 @@ class Errors
   -- The rendered sequence includes information about error contexts. The path
   -- item may be nil. If the line item is negative, the line number is not
   -- defined for the tuple.
-  private def renderMessages(errors as Array<ErrorInfo>) as 
+  private def renderMessages(errors as Array<ErrorInfo>) as
                                                Array<(Str, Int, Str)>
     var result = [] as <(Str, Int, Str)> -- (path, line, message)
     
@@ -235,7 +235,7 @@ class Errors
     while i < errors.length()
       var i0 = i
       -- Find neighbouring errors with the same context and file.
-      while i + 1 < errors.length() and 
+      while i + 1 < errors.length() and
                errors[i + 1].importCtx == errors[i].importCtx and
                errors[i + 1].file == errors[i].file
         i += 1
@@ -246,7 +246,7 @@ class Errors
       var a = StableSort(errors[i0:i], def (a, b)
                                          return a.line < b.line
                                        end)
-      result.extend(a)               
+      result.extend(a)
     end
     return result
   end
@@ -259,7 +259,7 @@ class Errors
     while i < errors.length()
       var dup = False
       var j = i - 1
-      while j >= 0 and 
+      while j >= 0 and
             errors[j][0] == errors[i][0] and errors[j][1] == errors[i][1]
         if errors[j] == errors[i]
           dup = True
@@ -292,14 +292,14 @@ end
 -- Perform a stable sort of a sequence, i.e. if the original sequence has
 -- a[n] == a[n+m] (when comparing using the comparison function f), in the
 -- sorted sequence item a[n] will be at an earlier index than a[n + m].
-private def StableSort<T>(a as Sequence<T>, 
+private def StableSort<T>(a as Sequence<T>,
                           f as def (T, T) as Boolean) as Array<T>
   var a2 = [] as <(T, Int)>
   for i in 0 to a.length()
     a2.append((a[i], i))
   end
   a2 = Sort(a2, def (s as (T, Int), t as (T, Int)) as Boolean
-                  return f(s[0], t[0]) or 
+                  return f(s[0], t[0]) or
                          (not f(t[0], s[0]) and s[1] < t[1])
                 end)
   var a3 = [] as <T>

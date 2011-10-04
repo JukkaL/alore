@@ -61,7 +61,7 @@ class OperatorOverloadingSuite is Suite
     Assert(foo == 3)
   end
  
-  def testCalls()    
+  def testCalls()
     var oo = OpOverload()
     
     var x, y, z = oo(41)
@@ -175,7 +175,7 @@ class OperatorOverloadingSuite is Suite
     AssertRaises(TypeError, def (); "i"._gt(o); end)
   end
   
-  def testIn()    
+  def testIn()
     var oo = OpOverload()
     
     -- in

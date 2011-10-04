@@ -5,25 +5,25 @@ import types
 
 -- Check if an intersection type is overlapping, and report an error using msg
 -- if it is.
-def CheckIntersectionType(type as Intersection, msg as MessageBuilder, 
+def CheckIntersectionType(type as Intersection, msg as MessageBuilder,
                           basic as BasicTypes, context as Context)
   var items = type.items()
   
   for i in 0 to items.length()
     for j in 0 to items.length()
       if i < j
-        CheckIntersectionItemPair(items[i], items[j], msg, i, j, basic, 
+        CheckIntersectionItemPair(items[i], items[j], msg, i, j, basic,
                                   context)
       end
-    end    
+    end
   end
 end
 
 
-private def CheckIntersectionItemPair(item1 as Callable, item2 as Callable, 
-                                      msg as MessageBuilder, 
-                                      n1 as Int, n2 as Int, 
-                                      basic as BasicTypes,   
+private def CheckIntersectionItemPair(item1 as Callable, item2 as Callable,
+                                      msg as MessageBuilder,
+                                      n1 as Int, n2 as Int,
+                                      basic as BasicTypes,
                                       context as Context)
   var isOverlapping = True
   

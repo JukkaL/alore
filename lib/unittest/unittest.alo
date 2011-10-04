@@ -64,7 +64,7 @@ def AssertRaises(type as Type, *rest as dynamic)
   if rest[0] is Str or rest[0] == nil
     msg = rest[0]
     rest = rest[1:]
-  end  
+  end
   var f = rest[0]
   var args = [] as <Str>
   if rest.length() > 1
@@ -226,8 +226,8 @@ end
 
 
 -- The first argument may be TestCase, Suite or (Str, Suite).
-def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int, 
-                     numSkip as Int, prefix as Str, depth as Int) as 
+def RunTestRecursive(t as dynamic, numTotal as Int, numFail as Int,
+                     numSkip as Int, prefix as Str, depth as Int) as
                                                              (Int, Int, Int)
   if t is TestCase
     var name = prefix + t.name
@@ -342,7 +342,7 @@ private def MatchPattern(s as Str, p as Str) as Boolean
         end
       end
       return False
-    end      
+    end
   elif s.length() == 0
     return False
   else
@@ -356,13 +356,13 @@ private def CleanTraceback(tb as Array<Str>) as Array<Str>
   if tb != [] and tb[-1].find("run of unittest::TestCase") >= 0
     tb = tb[:-1]
   end
-  for f in ["Assert", "AssertEqual", "AssertNotEqual", "AssertRaises", 
+  for f in ["Assert", "AssertEqual", "AssertNotEqual", "AssertRaises",
             "AssertType"]
     if tb != [] and tb[0].find("unittest::{}".format(f)) >= 0
       tb = tb[1:]
     end
   end
-  return tb 
+  return tb
 end
 
 

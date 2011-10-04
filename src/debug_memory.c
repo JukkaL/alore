@@ -255,7 +255,7 @@ void FreeBlockMap(void)
 
 
 /* Check if value points to a valid looking memory block with the expected
-   type. */   
+   type. */
 ABool IsValidValue(AValue v)
 {
     AValue *ptr;
@@ -478,7 +478,7 @@ void SetAndCheckBlockType(AValue *ptr, int type)
 
 /* Check that the type of a block referred to by a value is correct. Accept
    also an unknown block type. As a side effect, set the block type to the
-   expected value. */ 
+   expected value. */
 void CheckValueTargetType(AValue v)
 {
     int type;
@@ -1243,7 +1243,7 @@ void *VerifyBlockReferences(void *p)
 }
 
 
-/* Does p point to a free block? */ 
+/* Does p point to a free block? */
 ABool IsFreeBlock(AValue *p)
 {
     if (AGCState == A_GC_SWEEP && !AIsInNursery(p) && !AIsSwept(p)
@@ -1271,7 +1271,7 @@ void PrintDynaModuleInfo(void)
     int c, v;
 
     modNum = AFirstDynamicModule;
-    while (modNum != 0) {       
+    while (modNum != 0) {
         ADynaModule *mod = AValueToPtr(AGlobalByNum(modNum + 1));
         int len = AGetNumImportedModules(mod);
         

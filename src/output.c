@@ -146,7 +146,7 @@ void AQuitSection(void)
     PrevLine = ASection[ANumActiveSections].prevLine;
 
     /* FIX do we need to update NumLocals? */
-    /* IDEA: Make LeaveSection() call this function to share code. */    
+    /* IDEA: Make LeaveSection() call this function to share code. */
 }
 
 

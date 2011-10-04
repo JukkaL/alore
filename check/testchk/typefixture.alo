@@ -10,7 +10,7 @@ private const Base, Vars, BaseDefs, IsInterface, Interfaces
 
 -- Helper class that is used as a fixture in type-related unit tests. The
 -- members are initialized to contain various type-related values.
-private class TypeFixture  
+private class TypeFixture
   -- Type variables
   
   const t = TypeVar("T", 1)    -- T`1 (type variable)
@@ -68,10 +68,10 @@ private class TypeFixture
   -- class H<S, T>
   const hi = MakeTypeInfo("H", Base: oi, Vars: ["S", "T"])
   -- class GS<T, S> is G<S>
-  const gsi = MakeTypeInfo("GS", Base: gi, Vars: ["T", "S"], 
+  const gsi = MakeTypeInfo("GS", Base: gi, Vars: ["T", "S"],
                            BaseDefs: [Instance(gi, [s])])
   -- class GS2<S> is G<S>
-  const gs2i = MakeTypeInfo("GS2", Base: gi, Vars: ["S"], 
+  const gs2i = MakeTypeInfo("GS2", Base: gi, Vars: ["S"],
                             BaseDefs: [Instance(gi, [s1])])
   -- class Array as <T>
   const stdArrayi = MakeTypeInfo("std::Array", Base: oi, Vars: ["T"])
@@ -135,26 +135,26 @@ private class TypeFixture
   
   -- Helper methods
   
-  -- callable(a1, ..., an, r) constructs a callable with argument types 
+  -- callable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r.
   def callable(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], False)
   end
   
-  -- typeCallable(a1, ..., an, r) constructs a callable with argument types 
+  -- typeCallable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r, and which represents a type.
   def callableType(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], True)
   end
   
-  -- callableDefault(minArgs, a1, ..., an, r) constructs a callable with 
-  -- argument types a1, ... an and return type r, with minArgs mandatory fixed 
+  -- callableDefault(minArgs, a1, ..., an, r) constructs a callable with
+  -- argument types a1, ... an and return type r, with minArgs mandatory fixed
   -- arguments.
   def callableDefault(minArgs, *a)
     return Callable(a[:-1], minArgs, False, a[-1], False)
   end
   
-  -- callableVarArg(minArgs, a1, ..., an, r) constructs a callable with 
+  -- callableVarArg(minArgs, a1, ..., an, r) constructs a callable with
   -- argument types a1, ... *an and return type r.
   def callableVarArg(minArgs, *a)
     return Callable(a[:-1], minArgs, True, a[-1], False)
@@ -168,14 +168,14 @@ private class InterfaceTypeFixture is TypeFixture
   const gfi = MakeTypeInfo("GF", Vars: ["T"], IsInterface: True)
   
   -- class M1 implements GF as GF<A>
-  const m1i = MakeTypeInfo("M1", Interfaces: [gfi], 
+  const m1i = MakeTypeInfo("M1", Interfaces: [gfi],
                            BaseDefs: [Instance(gfi, [a])])
   -- class M2 implements GF as GF<A>, GF<B>
-  const m2i = MakeTypeInfo("M2", Interfaces: [gfi], 
+  const m2i = MakeTypeInfo("M2", Interfaces: [gfi],
                            BaseDefs: [Instance(gfi, [a]),
                                       Instance(gfi, [b])])
   -- class M3 implements GF as GF<A>, GF<B>, GF<C>
-  const m3i = MakeTypeInfo("M3", Interfaces: [gfi], 
+  const m3i = MakeTypeInfo("M3", Interfaces: [gfi],
                            BaseDefs: [Instance(gfi, [a]),
                                       Instance(gfi, [b]),
                                       Instance(gfi, [c])])
@@ -207,7 +207,7 @@ private def MakeTypeInfo(name, *args)
   end
   
   var info = TypeInfo(Map(), Map(), Map(), Map(), typeDef, False)
-  info.base = map.get(Base, nil)  
+  info.base = map.get(Base, nil)
   info.bases = map.get(BaseDefs, [])
   info.interfaces = map.get(Interfaces, [])
   

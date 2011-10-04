@@ -253,7 +253,7 @@ void ADisplayRegExp(ARegExp *re)
         case A_LITERAL_I:
             printf("\"");
             PrintChar(*reCode++);
-            printf("\"");  
+            printf("\"");
             if (code >= A_LITERAL_I)
                 printf(" (i)");
             break;

@@ -14,7 +14,7 @@ import sys
 class TracebackSuite is Suite
   -- Test simplest possible traceback containing only a single Alore function.
   def testSimplestTraceback()
-    assertTraceback(RaiseTypeError, [], TypeError, 
+    assertTraceback(RaiseTypeError, [], TypeError,
       ["runtime::RaiseTypeError (runtime/test-traceback-helpers.alo, line 6)"])
   end
   
@@ -25,40 +25,40 @@ class TracebackSuite is Suite
   
   -- Test simplest possible traceback containing only a single Alore method.
   def testSimplestTracebackWithMethod()
-    assertTraceback(TracebackClass().raiseTypeError, [], TypeError, 
+    assertTraceback(TracebackClass().raiseTypeError, [], TypeError,
       ["raiseTypeError of runtime::TracebackClass (runtime/test-traceback-helpers.alo, line 14)"])
   end
   
   -- Test simple traceback containing both overridden and inherited methods.
   def testTracebackWithInheritance()
-    assertTraceback(TracebackDerivedClass().base1, [], IndexError, 
+    assertTraceback(TracebackDerivedClass().base1, [], IndexError,
       ["base2 of runtime::TracebackClass (runtime/test-traceback-helpers.alo, line 23)",
        "callBase2 of runtime::TracebackDerivedClass (runtime/test-traceback-helpers.alo, line 42)",
        "base1 of runtime::TracebackDerivedClass (runtime/test-traceback-helpers.alo, line 38)"])
   end
   
-  -- Test simple traceback containing only the constructor or member 
+  -- Test simple traceback containing only the constructor or member
   -- initializer of a Alore class.
   def testTracebackWithConstructor()
-    assertTraceback(RaiseConstructorExceptionClass, [], TypeError, 
+    assertTraceback(RaiseConstructorExceptionClass, [], TypeError,
       ["create of runtime::RaiseConstructorExceptionClass (runtime/test-traceback-helpers.alo, line 51)"])
-    assertTraceback(RaiseMemberInitializerExceptionClass, [], ArithmeticError, 
+    assertTraceback(RaiseMemberInitializerExceptionClass, [], ArithmeticError,
       ["class runtime::RaiseMemberInitializerExceptionClass (runtime/test-traceback-helpers.alo, line 57)"])
   end
   
   -- Test traceback of an overloaded operator method.
   def testOverloadedOperatorTraceback()
-    assertTraceback(TracebackClass().overload, [], TypeError, 
+    assertTraceback(TracebackClass().overload, [], TypeError,
       ["_add of runtime::TracebackClass (runtime/test-traceback-helpers.alo, line 31)",
        "overload of runtime::TracebackClass (runtime/test-traceback-helpers.alo, line 27)"])
-    assertTraceback(InOperatorClass().overload, [], ArithmeticError, 
+    assertTraceback(InOperatorClass().overload, [], ArithmeticError,
       ["_in of runtime::InOperatorClass (runtime/test-traceback-helpers.alo, line 241)",
        "overload of runtime::InOperatorClass (runtime/test-traceback-helpers.alo)"]) -- FIX should be line 237
   end
   
   -- Test raising an exception while calculating values for default arguments.
   def testDefaultArgTraceback()
-    assertTraceback(DefaultArgError, [], ArithmeticError, 
+    assertTraceback(DefaultArgError, [], ArithmeticError,
       ["runtime::DefaultArgError (runtime/test-traceback-helpers.alo, line 64)"])
   end
   
@@ -71,7 +71,7 @@ class TracebackSuite is Suite
     Assert(TracebackCounter == 1)
 
     TracebackCounter = 0
-    assertTraceback(RaiseErrorWithFinally, [], ArithmeticError, 
+    assertTraceback(RaiseErrorWithFinally, [], ArithmeticError,
       ["runtime::ErrorWithFinally2 (runtime/test-traceback-helpers.alo, line 101)",
        "runtime::RaiseErrorWithFinally (runtime/test-traceback-helpers.alo, line 85)"])
     Assert(TracebackCounter == 111)
@@ -80,20 +80,20 @@ class TracebackSuite is Suite
   -- Test tracebacks with an excpetion that was reraised (raised after being catched).
   def testTracebackWithReraise()
     TracebackCounter = 0
-    assertTraceback(Reraise, [], TypeError, 
+    assertTraceback(Reraise, [], TypeError,
       ["runtime::Reraise (runtime/test-traceback-helpers.alo, line 115)"])
     Assert(TracebackCounter == 10)
   end
   
   -- Test different kinds of module names in traceback. Test different file names.
   def testModuleNamesInTraceback()
-    assertTraceback(RaiseError1, [], ArithmeticError, 
+    assertTraceback(RaiseError1, [], ArithmeticError,
       ["runtime::RaiseError3 (runtime/test-traceback-helpers.alo, line 164)",
        "runtime::traceback::RaiseError2 (runtime/traceback/t2.alo, line 7)",
        "runtime::traceback::RaiseError1 (runtime/traceback/t1.alo, line 5)"])
   end
   
-  -- Test traceback with different functions, some of them methods, 
+  -- Test traceback with different functions, some of them methods,
   -- constructors etc.
   def testComplexTraceback()
     assertTraceback(ComplexTraceback1, [], TypeError,
@@ -109,7 +109,7 @@ class TracebackSuite is Suite
   
   -- Test traceback with a C function calling an Alore function.
   def testTracebackWithCFunctionCallingAlore()
-    assertTraceback(Call, (DivFunc, [1, 0]), ArithmeticError, 
+    assertTraceback(Call, (DivFunc, [1, 0]), ArithmeticError,
       ["runtime::DivFunc (runtime/test-traceback-helpers.alo, line 159)",
        "__testc::Call"])
   end
@@ -117,15 +117,15 @@ class TracebackSuite is Suite
   -- Test traceback with dynamically loaded code.
   def testTracebackWithDynamicLoading()
     var m = Load(Join("data", "traceback-1.alo"))
-    assertTraceback(m["RaiseValueError"], [], ValueError, 
+    assertTraceback(m["RaiseValueError"], [], ValueError,
       ["RaiseValueError (data/traceback-1.alo, line 6)"])
   end
   
-  -- Test traceback with exception raised at the main level of dynamically 
+  -- Test traceback with exception raised at the main level of dynamically
   -- loaded code or in the Mafunction.
   def testTracebackWithInitException()
-    assertTraceback(Load, [Join("data", "traceback-2.alo")], 
-      ArithmeticError, 
+    assertTraceback(Load, [Join("data", "traceback-2.alo")],
+      ArithmeticError,
       ["at main level (data/traceback-2.alo, line 1)",
        "loader::Load"])
     assertTraceback(Load, [Join("data", "traceback-3.alo")], ValueError,
@@ -161,7 +161,7 @@ class TracebackSuite is Suite
     assertTraceback(DeepTraceback, [n], TypeError, t)
   end
 
-  -- Test traceback with an anonymous function.  
+  -- Test traceback with an anonymous function.
   def testAnonFunctionInTraceback()
     assertTraceback(AnonTraceback, [], TypeError,
       ["anonymous function (runtime/test-traceback-helpers.alo, line 248)",
@@ -184,7 +184,7 @@ class TracebackSuite is Suite
   end
   
   -- FIX Test line numbers in tracebacks (different statements etc.)
-  -- FIX Test tracebacks from all kinds of different thingies (e.g. calling 
+  -- FIX Test tracebacks from all kinds of different thingies (e.g. calling
   --     with wrong number of args, etc.)
   -- FIX Test traceback generation when calling alore on the command line
   -- FIX Test return error from C functions, when doing call from C, etc.

@@ -291,7 +291,7 @@ static ABool StoreError(const char *msg, void *data)
 /* Return the value of a global variable in the module. Raise KeyError if the
    name is not a public global variable in the module. */
 static AValue Module_get(AThread *t, AValue *frame)
-{    
+{
     int num = GetGlobalVariableNum(t, GetModuleSymbol(frame[0]), frame[1],
                                    TRUE);
     if (num == GLOBAL_MISSING)

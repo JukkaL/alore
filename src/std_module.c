@@ -128,7 +128,7 @@ ABool AInitializeStdTypes(void)
     ATypeClass = AValueToType(AGlobalByNum(TypeClassNum));
     AAnonFuncClass = AValueToType(AGlobalByNum(AAnonFuncClassNum));
     return TRUE;
-}    
+}
 
 
 /* Initialize pre-allocated exception instances. */
@@ -512,7 +512,7 @@ AValue AStdHash(AThread *t, AValue *frame)
 {
     if (AIsNarrowStr(frame[0]) || AIsSubStr(frame[0]))
         return AStringHashValue(frame[0]);
-    if (AIsShortInt(frame[0])) 
+    if (AIsShortInt(frame[0]))
         return frame[0] ^ AIntToValue(frame[0] >> 10);
     else if (AIsInstance(frame[0])) {
         if (AGetInstanceType(AValueToInstance(frame[0]))->hasHashOverload) {
@@ -795,7 +795,7 @@ static AValue StdReversed(AThread *t, AValue *frame)
             AShortInt i;
             for (i = stop - 1; i >= start; i--)
                 AAppendArray(t, frame[1], AIntToValue(i));
-        }        
+        }
     } else if (AIsArray(frame[0])) {
         /* Use efficient specialized implementation for arrays. */
         Assize_t i;

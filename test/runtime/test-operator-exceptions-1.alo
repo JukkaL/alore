@@ -39,7 +39,7 @@ class OperatorExceptionsSuite is Suite
       for y in ObjList
         var e = TypeError
         
-        if x == nil or y == nil or ((not (x is Str or x is Array)) or 
+        if x == nil or y == nil or ((not (x is Str or x is Array)) or
                                     (not (y is Int or y is Range)))
           TestOperatorException(IndexOp, x, y, e)
         end
@@ -184,7 +184,7 @@ class OperatorExceptionsSuite is Suite
       for y in ObjList
         var e = TypeError
         
-        if not (y is Array or y is Range or 
+        if not (y is Array or y is Range or
                 (x is Str and y is Str))
           TestOperatorException(InOp, x, y, e)
         end

@@ -67,7 +67,7 @@ static void GetUnicodeWord(int n, char *buf)
 
         ti += k;
         wi++;
-    }        
+    }
 }
 
 

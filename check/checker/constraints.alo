@@ -5,10 +5,10 @@ module checker
 import types
 
 
--- Infer type constraints for a callable and a list of argument types. 
+-- Infer type constraints for a callable and a list of argument types.
 -- Return a list of constraints.
-def InferConstraintsForCallable(callee as Callable, 
-                                argTypes as Array<Typ>, 
+def InferConstraintsForCallable(callee as Callable,
+                                argTypes as Array<Typ>,
                                 isVarArg as Boolean) as Array<Constraint>
   -- FIX check argument counts
   
@@ -16,7 +16,7 @@ def InferConstraintsForCallable(callee as Callable,
   
   var constraints = [] as <Constraint>
   
-  var callerRest = nil as Typ -- Rest of types for varargs calls  
+  var callerRest = nil as Typ -- Rest of types for varargs calls
   if isVarArg
     argTypes, callerRest = ExpandCallerVarArgs(argTypes, calleeNumArgs)
     if argTypes == nil
@@ -54,10 +54,10 @@ end
 -- variable references, recursively against a type which does not contain
 -- (the same) type variable references. The result is a list of type constrains
 -- of form "T is a supertype/subtype of x", where T is a type variable present
--- in the the template and x is a type without reference to type variables 
+-- in the the template and x is a type without reference to type variables
 -- present in the template.
 --
--- Assume T and S and type variables. Now the following results can be 
+-- Assume T and S and type variables. Now the following results can be
 -- calculated (read as "(template, actual) --> result"):
 --
 --   (T, X)            -->  T :> X
@@ -75,7 +75,7 @@ end
 const SubtypeOf, SupertypeOf
 
 
--- A representatino of a type constraint, either T <: type or T :> type (T is 
+-- A representatino of a type constraint, either T <: type or T :> type (T is
 -- a type variable).
 class Constraint
   const typeVar as Int      -- Type variable id
@@ -127,11 +127,11 @@ class ConstraintBuilderVisitor is TypeVisitor<Array<Constraint>>
   -- Non-leaf types
   
   def visitInstance(template as Instance) as Array<Constraint>
-    if self.actual is Instance and 
+    if self.actual is Instance and
        (self.actual as Instance).type.hasBase(template.type.fullName)
       var res = [] as <Constraint>
       
-      for mapped in MapInstanceToSupertypes(self.actual as Instance, 
+      for mapped in MapInstanceToSupertypes(self.actual as Instance,
                                             template.type)
         for i in 0 to template.args.length()
           -- The constraints for generic type parameters are invariant. Include
@@ -161,7 +161,7 @@ class ConstraintBuilderVisitor is TypeVisitor<Array<Constraint>>
       for i in 0 to template.argTypes.length()
         -- Negate constraints due function argument type contravariance.
         res.extend(NegateConstraints(
-                     InferConstraints(template.argTypes[i], 
+                     InferConstraints(template.argTypes[i],
                                       cactual.argTypes[i])))
       end
       res.extend(InferConstraints(template.retType, cactual.retType))
@@ -177,11 +177,11 @@ class ConstraintBuilderVisitor is TypeVisitor<Array<Constraint>>
   end
   
   def visitTupleType(template as TupleType) as Array<Constraint>
-    if self.actual is TupleType and 
+    if self.actual is TupleType and
        (self.actual as TupleType).items.length() == template.items.length()
       var res = [] as <Constraint>
       for i in 0 to template.items.length()
-        res.extend(InferConstraints(template.items[i], 
+        res.extend(InferConstraints(template.items[i],
                                     (self.actual as TupleType).items[i]))
       end
       return res
@@ -189,7 +189,7 @@ class ConstraintBuilderVisitor is TypeVisitor<Array<Constraint>>
       return inferAgainstDynamic(template.items)
     else
       return []
-    end      
+    end
   end
   
   def visitIntersection(template as Intersection) as Array<Constraint>
@@ -207,7 +207,7 @@ class ConstraintBuilderVisitor is TypeVisitor<Array<Constraint>>
 end
 
 
-private def NegateConstraints(constraints as Array<Constraint>) as 
+private def NegateConstraints(constraints as Array<Constraint>) as
                                 Array<Constraint>
   var res = [] as <Constraint>
   for c in constraints

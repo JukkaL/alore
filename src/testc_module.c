@@ -481,7 +481,7 @@ static void IntU64ToStr(char *buf, AIntU64 i)
     for (j = 0; j < n / 2; j++) {
         char t = buf[j];
         buf[j] = buf[n - j - 1];
-        buf[n - j - 1] = t;            
+        buf[n - j - 1] = t;
     }
     buf[n] = '\0';
 }
@@ -526,7 +526,7 @@ static AValue TestC_AGetIntU64(AThread *t, AValue *frame)
     AIntU64 i = AGetIntU64(t, frame[0]);
     char buf[100];
 
-    /* sprintf(buf, "%llu", i) would be simpler but not as portable. */    
+    /* sprintf(buf, "%llu", i) would be simpler but not as portable. */
     IntU64ToStr(buf, i);
     
     return AMakeStr(t, buf);
@@ -823,7 +823,7 @@ static AValue TestC_ARaiseErrnoIoError(AThread *t, AValue *frame)
 
 /* __testc::ATry(bool)
    Function for testing ATry and AEndTry. If bool is True, return 1 if
-   successful. If bool is False, return 2 if successful. */ 
+   successful. If bool is False, return 2 if successful. */
 static AValue TestC_ATry(AThread *t, AValue *frame)
 {
     if (ATry(t))
@@ -1216,7 +1216,7 @@ static AValue TestC_GlobalValueCount(AThread *t, AValue *frame)
         }
         
         num = AGetNextModule(num);
-    }    
+    }
     
     return AMakeInt(t, count);
 }

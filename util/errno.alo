@@ -8,7 +8,7 @@
 -- Script for generating several errno related C definitions.
 --
 -- Use to generate errno_info.c and errno_info.h:
---  
+--
 --   $ alore util/errno.alo --table > src/errno_info.c
 --   $ alore util/errno.alo --header > src/errno_info.h
 --

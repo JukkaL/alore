@@ -145,7 +145,7 @@ AValue AStdInt(AThread *t, AValue *frame)
 
         /* Now we have a narrow string -- convert it to Int. */
         frame[0] = n;
-        buf = AValueToStr(frame[0])->elem;        
+        buf = AValueToStr(frame[0])->elem;
         goto TryConvert;
     } else if (AIsInstance(frame[0]) || !AIsInt(frame[0])) {
         /* Call the _int method of an object. */

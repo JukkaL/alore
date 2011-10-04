@@ -39,7 +39,7 @@ class ThreadSuite6 is Suite
     end
     m1.unlock()
   
-    Ok()  
+    Ok()
   end
 end
 

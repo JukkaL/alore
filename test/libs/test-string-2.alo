@@ -25,7 +25,7 @@ class FormatSuite is Suite
     end
   end
 
-  -- Test empty {} sequences with different built-in types.  
+  -- Test empty {} sequences with different built-in types.
   def testSimpleFormats()
     Assert("{}".format(1) == "1")
     Assert("{}".format("abc") == "abc")
@@ -162,7 +162,7 @@ class FormatSuite is Suite
     Assert("{}".format(MyFormatObj()) == "str")
     Assert("{7:XYZ}".format(MyFormatObj()) == "  <xyz>")
     Assert("{-7:XYZ}".format(MyFormatObj()) == "<xyz>  ")
-    Assert("1{ABC}23{xyz}456".format(MyFormatObj(), MyFormatObj2()) == 
+    Assert("1{ABC}23{xyz}456".format(MyFormatObj(), MyFormatObj2()) ==
            "1<abc>23(XYZ)456")
   end
   
@@ -183,7 +183,7 @@ class FormatSuite is Suite
     Assert("{0.##}".format(123456) == "123456")
   end
   
-  -- Test formatting Int and Float objects in the scientific format with 
+  -- Test formatting Int and Float objects in the scientific format with
   -- trailing zeroes removed.
   def testScientificWithoutTrailingZeroes()
     -- Remove all trailing zeroes.
@@ -242,7 +242,7 @@ class FormatSuite is Suite
   -- Test a few complex format strings.
   def testComplexFormats()
     Assert("The {0}th player '{}' had a score of {0.###} or {0.00}%".format(
-                  4, "John", 1.2, 36.3) == 
+                  4, "John", 1.2, 36.3) ==
                   "The 4th player 'John' had a score of 1.2 or 36.30%")
                   
     Assert("{00} {-10:} {8:0.00}".format(2, "John", 1.234) ==

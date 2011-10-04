@@ -169,7 +169,7 @@ AValue AInWrapper(AThread *t, AValue *frame)
     else if (val == 1)
         return ATrue;
     else
-        return AError;    
+        return AError;
 }
 
 

@@ -88,7 +88,7 @@ class TypeQuery is TypeVisitor<Boolean>
           break
         end
       end
-      return res        
+      return res
     else
       -- Return True if all components are true.
       var res = True

@@ -32,9 +32,9 @@ class UrlClassSuite is Suite
   end
   
   def testUser()
-    assertUrl("http://root:password@foob.com", 
+    assertUrl("http://root:password@foob.com",
               "http", "foob.com", -1, "", "", "root", "password")
-    assertUrl("http://root@foob.com", 
+    assertUrl("http://root@foob.com",
               "http", "foob.com", -1, "", "", "root")
   end
   
@@ -47,7 +47,7 @@ class UrlClassSuite is Suite
   
   def testFragment()
     assertUrl("http://abc.de:23/path/file.ext?foo=bar&zar=dar#ref-brah",
-              "http", "abc.de", 23, "/path/file.ext", "foo=bar&zar=dar", 
+              "http", "abc.de", 23, "/path/file.ext", "foo=bar&zar=dar",
               "", "", "ref-brah")
     assertUrl("http://www.xy#x",
               "http", "www.xy", -1, "", "", "", "", "x")
@@ -144,7 +144,7 @@ class UrlClassSuite is Suite
                 "path='/xyz', query='q', fragment='frag')")
   end
   
-  private def assertUrl(url, scheme, host, port, path, query = "", 
+  private def assertUrl(url, scheme, host, port, path, query = "",
                         username = "", password = "", fragment = "", str = url)
     var u = Url(url)
     AssertEqual(u.scheme, scheme)

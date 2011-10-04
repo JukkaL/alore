@@ -32,7 +32,7 @@ class __TextWrapper
       raise ValueError("subsequentIndent too long")
     end
     
-    -- Prepend first line indent. Also expand tabs; otherwise row lengths 
+    -- Prepend first line indent. Also expand tabs; otherwise row lengths
     -- would be be arbitrary.
     s = ExpandTabs(self.initialIndent) + ExpandTabs(s)
     
@@ -49,7 +49,7 @@ class __TextWrapper
       
       -- Record the occurrance of space at the start of a line.
       if lo == i0
-        -- Ignore space if it's more than two thirds of the line length (this 
+        -- Ignore space if it's more than two thirds of the line length (this
         -- is somewhat arbitrary).
         if hi - lo > 2 * maxWidth div 3
           i0 = hi
@@ -62,7 +62,7 @@ class __TextWrapper
       -- Need to break a line?
       if lo - i0 > maxWidth
         if initSpace > 0 and i2 == i0
-          -- A single word cannot fit on a line + space at the start of the 
+          -- A single word cannot fit on a line + space at the start of the
           -- line. Truncate the space.
           i0 += initSpace
           i2 = i0
@@ -84,14 +84,14 @@ class __TextWrapper
             i0 = hi
           end
         else
-          -- Normal case, add all the accumulated words on this line and 
+          -- Normal case, add all the accumulated words on this line and
           -- continue with the next line.
           a.append(normalize(s[i0:i2]))
           i0 = i
         end
         i = i0
         i2 = i0
-        initSpace = 0        
+        initSpace = 0
         
         -- The rows after the first need to reserve space for indent, if any.
         if a.length() == 1
@@ -127,5 +127,5 @@ class __TextWrapper
                                       ss = ss.replace(CR + LF, " ")
                                       return " " * ss.length()
                                     end)
-  end  
+  end
 end

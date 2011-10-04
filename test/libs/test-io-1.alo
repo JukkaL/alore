@@ -35,7 +35,7 @@ class IOSuite1 is Suite
   -- methods. Keep track of numbers and kinds of exceptions raised, and verify
   -- that the correct exceptions were raised.
   --
-  -- Test invalid parameters for reads/writes with Input / Output file 
+  -- Test invalid parameters for reads/writes with Input / Output file
   -- streams (both unbuffered and unbuffered streams).
   def testInvalidCalls()
     TryInvalidCalls(Buffered)
@@ -103,7 +103,7 @@ private def TestStreamMethods(a, *params)
   var s = Stream(*params)
   var n1 = 0
   var n2 = 0
-  try 
+  try
     s.read()
   except MemberError
     n1 += 1

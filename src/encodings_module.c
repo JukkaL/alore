@@ -269,7 +269,7 @@ static AValue Utf8Decode(AThread *t, AValue *frame)
         if (i <= len)
             resultLen++;
         else
-            newUnprocessed = unprocessed;            
+            newUnprocessed = unprocessed;
     } else
         i = 0;
     
@@ -415,7 +415,7 @@ static AValue Iso8859_1Decode(AThread *t, AValue *frame)
         }
 
         return s;
-    } else    
+    } else
         return ARaiseTypeError(t, AMsgStrExpected);
 }
 
@@ -444,7 +444,7 @@ static AValue Iso8859_1Encode(AThread *t, AValue *frame)
         }
 
         return s;
-    } else    
+    } else
         return ARaiseTypeError(t, AMsgStrExpected);
 }
 
@@ -721,7 +721,7 @@ static AValue EightBitCodecEncode(AThread *t, AValue *frame)
                     ASetStrItem(s, i, '?');
             }
         }
-    }                
+    }
 
     return s;
 }
@@ -774,7 +774,7 @@ static AValue EightBitCodecDecode(AThread *t, AValue *frame)
             else
                 ASetStrItemW(s, i, 0xfffd);
         }
-    }                
+    }
 
     return s;
 }

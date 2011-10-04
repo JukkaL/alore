@@ -24,7 +24,7 @@ class Arguments
   const rest as Array<Str>     -- The positional arguments.
 
   -- Construct an instance.
-  def create(parser as ArgumentParser, opts as Array<(Str, Str)>, 
+  def create(parser as ArgumentParser, opts as Array<(Str, Str)>,
              rest as Array<Str>, descriptions as Array<Str>)
     self.parser = parser
     self.rest = rest.copy()
@@ -127,7 +127,7 @@ class Arguments
     end
   end
   
-  -- Return a representation of the arguments as 
+  -- Return a representation of the arguments as
   -- "Arguments(array-of-named-args, rest)".
   def _str() as Str
     var a = [] as <Object>

@@ -8,11 +8,11 @@ import nodes
 
 
 -- State ids.
-const UnseenState, 
-      WaitingState, 
-      ParsedState, 
-      BoundState, 
-      AnalysedState, 
+const UnseenState,
+      WaitingState,
+      ParsedState,
+      BoundState,
+      AnalysedState,
       CheckedState
       
       
@@ -84,11 +84,11 @@ end
 class WaitingFile is State
   const programText as Str -- Program text (or nil to read from file)
   
-  def create(info as (Str, Str, Array<(Str,  Int)>, Analysis), 
+  def create(info as (Str, Str, Array<(Str,  Int)>, Analysis),
              programText as Str)
     self.programText = programText
     super.create(info)
-  end  
+  end
 
   def process() as void
     var tree = parse(self.programText, self.path)
@@ -112,7 +112,7 @@ class WaitingFile is State
         self.errors.popImportContext()
       end
       if not res
-        fail(self.path, i.line, 
+        fail(self.path, i.line,
              "Module ""{}"" could not be imported".format(i.id))
       end
     end
@@ -155,7 +155,7 @@ class WaitingFile is State
   
   def state as Constant
     return WaitingState
-  end  
+  end
 end
 
 
@@ -163,7 +163,7 @@ class ParsedFile is State
   const tree as AloreFile
   const dependencies as Array<Str>
   
-  def create(info as (Str, Str, Array<(Str, Int)>, Analysis), 
+  def create(info as (Str, Str, Array<(Str, Int)>, Analysis),
              tree as AloreFile)
     self.tree = tree
     
@@ -191,7 +191,7 @@ class ParsedFile is State
       end
     end
     return True
-  end  
+  end
 
   def state as Constant
     return ParsedState

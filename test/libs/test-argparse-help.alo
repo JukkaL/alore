@@ -8,63 +8,63 @@ import argparse
 
 class ArgparseHelpSuite is Suite
   def testBasic()
-    assertHelp(["-x"], 
+    assertHelp(["-x"],
                ["-x" : "do stuff"],
                ["  -h, --help  show this help message and exit",
                 "  -x          do stuff"])
   end
   
   def testLongOption()
-    assertHelp(["--do-this"], 
+    assertHelp(["--do-this"],
                ["--do-this" : "do stuff"],
                ["      --do-this  do stuff",
                 "  -h, --help     show this help message and exit"])
   end
   
   def testShortAndLongOptions()
-    assertHelp(["-x --exclude"], 
+    assertHelp(["-x --exclude"],
                ["-x" : "do stuff"],
                ["  -h, --help     show this help message and exit",
                 "  -x, --exclude  do stuff"])
   end
   
   def testMultipleShortAlternatives()
-    assertHelp(["-x -a"], 
+    assertHelp(["-x -a"],
                ["-x" : "do stuff"],
                ["  -h, --help  show this help message and exit",
                 "  -x, -a      do stuff"])
   end
   
   def testMultipleLongAlternatives()
-    assertHelp(["--fo-bar --xar"], 
+    assertHelp(["--fo-bar --xar"],
                ["--fo-bar" : "do stuff"],
                ["      --fo-bar, --xar  do stuff",
                 "  -h, --help           show this help message and exit"])
   end
   
   def testShortOptionWithArguments()
-    assertHelp(["-x N"], 
+    assertHelp(["-x N"],
                ["-x" : "do stuff"],
                ["  -h, --help  show this help message and exit",
                 "  -x N        do stuff"])
   end
   
   def testLongOptionWithArguments()
-    assertHelp(["--pow-wow NUM"], 
+    assertHelp(["--pow-wow NUM"],
                ["--pow-wow" : "do stuff"],
                ["  -h, --help         show this help message and exit",
                 "      --pow-wow=NUM  do stuff"])
   end
   
   def testAliasedOptionWithArguments()
-    assertHelp(["-x --exclude FILE"], 
+    assertHelp(["-x --exclude FILE"],
                ["-x" : "do stuff"],
                ["  -h, --help          show this help message and exit",
                 "  -x, --exclude=FILE  do stuff"])
   end
   
   def testWrappingDescription()
-    assertHelp(["-x"], 
+    assertHelp(["-x"],
                ["-x" : "do stuff foo bar zar foo bar zar foo bar zar foo bar zar foo Bar zar Foo bar zar"],
    ["  -h, --help  show this help message and exit",
     "  -x          do stuff foo bar zar foo bar zar foo bar zar foo bar zar foo Bar",
@@ -72,19 +72,19 @@ class ArgparseHelpSuite is Suite
   end
   
   def testLongArgument()
-    assertHelp(["-x --exclude-very-long-name-please FILE"], 
+    assertHelp(["-x --exclude-very-long-name-please FILE"],
                ["-x" : "do stuff and other things and more"],
                ["  -h, --help                 show this help message and exit",
                 "  -x, --exclude-very-long-name-please=FILE  do stuff and other things and more"])
   end
   
   def testLongArgumentAndLongDescription()
-    assertHelp(["-x --exclude-very-long-name-please FILE"], 
+    assertHelp(["-x --exclude-very-long-name-please FILE"],
                ["-x" : "do stuff and other things and more!"],
                ["  -h, --help                 show this help message and exit",
                 "  -x, --exclude-very-long-name-please=FILE",
                 "                             do stuff and other things and more!"])
-    assertHelp(["-x --exclude-very-long-name-please FILE"], 
+    assertHelp(["-x --exclude-very-long-name-please FILE"],
                ["-x" : "do stuff and other things unrelated to the first"],
                ["  -h, --help                 show this help message and exit",
                 "  -x, --exclude-very-long-name-please=FILE",
@@ -92,7 +92,7 @@ class ArgparseHelpSuite is Suite
   end
 
   def testSorting()
-    assertHelp(["-x", "-a", "-y", "--hab"], 
+    assertHelp(["-x", "-a", "-y", "--hab"],
                ["-x" : "do stuff",
                 "-a" : "do other stuff",
                 "-y" : "do some stuff",
@@ -128,13 +128,13 @@ class ArgparseHelpSuite is Suite
   end
   
   def testExplicitHelpForHelpOption()
-    assertHelp(["-x"], 
+    assertHelp(["-x"],
                ["-h" : "show help"],
                ["  -h, --help  show help"])
-    assertHelp(["--help"], 
+    assertHelp(["--help"],
                ["--help" : "show help"],
                ["      --help  show help"])
-    assertHelp(["-h"], 
+    assertHelp(["-h"],
                ["-h" : "show help"],
                ["  -h  show help"])
   end
@@ -154,13 +154,13 @@ class ArgparseHelpSuite is Suite
     AssertEqual(act[1:],
       [
         "",
-        "This is it. This is it. This is it. This is it. This is it. This is it. This is" + Newline + 
+        "This is it. This is it. This is it. This is it. This is it. This is it. This is" + Newline +
         "it. This is it. This is it. This is it.",
         "",
         "Optional arguments:",
         "  -h, --help  show this help message and exit",
         "",
-        "This is not it. This is not it. This is not it. This is not it. This is not it." + Newline + 
+        "This is not it. This is not it. This is not it. This is not it. This is not it." + Newline +
         "This is not it. This is not it. This is not it. This is not it."])
   end
   
@@ -184,6 +184,6 @@ class ArgparseHelpSuite is Suite
         Print(result[i])
       end
     end
-    AssertEqual(act, result)    
+    AssertEqual(act, result)
   end
 end

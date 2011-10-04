@@ -14,7 +14,7 @@ private const Base64Pairs = [
   "\u0000\u00ff\u00ab" : "AP+r",
   "\u00fc" : "/A==",
   HexToBin("0010840c518720928b30d38f41149351559761969b71e75f8218a39259a7" +
-           "a29aabb2dbafc31cb3d35db7e39ebbf3dfbf") : 
+           "a29aabb2dbafc31cb3d35db7e39ebbf3dfbf") :
     "ABCEDFGHIJKLMNOPQRSTUVWXYZabcedfghijklmnopqrstuvwxyz0123456789+/",
   "a" * 10000 : 3333 * "YWFh" + "YQ==",
 ]

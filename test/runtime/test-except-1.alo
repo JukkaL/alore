@@ -221,7 +221,7 @@ class ExceptSuite1 is Suite
   end
   
   
-  -- Test raising an exception that is not an instance of a subclass of 
+  -- Test raising an exception that is not an instance of a subclass of
   -- std::Exception.
   def testT8()
     var i = 0

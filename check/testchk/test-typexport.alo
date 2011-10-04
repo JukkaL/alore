@@ -1,6 +1,6 @@
 -- Runner for test cases that verify the node types given by the type checker.
--- Each test case type checks a piece of code and the checked output includes 
--- the types of some parse tree nodes. 
+-- Each test case type checks a piece of code and the checked output includes
+-- the types of some parse tree nodes.
 --
 -- For example, a test case could check that the type of the IntExpr node 5 is
 -- Int in a checked part of the program and dynamic elsewhere.
@@ -44,16 +44,16 @@ class TypeExportSuite is Suite
       var kk = map.keys()
       var keys = []
       for k in kk
-        if k.line != nil and k.line != -1 and map[k] != nil 
+        if k.line != nil and k.line != -1 and map[k] != nil
           if Match(mask, ShortType(k)) != nil or
              (k is NameExpr and Match(mask, k.name) != nil)
             keys.append(k)
           end
         end
       end
-      for key in Sort(keys, 
+      for key in Sort(keys,
                   def (n, m)
-                    return (n.line, ShortType(n), Str(n)) < 
+                    return (n.line, ShortType(n), Str(n)) <
                            (m.line, ShortType(m), Str(m))
                   end)
         a.append("{}({}) : {}".format(ShortType(key), key.line, map[key]))
@@ -61,7 +61,7 @@ class TypeExportSuite is Suite
     except e is CompileError
       a = e.messages
     end
-    AssertStringArraysEqual(testcase.output, a, 
+    AssertStringArraysEqual(testcase.output, a,
                             "Invalid type checker output ({}, line {})".format(
                               testcase.file, testcase.line))
   end

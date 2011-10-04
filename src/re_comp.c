@@ -506,7 +506,7 @@ static void ParseConcat(ParseInfo *info)
             info->str++;
 
             if (info->flags & A_RE_NOCASE) {
-                for (i = 0; i < 256; i++) 
+                for (i = 0; i < 256; i++)
                     if (AIsInSet(set, i)) {
                         AAddToSet(set, ALower(i));
                         AAddToSet(set, AUpper(i));

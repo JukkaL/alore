@@ -45,7 +45,7 @@ class IntSuite is Suite
     Assert(42345367 == 42 * 1000000 + 345367)
     Assert(700000000 == 1400 * 500000)
 
-    Assert(123456123456123456 == 123456 * 1000000 * 1000000 + 
+    Assert(123456123456123456 == 123456 * 1000000 * 1000000 +
            123456 * 1000000 + 123456)
 
     Ok()
@@ -402,7 +402,7 @@ class IntSuite is Suite
   
   def testMembers()
     var i = 1
-    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow", 
+    for m in "_add", "_sub", "_neg", "_mul", "_div", "_idiv", "_mod", "_pow",
              "_eq", "_lt", "_gt", "_hash", "_float"
       AssertEqual(HasMember(i, m), True)
     end
@@ -464,7 +464,7 @@ end
 
 private def VerifyNeg(a)
   VerifyInt(a)
-  var n = -a  
+  var n = -a
   VerifyInt(n)
   Assert(n + a == 0)
 end

@@ -34,7 +34,7 @@ private class SameTypeVisitor is TypeVisitor<Boolean>
     self.right = right
   end
   
-  -- visitX(left) means: is left (which is an instance of X) the same type as 
+  -- visitX(left) means: is left (which is an instance of X) the same type as
   -- right?
 
   def visitUnboundType(left as UnboundType) as Boolean

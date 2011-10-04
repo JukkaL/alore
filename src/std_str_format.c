@@ -98,7 +98,7 @@ static void Append_(FormatOutput *out, int ch)
 }
 
 
-/* Append a narrow zero-terminated string to the output buffer. */ 
+/* Append a narrow zero-terminated string to the output buffer. */
 static void AppendStr(FormatOutput *out, const char *str)
 {
     while (*str != '\0') {

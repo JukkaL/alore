@@ -5,7 +5,7 @@ import random
 
 
 class RandomSuite is Suite
-  -- Test the Random function. 
+  -- Test the Random function.
   -- NOTE: The distribution of the return values is not tested for randomness.
   def testRandom()
     Assert(Random(1) == 0)

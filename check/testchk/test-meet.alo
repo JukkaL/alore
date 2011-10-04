@@ -38,7 +38,7 @@ class MeetSuite is Suite
   end
   
   def testFunctionTypes()
-    assertMeet(callable(fx.a, fx.b), callable(fx.a, fx.b), 
+    assertMeet(callable(fx.a, fx.b), callable(fx.a, fx.b),
                callable(fx.a, fx.b))
                
     assertMeet(callable(fx.a, fx.b), callable(fx.b, fx.b), NilType())
@@ -57,7 +57,7 @@ class MeetSuite is Suite
     
     -- Meet of any other type against void results in ErrorType, since there
     -- is no meaningful valid result.
-    for t in fx.a, fx.o, UnboundType("x"), NilType(), fx.t, tuple(), 
+    for t in fx.a, fx.o, UnboundType("x"), NilType(), fx.t, tuple(),
              callable(fx.a, fx.b)
       assertMeet(t, fx.void, fx.err)
     end
@@ -82,7 +82,7 @@ class MeetSuite is Suite
     assertMeet(UnboundType("x"), fx.void, fx.err)
     
     -- The meet of any type t with an unbound type results in dynamic (except
-    -- for void). Unbound type means that there is an error somewhere in the 
+    -- for void). Unbound type means that there is an error somewhere in the
     -- program, so this does not affect type safety.
     for t in fx.dyn, fx.a, fx.o, fx.t, tuple(), callable(fx.a, fx.b)
       assertMeet(t, UnboundType("X"), fx.dyn)
@@ -104,7 +104,7 @@ class MeetSuite is Suite
     for t in fx.a, fx.o, NilType(), UnboundType("x"), fx.void, fx.t,
              tuple(), callable(fx.a, fx.b)
       assertMeet(t, fx.err, fx.err)
-    end    
+    end
   end
   
   def testSimpleGenerics()
@@ -124,7 +124,7 @@ class MeetSuite is Suite
   def testGenericsWithMultipleArgs()
     assertMeet(fx.hab, fx.hab, fx.hab)
     assertMeet(fx.hab, fx.haa, fx.nilt)
-    assertMeet(fx.hab, fx.hbb, fx.nilt)    
+    assertMeet(fx.hab, fx.hbb, fx.nilt)
   end
   
   def testGenericsWithRanges()
@@ -164,16 +164,16 @@ class MeetSuite is Suite
   
   def testGenericsWithInheritanceAndRanges()
     -- Note that the result is collapsed.
-    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.o, fx.o]), 
-               fx.gaa, 
+    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.o, fx.o]),
+               fx.gaa,
                Instance(fx.gsi, [fx.d, fx.a]))
     
     -- This results in bottom (nilt) since we collapse ranges in this case
     -- before calculating the meet.
-    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
+    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                fx.gba, fx.nilt)
     
-    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]), 
+    assertMeet(Instance(fx.gsi, [fx.d, fx.a], [fx.d, fx.o]),
                fx.gbb, fx.nilt)
   end
   
@@ -193,7 +193,7 @@ class MeetSuite is Suite
   end
   
   def testCallablesWithDynamic()
-    assertMeet(callable(fx.a, fx.a,   fx.dyn, fx.a), 
+    assertMeet(callable(fx.a, fx.a,   fx.dyn, fx.a),
                callable(fx.a, fx.dyn, fx.a,   fx.dyn),
                callable(fx.a, fx.dyn, fx.dyn, fx.dyn))
   end
@@ -226,7 +226,7 @@ class MeetSuite is Suite
     assertMeet(fx.f, fx.f3, fx.f3)
   end
   
-  def testJoinInterfaceAndClassTypes()    
+  def testJoinInterfaceAndClassTypes()
     assertMeet(fx.o, fx.f, fx.f)
     assertMeet(fx.a, fx.f, fx.nilt)
     
@@ -251,7 +251,7 @@ class MeetSuite is Suite
   
   -- FIX generic interfaces + ranges
   
-  private def assertMeet(s, t, meet) 
+  private def assertMeet(s, t, meet)
     assertSimpleMeet(s, t, meet)
     assertSimpleMeet(t, s, meet)
   end
@@ -274,7 +274,7 @@ class MeetSuite is Suite
     return TupleType(a)
   end
   
-  -- callable(a1, ..., an, r) constructs a callable with argument types 
+  -- callable(a1, ..., an, r) constructs a callable with argument types
   -- a1, ... an and return type r.
   private def callable(*a)
     return Callable(a[:-1], a.length() - 1, False, a[-1], False)

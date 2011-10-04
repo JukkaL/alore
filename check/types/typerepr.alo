@@ -1,7 +1,7 @@
 module types
 
--- Representation classes for Typ subclasses and TypeVars. These are used for 
--- source-source transformation that preserves original formatting and 
+-- Representation classes for Typ subclasses and TypeVars. These are used for
+-- source-source transformation that preserves original formatting and
 -- comments.
 
 

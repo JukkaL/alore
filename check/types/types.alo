@@ -28,9 +28,9 @@ class UnboundType is Typ
   const name as Str
   const args as Array<Typ>
   
-  def create(name as Str, 
-             args = [] as Array<Typ>, 
-             line = -1 as Int, 
+  def create(name as Str,
+             args = [] as Array<Typ>,
+             line = -1 as Int,
              repr = nil)
     self.name = name
     self.args = args
@@ -83,8 +83,8 @@ end
 -- The type of "nil". This is only used internally during type inference.
 -- Programs cannot declare a variable of this type, and the type checker
 -- refuses to infer this type for a variable. However, subexpressions often
--- have this type. Note that this is not used as the result type when calling 
--- a function with a void type, even though semantically such a function 
+-- have this type. Note that this is not used as the result type when calling
+-- a function with a void type, even though semantically such a function
 -- returns a nil value; the void type is used instead so that we can report an
 -- error if the caller tries to do anything with the return value.
 class NilType is Typ
@@ -99,16 +99,16 @@ end
 -- variables are ranges and others are collapsed, the collapsed types can be
 -- represented by nils in argTops/rangeIds arrays.
 class Instance is Typ
-  const type as TypeInfo      
+  const type as TypeInfo
   const args as Array<Typ>     -- Lower bounds
   const argTops as Array<Typ>  -- Upper bounds (or nil if collapsed)
   const rangeIds as Array<Int> -- Range ids (or nil if collapsed)
   
-  def create(type as TypeInfo, 
-             args as Array<Typ>, 
-             argTops = nil as Array<Typ>, 
+  def create(type as TypeInfo,
+             args as Array<Typ>,
+             argTops = nil as Array<Typ>,
              rangeIds = nil as Array<Int>,
-             line = -1 as Int, 
+             line = -1 as Int,
              repr = nil)
     self.type = type
     self.args = args
@@ -137,13 +137,13 @@ class TypeVar is Typ
   const name as Str -- Name of the type variable (for messages and debugging)
   const id   as Int -- 1, 2, ... for type-related, -1, ... for function-related
   
-  -- True if refers to the value of the type variable stored in a generic 
+  -- True if refers to the value of the type variable stored in a generic
   -- instance wrapper. This is only relevant for generic class wrappers. If
-  -- False (default), this refers to the type variable value(s) given as the 
+  -- False (default), this refers to the type variable value(s) given as the
   -- implicit type variable argument.
   const isWrapperVar as Boolean
   
-  def create(name as Str, id as Int, isWrapperVar = False as Boolean, 
+  def create(name as Str, id as Int, isWrapperVar = False as Boolean,
              line = -1 as Int, repr = nil)
     self.name = name
     self.id = id
@@ -179,31 +179,31 @@ class Callable is FunctionLike
   const name      as Str        -- Name (may be nil; for error messages)
   const variables as TypeVars   -- Type variables for a generic function
   
-  -- Implicit bound values of type variables. These can be either for 
+  -- Implicit bound values of type variables. These can be either for
   -- class/interfaces type variables or for generic function type variables.
-  -- For example, the method 'append' of Array<Int> has implicit value Int for 
-  -- the Array type variable; the explicit method type is just 
+  -- For example, the method 'append' of Array<Int> has implicit value Int for
+  -- the Array type variable; the explicit method type is just
   -- 'def append(Int)', without any type variable. Implicit values are needed
   -- for runtime type checking, but they do not affect static type checking.
   --
-  -- All class/interface type arguments must be stored first, ordered by id, 
-  -- and function type arguments must be stored next, again ordered by id 
+  -- All class/interface type arguments must be stored first, ordered by id,
+  -- and function type arguments must be stored next, again ordered by id
   -- (absolute value this time).
-  -- 
+  --
   -- Stored as tuples (id, type).
   const boundVars as Array<(Int, Typ)>
   
   private const _isTypeObj as Boolean -- Does this represent a type object?
   
-  def create(argTypes   as Array<Typ>, 
-             minArgs    as Int, 
-             isVarArg   as Boolean, 
-             retType    as Typ, 
-             isTypeObj  as Boolean, 
-             name = nil as Str, 
-             variables = TypeVars([]) as TypeVars, 
+  def create(argTypes   as Array<Typ>,
+             minArgs    as Int,
+             isVarArg   as Boolean,
+             retType    as Typ,
+             isTypeObj  as Boolean,
+             name = nil as Str,
+             variables = TypeVars([]) as TypeVars,
              boundVars = [] as Array<(Int, Typ)>,
-             line = -1      as Int, 
+             line = -1      as Int,
              repr = nil)
     self.argTypes = argTypes
     self.minArgs = minArgs
@@ -284,19 +284,19 @@ end
 -- Note that the syntax for intersection types uses "or" instead of /\, since
 -- that somehow feels more natural.
 --
--- Note that there is some potential for confusion, since symbols associated 
+-- Note that there is some potential for confusion, since symbols associated
 -- with "or" have been used by others (including obsolete development versions
--- of Alore) for union types. Since Alore only has intersection types, no 
+-- of Alore) for union types. Since Alore only has intersection types, no
 -- union types, this is unlikely to be a problem.
 class Intersection is FunctionLike
   const item1 as FunctionLike
   const item2 as FunctionLike
   const name as Str  -- May be nil
   
-  def create(item1 as FunctionLike, 
-             item2 as FunctionLike, 
-             name = nil as Str, 
-             line = -1 as Int, 
+  def create(item1 as FunctionLike,
+             item2 as FunctionLike,
+             name = nil as Str,
+             line = -1 as Int,
              repr = nil)
     self.item1 = item1
     self.item2 = item2
@@ -317,7 +317,7 @@ class Intersection is FunctionLike
   end
   
   def isTypeObj as Boolean
-    -- Both items must have the type object status, so it's sufficient to 
+    -- Both items must have the type object status, so it's sufficient to
     -- query only one of them.
     return self.item1.isTypeObj
   end
@@ -365,7 +365,7 @@ class TypeVarDef
   const line  as Int
   const repr
   
-  def create(name as Str, id as Int, bound = nil as Typ, line = -1 as Int, 
+  def create(name as Str, id as Int, bound = nil as Typ, line = -1 as Int,
              repr = nil)
     self.name = name
     self.id = id
@@ -384,9 +384,9 @@ class TypeVarDef
 end
 
 
--- Reference to a runtime variable that represents the value of a type 
+-- Reference to a runtime variable that represents the value of a type
 -- variable. The reference can must be a expression node, but only some
--- node types are properly supported (NameExpr, SelfExpr, MemberExpr and 
+-- node types are properly supported (NameExpr, SelfExpr, MemberExpr and
 -- IndexExpr mainly).
 class RuntimeTypeVar is Typ
   const node as Node

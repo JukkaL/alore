@@ -249,7 +249,7 @@ int AMatchRegExp(AValue *reValue, AValue *strValue, int len, int pos,
 
     TRACE(("Failed: No matching position"));
     
-    return 0;   
+    return 0;
 
   Match:
 
@@ -386,7 +386,7 @@ static StackEntry *GrowStack(MatchInfo *info, StackEntry *st)
         int i;
         TRACE(("Adjustment due to copying gc"));
         for (i = 0; i <= ind; i++)
-            base[i].str = APtrAdd(info->strBeg, 
+            base[i].str = APtrAdd(info->strBeg,
                                   APtrDiff(base[i].str, oldStrBeg));
     }
 

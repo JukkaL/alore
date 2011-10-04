@@ -102,7 +102,7 @@ class StringSuite1 is Suite
     AssertEqual(IntToStr(3, 10), "3")
     AssertEqual(IntToStr(-5, 10), "-5")
     AssertEqual(IntToStr(12345, 10), "12345")
-    AssertEqual(IntToStr(1234567890123456789012345678901234567890, 10), 
+    AssertEqual(IntToStr(1234567890123456789012345678901234567890, 10),
                 "1234567890123456789012345678901234567890")
                 
     AssertEqual(IntToStr(256, 16), "100")

@@ -1,15 +1,15 @@
 module nodes
 
 
--- Classes for storing the lexical token information of nodes. This is used 
+-- Classes for storing the lexical token information of nodes. This is used
 -- for outputting the original source code represented by the nodes (including
 -- original formatting and comments).
 --
--- Each node representation usually only contains tokens directly associated 
+-- Each node representation usually only contains tokens directly associated
 -- with that node (terminals). All members are Tokens or arrays of Tokens,
 -- unless explicitly mentioned otherwise.
 --
--- If a representation has a single Break token, the member name is br. 
+-- If a representation has a single Break token, the member name is br.
 -- Otherwise, there are different members *Br for different breaks. The prefix
 -- of the member refers to a token before the Break. For example, defBr in
 -- the representation of a function definition refers to the Break token
@@ -93,7 +93,7 @@ class VarDefRepr
   const visibility
   const type         -- var/const
   const assign       -- May be None
-  const br  
+  const br
 end
 
 

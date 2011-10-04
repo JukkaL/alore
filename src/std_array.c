@@ -78,7 +78,7 @@ AValue AArrayCreate(AThread *t, AValue *frame)
         else if (res < 0)
             return AError;
         AAppendArray(t, frame[0], frame[3]);
-    }    
+    }
 }
 
 
@@ -751,7 +751,7 @@ AValue AConcatArrays(AThread *t, AValue arrVal1, AValue arrVal2)
     arr1Len = AArrayLen(arrVal1);
     arr2Len = AArrayLen(arrVal2);
     
-    length = arr1Len + arr2Len;    
+    length = arr1Len + arr2Len;
     cat = AMakeArrayND(t, length);
     if (AIsError(cat))
         return AError;

@@ -1,6 +1,6 @@
 module runtime
 
--- Test cases for exception error messages for exceptions produced by 
+-- Test cases for exception error messages for exceptions produced by
 -- statements and the std module.
 --
 -- The file test-operator-exceptions-2.alo contains test cases for exception
@@ -43,26 +43,26 @@ class ExceptionMessagesSuite is Suite
   end
   
   def testInvalidStrMethod()
-    AssertRaises(TypeError, 
-                 "_str of runtime::InvalidStr returned non-string (nil)", 
+    AssertRaises(TypeError,
+                 "_str of runtime::InvalidStr returned non-string (nil)",
                  def ()
                    Str(InvalidStr(nil))
                  end)
-    AssertRaises(TypeError, 
-                 "_str of runtime::InvalidStr returned non-string (Int)", 
+    AssertRaises(TypeError,
+                 "_str of runtime::InvalidStr returned non-string (Int)",
                  def ()
                    Str(InvalidStr(1))
                  end)
   end
   
   def testInvalidReprMethod()
-    AssertRaises(TypeError, 
-                 "_repr of runtime::InvalidStr returned non-string (nil)", 
+    AssertRaises(TypeError,
+                 "_repr of runtime::InvalidStr returned non-string (nil)",
                  def ()
                    Repr(InvalidStr(nil))
                  end)
-    AssertRaises(TypeError, 
-                 "_repr of runtime::InvalidStr returned non-string (Int)", 
+    AssertRaises(TypeError,
+                 "_repr of runtime::InvalidStr returned non-string (Int)",
                  def ()
                    Repr(InvalidStr(1))
                  end)
@@ -111,17 +111,17 @@ class ExceptionMessagesSuite is Suite
                  def ()
                    IsLetter(nil)
                  end)
-    AssertRaises(ValueError, 
+    AssertRaises(ValueError,
                  "Character expected (but string of length 2 found)",
                  def ()
                    IsLetter("xy")
                  end)
-    AssertRaises(ValueError, 
+    AssertRaises(ValueError,
                  "Character expected (but string of length 3 found)",
                  def ()
                    IsLetter("xy\u1234")
                  end)
-    AssertRaises(ValueError, 
+    AssertRaises(ValueError,
                  "Character expected (but string of length 9 found)",
                  def ()
                    IsLetter(SS("foo123bar"))
@@ -156,12 +156,12 @@ class ExceptionMessagesSuite is Suite
   end
   
   def testInvalidRaisedValue()
-    AssertRaises(TypeError, 
+    AssertRaises(TypeError,
       "Exception must be derived from std::Exception (not nil)",
       def ()
         raise nil
       end)
-    AssertRaises(TypeError, 
+    AssertRaises(TypeError,
       "Exception must be derived from std::Exception (not Int)",
       def ()
         raise 1

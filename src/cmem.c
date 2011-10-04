@@ -55,7 +55,7 @@ void *ACAlloc(unsigned long size)
             CFreeList[0].next = new->next;
             return new;
         }
-        size = MIN_CALLOC_SIZE; 
+        size = MIN_CALLOC_SIZE;
     } else
         size = ARoundUp(size, CALLOC_UNIT);
 

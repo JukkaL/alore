@@ -486,7 +486,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             /* Should we branch to another location in the current function
                as the result of a break statement? */
             if (AIsShortInt(val)) {
-                AOpcode *base = AValueToFunction(stack[1])->code.opc; 
+                AOpcode *base = AValueToFunction(stack[1])->code.opc;
                 
                 if (AValueToInt(val) < ip - base + 3 + ip[3] -
                                       A_DISPLACEMENT_SHIFT) {
@@ -625,7 +625,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     *(double *)t->heapPtr = result;
                     val = AFloatPtrToValue(t->heapPtr);
                     t->heapPtr += A_FLOAT_SIZE;
-                }                   
+                }
             } else if (AIsLongInt(val))
                 val = ANegateLongInt(t, val);
             else {
@@ -1292,7 +1292,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     ARaiseInvalidCallableErrorND(t, funcVal);
                     goto ExceptionRaised;
                 }
-            } else if (AIsInstance(funcVal)) {          
+            } else if (AIsInstance(funcVal)) {
                 int funcNum;
 
                 instance = AValueToInstance(funcVal);
@@ -1367,7 +1367,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         ip = AGetFrameIp(stack);
         
         /* Does the caller expect a return value? */
-        if (ip[-1] < A_NO_RET_VAL) 
+        if (ip[-1] < A_NO_RET_VAL)
             stack[ip[-1]] = retVal;
         
         A_END_OPCODE;
@@ -1446,7 +1446,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         
         AFixArray *a = AAlloc(t, sizeof(AValue) * 2);
         if (a == NULL)
-            goto ExceptionRaised;        
+            goto ExceptionRaised;
         AInitValueBlock(&a->header, 1 * sizeof(AValue));
         a->elem[0] = stack[ip[1]];
         
@@ -2000,7 +2000,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 
           IntSub:
 
-            dif = left - right;         
+            dif = left - right;
             if (AIsSubOverflow(dif, left, right)) {
                 dif = ACreateLongIntFromIntND(t, AValueToInt(left) -
                                            AValueToInt(right));
@@ -2336,7 +2336,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                         
                         sum = AStrToValue(res);
                         break;
-                    }   
+                    }
                     
                     if (AIsSubStr(left)) {
                         ASubString *subStr;
@@ -2454,7 +2454,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                     PERIODIC_INTERPRETER_CHECK;
                 } else
                     ip += 2;
-            }       
+            }
             break;
 
         case OP_NEQ:
@@ -3201,7 +3201,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
             funcVal = AGlobalByNum(
                 AValueToInt(method->data.boundMethod.method));
             goto CallWithInstance2;
-        } else if (AIsInstance(funcVal)) {              
+        } else if (AIsInstance(funcVal)) {
             int funcNum;
 
             instance = AValueToInstance(funcVal);
@@ -3257,7 +3257,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
                 if (exception == AErrorId(EX_RUNTIME_ERROR,
                                          EM_TOO_MANY_RECURSIVE_CALLS))
                     ARaiseStackOverflowError(t);
-                else                
+                else
                     ARaiseByNum(
                         t, AErrorClassNum[AGetErrorTypeFromId(exception)],
                         ExceptionErrorMessages[
@@ -3346,7 +3346,7 @@ AValue ARun(AThread *t, AOpcode *ip_, AValue *stack_)
         
         /* Transfer the execution of the current function invocation to the
            compiled function. The value returned by TransferControl is the
-           return value of the invocation. */        
+           return value of the invocation. */
         retVal = ATransferControl(t, stack, ip);
         
         /* Perform function return processing (similar to RET/RET_L). */

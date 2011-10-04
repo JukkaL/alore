@@ -26,7 +26,7 @@ class StdSuite is Suite
   end
   
   -- Test the Str function with integers.
-  def testIntStr()  
+  def testIntStr()
     Assert(Str(0) == "0")
     Assert(Str(1) == "1")
     Assert(Str(123456) == "123456")
@@ -99,10 +99,10 @@ class StdSuite is Suite
   -- Test the Float constructor with invalid arguments.
   def testFloatErrors()
     AssertRaises(MemberError, 'nil has no member "_float"', Float, [nil])
-    AssertRaises(TypeError, 
-                 '_float of libs::ErrorConvertible returned non-float (Str)', 
+    AssertRaises(TypeError,
+                 '_float of libs::ErrorConvertible returned non-float (Str)',
                  Float, [ErrorConvertible()])
-    AssertRaises(MemberError, 'libs::NoStrConv has no member "_float"', 
+    AssertRaises(MemberError, 'libs::NoStrConv has no member "_float"',
                  Float, [NoStrConv()])
     AssertRaises(ValueError, "Invalid string argument: 'x'", Float, ["x"])
     AssertRaises(ValueError, "Invalid string argument: '1x'", Float, ["1x"])
@@ -114,7 +114,7 @@ class StdSuite is Suite
     Assert(Repr(1) == "1")
     Assert(Repr(-123456) == "-123456")
     Assert(Repr(12345678901234567890) == "12345678901234567890")
-    Assert(Repr(-12345678901234567890) == "-12345678901234567890")    
+    Assert(Repr(-12345678901234567890) == "-12345678901234567890")
   end
   
   -- Test the Repr function with narrow strings.
@@ -305,7 +305,7 @@ class StdSuite is Suite
     AssertRaises(ValueError, Int, ("8", 8))
   end
   
-  -- Test the Int constructor with floats.  
+  -- Test the Int constructor with floats.
   def testFloatInt()
     VerifyInts(0, Int(0.0))
     VerifyInts(0, Int(0.1))
@@ -330,10 +330,10 @@ class StdSuite is Suite
     AssertRaises(ValueError, "Invalid string argument: '0x'", Int, ["0x"])
     AssertRaises(ValueError, "Invalid string argument: 'x0'", Int, ["x0"])
     AssertRaises(MemberError, 'nil has no member "_int"', Int, [nil])
-    AssertRaises(TypeError, 
-                 '_int of libs::ErrorConvertible returned non-integer (Str)', 
+    AssertRaises(TypeError,
+                 '_int of libs::ErrorConvertible returned non-integer (Str)',
                  Int, [ErrorConvertible()])
-    AssertRaises(MemberError, 'libs::NoStrConv has no member "_int"', 
+    AssertRaises(MemberError, 'libs::NoStrConv has no member "_int"',
                  Int, [NoStrConv()])
   end
   
@@ -460,8 +460,8 @@ class StdSuite is Suite
     Assert(Hash(HashClass(13)) == 13)
     Assert(Hash(HashClass(l)) == l)
     
-    AssertRaises(TypeError, 
-                 "_hash of libs::HashClass returned non-integer (Float)", 
+    AssertRaises(TypeError,
+                 "_hash of libs::HashClass returned non-integer (Float)",
                  def (); Hash(HashClass(1.0)); end)
     
     Assert(Hash((l, 1)) is Int)
@@ -551,11 +551,11 @@ class StdSuite is Suite
   end
   
   -- Test calling Min with an iterable argument. This is not supported by
-  -- the type system and is likely to removed in the future (or the 
+  -- the type system and is likely to removed in the future (or the
   -- functionality may be moved to another function).
   def testMinWithIterable()
     -- Create an alias so that the type checker does not produce an error.
-    var min = Min    
+    var min = Min
     AssertEqual(min([4, 2, 5, 7]), 2)
     AssertRaises(ValueError, min, [[]])
     AssertEqual(min(Set([4, 2, 5, 7])), 2)
@@ -572,7 +572,7 @@ class StdSuite is Suite
   -- Test calling Max with an iterable argument. The comments to Min, above,
   -- apply to Max: this is likely to not work in the future.
   def testMaxWithIterable()
-    var max = Max    
+    var max = Max
     AssertRaises(ValueError, max, [[]])
     AssertEqual(max(Set([4, 2, 7, 5])), 7)
   end
@@ -592,7 +592,7 @@ class StdSuite is Suite
     Assert(Sort((SStruct(5, 1), SStruct(1, 6), SStruct(19, 12)), SortFunc) ==
            (SStruct(1, 6), SStruct(5,1), SStruct(19, 12)))
            
-    AssertEqual(Sort((5, 4, 2, 6, 3, 4, 3, 2, 3, 4, 1), SortFunc2), 
+    AssertEqual(Sort((5, 4, 2, 6, 3, 4, 3, 2, 3, 4, 1), SortFunc2),
                 (6, 5, 4, 4, 4, 3, 3, 3, 2, 2, 1))
   end
   
@@ -631,7 +631,7 @@ class StdSuite is Suite
   
   -- Test the Exit function.
   def testExit()
-    -- IDEA: Test actually exiting program and returning status to the 
+    -- IDEA: Test actually exiting program and returning status to the
     --       operating system.
     AssertRaises(ExitException, Exit, [])
     AssertRaises(ExitException, Exit, [23])
@@ -708,7 +708,7 @@ class StdSuite is Suite
   def testTypeInterfaces()
     AssertEqual(Object.interfaces(), [])
     AssertEqual(Float.interfaces(), [Comparable])
-    AssertEqual(Array.interfaces(), [Multipliable, Comparable, Sequence, 
+    AssertEqual(Array.interfaces(), [Multipliable, Comparable, Sequence,
                                      Iterable])
     
     -- Interface implemented by superclass.
@@ -757,7 +757,7 @@ class StdSuite is Suite
     AssertType(Function, std::ReadLn)
   end
   
-  -- Try calling non-callable type objects such as Range and check that this 
+  -- Try calling non-callable type objects such as Range and check that this
   -- raises the correct exception.
   def testCallErrorsWithNonCallableTypes()
     AssertRaises(ValueError, "Type ""Range"" is not callable",

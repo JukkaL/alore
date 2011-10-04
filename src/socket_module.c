@@ -318,7 +318,7 @@ static AValue RaiseGetHostByNameException(AThread *t, int code)
 {
     const char *message = NULL;
     
-#ifndef A_HAVE_WINDOWS    
+#ifndef A_HAVE_WINDOWS
     switch (code) {
     case HOST_NOT_FOUND:
         message = "Unknown host";
@@ -393,7 +393,7 @@ static AValue SocketGetHostByAddress(AThread *t, AValue *frame)
     }
 
     addrtype = host->h_addrtype;
-    strcpy(buf, host->h_name);    
+    strcpy(buf, host->h_name);
 
     UnlockGetHostByName();
     
@@ -436,7 +436,7 @@ static ABool GetHostByName(AThread *t, const char *hostStr,
     if (inet_pton(AF_INET, hostStr, address) > 0)
         return TRUE;
     
-    AAllowBlocking();    
+    AAllowBlocking();
     LockGetHostByName();
     
     host = gethostbyname(hostStr);

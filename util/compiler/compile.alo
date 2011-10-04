@@ -26,7 +26,7 @@ var RequiredModules = ["io", "encodings"]
 -- the thread module is not included in the linking.
 var ForcedModules = ["thread"]
 
--- This extension is added to the target executable file if the target file 
+-- This extension is added to the target executable file if the target file
 -- would otherwise overwrite the input source file.
 const Extension = ".out"
 
@@ -43,7 +43,7 @@ def Compile(fnam)
   Msg("C options: " + " ".join(COpts))
   Msg("Linker options: " + " ".join(LinkDirOpts + LinkOpts))
   
-  DoSystem("{} {}".format(CCompiler, " ".join(COpts)) + 
+  DoSystem("{} {}".format(CCompiler, " ".join(COpts)) +
            " -c ""{}"" -o ""{}""".format(cfile, ofile))
   var dest = FileBase(fnam) + ExeSuffix()
   -- Avoid overwriting the source file.
@@ -167,9 +167,9 @@ private class FileInfo
 end
 
 
--- Return array (files, builtin, dyn). Files is the list of Alore source files 
+-- Return array (files, builtin, dyn). Files is the list of Alore source files
 -- imported by the given file, builtin is a list of built-in Alore C modules
--- imported by the file, and dyn is a list of dynamic Alore C modules imported 
+-- imported by the file, and dyn is a list of dynamic Alore C modules imported
 -- by the file.
 private def ImportedFiles(p)
   var res = []

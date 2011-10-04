@@ -42,7 +42,7 @@ class SocketSuite is Suite
   end
   
   -- Test using read and write using sockets.
-  def testReadAndWrite()   
+  def testReadAndWrite()
     var server = ServerSocket(Port)
     var cliStream = Socket("127.0.0.1", Port)
     var srvStream = server.accept()
@@ -76,7 +76,7 @@ class SocketSuite is Suite
     server.close()
   end
 
-  -- Test querying the addresses and ports related to connections.  
+  -- Test querying the addresses and ports related to connections.
   def testAddressAndPortInfo()
     var server = ServerSocket(Port)
     var cliStream = Socket("127.0.0.1", Port)
@@ -110,7 +110,7 @@ class SocketSuite is Suite
     server.close()
   end
   
-  -- Test superficially different buffering modes. 
+  -- Test superficially different buffering modes.
   def testBufferingModes()
     for buf in Buffered, LineBuffered, Unbuffered
       var server = ServerSocket(Port)

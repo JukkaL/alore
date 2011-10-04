@@ -30,7 +30,7 @@ interface LoopStmt
 end
 
 
--- Find and read the source files of a module. Return an array of 
+-- Find and read the source files of a module. Return an array of
 -- (file contents, path) pairs. Return nil if the module could not be imported.
 --
 -- id is a string of form "foo" or "foo::bar" (module name)
@@ -105,7 +105,7 @@ def MatchingNames(name as Str, symtable as SymbolTable, imports as Set<Str>,
     var prefix = comp[:-1]
     if symtable.hasKey(last)
       for sym in symtable[last]
-        if sym.kind == Gdef and ((sym.modId == curModId and prefix == [""]) or 
+        if sym.kind == Gdef and ((sym.modId == curModId and prefix == [""]) or
              (sym.modId in imports and not sym.node.isPrivate))
           var n = MatchModulePrefix(sym.modId, prefix, curModId)
           if n == 1
@@ -124,7 +124,7 @@ end
 
 -- Return 1 if modId and components are fully matched. Return 2 if components
 -- is a suffix of modId. Return nil if no match was found.
-private def MatchModulePrefix(modId as Str, components as Array<Str>, 
+private def MatchModulePrefix(modId as Str, components as Array<Str>,
                               curModId as Str) as Int
   if modId == nil
     if components == [""]
@@ -146,7 +146,7 @@ private def MatchModulePrefix(modId as Str, components as Array<Str>,
 end
 
 
--- Return the import in a file as a set of module ids. Also include std 
+-- Return the import in a file as a set of module ids. Also include std
 -- (if useStd is true) but not the actual module.
 def GetImports(tree as AloreFile) as Set<Str>
   var s = Set(["std"])
@@ -170,7 +170,7 @@ private def IsValidArgc(callExpr as CallExpr, funcDef as FuncDef) as Boolean
   elif funcDef.isVarArg
     return nargs >= funcDef.minArgs
   else
-    return nargs == funcDef.args.length() or 
+    return nargs == funcDef.args.length() or
              (nargs < funcDef.args.length() and funcDef.init[nargs] != nil)
   end
 end
@@ -191,8 +191,8 @@ def InvalidArgcMessage(callExpr as CallExpr, funcDef as FuncDef) as Str
 end
 
   
--- Create the implicit create method than initializes member variables 
--- without explicit initializers. Note that the returned method still has 
+-- Create the implicit create method than initializes member variables
+-- without explicit initializers. Note that the returned method still has
 -- to be semantically analysed elsewhere.
 def CreateImplicitCreate(defn as TypeDef, force = False as Boolean) as FuncDef
   var args = [] as <Var>

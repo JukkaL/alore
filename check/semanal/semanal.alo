@@ -10,7 +10,7 @@ import errors
 -- Primitive types (cannot be subclassed)
 const PrimitiveTypes = Set(["std::Int", "std::Str", "std::Float", "std::Type",
                             "std::Function", "std::Constant", "std::Pair",
-                            "std::Range", "std::Boolean", 
+                            "std::Range", "std::Boolean",
                             "std::Tuple"]) as Set<Str>
 -- Supported source file encodings
 const Encodings = ["ascii", "latin1", "utf8"] as Array<Str>
@@ -28,7 +28,7 @@ class SemanticAnal is NodeVisitor
   var type = nil    as TypeInfo   -- TypeInfo of enclosing class (or nil)
   var isCreate      as Boolean    -- Are we now analysing the create method?
   var isFunction    as Boolean    -- Are we now analysing a function/method?
-  var isLocalCtx    as Boolean    -- Are we now analysing a block (not at the 
+  var isLocalCtx    as Boolean    -- Are we now analysing a block (not at the
                                   -- top level or at class body)?
   var loopDepth = 0 as Int        -- Depth of breakable loops
   var curModId      as Str        -- Current module id (or nil) (phase 2)
@@ -51,9 +51,9 @@ class SemanticAnal is NodeVisitor
   -- First pass of semantic analysis
   ----------------------------------
   
-  -- Populate symbol table and build TypeInfo objects for defined types. 
+  -- Populate symbol table and build TypeInfo objects for defined types.
   -- Related TypeInfos (via subtyping) will remain unconnected after the first
-  -- pass. 
+  -- pass.
   
   def analMainHeader(tree as AloreFile, fnam as Str)
     self.errors.setFile(fnam)
@@ -76,7 +76,7 @@ class SemanticAnal is NodeVisitor
     elif tree.header.id != id
       fail("Invalid module header", tree.header)
       tree.header = Header(id)
-    end    
+    end
   end
   
   -- Perform the first analysis pass. Resolve the full names of definitions
@@ -157,7 +157,7 @@ class SemanticAnal is NodeVisitor
       self.errors.setType(nil, False)
     end
 
-    var type = TypeInfo(vars, methods, getters, setters, defn, 
+    var type = TypeInfo(vars, methods, getters, setters, defn,
                         hasImplicitCreate)
     type.line = defn.line
     addSymTable(defn.name, SymbolTableNode(Gdef, type, modId), defn)
@@ -187,21 +187,21 @@ class SemanticAnal is NodeVisitor
         var name = fd.name
         if fd.isSetter
           -- Analyse setter definition.
-          if vars.hasKey(name) or methods.hasKey(name) or 
+          if vars.hasKey(name) or methods.hasKey(name) or
              setters.hasKey(name)
             failMultipleDef(name, d)
           end
           setters[name] = fd
         elif fd.isGetter
           -- Analyse getter definition.
-          if vars.hasKey(name) or methods.hasKey(name) or 
+          if vars.hasKey(name) or methods.hasKey(name) or
              getters.hasKey(name)
             failMultipleDef(name, d)
           end
           getters[name] = fd
         else
           -- Analyse method definition.
-          if vars.hasKey(name) or methods.hasKey(name) or 
+          if vars.hasKey(name) or methods.hasKey(name) or
              getters.hasKey(name) or setters.hasKey(name)
             failMultipleDef(name, d)
           end
@@ -226,12 +226,12 @@ class SemanticAnal is NodeVisitor
     setCurModId(fileNode)
     
     for d in fileNode.defs
-      if d is TypeDef 
+      if d is TypeDef
         var td = (d as TypeDef)
         
         -- Inherit from Object implicitly, if the superclass of a class is
         -- not given explicitly.
-        if not td.isInterface and td.base == nil and 
+        if not td.isInterface and td.base == nil and
              td.fullName != "std::Object"
           td.base = NameExpr("std::Object")
         end
@@ -239,7 +239,7 @@ class SemanticAnal is NodeVisitor
         repeat
           done = True
           if td.base != nil
-            if analyseBase(td, td.base, False)          
+            if analyseBase(td, td.base, False)
               self.types[qualified(td.name)].setBase(
                 self.types[td.base.fullName])
             elif not td.isInterface
@@ -263,7 +263,7 @@ class SemanticAnal is NodeVisitor
     end
   end
 
-  private def analyseBase(typeDef as TypeDef, baseExpr as NameExpr, 
+  private def analyseBase(typeDef as TypeDef, baseExpr as NameExpr,
                           isImplements as Boolean) as Boolean
     visitNameExpr(baseExpr)
     if baseExpr.fullName != nil
@@ -284,7 +284,7 @@ class SemanticAnal is NodeVisitor
           return False
         else
           return True
-        end      
+        end
       else
         if not baseExpr.typeNode().isInterface
           fail("""implements"" cannot be used to extend a class", typeDef)
@@ -292,7 +292,7 @@ class SemanticAnal is NodeVisitor
         else
           return True
         end
-      end 
+      end
     end
     return False
   end
@@ -324,9 +324,9 @@ class SemanticAnal is NodeVisitor
       defn.info = self.type
     end
     
-    self.errors.setFunction(defn.name)    
+    self.errors.setFunction(defn.name)
     
-    analyseFunction(defn)    
+    analyseFunction(defn)
     
     self.errors.setFunction(nil)
     
@@ -334,7 +334,7 @@ class SemanticAnal is NodeVisitor
   end
     
   -- Analyse a function or method definition or an anonymous function.
-  def analyseFunction(defn as FuncBase)                     
+  def analyseFunction(defn as FuncBase)
     var wasFunction = self.isFunction
     self.isFunction = True
     
@@ -344,7 +344,7 @@ class SemanticAnal is NodeVisitor
       fdef = defn as FuncDef
     end
     
-    var isNotAccessor = defn is FuncExpr or 
+    var isNotAccessor = defn is FuncExpr or
                         (not fdef.isGetter and not fdef.isSetter)
     
     if defn.type != nil
@@ -365,7 +365,7 @@ class SemanticAnal is NodeVisitor
     
     enter()
     if isNotAccessor
-      addFuncTypeVariablesToSymbolTable(defn)    
+      addFuncTypeVariablesToSymbolTable(defn)
     end
     -- Analyse arguments and initialisation expressions.
     for i in 0 to defn.args.length()
@@ -377,7 +377,7 @@ class SemanticAnal is NodeVisitor
         defn.init[i].lvalues[0].accept(self)
       end
     end
-    visitBlock(defn.body)    
+    visitBlock(defn.body)
     leave()
     
     self.isFunction = wasFunction
@@ -388,7 +388,7 @@ class SemanticAnal is NodeVisitor
     if t is Callable
       var ct = (t as Callable)
       -- If there is only a single type signature, it must match the function
-      -- definition with respect to number of arguments and the presence of 
+      -- definition with respect to number of arguments and the presence of
       -- default arguments and varargs.
       if ct.argTypes.length() != defn.args.length() or
            ct.minArgs != defn.minArgs or ct.isVarArg != defn.isVarArg
@@ -420,14 +420,14 @@ class SemanticAnal is NodeVisitor
             defn.args[item.argTypes.length()].name), item)
         elif item.argTypes.length() > defn.args.length()
           fail("Too many argument types in type signature", item)
-        elif (defn.isVarArg and 
+        elif (defn.isVarArg and
               item.argTypes.length() == defn.args.length() and
               not item.isVarArg) or
              (item.isVarArg and (not defn.isVarArg or item.argTypes.length() !=
                                  defn.args.length())) or
              item.minArgs < defn.minArgs
           fail("Type signature incompatible with function", item)
-        end          
+        end
       end
       
       -- Verify that there is an item that has the minimum number of arguments.
@@ -552,7 +552,7 @@ class SemanticAnal is NodeVisitor
     
     leave()
     
-    self.type = nil    
+    self.type = nil
     self.errors.setType(nil, False)
   end
   
@@ -582,9 +582,9 @@ class SemanticAnal is NodeVisitor
   end
   
   def analyseBaseTypes(defn as TypeDef, type as TypeInfo)
-    -- If no base types are provided and the type is not generic, assume that 
+    -- If no base types are provided and the type is not generic, assume that
     -- we inherit them with dynamic types as type arguments.
-    if defn.baseTypes == [nil] * defn.baseTypes.length() and 
+    if defn.baseTypes == [nil] * defn.baseTypes.length() and
        type.typeVars == []
       return
     end
@@ -644,7 +644,7 @@ class SemanticAnal is NodeVisitor
           end
         end
       end
-    end        
+    end
     
     -- Verify that superclass is represented only once.
     if type.base != nil
@@ -688,13 +688,13 @@ class SemanticAnal is NodeVisitor
   end
   
   def addMembersToSymbolTable(type as TypeInfo)
-    for n in type.vars.values() + type.methods.values() + 
+    for n in type.vars.values() + type.methods.values() +
              type.getters.values() + type.setters.values()
       addVar(n, Mdef)
     end
     while type.base != nil
       type = type.base
-      for n in type.vars.values() + type.methods.values() + 
+      for n in type.vars.values() + type.methods.values() +
                type.getters.values() + type.setters.values()
         if not n.isPrivate
           addVar(n, Mdef)
@@ -766,7 +766,7 @@ class SemanticAnal is NodeVisitor
     for i in 0 to s.lvalues.length()
       s.lvalues[i].accept(self)
       
-      var lvalue = s.lvalues[i]      
+      var lvalue = s.lvalues[i]
       if not s.isInit and not isLvalueExpr(lvalue, self.isCreate)
         fail("Invalid lvalue in assignment", lvalue)
       end
@@ -957,7 +957,7 @@ class SemanticAnal is NodeVisitor
           var msg = InvalidArgcMessage(expr, create)
           fail("{} for ""{}""".format(msg, tnode.name), expr)
         end
-      end        
+      end
     end
   end
   
@@ -984,7 +984,7 @@ class SemanticAnal is NodeVisitor
   def visitMemberLvalue(expr as MemberLvalue)
     visitMemberExpr(expr)
     -- Verify that self.x refers to a member in the current class.
-    if isSelfExpr(expr.expr) and self.type != nil and 
+    if isSelfExpr(expr.expr) and self.type != nil and
          self.type.hasReadableMember(expr.name) and
          not self.type.hasWritableMember(expr.name)
       if not (self.isCreate and self.type.hasConst(expr.name))
@@ -1119,7 +1119,7 @@ class SemanticAnal is NodeVisitor
     addSymTable(name, SymbolTableNode(kind, node), nil)
   end
   
-  -- Add a definition to symbol table. Defn is the parse tree node 
+  -- Add a definition to symbol table. Defn is the parse tree node
   -- representing the name definition.
   def addSymTable(name as Str, node as SymbolTableNode, defn as Node)
     if node.kind == Gdef and isDefined(name)
@@ -1141,7 +1141,7 @@ class SemanticAnal is NodeVisitor
   end
   
   def isDefined(name)
-    if self.symtable.hasKey(name) and 
+    if self.symtable.hasKey(name) and
        self.symtable[name].length() > 0
       -- There is at least one definition with the name. Check if one of them
       -- is visible in this context.
@@ -1189,7 +1189,7 @@ class SemanticAnal is NodeVisitor
       if node is Var
         if not (node as Var).isConst
           return True
-        elif isCreate and lookupName((expr as NameLvalue).name, 
+        elif isCreate and lookupName((expr as NameLvalue).name,
                                      expr).kind == Mdef
           return True
         else
@@ -1291,7 +1291,7 @@ def GetInvalidOverridesForBase(inf as TypeInfo, base as TypeInfo) as
 end
 
 
--- Return an array of (message, node) pairs for all setters without a 
+-- Return an array of (message, node) pairs for all setters without a
 -- getter or setters and getters with incompatible visibility.
 def GetInvalidAccessors(inf as TypeInfo) as Array<(Str, Node)>
   var errors = [] as <(Str, Node)>
@@ -1314,7 +1314,7 @@ end
 
 -- Return an array of (message, node) pairs for all interface members that are
 -- missing in a type.
-def GetInterfaceErrors(type as TypeInfo, 
+def GetInterfaceErrors(type as TypeInfo,
                        interfaces = type.allDirectlyImplementedInterfaces() as
                          Array<TypeInfo>) as Array<(Str, Node)>
   var errors = [] as <(Str, Node)>
@@ -1343,7 +1343,7 @@ def GetInterfaceErrors(type as TypeInfo,
 end
 
 
-private def NotImplementMsg(type as TypeInfo, iface as TypeInfo, n as Str, 
+private def NotImplementMsg(type as TypeInfo, iface as TypeInfo, n as Str,
                             defType = "" as Str) as Str
   return """{}"" does not implement{} ""{}"" defined in ""{}""".format(
           type.defn.name, defType, n, iface.defn.name)

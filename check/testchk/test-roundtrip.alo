@@ -1,6 +1,6 @@
 module testchk
 
--- Test cases for identity source code transformation (roundtrip source -> 
+-- Test cases for identity source code transformation (roundtrip source ->
 -- parse tree -> source). The test cases verify (by default, if no explicit
 -- output is given) that the result is identical to the original source code.
 
@@ -20,7 +20,7 @@ class RoundtripSuite is Suite
   def cases()
     var c = []
     for f in RoundtripFiles
-      c += ParseTestCases(Join(TestDataPrefix, f), TestRoundtrip, 
+      c += ParseTestCases(Join(TestDataPrefix, f), TestRoundtrip,
                           TestTempDir, True)
     end
     return c
@@ -38,7 +38,7 @@ private def TestRoundtrip(testcase)
   try
     var src = LF.join(testcase.input)
     -- Parse and analyse the source program.
-    var trees, symtable, infos, types = 
+    var trees, symtable, infos, types =
                  Analyse(src, "main", False, TestTempDir)
     a = []
     var first = True
@@ -64,7 +64,7 @@ private def TestRoundtrip(testcase)
   except e is CompileError
     a = e.messages
   end
-  AssertStringArraysEqual(expected, a, 
+  AssertStringArraysEqual(expected, a,
                           "Invalid source code output ({}, line {})".format(
                             testcase.file, testcase.line))
 end

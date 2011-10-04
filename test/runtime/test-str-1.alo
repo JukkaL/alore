@@ -507,7 +507,7 @@ class StrSuite is Suite
     Assert("   abc-d   def   ".split() == ("abc-d", "def"))
     Assert((Tab + "a" + CR + "b" + LF + "c").split() == ("a", "b", "c"))
     Assert(W("   Abc-d   def   ").split() == (W("Abc-d"), "def"))
-    Assert(WSS(Tab + "A" + CR + "b" + LF + "C").split() == 
+    Assert(WSS(Tab + "A" + CR + "b" + LF + "C").split() ==
            (W("A"), "b", W("C")))
     
     -- Test splitting with a custom separator.
@@ -552,19 +552,19 @@ class StrSuite is Suite
     Assert(SS(",-------'").join(["abc", SS("defghi123")]) ==
            "abc,-------'defghi123")
     -- Wide string join.
-    Assert(WSS("--A--").join([W("Abc"), WSS("defgHI")]) == 
+    Assert(WSS("--A--").join([W("Abc"), WSS("defgHI")]) ==
            W("Abc--A--defgHI"))
 
     -- Combining narrow and wide strings.
     Assert(WSS("--A--").join(["ab", "cd", "ef"]) == W("ab--A--cd--A--ef"))
-    Assert(SS(",--,12,--").join([W("Ab"), W("Cd"), W("Ef")]) == 
+    Assert(SS(",--,12,--").join([W("Ab"), W("Cd"), W("Ef")]) ==
            W("Ab,--,12,--Cd,--,12,--Ef"))
     Assert("".join(["abc", W("CDE")]) == W("abcCDE"))
   end
   
   -- Test Joining non-Array objects.
   def testJoinWithNonArrays()
-    AssertEqual(",".join(JoinArray1("a", "bb", "ccc", "dd", "e")), 
+    AssertEqual(",".join(JoinArray1("a", "bb", "ccc", "dd", "e")),
                 "a,bb,ccc,dd,e")
     AssertEqual(",".join(JoinArray2(3)), "0,1,2")
   end
@@ -719,7 +719,7 @@ class StrSuite is Suite
     Assert(WSS("  A  ").strip() == W("A"))
   end
 
-  -- Test Upper.  
+  -- Test Upper.
   def testUpper()
     Assert("".upper() == "")
     Assert("a".upper() == "A")
@@ -744,7 +744,7 @@ class StrSuite is Suite
   end
 
   -- Test for loop over string.
-  def testFor()  
+  def testFor()
     assertStrFor("")
     for w in 1 to 3
       for s in SandSS("aBcdefgH-=", w)
@@ -800,7 +800,7 @@ class StrSuite is Suite
   
   def testMembers()
     var s = "foo"
-    for m in "length", "_add", "_mul", "_get", "_eq", "_lt", "_gt", "_in", 
+    for m in "length", "_add", "_mul", "_get", "_eq", "_lt", "_gt", "_in",
              "_repr", "_hash", "_int", "_float"
       AssertEqual(HasMember(s, m), True)
     end

@@ -113,7 +113,7 @@ AToken *AParseAssignExpression(AToken *tok, ABool allowCast)
    "as". */
 AToken *AParseSingleAssignExpression(AToken *tok, ABool *isErr)
 {
-    AExpression expr;    
+    AExpression expr;
     int oldNumLocalsActive = ANumLocalsActive;
     
     tok = ParseSubExpression(tok, PR_SINGLE, &expr, 0, FALSE);
@@ -162,7 +162,7 @@ AToken *AParseMultiExpression(AToken *tok, int num, ABool allowCast)
         ANumLocalsActive -= num;
     }
 
-    return tok;    
+    return tok;
 }
 
 
@@ -530,7 +530,7 @@ static void EmitAssignmentOpcodeForOperatorAssignment(int readOpcodeIndex,
     case OP_ASSIGN_EL:
         AEmitOpcode2Args(OP_ASSIGN_LE, AGetOpcode(readOpcodeIndex + 1),
                          rvalueNum);
-        break;        
+        break;
     case OP_AGET_LLL:
         AEmitOpcode3Args(OP_ASET_LLL,
                          AGetOpcode(readOpcodeIndex + 1),
@@ -574,7 +574,7 @@ AToken *AParseCaseExpression(AToken *tok, int num, int *skipIndex)
             getOpcode = OP_GET_LG;
         else if (expr.type == ET_INT)
             getOpcode = OP_GET_LI;
-        else        
+        else
             getOpcode = OP_GET_LL;
         
         AEmitOpcode2Args(getOpcode, num, expr.num); /* FIX */
@@ -786,7 +786,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                 if (read != -1) {
                     type = ASuperType(AType);
                     do {
-                        write = ALookupMemberTable(type, MT_VAR_SET_PUBLIC, 
+                        write = ALookupMemberTable(type, MT_VAR_SET_PUBLIC,
                                                   member);
                         if (write != -1)
                             break;
@@ -800,7 +800,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
                     AEmitPrivateMemberRead(read, write);
                     break;
                 }
-            }       
+            }
         }
         
         if (left.type == ET_LOCAL_LVALUE)
@@ -835,7 +835,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
             left.num  = 0;
             left.sym  = NULL; /* FIX: is this ok? */
             goto NoLex;
-        } else {        
+        } else {
             tok = AGenerateParseError(tok);
             result->type = ET_ERROR;
             return tok;
@@ -1186,7 +1186,7 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
             left.finalBranch      = right.finalBranch;
 
             break;
-        }           
+        }
             
         case TT_LPAREN: {
             /* Function call */
@@ -1593,7 +1593,7 @@ static ABool FindMemberVariable(ASymbolInfo *id)
             id->info.memberValue = key;
             id->sym = ACurClass;
             return TRUE;
-        }       
+        }
         
         /* Search public and private readable variables. */
         item = ALookupMemberTable(type, MT_VAR_GET_PUBLIC, key);
@@ -1641,7 +1641,7 @@ static void CreateMemberAccess(ASymbolInfo *sym, AExpression *result)
             
             if (member & A_MEMBER_CONSTANT)
                 result->type = ET_PARTIAL;
-            else        
+            else
                 result->type = ET_PARTIAL_LVALUE;
             
             memberValue = AGetMemberValue(member);

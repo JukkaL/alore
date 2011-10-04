@@ -80,7 +80,7 @@ AValue AFileCreate(AThread *t, AValue *frame)
     isProtected = FALSE;
     isOutput = FALSE;
     for (i = 2; i <= 5; i++) {
-        if (frame[i] == AGlobalByNum(AAppendNum) 
+        if (frame[i] == AGlobalByNum(AAppendNum)
             || frame[i] == AGlobalByNum(AProtectedNum)) {
             int j;
 
@@ -552,7 +552,7 @@ AValue AFile_ReadWithMethod(AThread *t, AValue *frame, int method)
 static ABool WriteBlock(AThread *t, AValue file, char *buf, int len,
                         int method)
 {
-#if defined(A_HAVE_WINDOWS) && defined(A_HAVE_SOCKET_MODULE)    
+#if defined(A_HAVE_WINDOWS) && defined(A_HAVE_SOCKET_MODULE)
     if (method == A_SOCKET_METHOD) {
         /* Windows socket implementation */
         int socket = AValueToInt(AValueToInstance(file)->member[A_FILE_ID]);
@@ -681,7 +681,7 @@ AValue AFileSeek(AThread *t, AValue *frame)
             li.QuadPart = offset;
             /* Use an API function instead of _fseeki64 (or similar) since
                it does not require a specific version of msvcrXX. */
-            if (SetFilePointerEx((HANDLE)_get_osfhandle(fileno(file)), li, 
+            if (SetFilePointerEx((HANDLE)_get_osfhandle(fileno(file)), li,
                                  NULL, FILE_BEGIN) == 0)
                 return ARaiseErrnoIoError(t, NULL);
         }
@@ -871,7 +871,7 @@ AValue AIoMain(AThread *t, AValue *frame)
     frame[3] = AGlobalByNum(stdinBuf);
 
     /* Initialize io::RawStdIn. */
-#ifdef A_HAVE_POSIX    
+#ifdef A_HAVE_POSIX
     v = CreateFileObject(t, frame, STDIN_FILENO);
 #else
     v = CreateFileObject(t, frame, stdin);
@@ -884,7 +884,7 @@ AValue AIoMain(AThread *t, AValue *frame)
     frame[1] = AGlobalByNum(AOutputNum);
 
     /* Determine StdOut buffering mode. */
-#ifdef A_HAVE_POSIX    
+#ifdef A_HAVE_POSIX
     if (isatty(STDOUT_FILENO))
         stdoutBuf = ALineBufferedNum;
     else
@@ -896,7 +896,7 @@ AValue AIoMain(AThread *t, AValue *frame)
     frame[3] = AGlobalByNum(stdoutBuf);
 
     /* Initialize io::RawStdOut. */
-#ifdef A_HAVE_POSIX    
+#ifdef A_HAVE_POSIX
     v = CreateFileObject(t, frame, STDOUT_FILENO);
 #else
     setbuf(stdout, NULL);
@@ -910,7 +910,7 @@ AValue AIoMain(AThread *t, AValue *frame)
     frame[3] = AGlobalByNum(AUnbufferedNum);
 
     /* Initialize io::RawStdErr. */
-#ifdef A_HAVE_POSIX    
+#ifdef A_HAVE_POSIX
     v = CreateFileObject(t, frame, STDERR_FILENO);
 #else
     setbuf(stderr, NULL);
@@ -1013,7 +1013,7 @@ static ABool AddOutputStreamList(AThread *t, AValue *file)
         if (!ASetMemberDirectND(t, AGlobalByNum(GL_OUTPUT_STREAMS),
                              A_STREAM_LIST_PREV, *file))
             goto Fail;
-    }    
+    }
     if (!ASetConstGlobalValue(t, GL_OUTPUT_STREAMS, *file))
         goto Fail;
     

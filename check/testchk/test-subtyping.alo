@@ -138,7 +138,7 @@ class SubtypingSuite is Suite
     assertProperSubtype(fx.callableType(fx.a, fx.b), fx.callable(fx.a, fx.b))
   end
   
-  -- IDEA: Maybe add these test cases (they are tested pretty well in type 
+  -- IDEA: Maybe add these test cases (they are tested pretty well in type
   --       checker tests already):
   --  * more interface subtyping test cases
   --  * more generic interface subtyping test cases
@@ -160,7 +160,7 @@ class SubtypingSuite is Suite
   private def assertProperSubtype(s, t)
     assertSubtype(s, t)
     assertNotSubtype(t, s)
-  end  
+  end
   
   private def assertEquivalent(s, t)
     assertSubtype(s, t)

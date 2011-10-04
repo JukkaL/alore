@@ -177,7 +177,7 @@ ABool AParse(AModuleId *module, char *path, AToken *tok)
     if (tok->type == TT_BOM) {
         isUtf8Bom = TRUE;
         tok = AAdvanceTok(tok);
-    }            
+    }
     
     if (tok->type == TT_NEWLINE)
         tok = AAdvanceTok(tok);
@@ -518,7 +518,7 @@ static AToken *ParseVariableDefinition(AToken *tok, ABool isPrivate)
 
     /* What kind of variable(s) are we defining? */
     if (ACurFunction != NULL || ACurMember != AM_NONE || ABlockDepth > 0) {
-        /* Define local variables. */   
+        /* Define local variables. */
         for (i = 0; i < numVars; i++) {
             AIdType type;
             
@@ -531,7 +531,7 @@ static AToken *ParseVariableDefinition(AToken *tok, ABool isPrivate)
             AddLocalVariable(vars[i], type);
         }
     } else if (ACurClass == NULL) {
-        /* Define global variables. */  
+        /* Define global variables. */
         for (i = 0; i < numVars; i++) {
             ASymbolInfo *var = CheckGlobal(vars[i], isConst ? ID_GLOBAL_CONST
                                                             : ID_GLOBAL);
@@ -580,7 +580,7 @@ void AInitFunctionParseState(void)
     LoopDepth = 0;
     LoopExits = &ExitSentinel;
     FinallyExits = NULL;
-    ReturnBranches = NULL;    
+    ReturnBranches = NULL;
     Locals = NULL;
     
     ANumLocals = ANumLocalsActive = 3; /* FIX: constant? */
@@ -618,7 +618,7 @@ static AToken *ParseFunctionDefinition(AToken *tok, ABool isPrivate,
     /* An identifier followed by '(' (or '<') introduces an ordinary
        function (or method). */
     if (tok->type == TT_ID && ((tok + 1)->type == TT_LPAREN
-                               || (tok + 1)->type == TT_LT)) {   
+                               || (tok + 1)->type == TT_LT)) {
         if (ACurClass == NULL) {
             /* Function definition */
 
@@ -770,7 +770,7 @@ AToken *AParseAnonymousFunction(AToken *tok)
         ANumLocalsActive++;
     }
     
-    AEnterSection();    
+    AEnterSection();
     AEmitAbsoluteLineNumber(tok);
 
     /* Reserve space for exposed variables referenced in this anonymous
@@ -797,7 +797,7 @@ AToken *AParseAnonymousFunction(AToken *tok)
     minArgs = maxArgs = 0;
     if (tok->type != TT_LPAREN)
         tok = AGenerateParseError(tok);
-    else 
+    else
         tok = ParseFunctionArguments(tok, &minArgs, &maxArgs, TRUE, FALSE);
 
     /* The exposed variables and self will be passed as additional hidden
@@ -1212,7 +1212,7 @@ static AToken *ParseTypeDefinition(AToken *tok)
 
             if (tok->type != TT_COMMA)
                 break;
-            tok = AAdvanceTok(tok);                
+            tok = AAdvanceTok(tok);
         } while (tok->type == TT_ID || tok->type == TT_SCOPEOP);
     }
 
@@ -1295,7 +1295,7 @@ static AToken *ParseTypeDefinition(AToken *tok)
             tok = AGenerateParseError(tok);
         tok = AAdvanceTok(tok);
     } else
-        tok = AGenerateParseError(tok);  
+        tok = AGenerateParseError(tok);
 
     ADebugCompilerMsg(("..."));
     
@@ -1528,7 +1528,7 @@ static AToken *ParseBlock(AToken *tok)
         default:
             tok = AGenerateParseErrorSkipNewline(tok);
             break;
-        }       
+        }
     }
 }
 
@@ -1596,7 +1596,7 @@ static AToken *ParseIfStatement(AToken *tok)
 
     /* tok->type is TT_EOF, TT_END or TT_ELSE. */
 
-    if (tok->type == TT_ELSE) { 
+    if (tok->type == TT_ELSE) {
         tok = AAdvanceTok(tok);
 
         if (tok->type != TT_NEWLINE)
@@ -1663,7 +1663,7 @@ static AToken *ParseWhileStatement(AToken *tok)
 
     LoopDepth = oldLoopDepth;
 
-    return tok;  
+    return tok;
 }
 
 
@@ -1711,7 +1711,7 @@ static AToken *ParseForStatement(AToken *tok)
     int createExposedOpcodeIndex = -1;
     int firstExposedVar = 0;
     
-    LoopDepth = ABlockDepth;    
+    LoopDepth = ABlockDepth;
     ABlockDepth++;
 
     AEmitLineNumber(tok);
@@ -1922,7 +1922,7 @@ static AToken *ParseReturnStatement(AToken *tok)
     /* Skip "return". */
     tok = AAdvanceTok(tok);
 
-    if (TryLocalVar == -1) {    
+    if (TryLocalVar == -1) {
         if (tok->type != TT_NEWLINE) {
             int retVal;
         
@@ -2035,7 +2035,7 @@ static AToken *ParseTryStatement(AToken *tok)
         for (fin = FinallyExits; fin != NULL && fin->data > beginIndex;
              fin = fin->next)
             ASetOpcode(fin->data + 2, AGetOpcode(fin->data + 2) + 1);
-    }        
+    }
 
     /* FIX: better error message if no except/finally? */
 
@@ -2964,7 +2964,7 @@ void AFixSupertype(AUnresolvedSupertype *unresolv)
     /* Free information about the unresolved module. */
     AFreeUnresolvedNameList(unresolv->modules);
     AFreeUnresolvedNameList(unresolv->super);
-    AFreeUnresolvedNameList(unresolv->interfaces);    
+    AFreeUnresolvedNameList(unresolv->interfaces);
     AFreeStatic(unresolv);
 
     /* Restore the saved previous compiler state. */
@@ -3144,7 +3144,7 @@ static void CalculateExposedVariableMappingInAnonFunc(AToken *tok)
     tok = AAdvanceTok(tok);
 
     /* Initialize previous token type. */
-    prev = TT_DEF;    
+    prev = TT_DEF;
     
     /* Loop over tokens and record any id tokens that refer to an exposed
        local variable unless the id tokens are part of a :: expression or
@@ -3301,7 +3301,7 @@ AToken *AParseBracketedTypeAnnotation(AToken *tok)
    be used for other annotation kinds.
 
    Note that none of the clear functions clear the lookahead token at the end
-   of token blocks. This should be fine, since lookahead is never used 
+   of token blocks. This should be fine, since lookahead is never used
    when skipping annotations, and there is also a "sentinel" token before a
    type annotation.
    

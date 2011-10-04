@@ -7,14 +7,14 @@ import types
 -- range types. Range types are supported for variable T when the both of the
 -- following conditions hold for the return type:
 --
---  1. T is only used as an argument of generic type, e.g. A<T>, but not in 
+--  1. T is only used as an argument of generic type, e.g. A<T>, but not in
 --     other contexts.
 --  2. T appears at most once in the return type.
 --
--- The first requirement is due to the limitation of supporting range types 
--- only as generic type arguments. The second requirement ensures that the 
--- range type will ever be collapsed at most once; otherwise we could lose 
--- type safety. It would probably be feasible to relax the requirements 
+-- The first requirement is due to the limitation of supporting range types
+-- only as generic type arguments. The second requirement ensures that the
+-- range type will ever be collapsed at most once; otherwise we could lose
+-- type safety. It would probably be feasible to relax the requirements
 -- somewhat, but it's not obvious how useful that would be.
 def GenericFunctionRangeVariables(type as Callable) as Array<Boolean>
   var res = [] as <Boolean>

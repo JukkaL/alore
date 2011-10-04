@@ -73,7 +73,7 @@ def GetLinkOpts(isDebug)
     linkOpts.append("-Wl,-exported_symbols_list,{}".format(p))
   end
   
-  return linkOpts  
+  return linkOpts
 end
 
 
@@ -81,7 +81,7 @@ def GetCOpts(isDebug)
   var copts = []
   var p = DirName(ProgramPath)
 
-  if Platform == "windows"  
+  if Platform == "windows"
     if IsStandalone
       var incPaths = [Join(p, "include", "alore")]
       if not IsDir(incPaths[0])
@@ -146,7 +146,7 @@ private def GetBaseModuleSearchPaths()
     end
   end
   
-  -- When run as standalone, we need to manually process the ALOREPATH 
+  -- When run as standalone, we need to manually process the ALOREPATH
   -- environment variable.
   if IsStandalone
     var pp = GetEnv("ALOREPATH")

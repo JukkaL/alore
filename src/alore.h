@@ -348,7 +348,7 @@ A_APIFUNC void AAllowBlocking(void);
 A_APIFUNC void AEndBlocking(void);
 
 
-/* Internal functions and definitions - not part of the public API! 
+/* Internal functions and definitions - not part of the public API!
    IDEA: These could be moved to a separate header file for clarity. */
 
 
@@ -410,7 +410,7 @@ A_APIVAR extern ATypeInfo *ATupleClass;
 #define AGetFixArrayLen(a) \
     (((a)->header & ~A_NEW_GEN_FLAG) >> 2)
 
-#elif A_VALUE_BITS == 64    
+#elif A_VALUE_BITS == 64
 
 #define AGetFixArrayItemPtr(a, intVal) \
     ((AValue *)APtrAdd(a, sizeof(AValue) + (intVal) * 2))

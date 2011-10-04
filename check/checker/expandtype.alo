@@ -5,8 +5,8 @@ import types
   
 -- Expand any type variable references in a type with the actual values of
 -- type variables in an instance.
-def ExpandType(type as Typ, 
-               map as Map<Int, Typ>, 
+def ExpandType(type as Typ,
+               map as Map<Int, Typ>,
                upperBounds = nil as Map<Int, Typ>) as Typ
   return type.accept(ExpandTypeVisitor(map, upperBounds))
 end
@@ -108,7 +108,7 @@ private class ExpandTypeVisitor is TypeVisitor<Typ>
   end
   
   def visitIntersection(t as Intersection) as Typ
-    return Intersection(t.item1.accept(self) as FunctionLike, 
+    return Intersection(t.item1.accept(self) as FunctionLike,
                         t.item2.accept(self) as FunctionLike,
                         t.name, t.line, t.repr)
   end

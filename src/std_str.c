@@ -1,4 +1,4 @@
-/* std_str.c - std::Str related operations 
+/* std_str.c - std::Str related operations
 
    Copyright (c) 2010-2011 Jukka Lehtosalo
 
@@ -223,7 +223,7 @@ AValue AStrUpper(AThread *t, AValue *frame)
         frame[1] = ANarrowStringToWide(t, frame[0], frame);
         if (AIsError(frame[1]))
             return AError;
-        goto Wide;      
+        goto Wide;
     } else if (AIsWideStr(frame[1])) {
         AWideString *s;
         AWideChar *src;
@@ -270,7 +270,7 @@ AValue AStrUpper(AThread *t, AValue *frame)
 AValue AStrLower(AThread *t, AValue *frame)
 {
     Assize_t begIndex;
-    Assize_t len;    
+    Assize_t len;
 
     frame[0] = AWrapObject(t, frame[0]);
     frame[1] = A_UNWRAP(frame[0]);
@@ -753,7 +753,7 @@ AValue AStrDecode(AThread *t, AValue *frame)
     frame[2] = frame[1];
     frame[1] = A_UNWRAP(frame[0]);
     
-    /* Did caller provide a strictness argument? */ 
+    /* Did caller provide a strictness argument? */
     if (AIsDefault(frame[3])) {
         /* No. Assume strict encoding. */
         frame[3] = ACallMethod(t, "decoder", 0, frame + 2);
@@ -795,7 +795,7 @@ AValue AStrEncode(AThread *t, AValue *frame)
 {
     frame[0] = AWrapObject(t, frame[0]);
 
-    /* Did caller provide a strictness argument? */ 
+    /* Did caller provide a strictness argument? */
     if (AIsDefault(frame[2])) {
         /* No. Assume strict encoding. */
         frame[2] = ACallMethod(t, "encoder", 0, frame + 1);
@@ -1046,7 +1046,7 @@ AValue AMakeStrUtf8(AThread *t, const char *str)
     int resultLen;
     AValue s;
 
-    len = strlen(str);    
+    len = strlen(str);
     resultLen = 0;
 
     for (i = 0; i < len; ) {
@@ -1136,7 +1136,7 @@ AWideChar AGetCh(AThread *t, AValue ch)
     if (AIsStr(ch) && AStrLen(ch) == 1)
         return AStrItem(ch, 0);
     else {
-        if (!AIsStr(ch)) 
+        if (!AIsStr(ch))
             ARaiseTypeError(t, "Character expected (but %T found)", ch);
         else
             ARaiseValueError(t, "Character expected (but string of length "
@@ -1473,7 +1473,7 @@ AValue ANormalizeNarrowString(AThread *t, AValue strVal)
 
                 return AStrToValue(dst);
             }
-        } else 
+        } else
             return ARaiseTypeErrorND(t, AMsgStrExpectedBut, strVal);
     }
 
@@ -1548,7 +1548,7 @@ AValue AConcatStrings(AThread *t, AValue left, AValue right)
         ACopyMem(res->elem + leftLen, rightStr, rightLen);
         
         return AStrToValue(res);
-    }   
+    }
     
     if (AIsSubStr(left)) {
         ASubString *subStr;
@@ -1696,7 +1696,7 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
                 *t->tempStack = strVal;
                 newStr = AAlloc(t, A_COPY_SUBSTR_SIZE);
                 if (newStr == NULL)
-                    return AError;             
+                    return AError;
                 strVal = *t->tempStack;
                 str = AValueToStr(strVal);
             } else {
@@ -1818,7 +1818,7 @@ AValue ACreateSubStr(AThread *t, AValue strVal, Assize_t begInd,
 
     /* Not reached */
 
-  IndexError:    
+  IndexError:
 
     return ARaiseByNum(t, AErrorClassNum[EX_INDEX_ERROR], NULL);
 }
@@ -2113,7 +2113,7 @@ AValue AConcatStringAndCStr(AThread *t, AValue str, const char *cstr)
     if (AIsError(cstrVal))
         return cstrVal;
 
-    return AConcatStrings(t, *t->tempStack, cstrVal); 
+    return AConcatStrings(t, *t->tempStack, cstrVal);
 }
 
 

@@ -152,7 +152,7 @@ static OpcodeInfo Operators[]  = {
     { OP_FOR_L,    "to(for)" },
     { OP_PAIR_L,   ":" },
     { 0, 0 }
-};    
+};
 
 
 static void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip);
@@ -177,7 +177,7 @@ static char *GetOpcodeStr(OpcodeInfo *info, AOpcode opcode)
 }
 
 
-/* Pretty-print all functions to stdout. */ 
+/* Pretty-print all functions to stdout. */
 void ADisplayCode(void)
 {
     int i;
@@ -277,14 +277,14 @@ void ADisplayCode(void)
                         }
 #else
                         FIX
-#endif                  
+#endif
                         j++;
                     } else {
                         printf("????\n");
                         break;
                     }
                 }
-            } 
+            }
         }
     }
 }
@@ -469,7 +469,7 @@ void FormatOpcode(char *buf, char *fmt, AOpcode *code, int *ip)
                 /* Member of a local variable */
                 AppendMessage(buf, "l%d.%M", code[i], code[i + 1]);
                 i += 2;
-                break;          
+                break;
                 
             case 'M':
                 /* Member of a local variable */

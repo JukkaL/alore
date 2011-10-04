@@ -39,7 +39,7 @@ def Main()
   
   WriteLn("<p>")
   for k in r.keys()
-    WriteLn("{}: {}<br>".format(Html(k), 
+    WriteLn("{}: {}<br>".format(Html(k),
                                 Html(Str(r.valueList(k)))))
   end
   

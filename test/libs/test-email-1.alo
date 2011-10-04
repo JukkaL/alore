@@ -22,7 +22,7 @@ class EmailSuite is Suite
   end
   
   def testMultipleHeaders()
-    var m = Message("To: foo@bar.com" + BR + "From:a@b.c" + BR + BR + 
+    var m = Message("To: foo@bar.com" + BR + "From:a@b.c" + BR + BR +
                     "the body" + BR + BR + "more...")
     AssertEqual(m.keys(), ["From", "To"])
     AssertEqual(m["to"], "foo@bar.com")

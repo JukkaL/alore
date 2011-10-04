@@ -22,7 +22,7 @@ import sys
 import loader
 import __testc
 
--- Import all built-in C modules so that they are available (if needed) in 
+-- Import all built-in C modules so that they are available (if needed) in
 -- compiled programs. Dynamic C modules and modules implemented in Alore can
 -- be loaded dynamically.
 import thread

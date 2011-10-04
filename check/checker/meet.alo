@@ -72,7 +72,7 @@ private class TypeMeetVisitor is TypeVisitor<Typ>
         if t.argTops != nil or si.argTops != nil
           return CombineGenericInstances(t, si, NilType(), basic)
         elif IsSubtype(t, s)
-          -- Combine type arguments. We could have used join below 
+          -- Combine type arguments. We could have used join below
           -- equivalently.
           var args = [] as <Typ>
           for i in 0 to t.args.length()

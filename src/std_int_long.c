@@ -74,7 +74,7 @@ static ALongInt *TruncateZeroDigits(AThread *t, ALongInt *li, ABool isNeg);
 
 /* Convert a fixed-width integer to a long integer object. This function may
    create non-normalized long integers that could be represented as short
-   ints. */ 
+   ints. */
 AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
 {
     ALongInt *li;
@@ -109,7 +109,7 @@ AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
 
 /* Convert a fixed-width integer to a long integer object. This function may
    create non-normalized long integers that could be represented as short
-   ints. */ 
+   ints. */
 AValue ACreateLongIntFromIntND(AThread *t, ASignedValue intVal)
 {
     ALongInt *li;
@@ -202,7 +202,7 @@ ALongIntSignedDoubleDigit ACompareLongInt(AValue aVal, AValue bVal)
                     break;
                 }
             }
-        }      
+        }
     } else
         result = 1;
 
@@ -628,7 +628,7 @@ static void Shl(ALongInt *src, ALongInt *dst, unsigned long shift)
     srcLen = Len(src);
     dstLen = srcLen + wordShift;
 
-    carry = (ALongIntDoubleDigit)src->digit[srcLen - 1] << bitShift; 
+    carry = (ALongIntDoubleDigit)src->digit[srcLen - 1] << bitShift;
     if (carry > MASK) {
         dst->digit[dstLen] = carry >> BITS;
         dstLen++;

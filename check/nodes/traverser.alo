@@ -3,8 +3,8 @@ module nodes
 
 -- A parse tree visitor that traverses the parse tree during visiting, but does
 -- not peform any actions outside the travelsal. Subclasses should override
--- visit methods to perform actions during travelsal. Calling the superclass 
--- method allows reusing the travelsal implementation. 
+-- visit methods to perform actions during travelsal. Calling the superclass
+-- method allows reusing the travelsal implementation.
 class TraverserVisitor is NodeVisitor
   -- Helper methods
   
@@ -245,7 +245,7 @@ class TraverserVisitor is NodeVisitor
     visitFunc(o)
   end
 
-  -- These are for convenience. These node types are not defined in the parser 
+  -- These are for convenience. These node types are not defined in the parser
   -- module.
   def visitFilterNode(o)
   end

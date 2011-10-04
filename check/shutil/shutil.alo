@@ -136,9 +136,9 @@ private def CopyStat(path, target, *flags)
     var st = Stat(path)
     var stt = Stat(target)
     if not NoPerm in flags
-      SetPerm(target, 
-              JoinPerm(st.ownerPerm, stt.ownerPerm), 
-              JoinPerm(st.otherPerm, stt.otherPerm), 
+      SetPerm(target,
+              JoinPerm(st.ownerPerm, stt.ownerPerm),
+              JoinPerm(st.otherPerm, stt.otherPerm),
               JoinPerm(st.groupPerm, stt.groupPerm))
     end
     if Timestamps in flags

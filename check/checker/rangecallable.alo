@@ -3,15 +3,15 @@ module checker
 import types
 
 
--- This class represents a bound method (callable) with some type variables 
+-- This class represents a bound method (callable) with some type variables
 -- that are partially defined by upper and lower bounds.
 --
--- This is an intermediate type that is only generated during type inference. 
--- This will be collapsed immediately into a Callable type by binding the type 
+-- This is an intermediate type that is only generated during type inference.
+-- This will be collapsed immediately into a Callable type by binding the type
 -- variables.
 --
 -- The reason we need range types is somewhat complicated. Suppose we have a
--- method call (_add), and the base object has a range type for a type 
+-- method call (_add), and the base object has a range type for a type
 -- variable (Array<Str..Object> in this case):
 --
 --   ['x'] + [1]
@@ -20,12 +20,12 @@ import types
 --
 --   def (Array<T>) as Array<T> for some T in Str..Object.
 --
--- (Note that is *not* a generic method; the type variable T is associated 
+-- (Note that is *not* a generic method; the type variable T is associated
 -- with class Array, not method _add.)
 --
 -- But we do not want to complicate things by supporting range types for all
--- callable types. So we only support them in this particular case, when 
--- evaluating member access. After the argument type has been inferred 
+-- callable types. So we only support them in this particular case, when
+-- evaluating member access. After the argument type has been inferred
 -- (Array<Int..Object>) we can solve and fix the type T of the method type (to
 -- Object) so we get the non-generic callable type
 --
@@ -35,7 +35,7 @@ import types
 class RangeCallable is Typ
   -- Lower bounds for type variabless 1, 2, ... of the base object.
   const bottoms   as Array<Typ>
-  -- Upper bounds for type variabless 1, 2, ... of the base object. Each may 
+  -- Upper bounds for type variabless 1, 2, ... of the base object. Each may
   -- be nil if collapsed.
   const tops      as Array<Typ>
   const rangeIds  as Array<Int>   -- Ids of range types (or nil if collapse).
@@ -58,7 +58,7 @@ class RangeCallable is Typ
     return self.bottoms.length()
   end
 
-  -- Visitors can't deal with this type.  
+  -- Visitors can't deal with this type.
   def accept<T>(visitor as TypeVisitor<T>) as T
     raise RuntimeError("Operation not supported")
   end

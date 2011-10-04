@@ -252,5 +252,5 @@ ABool AAdvanceNewRefList(AThread *t)
         t->newRefEnd = newRef->data.valPtr + A_GC_LIST_BLOCK_LENGTH;
     }
     
-    return TRUE;        
+    return TRUE;
 }

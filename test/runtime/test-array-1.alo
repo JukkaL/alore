@@ -46,7 +46,7 @@ class ArraySuite is Suite
   end
   
   def testArrayFromIterable()
-    AssertEqual(Array(""), [])    
+    AssertEqual(Array(""), [])
     AssertEqual(Array("foo"), ["f", "o", "o"])
     
     AssertEqual(Array([]), [])
@@ -609,7 +609,7 @@ class ArraySuite is Suite
   
   def testMembers()
     var a = [2, 3]
-    for m in "length", "_add", "_get", "_set", "_eq", "_lt", "_gt", "_in", 
+    for m in "length", "_add", "_get", "_set", "_eq", "_lt", "_gt", "_in",
              "_str", "_hash", "iterator"
       AssertEqual(HasMember(a, m), True)
     end

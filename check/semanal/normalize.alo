@@ -14,7 +14,7 @@ def InitializeNormalize()
 end
 
 
--- Normalize a non-semantically analyzed parse tree by transforming certain 
+-- Normalize a non-semantically analyzed parse tree by transforming certain
 -- syntactic constructs to simpler forms:
 --  - for loop into a while loop
 --  - initialization in definitions into definition + assigment (TODO)
@@ -103,7 +103,7 @@ private class NormVisitor is NodeVisitor
       for v in varStmt.names
         lvalues.append(NameExpr(v.name).setLine(line))
       end
-      var ass = AssignmentStmt(lvalues, varStmt.init, lvalues.length() > 1, 
+      var ass = AssignmentStmt(lvalues, varStmt.init, lvalues.length() > 1,
                                True).setLine(line)
       varStmt.init = nil
       block.insertAt(i + 1, ass)
@@ -130,9 +130,9 @@ private class NormVisitor is NodeVisitor
           var base = TmpVar()
           var initBase = VarDef([base], Ldef, False, lvalue.expr).setLine(line)
           init = [initBase]
-          get = MemberExpr(NameExpr(base.name).setLine(line), 
+          get = MemberExpr(NameExpr(base.name).setLine(line),
                            lvalue.name).setLine(line)
-          set = MemberExpr(NameExpr(base.name).setLine(line), 
+          set = MemberExpr(NameExpr(base.name).setLine(line),
                            lvalue.name).setLine(line)
         case IndexLvalue
           var base = TmpVar()
@@ -141,9 +141,9 @@ private class NormVisitor is NodeVisitor
           var initIndex = VarDef([index], Ldef, False, lvalue.index).
                             setLine(line)
           init = [initBase, initIndex]
-          get = IndexExpr(NameExpr(base.name).setLine(line), 
+          get = IndexExpr(NameExpr(base.name).setLine(line),
                           NameExpr(index.name).setLine(line)).setLine(line)
-          set = IndexExpr(NameExpr(base.name).setLine(line), 
+          set = IndexExpr(NameExpr(base.name).setLine(line),
                           NameExpr(index.name).setLine(line)).setLine(line)
       end
 

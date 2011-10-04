@@ -3,8 +3,8 @@ module checker
 import types
 
 
--- Infer the type arguments of a generic function. Return an array of 
--- (lower bound, upper bound) tuples for the type variables -1 (at index 0), 
+-- Infer the type arguments of a generic function. Return an array of
+-- (lower bound, upper bound) tuples for the type variables -1 (at index 0),
 -- -2 (at index 1), etc.
 --
 --   calleeType: the target generic function
@@ -12,7 +12,7 @@ import types
 --   isVarArg:   is the call a vararg call (if yes, last arg type is vararg)
 --   basic:      references to basic types which are needed during inference
 private def InferFunctionTypeArguments(
-                calleeType as Callable, argTypes as Array<Typ>, 
+                calleeType as Callable, argTypes as Array<Typ>,
                 isVarArg as Boolean, basic as BasicTypes) as Array<(Typ, Typ)>
   -- Infer constraints.
   var constraints = InferConstraintsForCallable(calleeType, argTypes, isVarArg)
@@ -23,8 +23,8 @@ private def InferFunctionTypeArguments(
 end
 
 
--- Infer the type arguments of a bound method type with ranges as instances 
--- type variables. Return an array of (lower bound, upper bound) tuples for 
+-- Infer the type arguments of a bound method type with ranges as instances
+-- type variables. Return an array of (lower bound, upper bound) tuples for
 -- the type variables; first for instance type variables and then for function
 -- type variables (if any).
 --
@@ -35,7 +35,7 @@ end
 --   isVarArg:   is the call a vararg call (if yes, last arg type is vararg)
 --   basic:      references to basic types which are needed during inference
 private def InferRangeCallableTypeArguments(
-                callee as RangeCallable, argTypes as Array<Typ>, 
+                callee as RangeCallable, argTypes as Array<Typ>,
                 isVarArg as Boolean, basic as BasicTypes) as Array<(Typ, Typ)>
   var callable = (callee.callable as Callable)
   -- Infer constraints for all type variables (both type and function).
@@ -48,5 +48,5 @@ private def InferRangeCallableTypeArguments(
   end
   
   var typeVars = callee.typeVarIds() + callable.typeVarIds()
-  return SolveConstraints(typeVars, constraints, basic)  
+  return SolveConstraints(typeVars, constraints, basic)
 end

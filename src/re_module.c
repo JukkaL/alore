@@ -298,7 +298,7 @@ A_MODULE(__re, "__re")
         A_METHOD("span", 1, 0, MatchResultSpan)
     A_END_CLASS()
 
-#ifdef A_DEBUG    
+#ifdef A_DEBUG
     A_DEF("__Dump", 1, 0, ReDump)
 #endif
 A_END_MODULE()

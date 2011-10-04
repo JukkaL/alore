@@ -26,7 +26,7 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
     self.right = right
   end
   
-  -- visitX(left) means: is left (which is an instance of X) a subtype of 
+  -- visitX(left) means: is left (which is an instance of X) a subtype of
   -- right?
 
   def visitUnboundType(left as UnboundType) as Boolean
@@ -84,7 +84,7 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
   end
   
   def visitTypeVar(left as TypeVar) as Boolean
-    if right is TypeVar 
+    if right is TypeVar
       return left.name == (right as TypeVar).name
     else
       return IsNamedInstance(right, "std::Object")
@@ -127,11 +127,11 @@ private class SubtypeVisitor is TypeVisitor<Boolean>
     if IsNamedInstance(right, "std::Object")
       return True
     elif right is Callable or IsNamedInstance(right, "std::Type")
-      return IsSubtype(left.item1, right) or 
+      return IsSubtype(left.item1, right) or
              IsSubtype(left.item2, right)
     elif right is Intersection
       var iright = (right as Intersection)
-      return IsSubtype(left, iright.item1) and 
+      return IsSubtype(left, iright.item1) and
              IsSubtype(left, iright.item2)
     elif right is UnboundType
       return True
@@ -175,7 +175,7 @@ private def IsCallableSubtype(left as Callable, right as Callable) as Boolean
     return False
   end
   
-  if left.isVarArg and not right.isVarArg and 
+  if left.isVarArg and not right.isVarArg and
      left.argTypes.length() <= right.argTypes.length()
     return False
   end
@@ -184,13 +184,13 @@ private def IsCallableSubtype(left as Callable, right as Callable) as Boolean
 end
 
 
--- Map an Instance type, including the type arguments, to compatible 
+-- Map an Instance type, including the type arguments, to compatible
 -- Instance(s) of a specific supertype. Multiple types are returned only if
 -- the supertype is a generic interface which is implemented with multiple
 -- sets of type arguments.
 --
 -- Assume that supertype is a supertype of instance.type.
-private def MapInstanceToSupertypes(instance as Instance, 
+private def MapInstanceToSupertypes(instance as Instance,
                                     supertype as TypeInfo) as Array<Instance>
   if instance.type == supertype
     return [instance]
@@ -213,12 +213,12 @@ private def MapInstanceToSupertypes(instance as Instance,
 end
 
 
-private def MapInstanceToDirectSupertype(instance as Instance, 
+private def MapInstanceToDirectSupertype(instance as Instance,
                                          supertype as TypeInfo) as Instance
   var type = instance.type
   
   for b in type.bases
-    -- The cast below cannot fail since we require that semantic analysis 
+    -- The cast below cannot fail since we require that semantic analysis
     -- was successful, so bases cannot contain unbound types.
     if b != nil and (b as Instance).type == supertype
       var map = TypeVarMap(type, instance.args)
@@ -227,7 +227,7 @@ private def MapInstanceToDirectSupertype(instance as Instance,
     end
   end
   
-  -- Relationship with the supertype not specified explicitly. Use dynamic 
+  -- Relationship with the supertype not specified explicitly. Use dynamic
   -- type arguments implicitly.
   return Instance(type.base, [Dynamic()] * type.base.typeVars.length())
 end
@@ -247,7 +247,7 @@ end
 
 
 private def MapInstanceToInterfaceSupertypes(
-                instance as Instance, 
+                instance as Instance,
                 supertype as TypeInfo) as Array<Instance>
   var result = [] as <Instance>
   for subtypingPath in InterfaceImplementationPaths(instance.type, supertype)
@@ -265,15 +265,15 @@ private def MapInstanceToInterfaceSupertypes(
 end
 
 
--- Return an array of non-empty paths of direct supertypes from type to 
+-- Return an array of non-empty paths of direct supertypes from type to
 -- supertype.
 -- Return [] if no such path could be found.
 --
 --   InterfaceImplementationPaths(A, B) == [[B]] if A inherits B
---   InterfaceImplementationPaths(A, C) == [[B, C]] if A inherits B and 
+--   InterfaceImplementationPaths(A, C) == [[B, C]] if A inherits B and
 --                                                     B inherits C
 private def InterfaceImplementationPaths(
-                type as TypeInfo, 
+                type as TypeInfo,
                 supertype as TypeInfo) as Array<Array<TypeInfo>>
   var result = [] as <Array<TypeInfo>>
 
@@ -308,7 +308,7 @@ private def MapInstanceToDirectSupertypes(
   var result = [] as <Instance>
   
   for b in type.bases
-    -- The cast below cannot fail since we require that semantic analysis 
+    -- The cast below cannot fail since we require that semantic analysis
     -- was successful, so bases cannot contain unbound types.
     if b != nil and (b as Instance).type == supertype
       var map = TypeVarMap(type, instance.args)
@@ -320,7 +320,7 @@ private def MapInstanceToDirectSupertypes(
   if result != []
     return result
   else
-    -- Relationship with the supertype not specified explicitly. Use dynamic 
+    -- Relationship with the supertype not specified explicitly. Use dynamic
     -- type arguments implicitly.
     return [Instance(supertype, [Dynamic()] * supertype.typeVars.length())]
   end

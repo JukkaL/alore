@@ -89,7 +89,7 @@ char *ANurseryEnd;
    bytes are allocated outside nursery.
    
    Note: The list may also contain small blocks that should not be moved by
-         gc. */   
+         gc. */
 static ANewGenNode *NewGenBigBlocks;
 /* Size of largest block currently in the new generation, in bytes. This is
    used in determining when to garbage collect the new generation. */
@@ -312,7 +312,7 @@ void *AAllocLocked(AThread *t, unsigned long size)
 /* Allocate a new generation block from the global heap (instead of the
    nursery).
 
-   NOTE: The heap must be locked. */   
+   NOTE: The heap must be locked. */
 static void *AllocNewGenBlockFromHeap(AThread *t, unsigned long size)
 {
     ANewGenNode *node;
@@ -353,7 +353,7 @@ static void *AllocNewGenBlockFromHeap(AThread *t, unsigned long size)
     AAllocAmount += allocSize;
     AllocCounter += allocSize;
 
-    return ptr;     
+    return ptr;
 }
 
 
@@ -1935,7 +1935,7 @@ static ABool CopyAndMark(AValue *top, ABool isOkThisFar)
 
                             /* If the previous pointer range is not exhausted,
                                we need to push a new stack entry. Otherwise,
-                               we can just replace the old one at the top. */ 
+                               we can just replace the old one at the top. */
                             if (ptr != end) {
                                 top++;
 
@@ -2399,7 +2399,7 @@ void *AAllocKeep(AThread *t, unsigned long size, AValue *keep)
     if (t->heapPtr + size <= t->heapEnd
         && size < A_MIN_BIG_BLOCK_SIZE) {
         ptr = t->heapPtr;
-        t->heapPtr += size;     
+        t->heapPtr += size;
     } else {
         *t->tempStack = *keep;
         ptr = AAlloc(t, size);
@@ -2597,8 +2597,8 @@ ABool ASetExternalDataSize(AThread *t, AValue obj, Asize_t size)
 }
 
 
-/* Try to truncate a block. Block sizes must be rounded up properly. If 
-   truncation is not possible, silently do nothing. */ 
+/* Try to truncate a block. Block sizes must be rounded up properly. If
+   truncation is not possible, silently do nothing. */
 void ATruncateBlock(void *block, unsigned long oldSize, unsigned long newSize)
 {
     if (!AIsInNursery(block) && newSize < oldSize

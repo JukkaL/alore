@@ -10,7 +10,7 @@ module argparse
 import io, sys, os, re
 
 
--- Command line argument parser. Also knows how to display standard help and 
+-- Command line argument parser. Also knows how to display standard help and
 -- error messages.
 class ArgumentParser
   private const descriptions as Array<Str> -- Optional arguments
@@ -44,11 +44,11 @@ class ArgumentParser
     end
     
     -- Find the number of non-positional/positional arguments. All positional
-    -- arguments must be after non-positional arguments in the description 
+    -- arguments must be after non-positional arguments in the description
     -- list.
     var i = descriptions.length()
     while i - 1 >= 0 and not descriptions[i - 1].startsWith("-") and
-          descriptions[i - 1] != ""       
+          descriptions[i - 1] != ""
       i -= 1
     end
   
@@ -65,7 +65,7 @@ class ArgumentParser
   end
   
   -- Check that the descriptions of positional arguments are valid.
-  -- Valid forms include 'name', 'name ...', '[name]', '[name] ...' and '...'. 
+  -- Valid forms include 'name', 'name ...', '[name]', '[name] ...' and '...'.
   private def checkPositionalDescriptions() as void
     for p in self.positional
       if p != "..."
@@ -79,7 +79,7 @@ class ArgumentParser
     end
   end
   
-  -- Parse an array of command line arguments, and return an object that can 
+  -- Parse an array of command line arguments, and return an object that can
   -- be used to access the parsed arguments. If the argument is not given,
   -- parse sys::Args instead.
   def parse(args = nil as Array<Str>) as Arguments
@@ -127,7 +127,7 @@ class ArgumentParser
       fail("too few positional arguments")
     elif not isVarArg and n > max
       fail("too many positional arguments")
-    end    
+    end
   end
   
   private def defFail(message as Str)
@@ -203,7 +203,7 @@ class ArgumentParser
         else
           s += close + " " + p
           close = ""
-        end          
+        end
       end
       return s + close
     end

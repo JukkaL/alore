@@ -117,7 +117,7 @@ end
 -- Reserved words (not including operators)
 private const Keywords = Set([
   "break", "class", "const", "elif", "else", "encoding",
-  "end", "except", "finally", "for", "if", "import", 
+  "end", "except", "finally", "for", "if", "import",
   "module", "nil", "private", "raise", "repeat", "return",
   "self", "def", "super", "switch", "try", "until", "var",
   "while", "sub", "interface", "implements", "dynamic", "bind"]) as Set<Str>
@@ -127,15 +127,15 @@ private const AlphaOperators = Set([
   "div", "mod", "in", "is", "to", "not", "and", "or", "as"]) as Set<Str>
   
 -- List of regular expressions that match non-alphabetical operators
-private const Operators = [RegExp("[+*/<>:.]"), 
-                           RegExp("-"), 
+private const Operators = [RegExp("[+*/<>:.]"),
+                           RegExp("-"),
                            RegExp("==|!=|<=|>=|\*\*")] as Array<RegExp>
 
 -- List of regular expressions that match punctuator tokens
-private const Punctuators = [RegExp("[=,()]"), 
+private const Punctuators = [RegExp("[=,()]"),
                              RegExp("\["),
                              RegExp("]"),
-                             RegExp("::"), 
+                             RegExp("::"),
                              RegExp("([-+*/]|\*\*)=")] as Array<RegExp>
 
 -- Tokens (as strings) after which newlines are ignored
@@ -212,7 +212,7 @@ private class Lexer
   -- Analyse a token starting with a dot (either the member access operator or
   -- a Float literal).
   def lexNumberOrDot() as void
-    if isAtNumber() 
+    if isAtNumber()
       lexNumber()
     else
       lexMisc()
@@ -228,7 +228,7 @@ private class Lexer
   
   -- Regexps used by lexNumber
   const numberExp1 = RegExp("[0-9]+") as RegExp
-  const numberExp2 = 
+  const numberExp2 =
     RegExp("[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?|[0-9]+[eE][-+]?[0-9]+") as RegExp
   const nameCharExp = RegExp("[a-zA-Z0-9_]") as RegExp
   
@@ -402,7 +402,7 @@ private class Lexer
     end
   end
   
-  -- Record string representing whitespace or comment after the previous. 
+  -- Record string representing whitespace or comment after the previous.
   -- The accumulated whitespace/comments will be associated with the next
   -- token and then it will be cleared.
   private def addPre(s as Str)
@@ -410,7 +410,7 @@ private class Lexer
     self.i += s.length()
   end
   
-  -- Store a token. Update its line number and record preceding whitespace 
+  -- Store a token. Update its line number and record preceding whitespace
   -- characters and comments.
   private def addToken(tok as Token)
     if tok.str == "" and not tok is Eof and not tok is Break and
@@ -433,7 +433,7 @@ private class Lexer
     return t == Break or tok[-1].str in JoinLineTokens
   end
   
-  -- Verify that a token (represented by a string) is encoded correctly 
+  -- Verify that a token (represented by a string) is encoded correctly
   -- according to the file encoding.
   private def verifyEncoding(str as Str, context as Constant)
     var codec = nil as Encoding
@@ -456,7 +456,7 @@ private class Lexer
           end
         end
         addToken(LexError("", type))
-      end        
+      end
     end
   end
 end

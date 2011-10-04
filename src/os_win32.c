@@ -201,7 +201,7 @@ AValue AOsSystem(AThread *t, AValue *frame)
 static int MyStat(const char *path, struct stat *buf)
 {
     char path2[A_MAX_PATH_LEN];
-    int status; 
+    int status;
     int fixed;
     int len = strlen(path);
     ABool trailing = FALSE;
@@ -220,7 +220,7 @@ static int MyStat(const char *path, struct stat *buf)
     }
     path2[len] = '\0';
     
-    /* stat() of path of form "x:" will fail. Translate it to "x:." instead, 
+    /* stat() of path of form "x:" will fail. Translate it to "x:." instead,
        which is equivalent and works. */
     if (len == 2 && A_IS_DRIVE_PATH(path2))
         strcat(path2, ".");
@@ -482,7 +482,7 @@ static ABool MatchName(const char *str, const char *mask)
                 return FALSE;
             str++;
         } else {
-            /* IDEA: What about case insensitive matching for character codes 
+            /* IDEA: What about case insensitive matching for character codes
                over 127? */
             int cm = *mask;
             int cs = *str;
@@ -704,7 +704,7 @@ AValue AOsGetEnv(AThread *t, AValue *frame)
             else
                 return ANil;
         } else {
-            /* Assume that the variable is empty. This might rely on 
+            /* Assume that the variable is empty. This might rely on
                undocumented behaviour. */
             strcpy(value, "");
         }
@@ -913,7 +913,7 @@ AValue AOsUser(AThread *t, AValue *frame)
 
 
 /* os::__getpwnam(user)
-   __getpwnam is an internal Posix function. Provide a dummy in Windows that 
+   __getpwnam is an internal Posix function. Provide a dummy in Windows that
    simply raises an exception. */
 AValue AOsGetpwnam(AThread *t, AValue *frame)
 {
@@ -921,7 +921,7 @@ AValue AOsGetpwnam(AThread *t, AValue *frame)
 }
 
 
-/* Get the absolute full version of a path name using Windows API. os::AbsPath 
+/* Get the absolute full version of a path name using Windows API. os::AbsPath
    needs this to work in Windows. This is an internal function. */
 AValue AOsGetFullPathName(AThread *t, AValue *frame)
 {

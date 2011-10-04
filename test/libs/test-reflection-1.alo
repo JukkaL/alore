@@ -12,7 +12,7 @@ class ReflectionSuite is Suite
     AssertEqual(GetMember(r, "x"), 1)
     AssertEqual(GetMember(r, "y"), 2)
     AssertEqual(GetMember(r, "getx"), 3)
-    AssertEqual(GetMember(r, "foo")(5), 6)    
+    AssertEqual(GetMember(r, "foo")(5), 6)
     AssertEqual(GetMember(r, "_eq")(r), True)
     AssertRaises(MemberError, def (); GetMember(r, "X"); end)
   end

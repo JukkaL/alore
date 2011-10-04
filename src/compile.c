@@ -623,7 +623,7 @@ ABool ACompileFile(AThread *t, const char *path, char *moduleSearchPath,
     file->next = NULL;
     file->tok  = NULL;
 
-    file->path = ADupStr(path); /* FIX: is this always freed? */    
+    file->path = ADupStr(path); /* FIX: is this always freed? */
     if (file->path == NULL) {
         ACFree(file, sizeof(AFileList));
         AFileIface.deinitCompilation(AFileIface.param);

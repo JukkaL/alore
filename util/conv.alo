@@ -1,5 +1,5 @@
 -- Conversion script for Alore documentation. Convert input files (which are
--- formatted in modified HTML with additional @-prefixed tags) to HTML files. 
+-- formatted in modified HTML with additional @-prefixed tags) to HTML files.
 -- Process links to files and definitions; also generate indexes.
 
 import io
@@ -19,7 +19,7 @@ const HtmlHeader = [
     """http://www.w3.org/TR/html4/strict.dtd"">",
   "<html>",
   "<head>",
-  "  <meta http-equiv=""Content-Type"" " + 
+  "  <meta http-equiv=""Content-Type"" " +
     "content=""text/html; charset=iso-8859-1"">",
   "  <link rel=""stylesheet"" type=""text/css"" href=""alore.css"">"]
 
@@ -81,7 +81,7 @@ class ConversionState
 end
 
 
--- This class performs the conversion and manages the state of the entire 
+-- This class performs the conversion and manages the state of the entire
 -- conversion process.
 class Converter
   -- Page nesting; each item is a (path, title) pair. Used to generate the
@@ -101,7 +101,7 @@ class Converter
   -- All grammar rules are collected in this list, in the order they appear.
   -- This is used for producing the grammar definition page.
   var grammarRules = []   as Array<Str>
-  -- Index items are collected in this list. Each item is in one of the 
+  -- Index items are collected in this list. Each item is in one of the
   -- following forms:
   --   [name, "module",    scope]     (module name)
   --   [name, moduleName,  className] (function or variable)
@@ -305,7 +305,7 @@ class Converter
       st.state.push("dl")
       st.out.append("<dl>")
     end
-    st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) + 
+    st.out.append("<dt>" + Anchor(st.anchors, arg, st.curClass) +
                   formatDef(arg))
     addIndexItem(IndexItem(DefName(arg), st.curMod, st.curClass))
   end
@@ -316,7 +316,7 @@ class Converter
       st.state.push("dl")
       st.out.append("<dl>")
     end
-    st.out.append("<dt>" + Anchor(st.anchors, arg) + 
+    st.out.append("<dt>" + Anchor(st.anchors, arg) +
                   formatDef("class " + arg))
     addIndexItem([DefName(arg), st.curMod])
     st.curClass = DefName(arg)
@@ -405,7 +405,7 @@ class Converter
     st.sectionType = nil
   end
   
-  -- Process @h2.  
+  -- Process @h2.
   def processHeading(arg, st)
     if st.state.top() == "dl"
       st.state.pop()
@@ -513,7 +513,7 @@ class Converter
     end
   end
 
-  -- Preprocess a file (and recursively all linked files). Record all 
+  -- Preprocess a file (and recursively all linked files). Record all
   -- reference targets.
   def preprocess(path, depth = 1)
     var i, curMod
@@ -569,7 +569,7 @@ class Converter
     end
   end
 
-  -- Output an alphabetical index. It contains all index items defined in the 
+  -- Output an alphabetical index. It contains all index items defined in the
   -- current scope, including modules, classes, functions and constants.
   def outputIndex(out)
     -- Sort index items.
@@ -617,7 +617,7 @@ class Converter
           if "implicit_interfaces" in y
             hh = " (implicit interface)"
           end
-          if (j == 0 or res[j - 1][0] != x) and 
+          if (j == 0 or res[j - 1][0] != x) and
              (j == res.length() - 1 or res[j + 1][0] != x)
             hh = ""
           end
@@ -647,7 +647,7 @@ class Converter
   end
 
   -- Return a variable or function declaration modified so that the name of the
-  -- declaration is within a highlight span and the rest is formatted as HTML. 
+  -- declaration is within a highlight span and the rest is formatted as HTML.
   -- Also replace < and > with the corresponding HTML sequences.
   def formatDef(defn)
     defn = defn.replace('<', '&lt;')
@@ -685,10 +685,10 @@ end
 -- Replace constant @ sequences such as @deprecated in s with corresponding
 -- HTML sequences.
 def ReplaceConstants(s, release)
-  s = s.replace("@raise-direct", 
+  s = s.replace("@raise-direct",
                 "Raise a direct exception on all error conditions.")
-  s = s.replace("@deprecated", 
-                "<span class=""deprecated"">Deprecated " + 
+  s = s.replace("@deprecated",
+                "<span class=""deprecated"">Deprecated " +
           "(this feature will be removed in a future Alore version).</span>")
   s = s.replace("@release", release)
   s = s.replace("@email", ObfuscateEmail(EmailAddress))
@@ -696,7 +696,7 @@ def ReplaceConstants(s, release)
 end
 
 
--- Split a string of form '@tag ...' into tag and argument (which may be 
+-- Split a string of form '@tag ...' into tag and argument (which may be
 -- empty). Return tuple (tag, argument).
 def ParseTag(ss)
   var tag = "@"
@@ -771,7 +771,7 @@ def FindLastChar(s, c)
 end
 
 
--- Modify a string so that it is a valid HTML anchor (link target). The 
+-- Modify a string so that it is a valid HTML anchor (link target). The
 -- resulting string resembles the original string, but it has e.g. spaces
 -- replaced with underscores.
 def NormAnchor(s)
@@ -829,7 +829,7 @@ def SpacePrefix(a)
       end
     end
   end
-  return p  
+  return p
 end
 
 
@@ -853,7 +853,7 @@ def PathOrder(order, path)
 end
 
 
--- Return the last part of a potentially qualified Alore name (the part after 
+-- Return the last part of a potentially qualified Alore name (the part after
 -- the last ::).
 def BaseName(id)
   return id.split("::")[-1]
@@ -891,14 +891,14 @@ def FormatGrammar(s, nameMap)
       i += m.group(0).length() - 1
     else
       i += 1
-    end    
+    end
   end
   
   return pre + r[:-1]
 end
 
 
--- Compare two index items (each should be an array with 3 items). Return a 
+-- Compare two index items (each should be an array with 3 items). Return a
 -- boolean indicating whether x < y.
 def IndexComp(x, y)
   try
@@ -913,7 +913,7 @@ def IndexComp(x, y)
 end
 
 
--- Return a normalized index string that can be used in sorting. Effectively 
+-- Return a normalized index string that can be used in sorting. Effectively
 -- map strings starting with an underscore to the end of the sorted list.
 def NormIndex(s)
   s = s.lower()
@@ -951,7 +951,7 @@ def Uniq(a)
 end
 
 
--- Return HTML code representing a highlighted variable/function name or 
+-- Return HTML code representing a highlighted variable/function name or
 -- an operation.
 def HiliSpan(html, cls = "hili")
   return '<span class="{}">{}</span>'.format(cls, html)
@@ -973,15 +973,15 @@ def ObfuscateEmail(email)
     raise ValueError("Unsupported email address")
   end
   
-  -- Modify the email address by inserting copies of the character to the 
+  -- Modify the email address by inserting copies of the character to the
   -- email address.
   var obfuscated = email[:2] + repl + email[2:5] + repl + email[5:8] + repl +
     email[8:]
 
   -- Construct JavaScript fragment that simplifies the modified email address
-  -- and inserts it. Also build the email address string using concetenation 
+  -- and inserts it. Also build the email address string using concetenation
   -- to give some further obfuscation.
-  var res = "<script type='text/javascript'>" + 
+  var res = "<script type='text/javascript'>" +
             "document.write(('{}' + '{}').replace(/{}/g, ''));".format(
               obfuscated[:4], obfuscated[4:], repl) +
             "</script>";

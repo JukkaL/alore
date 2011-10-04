@@ -1,15 +1,15 @@
 module testparser
 
--- This file contains test cases for parsing type annotations. The tested 
+-- This file contains test cases for parsing type annotations. The tested
 -- functionality is included directly within this file.
 --
--- All parse error test cases are included in CompileErrorSuite. 
+-- All parse error test cases are included in CompileErrorSuite.
 --
 -- IDEA: Provide separate test cases for an implementation that simply ignores
 --       type annotations.
 --
 -- FIX: Maybe load (some of) the tested code dynamically and only when not
---      doing runtime type checking. This file will produce runtime type 
+--      doing runtime type checking. This file will produce runtime type
 --      errors if the implementation does proper runtime type checking.
 
 import unittest

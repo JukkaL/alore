@@ -93,7 +93,7 @@ def RaiseErrorWithFinally()
     end
   finally
     TracebackCounter += 10
-  end      
+  end
 end
 def ErrorWithFinally2()
   var a = 1
@@ -268,5 +268,5 @@ def NestedAnonTraceback()
     end
     f2(5)
   end
-  f1("a")  
+  f1("a")
 end

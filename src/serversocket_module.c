@@ -158,16 +158,16 @@ static AValue ServerSocketAccept(AThread *t, AValue *frame)
         AAllowBlocking();
         conn = accept(handle, (struct sockaddr *)&address, &len);
         AEndBlocking();
-#ifndef A_HAVE_WINDOWS            
+#ifndef A_HAVE_WINDOWS
         if (conn < 0) {
             if (errno == ENETDOWN || errno == EPROTO || errno == ENOPROTOOPT
-                || errno == EHOSTDOWN 
+                || errno == EHOSTDOWN
 #ifdef ENONET
 		|| errno == ENONET
 #endif
                 || errno == EHOSTUNREACH || errno == EOPNOTSUPP
                 || errno == ENETUNREACH) {
-#ifdef linux                
+#ifdef linux
                 /* Linux man page for accept recommends retrying if there is
                    a protocol error. */
                 continue;

@@ -11,7 +11,7 @@ class StrLiteralsSuite is Suite
     AssertEqual(Ord("A"), 65)
   end
   
-  def testSingleUnicodeChar()  
+  def testSingleUnicodeChar()
     AssertEqual(Ord('\u0102'), 258)
     AssertEqual(Ord("\u0201"), 513)
   end

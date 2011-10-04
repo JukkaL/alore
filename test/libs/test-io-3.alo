@@ -115,7 +115,7 @@ private class WriteStream is Stream
   def _write(*aa)
     for x in aa
       s += x
-    end      
+    end
   end
   
   var s = ""
@@ -129,7 +129,7 @@ private def TestRead(*a)
     s += x
   end
   
-  -- First read a single character, then all but the last, then the last 
+  -- First read a single character, then all but the last, then the last
   -- character.
   for m in InputModes
     var r = ReadStream(a, *m)
@@ -167,7 +167,7 @@ private def TestReadLine(*a)
     
     var i = 0
     while i < s.length()
-      if m[1] != Unbuffered      
+      if m[1] != Unbuffered
         Assert(not r.eof())
       end
       

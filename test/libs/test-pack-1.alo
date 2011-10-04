@@ -14,11 +14,11 @@ private const Int8Tests = [
 private const Word16Tests = [
   ("0", "0000"), ("ffff", "ffff"), ("1abc", "1abc")]
 private const Int16Tests = [
-  ("0", "0000"), ("7fff", "7fff"), ("-8000", "8000"), ("-1", "ffff"), 
+  ("0", "0000"), ("7fff", "7fff"), ("-8000", "8000"), ("-1", "ffff"),
   ("1abc", "1abc"), ("-1abc", "e544")]
 private const Word32Tests = [
-  ("0", "00000000"), ("1abc", "00001abc"), 
-  ("ffffffff", "ffffffff"), ("1abc0598", "1abc0598")]  
+  ("0", "00000000"), ("1abc", "00001abc"),
+  ("ffffffff", "ffffffff"), ("1abc0598", "1abc0598")]
 private const Int32Tests = [
   ("0", "00000000"), ("1abc", "00001abc"),
   ("7fffffff", "7fffffff"), ("-80000000", "80000000"),
@@ -38,11 +38,11 @@ private const Int64Tests = [
   ("-1abc0598cd801234", "e543fa67327fedcc"),
   ("-1", "ffffffffffffffff")]
 private const Float32Tests = [
-  (0.0, "00000000"), (1.0, "3f800000"), 
+  (0.0, "00000000"), (1.0, "3f800000"),
   (-1.0, "bf800000"), (16.0, "41800000"),
   (1.0 / 7, "3e124925")]
 private const Float64Tests = [
-  (0.0,  "0000000000000000"), 
+  (0.0,  "0000000000000000"),
   (1.0,  "3ff0000000000000"),
   (-1.0, "bff0000000000000"),
   (16.0, "4030000000000000"),
@@ -122,7 +122,7 @@ class PackSuite is Suite
     assertUnpackErrors("Float64", ["xyz1234", "xyz123456"])
   end
   
-  def testPackStrErrors()    
+  def testPackStrErrors()
     AssertRaises(PackError, packer.packStr, ["foo", 2])
     AssertRaises(PackError, packer.packStrs, [["foo"], 2])
   end
@@ -317,8 +317,8 @@ class PackSuite is Suite
       var d = unpackHex(dst)
       AssertEqual(p(s), d)
       AssertEqual(p2(s), ''.join(Reversed(d)))
-      AssertEqual_Fuzzy(up(d), s)      
-      AssertEqual_Fuzzy(up2(''.join(Reversed(d))), s)      
+      AssertEqual_Fuzzy(up(d), s)
+      AssertEqual_Fuzzy(up2(''.join(Reversed(d))), s)
     end
     
     p = GetMember(packer, "pack" + many(type))
@@ -424,7 +424,7 @@ end
 
 
 private def IsEqFloat_Fuzzy(a, b)
-  return a is Float and b is Float and (a == b or (a/b >= 0.999 and 
+  return a is Float and b is Float and (a == b or (a/b >= 0.999 and
                                                    a/b <= 1.001))
 end
 

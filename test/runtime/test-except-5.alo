@@ -74,7 +74,7 @@ class DirectExceptionSuite is Suite
     Assert(n == 1)
   end
 
-  -- Catch direct MemoryError.  
+  -- Catch direct MemoryError.
   def testSimpleCatchMemoryError()
     var n = 0
     try
@@ -97,7 +97,7 @@ class DirectExceptionSuite is Suite
     Assert(n == 3)
   end
 
-  -- Perform finally with a direct exception.  
+  -- Perform finally with a direct exception.
   def testSimpleFinally()
     var n = 0
     try
@@ -111,7 +111,7 @@ class DirectExceptionSuite is Suite
     except TypeError
       n += 2
     end
-    Assert(n == 3)        
+    Assert(n == 3)
   end
   
   -- Catch a direct exception raised many calls deep in the call stack.
@@ -173,7 +173,7 @@ class DirectExceptionSuite is Suite
     except TypeError
       n += 1
     end
-    Assert(n == 1)    
+    Assert(n == 1)
         
     try
       try
@@ -189,7 +189,7 @@ class DirectExceptionSuite is Suite
     Assert(n == 2)
   end
 
-  -- Test raising and catching an exception within a finally block.  
+  -- Test raising and catching an exception within a finally block.
   def testExceptionWithinFinally()
     var n = 0
     try

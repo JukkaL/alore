@@ -54,7 +54,7 @@ static AValue DirName(AThread *t, AValue *frame)
 
     if (i > 0) {
         for (; A_IS_DIR_SEPARATOR(path[i - 1]); i--) {
-            if (i == 1) 
+            if (i == 1)
                 break;
         }
     }
@@ -132,7 +132,7 @@ static AValue FileBase(AThread *t, AValue *frame)
    Join path components. */
 static AValue OsJoin(AThread *t, AValue *frame)
 {
-    char path[A_MAX_PATH_LEN];    
+    char path[A_MAX_PATH_LEN];
     int pathInd;
     int aLen;
     int i;
@@ -171,7 +171,7 @@ static AValue OsJoin(AThread *t, AValue *frame)
         }
 
         ch1 = AStrItem(item, 0);
-#ifndef A_HAVE_WINDOWS        
+#ifndef A_HAVE_WINDOWS
         if (A_IS_DIR_SEPARATOR(ch1))
             pathInd = 0;
 #else

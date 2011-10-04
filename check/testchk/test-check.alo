@@ -20,7 +20,7 @@ class TypeCheckSuite is Suite
                  "check-accessors.test",
                  "check-super.test",
                  "check-functions.test",
-                 "check-tuples.test",                 
+                 "check-tuples.test",
                  "check-dynamic.test",
                  "check-interfaces.test",
                  "check-generics.test",
@@ -45,7 +45,7 @@ class TypeCheckSuite is Suite
     except e is CompileError
       a = NormalizeErrorMessages(e.messages)
     end
-    AssertStringArraysEqual(testcase.output, a, 
+    AssertStringArraysEqual(testcase.output, a,
                             "Invalid type checker output ({}, line {})".format(
                               testcase.file, testcase.line))
   end

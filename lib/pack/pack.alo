@@ -276,7 +276,7 @@ class Packer is PackerBase
     if s.length() != 8
       raise PackError()
     end
-    return UnpackFloat64_LE(Reverse(s))    
+    return UnpackFloat64_LE(Reverse(s))
   end
 end
 
@@ -338,7 +338,7 @@ class LittleEndianPacker is PackerBase
     if s.length() != 4
       raise PackError()
     end
-    return UnpackFloat32_LE(s)    
+    return UnpackFloat32_LE(s)
   end
   
   def packFloat64(f as Float) as Str
@@ -388,7 +388,7 @@ private def PackDword(x as Int, signed as Boolean) as Str
   else
     AssertRange(x, 0, 2**64 - 1)
   end
-  return PackWord(And(Shr(x, 32), 2**32-1), False) + 
+  return PackWord(And(Shr(x, 32), 2**32-1), False) +
          PackWord(And(x, 2**32-1), False)
 end
 

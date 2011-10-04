@@ -27,14 +27,14 @@ class SemAnalSymtableSuite is Suite
     try
       -- Build test case input.
       var src = LF.join(testcase.input)
-      var trees, symtable, infos, types = 
+      var trees, symtable, infos, types =
                      Analyse(src, "main", False, TestTempDir)
       -- The output is the symbol table converted into a string.
       a = Str(symtable).split(LF)
     except e is CompileError
       a = e.messages
     end
-    AssertStringArraysEqual(testcase.output, a, 
+    AssertStringArraysEqual(testcase.output, a,
                             "Invalid semantic analyser output ({}, line {})".
                               format(testcase.file, testcase.line))
   end

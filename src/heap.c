@@ -170,7 +170,7 @@ void *AGlobalAlloc(unsigned long size)
 
 /* Add a free block of specified size to the list of free blocks. The size
    argument accounts for the entire block, including header, and must be
-   rounded up to a valid block size. */   
+   rounded up to a valid block size. */
 #ifndef A_DEBUG
 void AAddFreeBlock(void *block, unsigned long size)
 #else
@@ -196,7 +196,7 @@ void AAddFreeBlock_Debug(void *block, unsigned long size, ABool isFill)
         for (i = 0; i < size / sizeof(AValue); i++)
             ptr[i] = 0xdeadbeef;
     }
-#endif    
+#endif
 
     node = block;
 

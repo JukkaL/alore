@@ -82,7 +82,7 @@ class OSSuite is Suite
     MakeDirs('')
   end
 
-  -- Test renaming a file.  
+  -- Test renaming a file.
   def testRenameFile()
     MakeFile("TMP")
     Rename("TMP", "TMP-2")
@@ -128,11 +128,11 @@ class OSSuite is Suite
   -- Test return value of System() when the process was terminated by a signal.
   def testSystemReturnValueWithSignal()
     if Platform != "windows"
-      -- Execute a shell command that kills itself (the shell process). The 
+      -- Execute a shell command that kills itself (the shell process). The
       -- return value must be negative.
       Assert(System("kill $$") < 0)
     else
-      -- IDEA: Is there a similar test case for Windows?      
+      -- IDEA: Is there a similar test case for Windows?
     end
   end
   
@@ -157,7 +157,7 @@ class OSSuite is Suite
     Assert(IsDir("TMPDIR" + Separator))
     if AltSeparator != nil
       Assert(IsDir("TMPDIR" + AltSeparator))
-    end    
+    end
 
     if Platform != "windows"
       -- Test symbolic links.
@@ -183,7 +183,7 @@ class OSSuite is Suite
     end
   end
   
-  -- Test querying whether a name refers to a regular file (or a symlink 
+  -- Test querying whether a name refers to a regular file (or a symlink
   -- pointing to a regular file).
   def testIsFile()
     Assert(not IsDir("TMPDIR"))
@@ -242,7 +242,7 @@ class OSSuite is Suite
     end
   end
   
-  -- Test changing current working directory and querying current working 
+  -- Test changing current working directory and querying current working
   -- directory.
   def testChangeDirAndCurrentDir()
     var dir = CurrentDir()
@@ -259,7 +259,7 @@ class OSSuite is Suite
     end
   end
   
-  -- Test sleeping for a period of time. Only the fact that the Sleep() 
+  -- Test sleeping for a period of time. Only the fact that the Sleep()
   -- function call is successful is tested, though.
   def testSleep()
     Sleep(0)
@@ -623,7 +623,7 @@ class OSSuite is Suite
     
     var t = DateTime("2001-02-03 10:11:12")
     
-    var s1 = Stat("TMP")    
+    var s1 = Stat("TMP")
     SetModificationTime("TMP", t)
     var s2 = Stat("TMP")
     
@@ -641,7 +641,7 @@ class OSSuite is Suite
     var t = DateTime("2001-02-03 10:11:12")
     var t2 = DateTime("2001-02-03 00:00:00") -- FAT can't do any better
     
-    var s1 = Stat("TMP")    
+    var s1 = Stat("TMP")
     SetAccessTime("TMP", t)
     var s2 = Stat("TMP")
     
@@ -824,8 +824,8 @@ class OSSuite is Suite
     MakeFile("TMPDIR/x/flat.c")
     
     AssertEqual(Set(WalkDir("TMPDIR")),
-                Set(["foo.c", "abc", Join("abc", "file.c"), 
-                     Join("abc", "book.pdf"), "x", 
+                Set(["foo.c", "abc", Join("abc", "file.c"),
+                     Join("abc", "book.pdf"), "x",
                      Join("x", "flat.c")]))
     AssertEqual(Set(WalkDir("TMPDIR", "*.c")),
                 Set(["foo.c", Join("abc", "file.c"),

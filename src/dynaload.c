@@ -165,7 +165,7 @@ void AFreeDynamicModule(int modNum)
     /* Clear any identifiers from the symbol table. */
     AFreeModuleIdentifiers(sym);
 
-    /* Free global values. */    
+    /* Free global values. */
     AFreeGlobals(AValueToInt(mod->globalVarIndex));
     AFreeGlobals(AValueToInt(mod->globalConstIndex));
 

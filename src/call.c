@@ -76,7 +76,7 @@ AValue ACallValue(AThread *t, AValue funcVal, int fullNumArgs,
                 AOpcode *ind;
                 
                 /* AllocStatic() is safe since there can be no direct
-                   exceptions before FreeStatic(). */                
+                   exceptions before FreeStatic(). */
                 ind = AAllocStatic(numArgs * sizeof(AOpcode));
                 if (ind == NULL)
                     return ARaiseMemoryErrorND(t);

@@ -13,7 +13,7 @@ const LineSeparators = (LF, CR, CR + LF)
 const InputModes = ((Input, Buffered),
 		    (Input, LineBuffered),
 		    (Input, Unbuffered))
-		    
+		
 const OutputModes = ((Output, Buffered),
                      (Output, LineBuffered),
                      (Output, Unbuffered))

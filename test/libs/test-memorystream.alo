@@ -290,7 +290,7 @@ class MemoryStreamSuite is Suite
     s.write("abc")
     AssertEqual(s.read(4), "4567")
     s.write("d")
-    AssertEqual(s.contents(), "abc4567d90")    
+    AssertEqual(s.contents(), "abc4567d90")
     
     var s2 = MemoryStream(d)
     s2.write("abc")

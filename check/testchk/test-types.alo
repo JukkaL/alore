@@ -73,11 +73,11 @@ class TypesSuite is Suite
   end
   
   def testGenericFunctionType()
-    var c = Callable([x, y], 2, False, y, False, nil, 
+    var c = Callable([x, y], 2, False, y, False, nil,
                      TypeVars([TypeVarDef("X", -1)]))
     AssertEqual(Str(c), "def <X> (X?, Y?) as Y?")
     
-    var v = TypeVars([TypeVarDef("Y", -1, UnboundType("X")), 
+    var v = TypeVars([TypeVarDef("Y", -1, UnboundType("X")),
                       TypeVarDef("X", -2)])
     var c2 = Callable([], 0, False, Void(nil), False, nil, v)
     AssertEqual(Str(c2), "def <Y is X?, X> ()")

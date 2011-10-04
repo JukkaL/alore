@@ -38,7 +38,7 @@ class SymbolTable is Map<Str, Array<SymbolTableNode>>
   def add(name as Str, node as SymbolTableNode)
     if not self.hasKey(name)
       self[name] = []
-    end    
+    end
     self[name].append(node)
   end
   
@@ -73,7 +73,7 @@ class SymbolTableNode
   
   private const typeOverride as Typ  -- If nil, fall back to type of node
   
-  def create(kind as Constant, node as SymNode, modId = nil as Str, 
+  def create(kind as Constant, node as SymNode, modId = nil as Str,
              type = nil as Typ, tvarId = 0 as Int)
     self.kind = kind
     self.node = node

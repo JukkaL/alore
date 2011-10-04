@@ -240,7 +240,7 @@ static long IntLen(AValue v)
         /* A long Int. Reserve an extra digit for the sign (the Int object
            representation has a separate sign bit).
            IDEA: This is really only be needed if the most significant bit is
-                 1? */ 
+                 1? */
         return AGetLongIntLen(AValueToLongInt(v)) + 1;
     }
 }

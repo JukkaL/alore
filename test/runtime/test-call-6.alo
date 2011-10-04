@@ -54,7 +54,7 @@ class CallSuite6 is Suite
   end
   
   def testReturn()
-    -- IDEA: Perhaps more test cases to test different possibilities of 
+    -- IDEA: Perhaps more test cases to test different possibilities of
     -- exceptions.
     Assert(FuncRet() == 7)
     FuncRet()

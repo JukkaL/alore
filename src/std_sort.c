@@ -61,7 +61,7 @@ static ABool QSort(AThread *t, AValue *frame, int b, int e)
             }
         } else {
             /* Use the provided comparison function. */
-            while (l <= r) {                
+            while (l <= r) {
                 AValue res;
 
                 frame[4] = frame[3];

@@ -23,7 +23,7 @@ void AInitializeExitHandlers(void)
 {
     AExitHandlers = NULL;
     ExitBlockSize = 0;
-    AExitBlockInd = 0;    
+    AExitBlockInd = 0;
 }
 
 

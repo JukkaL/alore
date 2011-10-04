@@ -12,9 +12,9 @@ class ArgparseParseSuite is Suite
   end
   
   def testSimple()
-    assertParse(["-a"], ["-a"], 
+    assertParse(["-a"], ["-a"],
                 [("-a", nil)], [])
-    assertParse(["a"], ["-a"], 
+    assertParse(["a"], ["-a"],
                 [], ["a"])
   end
   
@@ -24,21 +24,21 @@ class ArgparseParseSuite is Suite
   
   -- Multiple aliases for an argument
   def testAliases()
-    assertParse(["-a", "-b"], ["-a -b"], 
+    assertParse(["-a", "-b"], ["-a -b"],
                 [("-a", nil), ("-a", nil)], [])
   end
   
   -- Long argument --foo-bar
   def testLongArgument()
-    assertParse(["--foo", "--x-y"], ["-f --foo", "--x-y"], 
+    assertParse(["--foo", "--x-y"], ["-f --foo", "--x-y"],
                 [("-f", nil), ("--x-y", nil)], [])
   end
   
   -- Shortening long argument --foo-b
   def testShorteningLongArg()
-    assertParse(["--foo-ba", "--fo"], ["-f --foo-bar", "--far"], 
+    assertParse(["--foo-ba", "--fo"], ["-f --foo-bar", "--far"],
                 [("-f", nil), ("-f", nil)], [])
-    assertOptError(["--f"], 
+    assertOptError(["--f"],
                    ["--foo-bar -f", "--far"], "ambiguous option --f")
   end
   
@@ -52,11 +52,11 @@ class ArgparseParseSuite is Suite
     assertParse(["--a", "x", "--a=ayzy"], ["--ab X"],
                 [("--ab", "x"), ("--ab", "ayzy")], [])
 
-    assertOptError(["-f"], 
+    assertOptError(["-f"],
                    ["-f FILE"], "option -f requires an argument")
-    assertOptError(["--f"], 
+    assertOptError(["--f"],
                    ["--fa X"], "option --fa requires an argument")
-    assertOptError(["--fa=x"], 
+    assertOptError(["--fa=x"],
                    ["--fa"], "option --fa doesn't allow an argument")
   end
   
@@ -64,27 +64,27 @@ class ArgparseParseSuite is Suite
   def testCombiningArguments()
     assertParse(["-axy"], ["--aa -a", "-x", "-y"],
                 [("--aa", nil), ("-x", nil), ("-y", nil)], [])
-    assertOptError(["-fa", "x"], 
-                   ["-f", "-a X"], 
+    assertOptError(["-fa", "x"],
+                   ["-f", "-a X"],
                    "option -a requires an argument")
   end
   
   -- Combining multiple short arguments with an invalid argument name
   def testCombiningInvalidArgument()
-    assertOptError(["-faw"], 
-                   ["-f", "-a"], 
+    assertOptError(["-faw"],
+                   ["-f", "-a"],
                    "invalid option -w")
   end
   
   -- "--" signals the end of options
   def testDashDash()
-    assertParse(["-a", "--", "x", "y"], ["-a"], 
+    assertParse(["-a", "--", "x", "y"], ["-a"],
                 [("-a", nil)], ["x", "y"])
   end
   
   -- "-" is accepted as a positional argument (it often means stdin)
   def testDash()
-    assertParse(["-a", "-", "-x", "y"], ["-a"], 
+    assertParse(["-a", "-", "-x", "y"], ["-a"],
                 [("-a", nil)], ["-", "-x", "y"])
   end
   
@@ -177,7 +177,7 @@ class ArgparseParseSuite is Suite
                 ["x", "[foo]...", "[y]"],
                 [], ["x", "xx", "xxx", "x4"])
     
-    -- Test "..." form.           
+    -- Test "..." form.
     assertParse([],
                 ["..."],
                 [], [])
@@ -234,7 +234,7 @@ class ArgparseParseSuite is Suite
     assertParse(["-a=x", "y"], ["-a X"], [("-a", "=x")], ["y"])
   end
   
-  -- creating usage text  
+  -- creating usage text
   
   private def assertParse(args, descriptions, results, finalArgs)
     var arg = ArgumentParser(*descriptions).parse(args)

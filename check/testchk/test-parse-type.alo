@@ -68,7 +68,7 @@ class TypeParserSuite is Suite
   def testFunctionSignatures()
     assertTypeParse("def ()", "def ()")
     assertTypeParse("def (X) as Y", "def (X?) as Y?")
-    assertTypeParse("def (X, (dynamic, dynamic)) as def ()", 
+    assertTypeParse("def (X, (dynamic, dynamic)) as def ()",
                          "def (X?, (dynamic, dynamic)) as def ()")
   end
   
@@ -85,7 +85,7 @@ class TypeParserSuite is Suite
   
   def testGenericSignatures()
     assertTypeParse("def <T> (T) as T", "def <T> (T?) as T?")
-    assertTypeParse("def <T, K is A<T>> (T) as K", 
+    assertTypeParse("def <T, K is A<T>> (T) as K",
                          "def <T, K is A?<T?>> (T?) as K?")
   end
   
@@ -124,7 +124,7 @@ class TypeParserSuite is Suite
   end
   
   -- Test type parse errors related to function types.
-  def testFunctionTypeErrors()    
+  def testFunctionTypeErrors()
     -- Function with default arguments.
     assertParseError("def (=A)", "Punct(=)")
     assertParseError("def (A=, B)", "Punct())")
@@ -154,7 +154,7 @@ class TypeParserSuite is Suite
   
   -- Test that the parser reports the next node after the parsed input
   -- correctly.
-  def testExtraInput()    
+  def testExtraInput()
     assertExtraInput("X Y", "Name( Y)")
     assertExtraInput("A,", "Punct(,)")
     assertExtraInput("X 1", "IntLit( 1)")
@@ -168,7 +168,7 @@ class TypeParserSuite is Suite
     assertParseLineNumber(LF + "X", def (t)
                                       AssertEqual(t.line, 2)
                                     end)
-    assertParseLineNumber("X<" + LF + "Y>", 
+    assertParseLineNumber("X<" + LF + "Y>",
       def (t)
         AssertEqual(t.line, 1)
         AssertEqual(t.args[0].line, 2)
@@ -176,24 +176,24 @@ class TypeParserSuite is Suite
     assertParseLineNumber(LF + "dynamic", def (t)
                                             AssertEqual(t.line, 2)
                                           end)
-    assertParseLineNumber(LF + "(" + LF + "X, " + LF + "Y)", 
+    assertParseLineNumber(LF + "(" + LF + "X, " + LF + "Y)",
       def (t)
         AssertEqual(t.line, 2)
         AssertEqual(t.items[0].line, 3)
         AssertEqual(t.items[1].line, 4)
       end)
-    assertParseLineNumber(LF + "def (" + LF + "X) as Y", 
+    assertParseLineNumber(LF + "def (" + LF + "X) as Y",
       def (t)
         AssertEqual(t.line, 2)
         AssertEqual(t.argTypes[0].line, 3)
         AssertEqual(t.retType.line, 3)
       end)
-    assertParseLineNumber("def ()", 
+    assertParseLineNumber("def ()",
       def (t)
         AssertEqual(t.line, 1)
         AssertEqual(t.retType.line, -1)
       end)
-    assertParseLineNumber("def <" + LF + "X is Y> ()", 
+    assertParseLineNumber("def <" + LF + "X is Y> ()",
       def (t)
         AssertEqual(t.line, 1)
         AssertEqual(t.variables.items[0].line, 2)
@@ -201,7 +201,7 @@ class TypeParserSuite is Suite
       end)
   end
   
-  -- Parse string orig as a type and verify that it is equal to final when 
+  -- Parse string orig as a type and verify that it is equal to final when
   -- pretty-printed.
   private def assertTypeParse(orig, final)
     var tok = Lex(orig)
@@ -219,7 +219,7 @@ class TypeParserSuite is Suite
     AssertEqual(Str(t), final)
   end
   
-  -- Verify that parsing str results in error at the given token (when the 
+  -- Verify that parsing str results in error at the given token (when the
   -- token is converted to a string).
   private def assertParseError(str, errToken)
     var tok = Lex(str)
@@ -233,16 +233,16 @@ class TypeParserSuite is Suite
     raise AssertionFailure("No error")
   end
   
-  -- Verify that the string representation of the next unparsed token after 
+  -- Verify that the string representation of the next unparsed token after
   -- parsing str is nextTok.
   private def assertExtraInput(str, nextTok)
     var tok = Lex(str)
-    var t, i = ParseType(tok, 0)    
+    var t, i = ParseType(tok, 0)
     AssertEqual(Str(tok[i]), nextTok)
     Assert(i < tok.length() - 2)
   end
   
-  -- Parse str as a type. Pass the result type to function f, which should 
+  -- Parse str as a type. Pass the result type to function f, which should
   -- verify some properties of the line numbers of the type.
   private def assertParseLineNumber(str, f)
     var tok = Lex(str)

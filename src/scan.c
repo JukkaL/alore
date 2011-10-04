@@ -216,7 +216,7 @@ static AToken *ScanMemberVariableDefinition(AToken *tok, ATypeInfo *type,
     tok = AAdvanceTok(tok);
 
     while (tok->type == TT_ID) {
-        ASymbolInfo *sym;        
+        ASymbolInfo *sym;
         unsigned key;
         unsigned item;
 
@@ -299,7 +299,7 @@ static AToken *ScanMethodDefinition(AToken *tok, ATypeInfo *type,
 
         t2 = tok->type;
         if (t2 == TT_LPAREN) {
-            /* Ordinary method */           
+            /* Ordinary method */
             AAddMember(MT_METHOD_PUBLIC + isPrivate, member, gvar);
             if (idTok->info.sym == ACreateSymbol) {
                 HasCreate = TRUE;
@@ -477,7 +477,7 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
         tok = AAdvanceTok(tok);
 
         /* Clear and skip any <...> after class name. */
-        tok = AClearGenericAnnotation(tok); 
+        tok = AClearGenericAnnotation(tok);
 
         /* If the class inherits another class, store information about the
            inheritance so that the superclass name can be resolved after all
@@ -581,7 +581,7 @@ static AToken *ScanTypeDefinition(AToken *tok, ABool isPrivate)
         ANumLocals = i;
         ANumLocalsActive = i;
 
-        createNum = AAddConstGlobalValue(AZero);        
+        createNum = AAddConstGlobalValue(AZero);
         createVal = ALeaveSection(class_, i - 3, i - 3, createNum);
         if (!ASetConstGlobalValue(ACompilerThread, createNum, createVal)) {
             AGenerateOutOfMemoryError();
@@ -1157,7 +1157,7 @@ static void ScanExposedVariableDefinitions(AToken *tok)
                     AFunDepth++;
                     FunDepthBlockDepth[AFunDepth] = ABlockDepth;
                     
-                    AddFunctionArgumentVariables(tok);            
+                    AddFunctionArgumentVariables(tok);
                     /* tok still points to the start of the function header so
                        that any default argument expressions will be processed
                        next. */
@@ -1189,7 +1189,7 @@ static void ScanExposedVariableDefinitions(AToken *tok)
 
             /* Advance to the next token. */
             prev = tok->type;
-            tok = AAdvanceTok(tok);            
+            tok = AAdvanceTok(tok);
         }
 
         /* Skip newline. */

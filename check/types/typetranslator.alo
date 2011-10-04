@@ -1,7 +1,7 @@
 module types
 
 
--- Identity type transformation. Subclass this and override some methods to 
+-- Identity type transformation. Subclass this and override some methods to
 -- implement a non-trivial transformation.
 --
 -- NOTE: Does not preserve upper bounds of instance types!
@@ -46,7 +46,7 @@ class TypeTranslator is TypeVisitor<Typ>
   end
   
   def visitIntersection(t as Intersection) as Typ
-    return Intersection(t.item1.accept(self) as FunctionLike, 
+    return Intersection(t.item1.accept(self) as FunctionLike,
                         t.item2.accept(self) as FunctionLike,
                         t.name, t.line, t.repr)
   end

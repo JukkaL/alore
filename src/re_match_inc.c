@@ -259,7 +259,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             break;
         }
 
-            /* Literal character opcodes (ignoring case) */ 
+            /* Literal character opcodes (ignoring case) */
         case A_LITERAL_I:
             if (str == strEnd || LOWER(*str) != *ip)
                 goto Fail;
@@ -519,7 +519,7 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
                previous subExpBeg value. Otherwise, simply ignore it. */
             if (st->repeat < PAREN_MIN) {
                 int index = st->repeat - PAREN_MIN2;
-                info->subExpBeg[index] = 
+                info->subExpBeg[index] =
                     (CHAR *)st->str - (CHAR *)info->strBeg;
             }
             st--;

@@ -116,7 +116,7 @@ static const char ErrInFileImportedFrom[] =
 
 /* String representations of non-alphanumeric operators. These are used when
    generating error messages. */
-/* NOTE: You may need to update these when modifying ATokenType. */ 
+/* NOTE: You may need to update these when modifying ATokenType. */
 static const char OperatorId[TT_COLON - TT_PLUS + 1][3] = {
     "+",    /* TT_PLUS */
     "-",    /* TT_MINUS */
@@ -139,7 +139,7 @@ static const char OperatorId[TT_COLON - TT_PLUS + 1][3] = {
 };
 
 /* String representations of punctuators. */
-/* NOTE: You may need to update these when modifying ATokenType. */ 
+/* NOTE: You may need to update these when modifying ATokenType. */
 static const char PunctuatorId[TT_SCOPEOP - TT_COMMA + 1][4] = {
     ",", "(", ")", "[", "]", "=", "+=", "-=", "*=", "/=", "**=", ".", "::"
 };
@@ -162,7 +162,7 @@ static char *TrimFileName(char *fnam);
 
 
 /* Generate a compile error at a specific line of the current file. The format
-   argument and the rest of the arguments are similar to AFormatMessage. */ 
+   argument and the rest of the arguments are similar to AFormatMessage. */
 void AGenerateError(int line, const char *format, ...)
 {
     va_list args;
@@ -269,7 +269,7 @@ AToken *AGenerateErrorSkipNewline(AToken *tok, const char *message)
 
 
 /* Generate an expression parse error. Return the next newline token. Try to
-   generate a useful error message for unbalanced parentheses. */ 
+   generate a useful error message for unbalanced parentheses. */
 AToken *AGenerateExpressionParseError(AToken *tok)
 {
     if (tok->type != TT_RPAREN)
@@ -282,7 +282,7 @@ AToken *AGenerateExpressionParseError(AToken *tok)
     } while (tok->type != TT_NEWLINE);
 
     return tok;
-}       
+}
 
 
 /* Generate an out of memory error during compilation. */
@@ -464,7 +464,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                 char s[128];
                 sprintf(s, "%p", ptr);
                 i = CopyString(msg, i, maxLen, s);
-                break;                
+                break;
             }
 
             case 'T': {
@@ -520,7 +520,7 @@ Assize_t AFormatMessageVa(char *msg, Assize_t maxLen, const char *fmt,
                 
                 i = CopyString(msg, i, maxLen, type);
                 break;
-            }                
+            }
                 
             case '%':
                 /* Literal '%' */
@@ -642,12 +642,12 @@ static Assize_t CopyToken(char *msg, Assize_t i, Assize_t max, AToken *tok)
             /* During parsing if we see an unrecognized character, it should
                have been reported earlier and should not end up here. */
             
-            i = CopyString(msg, i, max, "<unknown>");            
+            i = CopyString(msg, i, max, "<unknown>");
             break;
         }
     }
 
-    return i;       
+    return i;
 }
 
 
@@ -708,7 +708,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                         AGlobalByNum(curErr->class_->num));
                     
                     if (curErr->member != AM_NONE && !type->isInterface) {
-                        if (curErr->class_ != prevClass 
+                        if (curErr->class_ != prevClass
                             || curErr->member != prevMember) {
                             AFormatMessage(buffer, AError_STRING_MAX_LEN,
                                           ErrInMethodOfClass, file,
@@ -745,7 +745,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
                             return FALSE;
                 
                         prevFunction = curErr->function;
-                        prevClass = NULL;                       
+                        prevClass = NULL;
                     }
                 }
 
@@ -759,7 +759,7 @@ ABool ADisplayErrorMessages(ABool (*display)(const char *msg, void *data),
             if (!display(buffer, data))
                 return FALSE;
             
-            /* Advance to the next message and exit loop if none available. */ 
+            /* Advance to the next message and exit loop if none available. */
             if (curErr == lastErr)
                 break;
             curErr = curErr->next;
@@ -794,7 +794,7 @@ void ATrace(const char *format, ...)
     char buf[1024];
     va_list args;
 
-    va_start(args, format);    
+    va_start(args, format);
     AFormatMessageVa(buf, sizeof(buf), format, args);
     va_end(args);
 

@@ -1,6 +1,6 @@
 ﻿encoding utf8
 
--- This is a source file with a UTF-8 byte order mark character at the 
+-- This is a source file with a UTF-8 byte order mark character at the
 -- beginning with a UTF-8 encoding declaration.
 -- Some editors (such as Windows Notepad) may insert a BOM character at the
 -- the beginning of a file saved as UTF-8 text.

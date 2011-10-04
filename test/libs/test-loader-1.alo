@@ -9,8 +9,8 @@ import string
 
 class LoaderSuite is Suite
   -- Load a file with errors in it. Check that cleanup is performed properly.
-  -- This should be one of the first test cases that uses the loader module, 
-  -- since otherwise previously loaded modules might interfere with this test 
+  -- This should be one of the first test cases that uses the loader module,
+  -- since otherwise previously loaded modules might interfere with this test
   -- case.
   def testResourceCleanup()
     var numSyms = SymbolInfoCount()
@@ -19,31 +19,31 @@ class LoaderSuite is Suite
     -- Verify that the number of symbols and allocated global values has not
     -- changed.
     AssertEqual(SymbolInfoCount(), numSyms)
-    AssertEqual(GlobalValueCount(), numGlobals)    
+    AssertEqual(GlobalValueCount(), numGlobals)
   end
   
   -- Load a file that imports a module with errors in it. Check that cleanup
-  -- is performed properly. The notes in the testResourceCleanup test case 
+  -- is performed properly. The notes in the testResourceCleanup test case
   -- apply for this case as well.
   def testResourceCleanupWithImportedModule()
     var numSyms = SymbolInfoCount()
     var numGlobals = GlobalValueCount()
     AssertRaises(CompileError, Load, ["data/loader-1-cleanup2.alo"])
     -- An additional symbol was leaked (the module symbol).
-    AssertEqual(SymbolInfoCount(), numSyms + 1)    
-    AssertEqual(GlobalValueCount(), numGlobals)    
+    AssertEqual(SymbolInfoCount(), numSyms + 1)
+    AssertEqual(GlobalValueCount(), numGlobals)
   end
   
   -- Load a file that contains errors and that loads a dynamic C module. Check
-  -- that cleanup is performed properly. The notes in the testResourceCleanup 
+  -- that cleanup is performed properly. The notes in the testResourceCleanup
   -- test case  apply for this case as well.
   def testResourceCleanupWithImportedCModule()
     var numSyms = SymbolInfoCount()
     var numGlobals = GlobalValueCount()
     AssertRaises(CompileError, Load, ["data/loader-1-cleanup3.alo"])
     -- An additional symbol was leaked (the module symbol).
-    AssertEqual(SymbolInfoCount(), numSyms + 1)    
-    AssertEqual(GlobalValueCount(), numGlobals)    
+    AssertEqual(SymbolInfoCount(), numSyms + 1)
+    AssertEqual(GlobalValueCount(), numGlobals)
   end
   
   -- Load a simple file. Check that initialization works and it is possible to
@@ -118,7 +118,7 @@ class LoaderSuite is Suite
     var m1 = Load("data/loader-1-import-2.alo", "data/subdir")
     Assert(m1["Foo"] == 88)
     
-    -- Verify that the directory of the main file is consulted first when 
+    -- Verify that the directory of the main file is consulted first when
     -- importing modules.
     var m2 = Load("data/loader-1-import-3.alo", "data/subdir")
     Assert(m2["Foo"] == 77)
@@ -132,7 +132,7 @@ class LoaderSuite is Suite
       var m = Load("data/loader-1-errors-1.alo")
     except e is CompileError
       nerr += 1
-      Assert(e.errorMessages == 
+      Assert(e.errorMessages ==
         ("data/loader-1-errors-1.alo, line 2: Parse error before )",
          "data/loader-1-errors-1.alo: In function ""Main"":",
          "data/loader-1-errors-1.alo, line 5: ""ggg"" undefined",
@@ -170,8 +170,8 @@ class LoaderSuite is Suite
     CollectAllGarbage()
     Assert(m1["Foo"] == 3)
     
-    -- Load a module, modify some state, collect garbage (module should be 
-    -- freed), load the same module and verify that the module instance is 
+    -- Load a module, modify some state, collect garbage (module should be
+    -- freed), load the same module and verify that the module instance is
     -- different from the previous one.
     var m2 = Load("data/loader-1-gc.alo")
     m2["Foo"] = 44
@@ -180,7 +180,7 @@ class LoaderSuite is Suite
     m2 = Load("data/loader-1-gc.alo")
     Assert(m2["Foo"] == 55)
     
-    -- Load a module, modify state (store recursive data structure). 
+    -- Load a module, modify state (store recursive data structure).
     var m3 = Load("data/loader-1-gc-2.alo")
     m3["Set"]((1, 2, (3, 4)))
     -- Collect garbage (module should not be freed).
@@ -191,7 +191,7 @@ class LoaderSuite is Suite
     Assert(m4["Get"]() == (1, 2, (3, 4)))
   end
   
-  -- Test returning the contents of a file (all the public names defined in 
+  -- Test returning the contents of a file (all the public names defined in
   -- the file).
   def testContents()
     var m = Load("data/loader-1-basic.alo")
@@ -214,7 +214,7 @@ class LoaderSuite is Suite
     var m = Load("data/loader-1-anonfunc.alo")
     var f = m["AnonFunc"]()
     AssertEqual(f(), 6)
-    AssertEqual(f(), 7)  
+    AssertEqual(f(), 7)
     var f2 = m["AnonFunc"]()
     AssertEqual(f2(), 6)
   end

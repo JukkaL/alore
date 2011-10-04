@@ -19,7 +19,7 @@ end
 --   class B<`1> is A<X<`1>> ...
 --
 -- Type X<`1> in B would be converted to `1 in A.
-def MapTypeToSupertype(type as Typ, subtype as TypeInfo, 
+def MapTypeToSupertype(type as Typ, subtype as TypeInfo,
                        supertype as TypeInfo) as Typ
   -- There's nothing to do if the subtype has no type variables, even if the
   -- supertype is generic.
@@ -27,7 +27,7 @@ def MapTypeToSupertype(type as Typ, subtype as TypeInfo,
     return type
   end
   
-  -- Repeatedly map the type to the immediate supertype until reaching our 
+  -- Repeatedly map the type to the immediate supertype until reaching our
   -- target.
   while subtype != supertype
     type = type.accept(SupertypeMapper(subtype))
@@ -49,9 +49,9 @@ class SupertypeMapper is TypeTranslator
   def visitInstance(t as Instance) as Typ
     if IsConstantType(t)
       -- Constant types (with no type variables) are never mapped. The effect
-      -- is that we get coercions from type variables to constant types. This 
-      -- may be essential if constant types may have a different 
-      -- representation from values with type variable type. Anyway, any 
+      -- is that we get coercions from type variables to constant types. This
+      -- may be essential if constant types may have a different
+      -- representation from values with type variable type. Anyway, any
       -- superfluous coercions can be removed later during the transformation.
       return super.visitInstance(t)
     else
@@ -67,7 +67,7 @@ class SupertypeMapper is TypeTranslator
   end
   
   def visitTypeVar(t as TypeVar) as Typ
-    -- If we reach here, the instance must map directly to a supertype 
+    -- If we reach here, the instance must map directly to a supertype
     -- variable.
     var m = findArgumentMatch(t)
     if m != nil

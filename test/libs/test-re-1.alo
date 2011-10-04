@@ -131,19 +131,19 @@ class ReSuite is Suite
     AssertMatch("[^a]", "a", False)
     AssertMatch("[^bf-h+]", "-", True)
     AssertMatch("[^bf-h+]", "+", False)
-    AssertMatch("[^bf-h+]", "f", False) 
+    AssertMatch("[^bf-h+]", "f", False)
     
-    AssertMatch("[a^]", "^", True) 
-    AssertMatch("[a[]", "[", True) 
-    AssertMatch("[a[]", "]", False) 
-    AssertMatch("[]a]", "]", True) 
-    AssertMatch("[]a]", "[", False) 
-    AssertMatch("[^]]", "[", True) 
-    AssertMatch("[^]]", "]", False) 
-    AssertMatch("[-a]", "-", True) 
-    AssertMatch("[-a]", "a", True) 
-    AssertMatch("[-b]", "a", False) 
-    AssertMatch("[-b]", "c", False) 
+    AssertMatch("[a^]", "^", True)
+    AssertMatch("[a[]", "[", True)
+    AssertMatch("[a[]", "]", False)
+    AssertMatch("[]a]", "]", True)
+    AssertMatch("[]a]", "[", False)
+    AssertMatch("[^]]", "[", True)
+    AssertMatch("[^]]", "]", False)
+    AssertMatch("[-a]", "-", True)
+    AssertMatch("[-a]", "a", True)
+    AssertMatch("[-b]", "a", False)
+    AssertMatch("[-b]", "c", False)
     AssertMatch("[a-]x", "-x", True)
     AssertMatch("[a-]", "]", False)
     AssertMatch("[a-]", "a", True)
@@ -751,10 +751,10 @@ class ReSuite is Suite
   end
   
   def testComplexExpressions()
-    AssertMatchResult("import[ \t]+(.*?)(--.*)?$", 
-                      "import foo::bar   -- xx", 
+    AssertMatchResult("import[ \t]+(.*?)(--.*)?$",
+                      "import foo::bar   -- xx",
                       "foo::bar   ", "-- xx")
-    AssertMatchResult("import[ \t]+(.*?)(--.*)?$", 
+    AssertMatchResult("import[ \t]+(.*?)(--.*)?$",
                       "import foo::bar", "foo::bar", nil)
   end
   
@@ -781,10 +781,10 @@ class ReSuite is Suite
     AssertEqual(Subst("abc", "(ab|a)b*c", "\0-\1"), "abc-ab")
     AssertEqual(Subst("abcd", "((a)(b)c)(d)", "\1-\2-\3-\4"), "abc-a-b-d")
     AssertEqual(Subst("abh", "^a(bc+|b[eh])g|.h$", "\0-\1"), "abh-")
-    AssertEqual(Subst("effgz", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"), 
+    AssertEqual(Subst("effgz", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"),
                       "effgz-effgz-")
     AssertEqual(Subst("ij", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"), "ij-ij-j")
-    AssertEqual(Subst("reffgz", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"), 
+    AssertEqual(Subst("reffgz", "(bc+d$|ef*g.|h?i(j|k))", "\0-\1-\2"),
                       "reffgz-effgz-")
     AssertEqual(Subst("a", "(((((((((a)))))))))", "\0"), "a")
   end
@@ -829,8 +829,8 @@ class ReSuite is Suite
     AssertFindAll("", "foo", ["", "", "", ""])
     AssertFindAll("f?", "fooff", ["f", "", "", "f", "f", ""])
     
-    -- Test groups.    
-    var a = FindAll("(a)|(b)", "-a-b-")    
+    -- Test groups.
+    var a = FindAll("(a)|(b)", "-a-b-")
     AssertEqual(a.length(), 2)
     
     AssertEqual(a[0].group(0), "a")
@@ -903,15 +903,15 @@ class ReSuite is Suite
     AssertMatch(re, "\u01ff", True)
     AssertMatch(re, "\u0200", False)
     
-    -- Case insensitive charsets    
+    -- Case insensitive charsets
     AssertMatch(MyRegExp("[\u24e9]", IgnoreCase), "\u24cf", True)
-    AssertMatch(MyRegExp("[\u24e9]", IgnoreCase), "\u24e9", True)    
+    AssertMatch(MyRegExp("[\u24e9]", IgnoreCase), "\u24e9", True)
     AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "\u24cf", True)
     AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "\u24e9", True)
     AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "\u24ea", False)
     AssertMatch(MyRegExp("[\u24cf]", IgnoreCase), "x", False)
     
-    -- Complements    
+    -- Complements
     AssertMatch("[^x\u0210-\u0215\u1234]", "y", True)
     AssertMatch("[^x\u0210-\u0215\u1234]", "\u0216", True)
     AssertMatch("[^x\u0210-\u0215\u1234]", "\u1234", False)
@@ -1023,7 +1023,7 @@ class ReSuite is Suite
     AssertReError("?", "Invalid repeat")
     AssertReError("a???", "Invalid repeat")
     
-    AssertReError("{", "Invalid repeat")    
+    AssertReError("{", "Invalid repeat")
     AssertReError("{1}", "Invalid repeat")
     AssertReError("a{", "Invalid range")
     AssertReError("a{1", "Invalid range")
@@ -1106,7 +1106,7 @@ def AssertMatchResult(re, s, *groups)
   end
   if not ok
     raise AssertionFailure("""" + re + """ against " + Repr(s))
-  end  
+  end
 end
 
 
@@ -1128,7 +1128,7 @@ def AssertSearchResult(re, s, g0, *groups)
   end
   if not ok
     raise AssertionFailure("""" + re + """ against """ + s + """")
-  end  
+  end
 end
 
 

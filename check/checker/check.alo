@@ -27,7 +27,7 @@ private const OpMethods = Map(
 ) as Map<Str, Str>
 
 
--- Alore type checker. Type check Alore source files that have been 
+-- Alore type checker. Type check Alore source files that have been
 -- semantically analysed.
 class TypeChecker is NodeVisitor<Typ>
   const errors   as Errors          -- Error reporting
@@ -36,15 +36,15 @@ class TypeChecker is NodeVisitor<Typ>
   const typeMap  as Map<Node, Typ>  -- Types of type checked nodes
   const exprChecker as ExpressionChecker
   
-  const stack = [nil] as Array<Str> -- Stack of local variable definitions; 
+  const stack = [nil] as Array<Str> -- Stack of local variable definitions;
                                     -- nil separates nested functions
   const returnTypes = [] as Array<Typ> -- Stack of function return types
   const typeContext = [] as Array<Typ> -- Unused (for type inference??)
 
   -- Keep track of casts within functions with intersection types to check
-  -- if a cast is valid. The keys are CastExpr instances. The values are 
-  -- arrays of invalid casts represented as (targetType, sourceType) tuples. 
-  -- If a cast is valid for any item of an intersection type, the array for 
+  -- if a cast is valid. The keys are CastExpr instances. The values are
+  -- arrays of invalid casts represented as (targetType, sourceType) tuples.
+  -- If a cast is valid for any item of an intersection type, the array for
   -- that cast is cleared and remains empty (valid) for that cast.
   var castStatus = Map() as Map<Node, Array<(Typ, Typ)>>
   
@@ -126,10 +126,10 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
   
-  -- Infer the type of initialized local variables from the type of the 
-  -- initializer expression. The initializer type does not have to be 
+  -- Infer the type of initialized local variables from the type of the
+  -- initializer expression. The initializer type does not have to be
   -- collapsed.
-  def inferLocalVariableType(names as Array<Var>, initType as Typ, 
+  def inferLocalVariableType(names as Array<Var>, initType as Typ,
                              context as Context)
     -- Collapse the rvalue type to get rid of ranges.
     initType = CollapseType(initType)
@@ -157,7 +157,7 @@ class TypeChecker is NodeVisitor<Typ>
           else
             fail(IncompatibleTypesInAssignment, context)
           end
-        elif initType is Instance and 
+        elif initType is Instance and
              (initType as Instance).type.fullName == "std::Array"
           -- Initializer with an array type.
           var itemType = (initType as Instance).args[0]
@@ -179,7 +179,7 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
       
-  -- Is an inferred type invalid (e.g. the nil type or a type with a nil 
+  -- Is an inferred type invalid (e.g. the nil type or a type with a nil
   -- component)?
   private def isValidInferredType(type as Typ) as Boolean
     if IsSameType(type, NilType())
@@ -198,9 +198,9 @@ class TypeChecker is NodeVisitor<Typ>
       end
     end
     return True
-  end 
+  end
   
-  -- Remove a copy of type with all "debugging information" (e.g. name of 
+  -- Remove a copy of type with all "debugging information" (e.g. name of
   -- function) removed.
   private def stripType(type as Typ) as Typ
     if type is Callable
@@ -222,7 +222,7 @@ class TypeChecker is NodeVisitor<Typ>
   end
   
   -- Check that a member variable is compatible with an implemented interface.
-  def checkMemberVarImplementationInInterface(defn as VarDef, 
+  def checkMemberVarImplementationInInterface(defn as VarDef,
                                               iface as TypeInfo)
     for v in defn.names
       var getter = iface.getPublicVarOrGetter(v.name)
@@ -250,8 +250,8 @@ class TypeChecker is NodeVisitor<Typ>
   
   -- Check that an accessor that overrides a variable or an accessor is
   -- compatible with the supertype.
-  def checkVarOverride(override as Typ, original as Typ, name as Str, 
-                       subtype as TypeInfo, supertype as TypeInfo, 
+  def checkVarOverride(override as Typ, original as Typ, name as Str,
+                       subtype as TypeInfo, supertype as TypeInfo,
                        context as Context)
     for mapped in mapAllTypesFromSupertype(original, subtype, supertype)
       if not IsEquivalent(override, mapped)
@@ -270,8 +270,8 @@ class TypeChecker is NodeVisitor<Typ>
     end
   
     if fdef != nil and fdef.isGetter
-      -- Verify compatible types for getter and setter. We do this even if 
-      -- there is no type signature, since the setter may have a type 
+      -- Verify compatible types for getter and setter. We do this even if
+      -- there is no type signature, since the setter may have a type
       -- signature.
       var n = fdef.info.getVarOrSetter(fdef.name)
       if n is FuncDef
@@ -298,7 +298,7 @@ class TypeChecker is NodeVisitor<Typ>
       -- Check if the intersection type is overlapping.
       CheckIntersectionType(type as Intersection, self.msg, basicTypes(), defn)
       
-      -- Must be an intersection type. Type check body once for each 
+      -- Must be an intersection type. Type check body once for each
       -- intersection type item.
       for t in (type as Intersection).items()
         checkFuncDefOnce(defn, t)
@@ -310,7 +310,7 @@ class TypeChecker is NodeVisitor<Typ>
     end
     
     if fdef != nil
-      self.errors.setFunction(nil)    
+      self.errors.setFunction(nil)
     end
   end
   
@@ -333,7 +333,7 @@ class TypeChecker is NodeVisitor<Typ>
       end
       -- The cast below will work since non-method create will cause semantic
       -- analysis to fail, and type checking won't be done.
-      if fdef.info != nil and fdef.name =="create" and 
+      if fdef.info != nil and fdef.name =="create" and
            not (type as Callable).retType is Void
         fail(CreateMustNotHaveReturnType, defn.type)
       end
@@ -346,7 +346,7 @@ class TypeChecker is NodeVisitor<Typ>
       elif fdef.isSetter
         self.returnTypes.append(Void(nil))
       end
-    else    
+    else
       self.returnTypes.append((type as Callable).retType)
     end
     
@@ -362,7 +362,7 @@ class TypeChecker is NodeVisitor<Typ>
         addVar(defn.args[i], Ldef, argType)
       end
       
-      -- Some arguments may have been omitted, if the function has an 
+      -- Some arguments may have been omitted, if the function has an
       -- intersection type with different argument counts. Add the rest of
       -- the arguments with nil types.
       for i in ctype.argTypes.length() to nargs
@@ -390,7 +390,7 @@ class TypeChecker is NodeVisitor<Typ>
     leave()
   end
   
-  -- Report any invalid casts. Analyse casts that have been collected when 
+  -- Report any invalid casts. Analyse casts that have been collected when
   -- type checking a function.
   private def checkCasts() as void
     for node, errors in self.castStatus
@@ -434,11 +434,11 @@ class TypeChecker is NodeVisitor<Typ>
     end
   
     -- Check if the type defines additional type variables that are not mapped
-    -- to any supertype type variable (unless supertype is Object). 
-    -- 
-    -- Report this as an error, since the runtime type checker cannot deal 
-    -- with this case. When calling a method via a supertype reference, 
-    -- runtime values for type variables defined in subtype, but which are 
+    -- to any supertype type variable (unless supertype is Object).
+    --
+    -- Report this as an error, since the runtime type checker cannot deal
+    -- with this case. When calling a method via a supertype reference,
+    -- runtime values for type variables defined in subtype, but which are
     -- independent of supertype variables, cannot be determined.
     if type.base != nil and type.base.fullName != 'std::Object'
       if type.base.typeVars == []
@@ -456,7 +456,7 @@ class TypeChecker is NodeVisitor<Typ>
       
       for tvi in 0 to type.typeVars.length()
         -- If we cannot map to type variable from a supertype type variable,
-        -- report an error. Note that this applies only overriding; thus 
+        -- report an error. Note that this applies only overriding; thus
         -- interfaces need not be checked.
         if GetSupertypeToSubtypeTvarRelation(type.base, type, tvi + 1) == nil
           self.isInvalidSubtypeRelationship = True
@@ -467,7 +467,7 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
   
-  -- Check that function definition is compatible with any overridden 
+  -- Check that function definition is compatible with any overridden
   -- definitions defined in superclasses or implemented interfaces.
   def checkMethodOrAccessorOverride(defn as FuncDef)
     checkMethodOrAccessorOverrideForBase(defn, defn.info.base)
@@ -475,12 +475,12 @@ class TypeChecker is NodeVisitor<Typ>
       checkMethodOrAccessorOverrideForBase(defn, iface)
     end
     if defn.type != nil
-      checkPartialTypeVarMatchesInOverride(defn.name, defn.type.type, 
+      checkPartialTypeVarMatchesInOverride(defn.name, defn.type.type,
                                            defn.info, defn)
     end
   end
   
-  -- Check that function definition is compatible with any overridden 
+  -- Check that function definition is compatible with any overridden
   -- definition in the specified supertype.
   def checkMethodOrAccessorOverrideForBase(defn as FuncDef, base as TypeInfo)
     if base != nil
@@ -509,7 +509,7 @@ class TypeChecker is NodeVisitor<Typ>
           for originalType in mapAllTypesFromSupertype(
                                 functionType(baseMethod), defn.info, base)
             -- Check that the types are compatible.
-            checkOverride(type, originalType as FunctionLike, defn.name, 
+            checkOverride(type, originalType as FunctionLike, defn.name,
                           baseMethod.info.name, defn)
           end
         end
@@ -521,7 +521,7 @@ class TypeChecker is NodeVisitor<Typ>
       end
       
       -- We have to check that the member is compatible with all supertypes
-      -- due to the dynamic type. Otherwise we could first override with 
+      -- due to the dynamic type. Otherwise we could first override with
       -- dynamic and then with an arbitary type.
       checkMethodOrAccessorOverrideForBase(defn, base.base)
     end
@@ -539,17 +539,17 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
   
-  -- Check a method override with given signatures. 
+  -- Check a method override with given signatures.
   --
   --  override:  The signature of the overriding method.
   --  original:  The signature of the original supertype method.
-  --  name:      The name of the subtype. This and the next argument are 
+  --  name:      The name of the subtype. This and the next argument are
   --             only used for generating error messages.
-  --  supertype: The name of the supertype. 
-  def checkOverride(override as FunctionLike, original as FunctionLike, 
+  --  supertype: The name of the supertype.
+  def checkOverride(override as FunctionLike, original as FunctionLike,
                     name as Str, supertype as Str, node as Context)
     if override is Intersection or original is Intersection or
-       (override as Callable).argTypes.length() != 
+       (override as Callable).argTypes.length() !=
          (original as Callable).argTypes.length() or
        (override as Callable).minArgs != (original as Callable).minArgs
       if not IsSubtype(override, original)
@@ -557,7 +557,7 @@ class TypeChecker is NodeVisitor<Typ>
       end
       return
     else
-      -- Give more detailed messages for the common case of both signatures 
+      -- Give more detailed messages for the common case of both signatures
       -- having the same number of arguments and no intersection types.
       
       var coverride = (override as Callable)
@@ -576,13 +576,13 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
   
-  -- Check that a type of an override doesn't have partial matches to 
-  -- supertype type variables. For example, if A<T> inherits B<X<T>>, just T 
+  -- Check that a type of an override doesn't have partial matches to
+  -- supertype type variables. For example, if A<T> inherits B<X<T>>, just T
   -- in the signature of a method override is not valid: it must be X<T>. This
-  -- limitation simplifies runtime type checking; otherwise this would not be 
+  -- limitation simplifies runtime type checking; otherwise this would not be
   -- necessary.
   def checkPartialTypeVarMatchesInOverride(
-                             member as Str, type as Typ, 
+                             member as Str, type as Typ,
                              info as TypeInfo, context as Context)
     -- Skip if the current type has an invalid subtype relationship. This is
     -- done to avoid duplicate error messages in some cases.
@@ -590,11 +590,11 @@ class TypeChecker is NodeVisitor<Typ>
       return
     end
     
-    -- A partial type variable match is only relevant if a generic class 
+    -- A partial type variable match is only relevant if a generic class
     -- inherits another class (other than Object).
-    if info.typeVars != [] and info.base != nil and 
+    if info.typeVars != [] and info.base != nil and
        info.base.fullName != "std::Object"
-      -- Need to perform the check if this is an override. 
+      -- Need to perform the check if this is an override.
       var n = FindOriginalMemberDefinition(info, member)
       if n != nil
         -- Yes, it's an override. Now perform the check by trying to translate
@@ -606,16 +606,16 @@ class TypeChecker is NodeVisitor<Typ>
           self.msg.incompleteTypeVarMatch(member, context)
         end
       end
-      -- This does not affect interfaces, since interfaces don't have 
-      -- implementations and thus their definitions cannot be properly 
+      -- This does not affect interfaces, since interfaces don't have
+      -- implementations and thus their definitions cannot be properly
       -- overridden.
     end
   end
   
   -- Add all the members of a type to the symbol table (including inherited
-  -- members). 
+  -- members).
   def addMembersToSymbolTable(type as TypeInfo)
-    for n in type.vars.values() + type.methods.values() + 
+    for n in type.vars.values() + type.methods.values() +
              type.getters.values() + type.setters.values()
       addVar(n, Mdef)
     end
@@ -635,7 +635,7 @@ class TypeChecker is NodeVisitor<Typ>
   -------------
   
   
-  -- Type check an assignment statement. Handle all kinds of assignment 
+  -- Type check an assignment statement. Handle all kinds of assignment
   -- statements (simple, indexed, multiple).
   def visitAssignmentStmt(s as AssignmentStmt) as Typ
     -- Collect lvalue types. Index lvalue require special consideration, since
@@ -665,13 +665,13 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
   
-  -- Type check multiple assignment. For each separate sub-assignment i, 
+  -- Type check multiple assignment. For each separate sub-assignment i,
   -- exactly one of lvaluesTypes[i] and indexLvalueTypes[i] must be non-nil;
-  -- this determines whether that particular assignment is an ordinary 
-  -- assignment or an indexed assignment. See checkIndexedAssignment for a 
+  -- this determines whether that particular assignment is an ordinary
+  -- assignment or an indexed assignment. See checkIndexedAssignment for a
   -- description of the indexLvalueTypes argument.
-  private def checkMultiAssignment(lvalueTypes as Array<Typ>, 
-                                   indexLvalueTypes as Array<(Typ, Typ)>, 
+  private def checkMultiAssignment(lvalueTypes as Array<Typ>,
+                                   indexLvalueTypes as Array<(Typ, Typ)>,
                                    rvalueType as Typ,
                                    context as Context,
                                    msg = IncompatibleTypesInAssignment as Str)
@@ -687,11 +687,11 @@ class TypeChecker is NodeVisitor<Typ>
       else
         -- The number of values is compatible. Check their types.
         for i in 0 to lvalueTypes.length()
-          checkAssignment(lvalueTypes[i], indexLvalueTypes[i], 
+          checkAssignment(lvalueTypes[i], indexLvalueTypes[i],
                           trvalue.items[i], context, msg)
         end
-      end    
-    elif rvalueType is Instance and 
+      end
+    elif rvalueType is Instance and
          (rvalueType as Instance).type.fullName == "std::Array"
       -- Rvalue with Array type.
       var itemType = (rvalueType as Instance).args[0]
@@ -708,8 +708,8 @@ class TypeChecker is NodeVisitor<Typ>
   -- must be non-nil; this determines whether to check an ordinary assignment
   -- or an indexed assignment. See checkIndexedAssignment for a description of
   -- the indexLvalueType argument.
-  private def checkAssignment(lvalueType as Typ, 
-                              indexLvalueType as (Typ, Typ), 
+  private def checkAssignment(lvalueType as Typ,
+                              indexLvalueType as (Typ, Typ),
                               rvalueType as Typ, context as Context,
                               msg = IncompatibleTypesInAssignment as Str)
     if lvalueType != nil
@@ -719,11 +719,11 @@ class TypeChecker is NodeVisitor<Typ>
     end
   end
   
-  -- Type check indexed assignment base[index] = rvalue. The lvalueTypes 
+  -- Type check indexed assignment base[index] = rvalue. The lvalueTypes
   -- argument is the tuple (base type, index type), the rvaluaType is the type
   -- of the rvalue. None of the types should be collapsed (?).
   private def checkIndexedAssignment(
-                  lvalueTypes as (Typ, Typ), 
+                  lvalueTypes as (Typ, Typ),
                   rvalueType as Typ, context as Context) as Typ
     var methodType = self.exprChecker.analyseExternalMemberAccess(
                        "_set", lvalueTypes[0], context)
@@ -740,7 +740,7 @@ class TypeChecker is NodeVisitor<Typ>
   def visitOperatorAssignmentStmt(s as OperatorAssignmentStmt) as Typ
     var rightType = accept(s.rvalue)
     var lvalueType = accept(s.lvalue)
-    var rvalueType = self.exprChecker.checkOp(OpMethods[s.op], 
+    var rvalueType = self.exprChecker.checkOp(OpMethods[s.op],
                                               lvalueType, rightType, s)
     
     if s.lvalue is IndexLvalue
@@ -765,7 +765,7 @@ class TypeChecker is NodeVisitor<Typ>
           if self.returnTypes[-1] is Void
             fail(NoReturnValueExpected, s)
           else
-            checkSubtype(type, self.returnTypes[-1], s, 
+            checkSubtype(type, self.returnTypes[-1], s,
                          IncompatibleReturnValueType)
           end
         end
@@ -847,7 +847,7 @@ class TypeChecker is NodeVisitor<Typ>
     var iterable = accept(s.expr)
     
     checkNotVoid(iterable, s.expr)
-    checkSubtype(iterable, namedGenericType("std::Iterable", [Dynamic()]), 
+    checkSubtype(iterable, namedGenericType("std::Iterable", [Dynamic()]),
                  s.expr, IterableExpected)
     
     var method as Typ
@@ -870,7 +870,7 @@ class TypeChecker is NodeVisitor<Typ>
     
     if s.index.length() == 1
       if s.index[0].type != nil
-        checkAssignment(s.index[0].type.type, nil, item, s, 
+        checkAssignment(s.index[0].type.type, nil, item, s,
                         IncompatibleTypesInFor)
       end
     else
@@ -985,7 +985,7 @@ class TypeChecker is NodeVisitor<Typ>
   
   def visitTypeApplication(e as TypeApplication) as Typ
     return self.exprChecker.visitTypeApplication(e)
-  end  
+  end
   
   
   -- Helpers
@@ -1004,7 +1004,7 @@ class TypeChecker is NodeVisitor<Typ>
                       Dynamic(), -- Return type
                       False,     -- Not a type object
                       nil)       -- Name
-    end    
+    end
   end
   
   -- Return the type of a getter, a setter or a variable.
@@ -1015,22 +1015,22 @@ class TypeChecker is NodeVisitor<Typ>
       -- Implicit dynamic type.
       return Dynamic()
     end
-  end  
+  end
   
   -- Generate an error if the subtype is not compatible with supertype.
-  def checkSubtype(subtype as Typ, supertype as Typ, context as Context, 
+  def checkSubtype(subtype as Typ, supertype as Typ, context as Context,
                    msg = IncompatibleTypes as Str)
     if not IsSubtype(subtype, supertype)
       if subtype is Void
         self.msg.doesNotReturnValue(subtype, context)
       else
-        fail(msg, context) 
+        fail(msg, context)
       end
     end
   end
   
   -- Generate an error if the type is not compatible with std::Boolean.
-  def checkBoolean(type as Typ, context as Context, 
+  def checkBoolean(type as Typ, context as Context,
                    msg = BooleanValueExpected as Str)
     checkSubtype(type, booleanType(), context, msg)
   end
@@ -1070,14 +1070,14 @@ class TypeChecker is NodeVisitor<Typ>
   -- Return a BasicTypes instance that contains primitive types that are
   -- needed for certain type operations (joins, for example).
   def basicTypes() as BasicTypes
-    return BasicTypes(objectType(), typeType(), 
+    return BasicTypes(objectType(), typeType(),
                       namedTypeIfExists("std::Tuple"),
                       namedTypeIfExists("std::Function"))
   end
   
   -- Generate an error if the types are not equivalent. The dynamic type is
   -- equivalent with all types.
-  def checkTypeEquivalency(t1 as Typ, t2 as Typ, node as Context, 
+  def checkTypeEquivalency(t1 as Typ, t2 as Typ, node as Context,
                            msg = IncompatibleTypes as Str)
     if not IsEquivalent(t1, t2)
       fail(msg, node)
@@ -1086,7 +1086,7 @@ class TypeChecker is NodeVisitor<Typ>
   
   -- Generate an error if the types are not the same. The dynamic type is only
   -- the same as dynamic, unlike with equivalency.
-  def checkTypeSameness(t1 as Typ, t2 as Typ, node as Context, 
+  def checkTypeSameness(t1 as Typ, t2 as Typ, node as Context,
                         msg = IncompatibleTypes as Str)
     if not IsSameType(t1, t2)
       fail(msg, node)
@@ -1100,9 +1100,9 @@ class TypeChecker is NodeVisitor<Typ>
   end
   
   -- Like MapTypeFromSupertype, but return all the possible types. More than
-  -- one type can only be returned if a generic interface is implemented 
+  -- one type can only be returned if a generic interface is implemented
   -- multiple times.
-  def mapAllTypesFromSupertype(type as Typ, subInfo as TypeInfo, 
+  def mapAllTypesFromSupertype(type as Typ, subInfo as TypeInfo,
                                superInfo as TypeInfo) as Array<Typ>
     var instType = SelfType(subInfo)
     var result = [] as <Typ>
@@ -1147,7 +1147,7 @@ class TypeChecker is NodeVisitor<Typ>
   
   -- Return named instance type, or UnboundType if the type was not defined.
   --
-  -- This is used to simplify test cases by avoiding the need to define basic 
+  -- This is used to simplify test cases by avoiding the need to define basic
   -- types not needed in specific test cases (std::Function etc.).
   def namedTypeIfExists(name as Str) as Typ
     try
@@ -1161,7 +1161,7 @@ class TypeChecker is NodeVisitor<Typ>
   
   -- Return an instance with the given name and type arguments. Assume that
   -- the number of arguments is correct.
-  def namedGenericType(name as Str, args as Array<Typ>, 
+  def namedGenericType(name as Str, args as Array<Typ>,
                        tops = nil as Array<Typ>) as Instance
     -- Assume that the name refers to a compatible generic type.
     var sym = lookup(name, Gdef)

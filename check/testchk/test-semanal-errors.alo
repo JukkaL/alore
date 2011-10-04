@@ -21,7 +21,7 @@ class SemAnalErrorSuite is Suite
     -- Read test cases from test case description files.
     var c = []
     for f in SemAnalErrorFiles
-      c += ParseTestCases(Join(TestDataPrefix, f), TestSemAnalError, 
+      c += ParseTestCases(Join(TestDataPrefix, f), TestSemAnalError,
                           TestTempDir)
     end
     return c
@@ -38,10 +38,10 @@ private def TestSemAnalError(testcase)
     raise AssertionFailure("No errors reported in {}, line {}".format(
             testcase.file, testcase.line))
   except e is CompileError
-    -- Verify that there was a compile error and that the error messages 
+    -- Verify that there was a compile error and that the error messages
     -- are equivalent.
-    AssertStringArraysEqual(testcase.output, 
-                            NormalizeErrorMessages(e.messages), 
+    AssertStringArraysEqual(testcase.output,
+                            NormalizeErrorMessages(e.messages),
                             "Invalid compiler output ({}, line {})".format(
                               testcase.file, testcase.line))
   end

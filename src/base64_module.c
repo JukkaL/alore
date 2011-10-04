@@ -70,7 +70,7 @@ static AValue Base64Encode(AThread *t, AValue *frame)
             ASetStrItem(res, resInd + j, out[j]);
 
         resInd += 4;
-    }    
+    }
     
     return res;
 }

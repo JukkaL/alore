@@ -181,7 +181,7 @@ static void FindNewSpot(void)
 
     while (block != &Sentinel) {
         if (block->firstFileIndex != block->next->firstFileIndex +
-            block->next->numFiles) {        
+            block->next->numFiles) {
             FirstIndex = block->next->firstFileIndex + block->next->numFiles;
             LastIndex = block->firstFileIndex;
         }

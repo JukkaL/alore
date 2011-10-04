@@ -41,7 +41,7 @@ class AloreFile is Node
   var defs    as Array<Node>   -- Global definitions and statements
   var isBom   as Boolean       -- Is there a UTF-8 BOM at the start?
   
-  def create(enc as Encoding, header as Header, imports as Array<Import>, 
+  def create(enc as Encoding, header as Header, imports as Array<Import>,
              defs as Array<Node>, isBom = False as Boolean)
     self.enc = enc
     self.header = header
@@ -109,11 +109,11 @@ class FuncBase is Node
   var init = [] as Array<AssignmentStmt> -- Initialization expessions
   var minArgs as Int           -- Minimum number of arguments
   var isVarArg as Boolean      -- If true, last variable is a var-arg variable
-  var body as Array<Node> 
+  var body as Array<Node>
   var type as Annotation       -- Declared type (or nil if none)
   
   -- (Array<Var>, Array<Node>, Array<Node>, Boolean[, Array<Str>, Typ])
-  def create(args as Array<Var>, init as Array<Node>, body as Array<Node>, 
+  def create(args as Array<Var>, init as Array<Node>, body as Array<Node>,
              isVarArg as Boolean, type = nil as Annotation)
     self.args = args
     self.isVarArg = isVarArg
@@ -187,16 +187,16 @@ class FuncDef is FuncBase
   var fullName as Str      -- Name with module prefix
   var info as TypeInfo     -- If method, reference to TypeInfo
   var isGetter as Boolean  -- True if getter. If true, args must be empty.
-  var isSetter as Boolean  -- True if setter. If true, there must be 1 arg and 
+  var isSetter as Boolean  -- True if setter. If true, there must be 1 arg and
                            -- no init.
   var isPrivate as Boolean -- Boolean
   
-  def create(name as Str, 
-             args as Array<Var>, 
-             init as Array<Node>, 
-             body as Array<Node>, 
-             isVarArg = False as Boolean, isGetter = False as Boolean, 
-             isSetter = False as Boolean, isPrivate = False as Boolean, 
+  def create(name as Str,
+             args as Array<Var>,
+             init as Array<Node>,
+             body as Array<Node>,
+             isVarArg = False as Boolean, isGetter = False as Boolean,
+             isSetter = False as Boolean, isPrivate = False as Boolean,
              type = nil as Annotation)
     super.create(args, init, body, isVarArg, type)
     self.name = name
@@ -246,7 +246,7 @@ class TypeDef is Node
   var fullName as Str    -- Fully qualified name of the class
   var base as NameExpr   -- May be nil
   var implement as Array<NameExpr>
-  var binds as Array<NameExpr>    
+  var binds as Array<NameExpr>
   var defs = [] as Array<Node>  -- VarDef or FuncDef
   var isInterface as Boolean
   var isPrivate as Boolean
@@ -256,14 +256,14 @@ class TypeDef is Node
   var baseTypes as Array<Typ>
   var info as TypeInfo    -- Related TypeInfo
   
-  def create(name as Str, 
-             defs as Array<Node>, 
-             base = nil as NameExpr, 
-             implement = [] as Array<NameExpr>, 
-             isInterface = False as Boolean, 
-             binds = [] as Array<NameExpr>, 
-             isPrivate = False as Boolean, 
-             typeVars = nil as TypeVars, 
+  def create(name as Str,
+             defs as Array<Node>,
+             base = nil as NameExpr,
+             implement = [] as Array<NameExpr>,
+             isInterface = False as Boolean,
+             binds = [] as Array<NameExpr>,
+             isPrivate = False as Boolean,
+             typeVars = nil as TypeVars,
              baseTypes = [] as Array<Typ>)
     self.name = name
     self.defs = defs
@@ -293,12 +293,12 @@ class VarDef is Node
   var isInit as Boolean    -- Boolean
   var type as Annotation   -- May be nil
   
-  def create(names as Array<Var>, 
-             kind as Constant, 
-             isConst as Boolean, 
+  def create(names as Array<Var>,
+             kind as Constant,
+             isConst as Boolean,
              isTopLevel as Boolean,
-             init = nil as Node, 
-             isPrivate = False as Boolean, 
+             init = nil as Node,
+             isPrivate = False as Boolean,
              type = nil as Annotation)
     self.names = names
     self.kind = kind
@@ -351,7 +351,7 @@ class AssignmentStmt is Node
   var isExpand as Boolean -- Is this an expanding assignment?
   var isInit as Boolean   -- Is this a init assignment (can assign to consts)
   
-  def create(lvalues as Array<Node>, rvalue as Node, isExpand as Boolean, 
+  def create(lvalues as Array<Node>, rvalue as Node, isExpand as Boolean,
              isInit = False as Boolean)
     self.lvalues = lvalues
     self.rvalue = rvalue
@@ -378,7 +378,7 @@ class OperatorAssignmentStmt is Node
   
   def accept<T>(visitor as NodeVisitor<T>) as T
     return visitor.visitOperatorAssignmentStmt(self)
-  end    
+  end
 end
 
 
@@ -418,9 +418,9 @@ class ForStmt is Node
   var body as Array<Node>      -- Body
   var types as Array<Annotation>
   
-  def create(index as Array<Var>, 
-             expr as Node, 
-             body as Array<Node>, 
+  def create(index as Array<Var>,
+             expr as Node,
+             body as Array<Node>,
              types = nil as Array<Annotation>)
     self.index = index
     self.expr = expr
@@ -500,9 +500,9 @@ class TryExceptStmt is Node
   var vars = [] as Array<Var>       -- Except variable names
   var handlers = [] as Array<Array<Node>> -- Except bodies
   
-  def create(body as Array<Node>, 
-             vars as Array<Var>, 
-             types as Array<NameExpr>, 
+  def create(body as Array<Node>,
+             vars as Array<Var>,
+             types as Array<NameExpr>,
              handlers as Array<Array<Node>>)
     self.body = body
     self.vars = vars
@@ -534,11 +534,11 @@ end
 class SwitchStmt is Node
   var expr as Node
   var cases as Array<Array<Node>>  -- Case expressions
-  var bodies as Array<Array<Node>> -- Case bodies. If longer than cases, the 
+  var bodies as Array<Array<Node>> -- Case bodies. If longer than cases, the
                                    -- last one is the else part.
   
-  def create(expr as Node, 
-             cases as Array<Array<Node>>, 
+  def create(expr as Node,
+             cases as Array<Array<Node>>,
              bodies as Array<Array<Node>>)
     self.expr = expr
     self.cases = cases
@@ -886,7 +886,7 @@ class TypeApplication is Node
 end
 
 
--- Implicit coercion expression (used only when compiling/transforming; 
+-- Implicit coercion expression (used only when compiling/transforming;
 -- inserted after type checking).
 class CoerceExpr is Node
   var expr as Node
@@ -894,7 +894,7 @@ class CoerceExpr is Node
   var sourceType as Typ
   var isWrapperClass as Boolean
   
-  def create(expr as Node, targetType as Typ, sourceType as Typ, 
+  def create(expr as Node, targetType as Typ, sourceType as Typ,
              isWrapperClass as Boolean)
     self.expr = expr
     self.targetType = targetType
@@ -909,8 +909,8 @@ class CoerceExpr is Node
 end
 
 
--- Expression that evaluates to a runtime representation of a sequence of 
--- types. This is used only for runtime type checking. This node is always 
+-- Expression that evaluates to a runtime representation of a sequence of
+-- types. This is used only for runtime type checking. This node is always
 -- generated only after type checking.
 class TypeExpr is Node
   var types as Array<Typ>

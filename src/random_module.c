@@ -65,7 +65,7 @@ static AValue RandomSeed(AThread *t, AValue *frame)
             seed = t.tv_usec + t.tv_sec * 1000000;
 #else
         seed = time(NULL);
-#endif        
+#endif
     } else
         seed = AGetInt(t, frame[0]);
 

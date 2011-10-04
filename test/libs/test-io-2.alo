@@ -48,14 +48,14 @@ class IOSuite2 is Suite
     end
   end
   
-  def testWritingSeveralStringsAtAAtime()    
+  def testWritingSeveralStringsAtAAtime()
     -- Test writing several strings at a time.
     TestFileWrite((GetStr(1), GetStr(2), GetStr(3), GetStr(4), GetStr(5)))
     var a = ["abc"] * 1000
     TestFileWrite(a)
   end
   
-  def testFileWriteSpecialCases()    
+  def testFileWriteSpecialCases()
     -- Test writing exactly the same size as the buffer.
     TestFileWrite((LongNarrowStr()[0:LineBufferSize], "a"))
     TestFileWrite((LongNarrowStr()[0:BufferSize], "a"))
@@ -69,7 +69,7 @@ class IOSuite2 is Suite
     TestFileWrite([StrObj(WSS("foo bar zar"))])
   end
 
-  -- Test reading from a file.  
+  -- Test reading from a file.
   def testFileRead()
     for i in 2 to NumNarrowRealStr + 1
       for j in 2 to NumNarrowRealStr + 1
@@ -290,7 +290,7 @@ class IOSuite2 is Suite
     Assert(f.read(3) == "HAP")
     
     f.close()
-  end 
+  end
   
   -- Test seeking before the start of a file.
   def testSeekUnderflow()
@@ -315,7 +315,7 @@ class IOSuite2 is Suite
     f.close()
   end
 
-  -- Test appending to a file that does not exist. It should be created.  
+  -- Test appending to a file that does not exist. It should be created.
   def testAppendToEmptyFile()
     for mode in Unbuffered, LineBuffered, Buffered
       if IsFile("TMP")
@@ -386,7 +386,7 @@ class IOSuite2 is Suite
     f.close()
   end
   
-  -- Test that most operations raise exceptions if applied on a closed file 
+  -- Test that most operations raise exceptions if applied on a closed file
   -- stream. The close operation is an exception to this rule.
   def testOperationsAfterClose()
     var f = File("TMP", Input, Output)
@@ -947,7 +947,7 @@ private def TestFileWriteWithFlags(a, isWriteLine, *flags)
     else
       f.write(*x)
     end
-  end  
+  end
   f.close()
   var f2 = File("TMP")
   var s2 = f2.read()
@@ -1026,7 +1026,7 @@ private def TestFileReadAll(*a)
     f.close()
   end
 
-  -- Read the rest of the contents of the file using different read modes 
+  -- Read the rest of the contents of the file using different read modes
   -- after having read 1 character.
   for m in InputModes
     f = File("TMP", *m)
