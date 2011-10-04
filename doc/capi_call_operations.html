@@ -75,7 +75,7 @@ that calls a method:
       AValue ret; /* The return value does not need to be stored in the frame,
                      since no operation invalidates it. However, it could be
                      stored in the frame for safety and consistency. */
-  
+
       /* Setup arguments. Note that frame[3] is not set, but it is allocated in
          the frame. */
       frame[1] = AMakeInt(t, 4);
@@ -91,13 +91,13 @@ that calls a method:
   AValue MethodExample(AThread *t, AValue *frame)
   {
       AValue ret;
-  
+
       /* Setup arguments. Note that frame[4] is not set, but it is allocated in
          the frame. */
       frame[1] = frame[0]; /* self */
       frame[2] = AMakeInt(t, 4); /* First argument */
       frame[3] = AMakeStr(t, "hello"); /* Second argument */
-      
+
       ret = ACallMethod(t, "method", 2, frame + 1);
       if (AIsError(ret))
           return AError; /* Normal exception */

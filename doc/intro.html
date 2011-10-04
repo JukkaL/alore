@@ -169,11 +169,11 @@ Other influential languages include Java, Lua, Strongtalk, Boo and Pascal.
 <p>This introduction uses a bottom-up approach: basics are introduced first,
 and explanations of more advances concepts are built on top of more basic
 concepts. The next sections present the traditional
-"Hello world" program in Alore, and 
+"Hello world" program in Alore, and
 instructions for getting your first program up and running.
 The rest of this document explains different language
 constructs, with short source code examples for each feature.
-Experienced programmers can get a quick overview of the 
+Experienced programmers can get a quick overview of the
 syntax of Alore by
 only looking at the section titles and code examples. Finally, the last section
 gives a quick introduction to some of the most important Alore standard library
@@ -188,7 +188,7 @@ complex features and trivia that you need to properly master the language.
 <a href="langref.html">Alore Language Reference</a> for more detailed
 explanations after having read this document. The
 <a href="libmain.html">Alore Library Reference</a> explains
-all the modules and types in the Alore standard library. This introduction 
+all the modules and types in the Alore standard library. This introduction
 contains links to the Library Reference for getting further
 information on specific topics. You can optionally read
 <a href="typemain.html">Introduction to Alore Type System</a> after you
@@ -220,7 +220,7 @@ you created in the previous section in the shell or the command prompt:
 @end
 
 <p>If you don't have Alore in your PATH, you need to provide the path to
-the Alore interpreter explicitly. If you used the default installation 
+the Alore interpreter explicitly. If you used the default installation
 directory, you can run the program in the Windows Command prompt like this:
 
 @example
@@ -461,7 +461,7 @@ break is always ignored after one of the following lexical items:</p>
       5 +
       6
 @end
-      
+
 
 <h3><a name="loops"></a>The for, while, repeat and break statements</h3>
 
@@ -630,7 +630,7 @@ to those of ordinary functions.
     Greet()     -- Display "hello, world"
     Greet('hi') -- Display "hi, world"
   end
-  
+
   def Greet(greeting = 'hello')
     WriteLn(greeting, ', world')
   end
@@ -715,7 +715,7 @@ integers and the @ref{Str} type refers to strings.
 
 <p>The type objects and the basic functions described below are
 included in the <a href="#std"><tt>std</tt></a> module. It is a special module
-that is always available without having to import it. It also contains 
+that is always available without having to import it. It also contains
 utility functions such as <tt>WriteLn</tt> and <tt>ReadLn</tt> that have
 already been used in several examples.
 
@@ -737,7 +737,7 @@ integers:
   Int('-123')   -- -123
   Int(2.34)     -- 2
 @end
-  
+
 <p>Integers and strings cannot be mixed in arithmetic
 operations. The <tt>Int</tt> constructor is often used to convert
 <tt>Str</tt> objects to integers in arithmetic expressions:
@@ -823,7 +823,7 @@ a prefix or suffix or a string, respectively.
   a[:2]             -- 'fo'
   a[1:]             -- 'oobar'
 @end
-  
+
 <p>Negative indices can be used to access string contents relative to the end
 of the string (-1 refers to the last character):
 
@@ -994,9 +994,9 @@ other special meaning and does not need to be escaped in string literals.
 
 @example
   '\u1230'          -- Character code 4656 (hexadecimal 1230)
-  '\u000a'          -- Character code 10 (LF) 
+  '\u000a'          -- Character code 10 (LF)
 @end
-  
+
 <h3><a name="array"></a>Array</h3>
 
 <p>Arrays are <i>composite</i> objects that store sequences of references to
@@ -1110,7 +1110,7 @@ means that it is often much more efficient than <tt>+</tt>.
 @example
   a = [1, 2]
   a.extend([3, 4])   -- a becomes [1, 2, 3, 4]
-@end  
+@end
 
 <p>The <tt>for</tt> statement can be used for iterating over all the elements
 of an array. The loop variable (<tt>i</tt> in the example below) receives all
@@ -1190,7 +1190,7 @@ and initialization. This is sometimes called <i>multiple assignment</i>:
 @example
   var a, b = 1, 2     -- a gets 1, b gets 2
   a, b = b, a         -- Swap the values of a and b
-  
+
   var xy = ['x', 3]
   a, b = xy           -- a gets 'x', b gets 3
 @end
@@ -1203,7 +1203,7 @@ expanded, similar to multiple assignment:
     WriteLn(x, '/', y)         -- Write 1/2 and 3/4
   end
 @end
-  
+
 <p>Tuples are often used to return
 multiple values from functions: a tuple (or array) of values, potentially with
 mixed types, is returned, and the caller expands the result by assigning it to
@@ -1279,7 +1279,7 @@ provided as an array of strings:
 <p>While <tt>Array</tt> objects only support indexing with
 integers, the <tt>Map</tt> type allows indexing with values of almost any type:
 
-@example  
+@example
   var m = Map('John': 34, 'Mary': 24)
   m['John']                 -- 34 (value associated with key 'John')
   m['Jane'] = 50            -- Assign value
@@ -1299,7 +1299,7 @@ later. As tuples are immutable, they are better map keys than arrays.
 
 @example
   var m = Map()      -- Create an empty Map
-  m[12] = 56         
+  m[12] = 56
   m['x'] = 66        -- Assign values
   m.keys()           -- [12, 'x'] (array of keys in an arbitrary order)
   m.remove(12)       -- Remove a key/value mapping using a key
@@ -1397,7 +1397,7 @@ integer range:
 
 <p>Types are objects as well. They are used to construct values of a specific
 type
-and to check if a value has a specific type using the <tt>is</tt> operator. 
+and to check if a value has a specific type using the <tt>is</tt> operator.
 
 @example
   Int('23')            -- 23 (Int object)
@@ -1468,7 +1468,7 @@ type, including objects of primitive types.
 
   def Main()
     var p = Person('John Smith',  -- Construct a Person object
-                   'journalist')  
+                   'journalist')
     WriteLn(p.name)             -- John Smith
     p.name = 'Mary Smith'       -- Change name
     WriteLn(p.name)             -- Mary Smith
@@ -1509,7 +1509,7 @@ functions, but the definitions are always within class definitions:
     var p = Person('John Smith', 'journalist')
     p.show()   -- Print 'Name: John Smith' and 'Occupation: journalist'
   end
-@end  
+@end
 
 <p>Other members of a class can be accessed within methods like ordinary
 variables.
@@ -1636,7 +1636,7 @@ modifier:
       return array[index]
     end
   end
-  
+
   def Main()
     var list = MyList(5)
     list.add('John')
@@ -1726,7 +1726,7 @@ module with almost no functionality of its own: <tt>Object</tt> instances
 can only compare themselves with another objects using the
 == and != operators based on object identity.
 Inheritance from primitive types
-(<tt>Int</tt>, <tt>Str</tt>, etc.) is not supported. 
+(<tt>Int</tt>, <tt>Str</tt>, etc.) is not supported.
 
 <p>If a derived class defines a member with an
 identical name as a public member in the superclass, the definition in the
@@ -1780,7 +1780,7 @@ returns a value (other than the implicit <tt>nil</tt> value).
   class Base
     var value = nil           -- Member variable, default getter and setter
   end
-  
+
   class Monitor is Base
     def value                 -- Getter for value
       WriteLn('read value')
@@ -1826,7 +1826,7 @@ contain a reference to the object they are related to. Example:
 @example
   class Printer
     var message
-  
+
     def print()
       WriteLn(message)
     end
@@ -1849,7 +1849,7 @@ an underscore. For example, the <tt>Str</tt> constructor tries to call the
 @example
   class MyList
     <i>... as defined previously ...</i>
-  
+
     def _str()
       return 'MyList'
     end
@@ -1880,7 +1880,7 @@ operations such as addition, subtraction and indexing. This topic is discussed
 later in the section <a href="#opoverload">Operator overloading</a>.
 
 <h3><a name="interfaces"></a>Interfaces and expanding the for loop</h3>
-      
+
 <p>An interface defines a set of member names and their behaviors. An example
 of a simple
 interface is the <tt>_str</tt> interface: a class implements this interface if
@@ -1918,7 +1918,7 @@ to clarify the iterable and iterator interfaces:
 @end
 
 <p>if the name <tt>e</tt> is replaced with a name that does not occur
-anywhere else in the program. 
+anywhere else in the program.
 
 <p>A <i>polymorphic function</i> or method accepts all objects that support a
 specific interface.
@@ -2023,25 +2023,25 @@ parentheses to ensure the correct evaluation order).
   <tr>
     <th>Operation
     <th>Equivalent method call
-  <tr>    
+  <tr>
     <td><tt>x + y</tt>
     <td><tt>x._add(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x - y</tt>
     <td><tt>x._sub(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x * y</tt>
     <td><tt>x._mul(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x / y</tt>
     <td><tt>x._div(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x div y</tt>
     <td><tt>x._idiv(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x mod y</tt>
     <td><tt>x._mod(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x ** y</tt>
     <td><tt>x._pow(y)</tt>
   <tr>
@@ -2050,16 +2050,16 @@ parentheses to ensure the correct evaluation order).
   <tr>
     <td><tt>x != y</tt>
     <td><tt>not x._eq(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x &lt; y</tt>
     <td><tt>x._lt(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x &gt;= y</tt>
     <td><tt>not x._lt(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x &gt; y</tt>
     <td><tt>x._gt(y)</tt>
-  <tr>    
+  <tr>
     <td><tt>x &lt;= y</tt>
     <td><tt>not x._gt(y)</tt>
 </table>
@@ -2089,15 +2089,15 @@ differently from the binary operators in the previous table:
     <td><tt>-x</tt>
     <td><tt>x._neg()</tt>
     <td>Unary operation, no arguments
-  <tr>    
+  <tr>
     <td><tt>x[y]</tt>
     <td><tt>x._get(y)</tt>
     <td>Indexed read
-  <tr>    
+  <tr>
     <td><tt>x[y] = z</tt>
     <td><tt>x._set(y, z)</tt>
     <td>Indexed store
-  <tr>    
+  <tr>
     <td><tt>x(y, z)</tt>
     <td><tt>x._call(y, z)</tt>
     <td>Any number of arguments may be used
@@ -2123,7 +2123,7 @@ are expected to follow the rules listed below:
 
 <ol>
   <li>(x != y) is equivalent to (not x == y)
-  <li>(x &gt;= y) is equivalent to (not x &lt; y) 
+  <li>(x &gt;= y) is equivalent to (not x &lt; y)
   <li>(x &lt;= y) is equivalent to (not x &gt; y)
 </ol>
 
@@ -2188,7 +2188,7 @@ module "message" and the main source file is illustrated below:
   module message
 
   private const Hili = ' *** '
-  
+
   def Show(msg)
     WriteLn(Hili, msg.upper(), Hili)
   end
@@ -2526,7 +2526,7 @@ of the file using a for loop:
     end
     f.close()                 -- Close file
   end
-@end      
+@end
 
 <p>The <tt>write</tt> and <tt>writeLn</tt> methods are used to write to
 streams:
@@ -2548,9 +2548,9 @@ control of reading from files, whereas the <tt>readLines</tt> methods returns
 the contents of a stream as an array of lines:
 
 @example
-  var f = File('file.txt')  
+  var f = File('file.txt')
   var s = f.read(5)         -- Read 5 characters as a string
-  while not f.eof()         -- Copy the rest of the contents to 
+  while not f.eof()         -- Copy the rest of the contents to
     WriteLn(f.readLn())     -- standard output
   end
   f.close()
@@ -2585,7 +2585,7 @@ the contents of a stream as an array of lines:
   FileExt('foo/bar/file.txt')   -- '.txt'
   GetEnv('PATH')                -- Get the value of an environment variable
   SetEnv('VAR', 'value')        -- Change or add an environment variable
-  var s = Stat('file.txt')      -- Get file properties 
+  var s = Stat('file.txt')      -- Get file properties
     s.size, s.isFile, s.isDir,
     s.isLink, s.modificationTime,
     s.accessTime, s.isReadable,

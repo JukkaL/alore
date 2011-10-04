@@ -15,7 +15,7 @@ conditions.
 @fun Remove(path as Str)
 @desc Remove a file or a directory. Only an empty directory can be removed.
 @end
-  
+
 @fun Rename(sourcepath as Str, targetpath as Str)
 @desc Rename a file or a directory. The operation may fail if the source and
     target directories differ.
@@ -58,16 +58,16 @@ conditions.
 @desc Return a boolean indicating whether the path refers to a directory or a
       symbolic link to a directory.
 @end
-  
+
 @fun IsFile(path as Str) as Boolean
 @desc Return a boolean indicating whether the path refers to an ordinary file
       or a symbolic link to an ordinary file.
 @end
-  
+
 @fun IsLink(path as Str) as Boolean
 @desc Return a boolean indicating whether the path refers to a symbolic link.
 @end
- 
+
 @fun ListDir(path as Str[, mask as Str]) as Array<Str>
 @desc Return the names of the directory entries in the directory as an array.
     The "." and ".." directory entries are omitted. The order of the entries is
@@ -85,7 +85,7 @@ conditions.
     of the entries is arbitrary. The entries in subdirectories include the
     relative path from the initial directory.
     <p>If the mask is specified, only entries whose names match the file mask
-      are included. The mask may contain the wild cards * and ?. The mask 
+      are included. The mask may contain the wild cards * and ?. The mask
       does not affect descending into subdirectories.
 
     <p>As an example, the call
@@ -95,7 +95,7 @@ conditions.
     <p>may produce the result
     @example
       ["essay.doc", "work/study plan.doc"]
-    @end    
+    @end
 @end
 
 @fun MakeSymLink(sourcepath as Str, linkpath as Str)
@@ -112,7 +112,7 @@ conditions.
 @end
 
 <h2>Path operations</h2>
-  
+
 @fun Join(component as Str, ...) as Str
 @desc Join one or more path components with the directory separator character
     ("/" or "\"). Examples:
@@ -121,7 +121,7 @@ conditions.
                            --         "work\texts" (Windows)
     Join("/usr/bin", "ls") -- Result: "/usr/bin/ls" (Posix)
     Join("a\", "b\c")      -- Result: "a\b\c" (Windows)
-    @end    
+    @end
 @end
 
 @fun DirName(path as Str) as Str
@@ -132,14 +132,14 @@ conditions.
       DirName("/usr/bin") -- Result: "/usr"
       @end
 @end
-  
+
 @fun BaseName(path as Str) as Str
 @desc Return the last component in a path. Example:
       @example
       BaseName("/usr/bin") -- Result: "bin"
       @end
 @end
-  
+
 @fun FileExt(path as Str) as Str
 @desc Return the file extension of a path. The dot in the extension is
       included. If there is no extension, return an empty string. If there
@@ -157,7 +157,7 @@ conditions.
     one is removed. Example:
     @example
     FileBase("work/essay.doc") -- Result: "work/essay"
-    @end    
+    @end
 @end
 
 @fun IsAbs(path as Str) as Boolean
@@ -173,8 +173,8 @@ conditions.
       @example
         NormPath("./foo//bar/../x") -- Result: "foo/x" (Posix)
       @end
-      
-      @note The returned path may refer to a different location if some 
+
+      @note The returned path may refer to a different location if some
             path components are symbolic links, as
             symbolic links receive no special processing.
       @end
@@ -194,7 +194,7 @@ conditions.
       <tt>HOME</tt> environment variable and, failing that, the password
       database.
 @end
-      
+
 <h2>Path constants</h2>
 
 @var Separator as Str
@@ -225,7 +225,7 @@ conditions.
 <p>Stat has the following constant members:
 
 @var size as Int
-@desc Size of the file, in bytes. If the path refers to a directory or a 
+@desc Size of the file, in bytes. If the path refers to a directory or a
       special file, the value is undefined.
 @end
 
@@ -305,7 +305,7 @@ conditions.
 
 @fun SetPerm(path as Str, owner as Str[, other as Str[, group as Str]])
 @desc Change the permissions of a directory entry. Permissions are defined
-  using a string which may have any subset of the characters <tt>r</tt> 
+  using a string which may have any subset of the characters <tt>r</tt>
   (read permission), <tt>w</tt> (write permission) and <tt>x</tt>
   (execute permission). If only owner permissions are specified, other users
   will receive the same permissions minus write permission. Group
@@ -340,7 +340,7 @@ conditions.
       value should be strings. As an exception, if the value is
       <tt>nil</tt>, remove the variable from the environment.
 @end
-  
+
 @fun ListEnv() as Array<Str>
 @desc Return an array containing the names of all environment variables in the
       current environment.
@@ -357,7 +357,7 @@ conditions.
           system.
     @end
 @end
-  
+
 @fun Sleep(seconds as Int)
 @fun Sleep(seconds as Float)
 @desc Pause for the specified number of seconds. The seconds may be an integer

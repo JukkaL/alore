@@ -20,7 +20,7 @@ protocols and interoperating with lower-level languages such as C.
 only pack integer data, others floating point numbers, and finally there
 is a format for string data. There are no separate formats for different
 endiannesses &#8212; instead there are separate classes for packing and
-unpacking big endian and little endian data. 
+unpacking big endian and little endian data.
 
 <p>The table below contains descriptions of the supported formats, including
 sizes of the packed representations and the corresponding Alore types that
@@ -128,7 +128,7 @@ same methods; the common abstract superclass <tt>PackerBase</tt> defines these.
       for the format. See the above table for details. For example, the actual
       methods for packing words are <tt>packWord16</tt>, <tt>packWord32</tt> and
       <tt>packWord64</tt>.
-@end      
+@end
 
 @fun packByte(int as Int) as Str
 @fun packWordN(int as Int) as Str
@@ -191,7 +191,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 @supertypes
 
 @class PackStream(stream as Stream[, packer as PackerBase][, bufMode as Constant])
-@desc Construct a <tt>PackStream</tt> instance that uses another stream for 
+@desc Construct a <tt>PackStream</tt> instance that uses another stream for
       input/output. The <i>packer</i> argument,
       if present, must be a packer object. If omitted, the big endian packer
       will be used. The <i>bufMode</i> argument may be @ref{Buffered},
@@ -222,7 +222,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 @fun writeIntsN(array as Array<Int>)
 @fun writeFloatsN(array as Array<Float>)
 @fun writeStrs(array as Array<Str>, int as Str)
-@desc Pack an array and write to the stream. The arguments are similar to the 
+@desc Pack an array and write to the stream. The arguments are similar to the
       corresponding <tt>pack*</tt> methods (see above).
 @end
 
@@ -231,7 +231,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
 @fun readIntN() as Int
 @fun readFloatN() as Int
 @desc Read and unpack data from the stream. The format specifies the number of
-      characters (bytes) to read and the type of the return value. 
+      characters (bytes) to read and the type of the return value.
 @end
 
 @fun readBytes(n as Int) as Array<Int>
@@ -266,7 +266,7 @@ pl.packWord16(7)              -- Result: "\u0007\u0000"
       arguments are the same as for @ref{io::File}. The <i>packer</i>
       argument, if present, must be a packer object (see above). If omitted,
       the big endian packer will be used.
-      
+
       <p>Example:
       @example
         var f = PackFile("file.bin", Output)

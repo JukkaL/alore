@@ -1,24 +1,24 @@
 @head
 @title Accessing global variables and definitions
 
-<p>These functions can be used to access or modify the values of global 
-definitions. Global definitions include global functions, classes, variables 
+<p>These functions can be used to access or modify the values of global
+definitions. Global definitions include global functions, classes, variables
 and constants. Some of these functions refer to the definition using
 the fully qualified name of the definitions, such as <tt>io::File</tt>, and
 some refer using a numeric id. Numeric ids can be obtained using the
 @ref{AGlobalByNum} function as described below, or by using a _P variant macro
-when defining the global definition, described in  section 
+when defining the global definition, described in  section
 @href{Variant macros}.
 
 @fun AValue AGlobal(AThread *t, const char *name)
 @desc Return the value of a global definition. The name must be the fully
       qualified name of the definition. All available definitions, including
-      private ones, can be 
+      private ones, can be
       accessed using this function without having to respect the ordinary Alore
       visibility rules. The only requirement
-      is that the module containing the definition has been imported at least 
+      is that the module containing the definition has been imported at least
       once and it has not been freed by the garbage collector. @raise-direct
-      Example:      
+      Example:
       @example
         AValue intType = AGlobal(t, "std::Int");
       @end
@@ -26,7 +26,7 @@ when defining the global definition, described in  section
 
 @fun int AGetGlobalNum(AThread *t, const char *name)
 @desc Get the internal numeric id of a global definition. The valid argument
-      values are the same as for the <tt>AGlobal</tt> function above. The 
+      values are the same as for the <tt>AGlobal</tt> function above. The
       numeric id can be used as an argument for the functions described
       below and some additional functions such as @ref{ARaiseByNum}.
       @raise-direct

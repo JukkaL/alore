@@ -3,7 +3,7 @@
 
 @h2 Main module
 
-<p>Each program has a single main source file. The main source file contains 
+<p>Each program has a single main source file. The main source file contains
 an optional UTF-8 byte order mark sequence, an optional <tt>#!</tt> comment,
 an optional encoding declaration, any number of import declarations, and any
 number of global definitions and statements:
@@ -43,7 +43,7 @@ import declarations, followed by global definitions and statements:
 <p>The tokens after the <tt>module</tt> keyword must form the module name.
 
 <p>The relative location of the module files is formed by interpreting the
-module name components as directory names. The first component is the main 
+module name components as directory names. The first component is the main
 directory, the second component is the subdirectory of the main directory, etc.
 The root directory that contains the main directory is the directory of the
 main source file, but implementations may define other, alternative root
@@ -66,8 +66,8 @@ imported are not compiled, and thus any errors in them are not reported.
 @h2 The std module
 
 <p>The special module @ref{std} contains definitions of basic types,
-exceptions and other objects that are generally useful in many Alore 
-programs. This module is always implicitly imported in every source file, and 
+exceptions and other objects that are generally useful in many Alore
+programs. This module is always implicitly imported in every source file, and
 it is an error to import it explicitly.
 
 @h2 Standard modules
@@ -76,13 +76,13 @@ it is an error to import it explicitly.
 Reference</a> are standard modules, unless explicitly mentioned otherwise.
 There are no other standard modules. Every Alore implementation should provide
 all the standard modules. If it does not provide some of them, or if the
-module implementations are incomplete, this should be clearly mentioned in the 
+module implementations are incomplete, this should be clearly mentioned in the
 accompanying documentation.
-  
+
 <p>Standard modules may define additional public global definitions and members
 beyond those described in the Alore Library Reference. The names
 of these definitions always start with two underscores (__).
-Otherwise, standard modules define only those public names that are mentioned 
+Otherwise, standard modules define only those public names that are mentioned
 in the Alore Library Reference. New versions of Alore may define additional
 functionality in standard library modules. An implementation should make clear
 which version of the Alore standard library it implements.

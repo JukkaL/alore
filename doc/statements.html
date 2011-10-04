@@ -12,9 +12,9 @@
 
 <p>A block contains any number of statements and local variable definitions.
 It is the basic building block
-of functions, methods and compound statements. A block is evaluated by 
-evaluating its statements sequentially. If one of the statements either raises 
-an exception or is a break or return statement, the execution of the block 
+of functions, methods and compound statements. A block is evaluated by
+evaluating its statements sequentially. If one of the statements either raises
+an exception or is a break or return statement, the execution of the block
 terminates and the rest of the statements are not evaluated.
 
 @h2 Expression statement
@@ -40,7 +40,7 @@ expression like this:
   <li>If the expression is a global or local variable reference, assign the
     value to that variable.
   <li>If the expression is a member variable reference, call the setter method
-    related to the referred member variable of the base object, with 
+    related to the referred member variable of the base object, with
     the value of the right-hand side expression as the argument.
   <li>If the expression is a subscript expression, call the <tt>_set</tt>
     method of the subscripted object, with the value of the bracketed
@@ -58,15 +58,15 @@ expression like this:
 <p>If the left expression is a tuple or array constructor, the assignment is a
 <i>multi-assignment</i>. The right
 expression must evaluate to a tuple or array with the same number of items as
-in the lvalue, or otherwise a @ref{std::ValueError} or @ref{std::TypeError} 
+in the lvalue, or otherwise a @ref{std::ValueError} or @ref{std::TypeError}
 exception will be raised. Each
 item expression in the left side will be assigned a value from the right
-side value, the first item getting the first array item, the second the 
-second one, etc. These assignments are performed according to the rules in the 
+side value, the first item getting the first array item, the second the
+second one, etc. These assignments are performed according to the rules in the
 above list.
 
-<p>If the setter or the <tt>_set</tt> method mentioned above is not defined, a 
-@ref{std::MemberError} exception will raised when evaluating the assignment 
+<p>If the setter or the <tt>_set</tt> method mentioned above is not defined, a
+@ref{std::MemberError} exception will raised when evaluating the assignment
 statement.
 
 @h2 Operator assignment statement
@@ -78,7 +78,7 @@ statement.
 
 <p>Evaluate the value of the expression on the left-hand side of the operator
 assignment token and the value of the right-hand-side expression.
-Evaluate the binary operation suggested by the 
+Evaluate the binary operation suggested by the
 operator assignment token, with the value of the left expression as the left
 operand, and the value of the right expression as the right
 operand, and assign the resulting value to the left expression, which is now
@@ -97,15 +97,15 @@ semantics of the binary operation are described in section
 @end
 
 <p>Define one or more local variables. If the optional initialization part
-is missing, the variables will be initialized to refer to the <tt>nil</tt> 
+is missing, the variables will be initialized to refer to the <tt>nil</tt>
 object.
 Otherwise, the initialization expression is evaluated and its results are
 assigned to the variables. The semantics are similar to the assignment
 statement: If there is a single variable, the result of the expression is
 assigned to that variable. If there are multiple variables, the result should
-be an <tt>Array</tt> object with as many items as there are variables. The 
-array items will be assigned sequentially to the variables. If the result is 
-not an <tt>Array</tt> object or contains a wrong number of items, an exception 
+be an <tt>Array</tt> object with as many items as there are variables. The
+array items will be assigned sequentially to the variables. If the result is
+not an <tt>Array</tt> object or contains a wrong number of items, an exception
 will be raised.
 
 <p>The local variables are visible and can be accessed only in the block that
@@ -126,9 +126,9 @@ expressions, and executes at most a single block related to a true condition
 (or the else block if no conditions are true).
 All the condition expressions are evaluated in a boolean context.
 
-<p>First, the expression after <tt>if</tt> is evaluated. If it is true, the 
-first block will be evaluated. Otherwise, if there are <tt>elif</tt> 
-conditions, they are evaluated sequentially until one of them evaluates to 
+<p>First, the expression after <tt>if</tt> is evaluated. If it is true, the
+first block will be evaluated. Otherwise, if there are <tt>elif</tt>
+conditions, they are evaluated sequentially until one of them evaluates to
 true or until they
 have all been evaluated. If one of them evaluated to true,
 the block following that expression will be evaluated. If no
@@ -152,10 +152,10 @@ terminated.
 @end
 
 <p>Switch statement first evaluates the expression after the <tt>switch</tt>
-keyword. Then, the expressions after the case keywords are evaluated 
-sequentially. After evaluating each expression, the value of the expression is 
-compared for equality with the value of the switch expression. If they compare 
-equal, the block after the case expression is evaluated, and the statement 
+keyword. Then, the expressions after the case keywords are evaluated
+sequentially. After evaluating each expression, the value of the expression is
+compared for equality with the value of the switch expression. If they compare
+equal, the block after the case expression is evaluated, and the statement
 finishes.
 
 <p>If no case expression is equal to the switch expression, the block
@@ -179,9 +179,9 @@ is used to break out of the loop.
 @end
 
 <p>The while statement is evaluated by evaluating the expression in a
-boolean context, and if the expression evaluates to <tt>True</tt>, the body 
+boolean context, and if the expression evaluates to <tt>True</tt>, the body
 of the statement is evaluated. The evaluation of the loop continues by
-evaluating the expression and body until the expression evaluates to 
+evaluating the expression and body until the expression evaluates to
 <tt>False</tt>, after which the evaluation of the statement is finished.
 
 <h3>Repeat statement</h3>
@@ -191,10 +191,10 @@ evaluating the expression and body until the expression evaluates to
 @end
 
 <p>The repeat statement is evaluated by evaluating the body and then evaluating
-the expression in a boolean context. If the expression evaluates to 
+the expression in a boolean context. If the expression evaluates to
 <tt>True</tt>,
-the loop terminates. If it evaluates to <tt>False</tt>, evaluation of 
-the loop continues by evaluating the body and the expression repeatedly until 
+the loop terminates. If it evaluates to <tt>False</tt>, evaluation of
+the loop continues by evaluating the body and the expression repeatedly until
 the expression evaluates to <tt>True</tt>.
 
 <h3>For statement</h3>
@@ -207,7 +207,7 @@ the expression evaluates to <tt>True</tt>.
 
 <ol>
   <li>Evaluate the expression after <tt>in</tt>.
-  <li>Call the method <tt>iterator</tt> of the expression result 
+  <li>Call the method <tt>iterator</tt> of the expression result
     value with no arguments. The result of the method call is the iterator
     object, and a reference to it is stored during the execution of the loop.
   <li>Call the method <tt>hasNext</tt> of the iterator with no arguments
@@ -216,12 +216,12 @@ the expression evaluates to <tt>True</tt>.
   <li>Call the method <tt>next</tt> of the iterator with no arguments.
     Assign the return value to the variable list located before <tt>in</tt>,
     using the semantics described above in @href{Local variable definition}.
-    The variables in the list are visible only in the loop body. Unlike other 
-    local variables, they cannot be used as lvalues, i.e. they behave like 
+    The variables in the list are visible only in the loop body. Unlike other
+    local variables, they cannot be used as lvalues, i.e. they behave like
     constants.
   <li>Evaluate the body of the loop.
   <li>Return to step 3.
-</ol>  
+</ol>
 
 @h2 Break statement
 
@@ -277,17 +277,17 @@ first block in the statement (<tt>except</tt> or <tt>finally</tt>).
 the statement body. Each except block contains a global variable
 reference that must refer to a class definition (a type), a block, and
 optionally an identifier before the <tt>is</tt> keyword that defines a local
-variable. The identifier, if present, must be a valid name for a local 
+variable. The identifier, if present, must be a valid name for a local
 variable at that context.
 
 <p>The try-except statement evaluates the block after the <tt>try</tt>
-keyword. If no exception propagating outside the block is raised within the 
-block, the evaluation of the statement ends there. Otherwise, the except 
-blocks are consulted in the order they appear in the statement, and the type 
+keyword. If no exception propagating outside the block is raised within the
+block, the evaluation of the statement ends there. Otherwise, the except
+blocks are consulted in the order they appear in the statement, and the type
 of the uncaught exception object is compared against the type references after
-each <tt>except</tt> keyword. If the exception object belongs to one of the 
+each <tt>except</tt> keyword. If the exception object belongs to one of the
 types, the block after the <tt>except</tt> keyword is evaluated, and after this
-the statement evaluation is finished. In this case, the exception was 
+the statement evaluation is finished. In this case, the exception was
 <i>caught</i>, and the exception object is no longer active.
 If no types match, the exception will be propagated further as if the try
 statement did not exist.
@@ -299,7 +299,7 @@ that local variable before evaluating the block.
 <h3>Try-finally</h3>
 
 <p>The try-finally statement contains an additional <i>finally block</i> after
-the <tt>finally</tt> keyword. The block after the <tt>try</tt> keyword is 
+the <tt>finally</tt> keyword. The block after the <tt>try</tt> keyword is
 evaluated, as
 in the try-except variant. If no uncaught exception was raised within the
 block, the finally block will then be evaluated and the evaluation of the
@@ -322,7 +322,7 @@ to be evaluated before returning from the function or method.
 @end
 
 <p>First, the expression is evaluated. It should evaluate to an instance of
-@ref{std::Exception} or any subtype of @ref{std::Exception}. In that case, the 
-value of the expression will be raised as an exception. Otherwise if the type 
-of the expression is invalid, a @ref{std::TypeError} exception will be 
+@ref{std::Exception} or any subtype of @ref{std::Exception}. In that case, the
+value of the expression will be raised as an exception. Otherwise if the type
+of the expression is invalid, a @ref{std::TypeError} exception will be
 raised.

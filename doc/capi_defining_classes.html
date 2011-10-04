@@ -181,11 +181,11 @@ defined in the interface must be implemented in the class or a superclass.
 
 @h2 Accessing member variable slots directly
 
-<p>The most efficient way of accessing member variables or constants is by 
+<p>The most efficient way of accessing member variables or constants is by
 accessing the member variable slots directly using a <i>slot index</i>.
 The first member variable or constant receives the slot index 0, the next 1,
-etc. Member variables defined in the superclasses always receive the smallest 
-slot indices. Direct access can typically used to access only private members 
+etc. Member variables defined in the superclasses always receive the smallest
+slot indices. Direct access can typically used to access only private members
 variables, since any member which might have an overridden accessor has to
 be accessed using other means.
 

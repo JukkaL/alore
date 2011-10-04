@@ -9,15 +9,15 @@ rules. Here are a few examples of grammar rules:
   num :: digit+ | digit* "." digit+
 @end
 
-<p>This means that the <i>digit</i> rule is defined as a numeric character 
-and that the <i>num</i> rule is defined as either a string of at least one 
+<p>This means that the <i>digit</i> rule is defined as a numeric character
+and that the <i>num</i> rule is defined as either a string of at least one
 digit, or any number of digits followed by a dot and one or more digits.
 
 <p>Each rule starts with the name of the rule (<i>digit</i> and <i>num</i> in
 the previous example), followed by two colons (<tt>::</tt>). The colons are
 followed by a rule
 definition. In the rule definition, the name of any rule refers to that
-rule (the definition of the <i>num</i> rule in the above example refers to 
+rule (the definition of the <i>num</i> rule in the above example refers to
 the <i>digit</i> rule). Literal
 characters and strings are entered within double quotes. The | symbol separates
 alternatives. The + operator specifies that the previous

@@ -11,16 +11,16 @@
       GetMember(range, "start")  -- 2
     @end
 @end
-  
+
 @fun SetMember(instance, id as Str, value)
 @desc Set the value of a member of an instance. The <tt>id</tt> argument must
     be a <tt>Str</tt> object. Raise <tt>MemberError</tt> if the member
     is not defined or if it is a method or a constant.
 @end
-  
+
 @fun HasMember(instance, id as Str) as Boolean
 @desc Return a boolean indicating whether an instance has a specific member.
-    The <tt>id</tt> argument must be a <tt>Str</tt> object. 
+    The <tt>id</tt> argument must be a <tt>Str</tt> object.
 @end
 
 @fun TypeOf(instance) as Type

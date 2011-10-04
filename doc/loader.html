@@ -6,7 +6,7 @@
       The <tt>compiler</tt> module will replace it.
 @end
 
-<p>This module enables dynamic compilation of Alore source code files. 
+<p>This module enables dynamic compilation of Alore source code files.
 Dynamically loaded source files must follow the same conventions as ordinary
 Alore programs. They may import any modules imported by the program that loads
 the file and additional modules, potentially located in different directories.
@@ -18,13 +18,13 @@ the file and additional modules, potentially located in different directories.
 <h2>Functions</h2>
 
 @fun Load(path as Str[, modulePath as Str]) as Module
-@desc Load an Alore source file. Return a <tt>Module</tt> object that allows 
-      accessing public variables, functions and classes defined in the file. 
+@desc Load an Alore source file. Return a <tt>Module</tt> object that allows
+      accessing public variables, functions and classes defined in the file.
       If compilation fails, a @ref{CompileError} exception will be raised.
       <p>By default, the constant @ref{ModuleSearchPath} specifies the
       module search path. The optional argument can be provided to override the
       default module search path. The format
-      of the argument is the same as the format of the 
+      of the argument is the same as the format of the
       @ref{ModuleSearchPath} constant.
 @end
 
@@ -83,7 +83,7 @@ the file and additional modules, potentially located in different directories.
 
 <p>Dynamically loaded code may not compile new copies of any already imported
 modules. Therefore
-any global variables in modules are shared between all source files in a 
+any global variables in modules are shared between all source files in a
 program, and module initialization is performed only once per module.
 
 <p>As an exception to this rule, if only a dynamically loaded source file or

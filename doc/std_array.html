@@ -108,7 +108,7 @@ constructed using the <tt>*</tt> operator. Example:
 @desc @deprecated
       Return the smallest (non-negative) index of the array that contains the
       item, or -1 if the array does not contain the item.
-      
+
 @end
 
 <h2><tt>Array</tt> operations</h2>
@@ -118,7 +118,7 @@ constructed using the <tt>*</tt> operator. Example:
 @op array[n] @optype{Array<T>[Int] -> Int}
 @desc Access an array item at integer index <tt>n</tt>.
       Raise @ref{IndexError} if the index is out of bounds.
-      
+
       @example
         var a = ["a", "b", "c"]
         a[0]        -- "a"
@@ -130,7 +130,7 @@ constructed using the <tt>*</tt> operator. Example:
 @op array[n] = x @optype{Array<T>[Int] = Int}
 @desc Modify an array item at integer index <tt>n</tt>. Raise @ref{IndexError}
       if the index is out of bounds.
-      
+
       @example
         var a = ["a", "b", "c"]
         a[1] =  "1" -- a == ["a", "1", "c"]
@@ -149,7 +149,7 @@ constructed using the <tt>*</tt> operator. Example:
       value of the pair is omitted (or is <tt>nil</tt>), assume it to be 0.
       If the right value is omitted or <tt>nil</tt>, the result is a slice
       extending to the end of the array.
-      
+
       @example
         var a = ["a", "b", "c"]
         a[1:5]      -- ["b", "c"]
@@ -194,7 +194,7 @@ constructed using the <tt>*</tt> operator. Example:
 @end
 
 @op x, y, z = array
-@desc Array objects can be expanded in a multi-assignment or a variable 
+@desc Array objects can be expanded in a multi-assignment or a variable
       definition. The number of items
       in the lvalue must equal the length of the array.
       @example

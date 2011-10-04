@@ -6,16 +6,16 @@
 @implements Iterable<(KT, VT)>
 @supertypes
 
-<p>The <tt>Map</tt> class implements a mapping from <i>keys</i> to 
-<i>values</i>. Keys may be any objects that provide a hash value 
-using the @ref{std::Hash} function and 
+<p>The <tt>Map</tt> class implements a mapping from <i>keys</i> to
+<i>values</i>. Keys may be any objects that provide a hash value
+using the @ref{std::Hash} function and
 support the == operator, while values may be arbitrary objects.
 At most a single object can be associated with a specific key. If several
 values are assigned to a key, the later assignments replace the earlier values.
 
 @class Map(... as Pair<KT, VT>)
 @desc Construct a <tt>Map</tt> object.  The constructor accepts
-    an arbitrary number of <tt>Pair</tt> objects that define the initial 
+    an arbitrary number of <tt>Pair</tt> objects that define the initial
     (key, value) pairs to be added to the map. The left item of each
     pair is the key, and the right item is the value. Example:
 
@@ -40,7 +40,7 @@ values are assigned to a key, the later assignments replace the earlier values.
 @desc Return <tt>True</tt> if the key is in the map, or <tt>False</tt>
       otherwise.
 @end
-  
+
 @fun remove(key as KT)
 @desc Remove a key and the corresponding value from the map.
       Raise @ref{KeyError} if the key is not in the map.
@@ -76,7 +76,7 @@ values are assigned to a key, the later assignments replace the earlier values.
 <p><tt>Map</tt> objects support the following operations:
 
 @op map[key] @optype{Map<KT, VT>[KT] -> VT}
-@desc Return the value associated with a key, or raise 
+@desc Return the value associated with a key, or raise
       @ref{KeyError} if the key is not in the map.
 @end
 
@@ -86,7 +86,7 @@ values are assigned to a key, the later assignments replace the earlier values.
 @end
 
 @op for key, value in map @optype{for KT, VT in Map<KT, VT>}
-@desc Map contents can be iterated with a for loop. Each item in the 
+@desc Map contents can be iterated with a for loop. Each item in the
       iteration is a tuple (key, value). The items are iterated
       in an arbitrary order.
       @note You should not modify the map object during iteration, as the

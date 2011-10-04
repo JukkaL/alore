@@ -6,26 +6,26 @@ expression matching.
 
 <h2>Repetition and match length</h2>
 
-<p>The repetition expressions *, +, ? and {} match by default a 
+<p>The repetition expressions *, +, ? and {} match by default a
 <i>locally maximal</i> match. Each repeated expression matches the longest
 possible substring in isolation, but the whole expression does not always match
 the longest possible match. The regular expression is matched sequentially from
 left (start) to right, each subexpression matching a locally maximal substring
-so that the rest of the regular expression matches as well. The first 
-successful found match is always reported. The alternation operator | is 
-evaluated in a similar fashion: if the whole expression matches after 
+so that the rest of the regular expression matches as well. The first
+successful found match is always reported. The alternation operator | is
+evaluated in a similar fashion: if the whole expression matches after
 trying the first alternative, the second alternative is not tried at all.
 
-<p>For example, the regular expression <tt>a?(b|abc)</tt> matches <tt>ab</tt>, 
+<p>For example, the regular expression <tt>a?(b|abc)</tt> matches <tt>ab</tt>,
 not <tt>abc</tt>, when matched against the string <tt>abc</tt>.
 
 <h2>Minimizing repetition</h2>
 
-<p>If a repetition expression is followed by ?, it matches a <i>locally 
+<p>If a repetition expression is followed by ?, it matches a <i>locally
 minimal</i> match, i.e. the smallest number of repetitions so that the rest
 of the regular expression matches.
 
-<p>For example, the regular expression <tt>.*?b+</tt> matches the string 
+<p>For example, the regular expression <tt>.*?b+</tt> matches the string
 <tt>ab</tt> when matched against the string <tt>ababb</tt>.
 
 <h2>Grouping and back references</h2>
@@ -36,12 +36,12 @@ methods and they can be referred to later in the regular expression using back
 references of the form \1, \2, etc. Only
 the first 9 groups can be matched as back references.
 
-<p>A back reference matches the string that was last matched by the group. 
+<p>A back reference matches the string that was last matched by the group.
 If a group is repeated, each repetition is considered a separate match.
 If
 the group has not matched anything, a back reference fails to match anything.
 
-<p>For example, the regular expression <tt>(a|b)+\1</tt> matches any number 
+<p>For example, the regular expression <tt>(a|b)+\1</tt> matches any number
 of <tt>a</tt>'s and <tt>b</tt>'s followed by <tt>aa</tt> or <tt>bb</tt>.
 
 <h2>Precedence</h2>
@@ -51,12 +51,12 @@ the concatenation operator. Repetition has the highest precedence. Use grouping
 to override the operator precedence.
 
 <p>For example, <tt>a|bc*</tt> is interpreted as <tt>a|(b(c*))</tt> (except
-for grouping behavior). 
+for grouping behavior).
 
 <h2>Character class syntax</h2>
 
-<p>The right square bracket (<tt>]</tt>) and dash (<tt>-</tt>) 
-have special meanings within character 
+<p>The right square bracket (<tt>]</tt>) and dash (<tt>-</tt>)
+have special meanings within character
 classes (<tt>[...]</tt> or <tt>[^...]</tt>). Therefore they usually have to be
 escaped using a backslash to have them interpreted literally. As an
 exception, the right square bracket can be included without

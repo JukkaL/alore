@@ -5,7 +5,7 @@
 Array, Map or Set objects.
 
 <p>All of these operations may raise direct or normal exceptions. They always
-check the validity of their arguments and raise exceptions on any error 
+check the validity of their arguments and raise exceptions on any error
 conditions.
 
 @see There are faster but more specific operations for dealing with only
@@ -21,7 +21,7 @@ conditions.
 @end
 
 @fun AValue AGetItem(AThread *t, AValue collection, AValue index)
-@desc Return <tt>collection[index]</tt>, i.e. the result of the <tt>_get</tt> 
+@desc Return <tt>collection[index]</tt>, i.e. the result of the <tt>_get</tt>
       method of collection. This method may return <tt>AError</tt>.
 @end
 
@@ -32,8 +32,8 @@ conditions.
 @end
 
 @fun AValue AGetItemAt(AThread *t, AValue collection, Assize_t index)
-@desc Return <tt>collection[index]</tt> after converting index to an 
-      <tt>Int</tt> object, i.e. the result of the <tt>_get</tt> method of 
+@desc Return <tt>collection[index]</tt> after converting index to an
+      <tt>Int</tt> object, i.e. the result of the <tt>_get</tt> method of
       collection. This is
       a convenience method that can be used instead of <tt>AGetItem</tt> if
       the index is a C integer. This method may return <tt>AError</tt>.
@@ -41,15 +41,15 @@ conditions.
 
 @fun AValue ASetItemAt(AThread *t, AValue collection, Assize_t index, AValue object)
 @desc Assign object to <tt>collection[index]</tt> after converting index to an
-      <tt>Int</tt> object, i.e. call the <tt>_set</tt> method of collection. 
-      This is a convenience function that can be used instead of 
+      <tt>Int</tt> object, i.e. call the <tt>_set</tt> method of collection.
+      This is a convenience function that can be used instead of
       <tt>ASetItem</tt> if the index is a C integer. The return value is
       ANil, if successful, or AError.
 @end
 
 @fun AValue AIterator(AThread *t, AValue object)
 @desc Return the result of calling the <tt>iterator()</tt> method of an object.
-      This is typically an iterator object. This function may return 
+      This is typically an iterator object. This function may return
       <tt>AError</tt>.
 @end
 

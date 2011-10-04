@@ -12,7 +12,7 @@
 <p>Instances of the <tt>Str</tt> class are immutable strings. A string is a
 potentially empty sequence of characters. A character is logically
 represented by an integer code between 0 and 65535, inclusive. Alore has no
-special data type for characters &#8212; characters are represented as strings 
+special data type for characters &#8212; characters are represented as strings
 of length 1.
 Character codes can be queried using the @ref{Ord} function, and strings
 with specific character codes can be created using the @ref{Chr} function.
@@ -91,7 +91,7 @@ the second to last character, etc.
     whitespace characters, if the separator is not specified or it is
     <tt>nil</tt>. In the latter case, whitespace characters at the start and
     the end of string are not included in the fields.
-    <p>Return an array 
+    <p>Return an array
     containing the fields. If the separator is given, the result contains
     always at least a single
     field, which may be empty. The optional <tt>max</tt> parameter specifies
@@ -126,7 +126,7 @@ the second to last character, etc.
 
 @fun strip() as Str
 @desc Return a copy of the string with leading and trailing whitespace
-    characters removed. Only ASCII space, tab, CR and LF characters are 
+    characters removed. Only ASCII space, tab, CR and LF characters are
     removed.
 @end
 
@@ -146,18 +146,18 @@ the second to last character, etc.
     @example
       "{} and {}".format(1, "2")  -- Result: "1 and 2"
     @end
-    
+
     Brace characters can be added to the result by duplicating them in the
     format:
-    
+
     @example
       "{{ and }}".format() -- Result: "{ and }"
     @end
-    
-    The contents of brace expressions may optionally be prefixed with a field 
+
+    The contents of brace expressions may optionally be prefixed with a field
     width specifier,
     an integer followed by a colon. The replacement is padded with spaces to
-    have at least as many characters as the absolute value of the width. If 
+    have at least as many characters as the absolute value of the width. If
     the width is positive, the result is aligned to right, otherwise to left:
 
     @example
@@ -196,7 +196,7 @@ the second to last character, etc.
       "{0e0}".format(15)         -- Result: "2e1"
     @end
 @end
-  
+
 @fun startsWith(prefix as Str) as Boolean
 @desc Return a boolean indicating whether the string starts with the prefix.
 @end
@@ -212,7 +212,7 @@ the second to last character, etc.
       convert strings in 8-bit binary encodings to Unicode so that you can
       use them with operations such as @ref{lower}() that expect Unicode
       strings.
-      
+
       <p>Example:
       @example
         "\u00c3\u00a4".decode(encodings::Utf8)  -- Decode "&#228;" in UTF-8 to 16-bit Unicode
@@ -223,12 +223,12 @@ the second to last character, etc.
 
 @fun encode(encoding as Encoding[, mode as Constant]) as Str
 @desc Encode the string (interpreted as 16-bit Unicode) using the given
-      character encoding. 
+      character encoding.
       The mode argument may be @ref{encodings::Strict} (the
       default) or @ref{encodings::Unstrict}.
       Calling this method is
       equivalent to <tt>encoding.encoder([mode]).encode(str)</tt>.
-      
+
       <p>Example:
       @example
         "\u20ac".encode(encodings::Utf8)        -- Encode the Euro sign using UTF-8
@@ -242,7 +242,7 @@ the second to last character, etc.
 <p><tt>Str</tt> objects support the following operations:
 
 @op str[n] @optype{Str[Int] -> Str; Str[Pair<Int, Int>] -> Str}
-@desc If the index <tt>n</tt> is an integer, return the character at the 
+@desc If the index <tt>n</tt> is an integer, return the character at the
   specified index as a string of length 1.
   If the index value is out of bounds, raise an @ref{IndexError} exception.
   <p>If the index is a pair <tt>x</tt> <tt>:</tt> <tt>y</tt>, return a

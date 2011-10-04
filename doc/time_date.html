@@ -37,7 +37,7 @@ are immutable.
       date components (day, month, year). A format sequence matches a date
       component in the string. The following list contains all the
       available format sequences and examples of valid values:
-      
+
       <table class="no-border" summary="Format sequences">
         <tr>
           <td>D
@@ -56,7 +56,7 @@ are immutable.
           <td>abbreviated name of month (Jan, Feb, ..., Dec)
         <tr>
           <td>MMMM&nbsp;
-          <td>name of month (January, February, ..., December) 
+          <td>name of month (January, February, ..., December)
         <tr>
           <td>YY
           <td>year, 2 digits (00, 01, ... 99)
@@ -80,19 +80,19 @@ are immutable.
 @var day as Int
 @desc Day of month (the first day of the month is 1)
 @end
-  
+
 @var month as Int
 @desc Month number (1 = January, 2 = February, ...).
 @end
-  
+
 @var year as Int
 @desc Year number (e.g. 2010)
 @end
-  
+
 @var weekday as Int
 @desc Weekday of the date (1 = Monday, 2 = Tuesday, ..., 7 = Sunday).
 @end
-  
+
 @fun week([rule as Constant]) as Int
 @desc Return the week number. The rule argument specifies how the week number
       is calculated. It can be one of
@@ -108,7 +108,7 @@ are immutable.
       the result. The following <i>formatting sequences</i> in the template
       are replaced with formatted <tt>Date</tt> components (examples within
       parentheses):
-      
+
       <table class="no-border" summary="Format sequences">
         <tr>
           <td>D
@@ -127,7 +127,7 @@ are immutable.
           <td>abbreviated name of month (Feb)
         <tr>
           <td>MMMM&nbsp;
-          <td>name of month (February) 
+          <td>name of month (February)
         <tr>
           <td>YY
           <td>year, 2 digits (09)

@@ -51,7 +51,7 @@ precedence:
 associative, i.e. <tt>a + b + c == (a + b) + c</tt>, whereas <tt>**</tt> is
 right associative, i.e. <tt>a**b**c == a**(b**c)</tt>.
 
-<p>The comma operator is used to form lists of arbitrary length. Associativity 
+<p>The comma operator is used to form lists of arbitrary length. Associativity
 rules do not apply to the comma operator.
 
 @h2 Lvalues and rvalues
@@ -78,15 +78,15 @@ the left hand side of assignment may include rvalue expressions as the
 subexpressions of lvalue expressions (target of member reference and
 subscripts in subscript expressions).
 
-<p>The semantics of lvalue expressions are described in section 
-@href{Assignment statement}. The descriptions below only apply to rvalue 
+<p>The semantics of lvalue expressions are described in section
+@href{Assignment statement}. The descriptions below only apply to rvalue
 expressions, unless explicitly mentioned otherwise.
 
 @h2 Expressions in boolean context
 
 <p>Some expressions are evaluated in a boolean context. Such
-an expression is expected to evaluate to a boolean value, either 
-<tt>True</tt> or <tt>False</tt>, as its value. If the expression 
+an expression is expected to evaluate to a boolean value, either
+<tt>True</tt> or <tt>False</tt>, as its value. If the expression
 evaluates to some other value, a @ref{std::TypeError} exception will be
 raised.
 
@@ -96,18 +96,18 @@ raised.
 order as specified by precedence and associativity rules: operations with a
 higher precedence are evaluated first, and consecutive operations with the
 same precedence are evaluated left to right (if the operations are left
-associative) or right to left (otherwise). 
+associative) or right to left (otherwise).
 The natural evaluation order of comma-separated lists is from left to right.
 Parentheses can be used to change the default operation evaluation order.
 
-<p>Variable and constant references 
-within a single expression may be evaluated in an arbitrary order, but all the 
-operands and arguments of operations must be evaluated before the 
+<p>Variable and constant references
+within a single expression may be evaluated in an arbitrary order, but all the
+operands and arguments of operations must be evaluated before the
 operation is performed.
 
 <p>Otherwise, expressions and statements are always evaluated in their
 entirety in the order described in this document, unless some operation causes
-an exception to be raised. At the instant an exception is raised, any 
+an exception to be raised. At the instant an exception is raised, any
 statements or expressions that are not fully evaluated are terminated.
 
 @h2 Simple expressions
@@ -116,8 +116,8 @@ statements or expressions that are not fully evaluated are terminated.
   simple-expression :: int | float | str | "nil"
 @end
 
-<p>Integer literals evaluate to @ref{Int} objects. Correspondingly, float 
-and string literals evaluate to @ref{Float} and @ref{Str} objects. The 
+<p>Integer literals evaluate to @ref{Int} objects. Correspondingly, float
+and string literals evaluate to @ref{Float} and @ref{Str} objects. The
 <tt>nil</tt> expression evaluates to the special <tt>nil</tt> object.
 All of these expressions are only valid as rvalues.
 
@@ -127,7 +127,7 @@ All of these expressions are only valid as rvalues.
   self-expression :: "self"
 @end
 
-<p>The <tt>self</tt> expression evaluates to the <tt>self</tt> 
+<p>The <tt>self</tt> expression evaluates to the <tt>self</tt>
 object, i.e. the object that is bound to the current evaluated method or the
 object whose getter, setter or initialization expression is being evaluated.
 The self expression is only valid as an rvalue.
@@ -139,10 +139,10 @@ The self expression is only valid as an rvalue.
 @end
 
 <p>A simple name expression evaluates to either a local variable, a member
-of <tt>self</tt>, 
-or a global definition. Local definitions take precedence over other 
-definitions and member definitions take precedence over global definitions 
-(see @href{Precedence of names} for details). Evaluating a local or global 
+of <tt>self</tt>,
+or a global definition. Local definitions take precedence over other
+definitions and member definitions take precedence over global definitions
+(see @href{Precedence of names} for details). Evaluating a local or global
 reference results in the value of the variable or constant. Evaluating a
 member
 reference is equivalent to evaluating the member reference <tt>self.id</tt>
@@ -157,12 +157,12 @@ a bound method object (see @href{Member references} for the details).
 @end
 
 <p>A global reference evaluates to the value of a global definition. The form
-<tt>::id</tt> refers to a 
-global definition in the current module. Otherwise, the last <i>id</i> is the 
+<tt>::id</tt> refers to a
+global definition in the current module. Otherwise, the last <i>id</i> is the
 name of a global definition, and all elements before the last <tt>::</tt> form
 the module prefix.
 
-<p>If the module prefix matches the name of a module imported in the current 
+<p>If the module prefix matches the name of a module imported in the current
 source file,
 the reference refers to that module. Otherwise, the prefix must form a
 unique suffix of the name of any module that was imported in the current file.
@@ -273,7 +273,7 @@ but are evaluated directly:
 <dl>
   <dt><b>is</b>
   <dd>Test whether the left operand is a member of a type specified by the
-    right operand. Evaluate to a boolean value. Raise @ref{std::TypeError} if 
+    right operand. Evaluate to a boolean value. Raise @ref{std::TypeError} if
     the right operand is not a type. The nil value is not considered to be
     a member of any type.
   <dt><b>to</b>
@@ -299,21 +299,21 @@ swapped before evaluation.
   boolean-operation :: expression ("and" | "or") expression
 @end
 
-<p>The "<tt>and</tt>" and "<tt>or</tt>" operators are short-circuit boolean 
+<p>The "<tt>and</tt>" and "<tt>or</tt>" operators are short-circuit boolean
 operators. Their
-arguments are evaluated in a boolean context. The <tt>and</tt> operator 
-evaluates to <tt>True</tt> if and only if both of the operands are 
+arguments are evaluated in a boolean context. The <tt>and</tt> operator
+evaluates to <tt>True</tt> if and only if both of the operands are
 <tt>True</tt>; otherwise, it evaluates to
-<tt>False</tt>. The <tt>or</tt> operator evaluates to <tt>True</tt> if either 
-one or both of the operands is <tt>True</tt>; otherwise, it evaluates to 
+<tt>False</tt>. The <tt>or</tt> operator evaluates to <tt>True</tt> if either
+one or both of the operands is <tt>True</tt>; otherwise, it evaluates to
 <tt>False</tt>.
 
 <p>The boolean operators use <i>short-circuit evaluation</i>.
-If the first operand of an <tt>and</tt> operation evaluates to 
+If the first operand of an <tt>and</tt> operation evaluates to
 <tt>False</tt> or if the first operand of an <tt>or</tt> operation
-evaluates to 
-<tt>True</tt>, the second operand is not evaluated at all. In this case, the 
-value of the operation is the same as if the second operand evaluated to any 
+evaluates to
+<tt>True</tt>, the second operand is not evaluated at all. In this case, the
+value of the operation is the same as if the second operand evaluated to any
 boolean value, i.e. equivalent to the value of the first operand.
 
 @h2 Unary operations
@@ -325,30 +325,30 @@ boolean value, i.e. equivalent to the value of the first operand.
 <p>Both of the unary operations have unique semantics:
 
 <ul>
-  <li>The unary negation operator '<tt>-</tt>' is evaluated by calling the 
-    <tt>_neg</tt> method of the operand with no arguments. 
+  <li>The unary negation operator '<tt>-</tt>' is evaluated by calling the
+    <tt>_neg</tt> method of the operand with no arguments.
   <li>The operand of the unary <tt>not</tt> operator is evaluated in a boolean
     context. The operation evaluates to the boolean negation of the operand.
 </ul>
-    
+
 @h2 Subscripting
 
 @grammar
   subscript-expression :: expression "[" expression "]"
 @end
 
-<p>The subscript expression is evaluated by calling the <tt>_get</tt> 
+<p>The subscript expression is evaluated by calling the <tt>_get</tt>
 method of the left operand with the right operand (index) as the only argument.
 The return value of that method is the value of the expression.
 
-<p>The subscript expression is also valid in an lvalue context; see 
+<p>The subscript expression is also valid in an lvalue context; see
 section @href{Assignment statement} for details.
 
 @h2 Call expressions
 
 @grammar
   call-expression :: expression "(" args ")"
-  args :: [ "*" expression ] 
+  args :: [ "*" expression ]
     | single-expression ("," single-expression)* [ "," "*" expression ]
 @end
 
@@ -360,14 +360,14 @@ expressions.
 <p>The expression before the left parenthesis evaluates to the
 <i>called object</i>. The expressions, if any, between the parentheses evaluate
 to the <i>actual arguments</i>. If the final argument expression is prefixed
-with <tt>*</tt>, this argument is a <i>variable-length argument list</i>. 
+with <tt>*</tt>, this argument is a <i>variable-length argument list</i>.
 Arguments not prefixed with <tt>*</tt> are the fixed (actual) arguments.
 
 <p>If the called object is a global function, an anonymous function or a bound
 method, the formal argument list and the body of the function are defined
 by this object.
 Otherwise, the formal argument list and the body of the function are those of
-the <tt>_call</tt> method of the object being called. If this method is not 
+the <tt>_call</tt> method of the object being called. If this method is not
 defined, the object is not <i>callable</i> and an
 exception will be raised.
 
@@ -378,7 +378,7 @@ is evaluated as follows:
 <ol>
   <li>Evaluate the called object expression.
   <li>Evaluate the actual argument expressions, from left to right.
-  <li>If the called object is not callable, raise a @ref{std::TypeError} 
+  <li>If the called object is not callable, raise a @ref{std::TypeError}
     exception.
   <li>If the number of actual arguments is not compatible with the number of
     formal arguments, raise a @ref{std::ValueError} exception.
@@ -417,7 +417,7 @@ is evaluated as follows:
 <p>If the call expression contains a variable-length argument list expression,
 it must evaluate to an @ref{Array} or a @ref{Tuple} object (or an object of
 an <tt>Array</tt> subclass). The items of this sequence
-behave identically to fixed actual arguments, as if they were included at the 
+behave identically to fixed actual arguments, as if they were included at the
 end of the argument list as fixed arguments.
 
 <h3>Arguments with default values</h3>
@@ -431,7 +431,7 @@ values), these rules are followed:
     These formal arguments behave like required arguments in this invocation,
     and their default value expressions are ignored.
   <li>If there are not enough actual arguments to cover all the optional
-    formal arguments, the rest of the optional arguments are 
+    formal arguments, the rest of the optional arguments are
     initialized to the values of the
     initialization expressions. The initialization expressions are evaluated
     sequentially from left to right. All the available actual arguments are
@@ -443,9 +443,9 @@ values), these rules are followed:
 
 <p>If the formals include a variable-length argument list, any number of
 additional actual arguments are accepted beyond the fixed formal arguments.
-An <tt>Array</tt> object is created that holds these extra arguments, in the 
-same order they appear in the argument list. This object is assigned to the 
-formal argument preceded by <tt>*</tt>. If there are no extra arguments, an 
+An <tt>Array</tt> object is created that holds these extra arguments, in the
+same order they appear in the argument list. This object is assigned to the
+formal argument preceded by <tt>*</tt>. If there are no extra arguments, an
 empty <tt>Array</tt> object will be created and assigned instead.
 
 @h2 Array constructors
@@ -457,7 +457,7 @@ empty <tt>Array</tt> object will be created and assigned instead.
 @end
 
 <p>Construct an @ref{Array} instance with the values of the subexpressions,
-separated by commas, as the items. The length of the array is equal to the 
+separated by commas, as the items. The length of the array is equal to the
 number of items in the array expression.
 
 @h2 Tuple constructors
@@ -467,7 +467,7 @@ number of items in the array expression.
 @end
 
 <p>Construct a @ref{Tuple} instance with the values of the subexpressions,
-separated by commas, as the items. The length of the tuple is equal to the 
+separated by commas, as the items. The length of the tuple is equal to the
 number of items in the array expression.
 
 <p>An empty tuple is constructed using the <tt>()</tt> form.
@@ -484,8 +484,8 @@ another meaning, such as in argument lists of call expressions.
 <p>This expression refers to the member <i>id</i> of an object, specified by
 the left operand expression. In an rvalue context,
 it is evaluated by either constructing a bound method object of type
-<tt>std::Function</tt> (if the member refers to a method) or by evaluating the 
-getter method of the member (if the member refers to a member variable or 
+<tt>std::Function</tt> (if the member refers to a method) or by evaluating the
+getter method of the member (if the member refers to a member variable or
 constant). Otherwise, if the member is not defined, raise a
 @ref{std::MemberError} exception.
 
@@ -501,8 +501,8 @@ reference.
 <p>If the member in a dot expression refers to a method, the result of
 the operation is a @ref{std::Function} object that represents the method
 <i>bound</i> to the specific object.
-A bound method accepts the arguments specified in the method definition, and 
-when the bound method is called, the body of the method is evaluated so that 
+A bound method accepts the arguments specified in the method definition, and
+when the bound method is called, the body of the method is evaluated so that
 <tt>self</tt> refers to the bound object.
 
 <h3>Evaluating getter and setter references</h3>

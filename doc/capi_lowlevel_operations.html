@@ -265,7 +265,7 @@ container object.
 
 @fun AValue AAllocContainer(AThread *t, AValue initValue)
 @desc Allocate a container object that is initialized to the specified value.
-      @note You must never expose the returned object to Alore code. 
+      @note You must never expose the returned object to Alore code.
       @end
 @end
 
@@ -330,12 +330,12 @@ unless the call is surrounded by these function calls.
   static AValue WriteFile(AThread *t, AValue *frame)
   {
       /* Note: Most error checking is left out for brevity. */
-      
+
       char path[1024];
       FILE *f;
 
       AGetStr(t, frame[0], path, 1024);
-  
+
       AAllowBlocking();
       f = fopen(path, "w");
       fprintf(f, "Hello\n");

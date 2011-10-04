@@ -160,17 +160,17 @@ cleanup actions before returning). Example:
   AValue MyFunc(AThread *t, AValue *frame)
   {
       AValue ret;
-      
+
       /* ... */
-      
+
       frame[x] = Axxx(t, ...); /* Axxx can be any API function that may raise
                                   a normal exception. x should be some valid
                                   integer value. */
       if (AIsError(frame[x]))
           return AError; /* Propagate any normal exceptions to callers. */
-      
+
       /* ... no exception was raised ... */
-      
+
       return /* ... */;
   }
 @end
@@ -221,7 +221,7 @@ described below.
       This function never raises an exception and performs no error checking.
 @end
 
-@h2 Direct exceptions and freeing resources 
+@h2 Direct exceptions and freeing resources
 
 <p>Since direct exceptions bypass the normal control flow and may skip over
 large sections of code, potentially spanning multiple function invocations,
@@ -249,7 +249,7 @@ operation that may trigger garbage collection may also raise a direct
           f = fopen("file.ext", "w")
           if (f == NULL)
               return ARaiseIoError(t, "File could not be opened");
-          
+
           if (ATry(t)) {
               fclose(f);
               return AError;
@@ -258,9 +258,9 @@ operation that may trigger garbage collection may also raise a direct
           i = AGetInt(t, frame[0]); /* This may raise a direct exception. */
           fprintf(f, "i = %d\n", i);
           fclose(f);
-          
+
           AEndTry(f);
-          
+
           return ANil;
       }
     @end
@@ -309,7 +309,7 @@ raises direct exceptions.
   static AValue CatchDirect(AThread *t, AValue *frame)
   {
       char str[100];
-  
+
       if (ATry(t)) {
           if (AIsExceptionType(t, "std::ValueError")) {
               /* Caught a ValueError exception. Return -1. */
@@ -320,7 +320,7 @@ raises direct exceptions.
 
       /* This might raise a TypeError. */
       AGetStr(t, frame[0], str, 100);
-      
+
       /* ... now we could do something with str ... */
 
       AEndTry(t);
@@ -354,7 +354,7 @@ exceptions, and <tt>IoError</tt> cannot be raised as a direct exception.
           } else
               return AError; /* Propagate other exceptions. */
       }
-      
+
       /* Return 0 to indicate success. */
       return AZero;
   }

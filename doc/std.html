@@ -44,7 +44,7 @@ and its services are used by practically every Alore program.
   <dt><b>
     @link std_boolean.html
     </b>
-  <dd>The Boolean type  
+  <dd>The Boolean type
 
   <dt><b>
     @link std_type.html
@@ -79,12 +79,12 @@ and its services are used by practically every Alore program.
     @link std_array.html
     </b>
   <dd>A resizable array of values
-  
+
   <dt><b>
     @link std_tuple.html
     </b>
   <dd>A fixed-length, immutable sequence of values
-  
+
   <dt><b>
     @link std_map.html
     </b>
@@ -98,7 +98,7 @@ and its services are used by practically every Alore program.
       followed by a line break. Flush the stream afterwards.
       <tt>Print</tt> is aimed at displaying debugging and diagnostics
       output, and Alore implementations may allow redirecting the output of
-      <tt>Print</tt> to a log file or an IDE window, for example. 
+      <tt>Print</tt> to a log file or an IDE window, for example.
       Consider using <tt>WriteLn</tt> or <tt>Write</tt> for displaying normal
       program output.
       @example
@@ -110,14 +110,14 @@ and its services are used by practically every Alore program.
 @desc Write the arguments to the @ref{StdOut} stream. This is a shorthand
       for <tt>io::StdOut.write</tt>.
 @end
-  
+
 @fun WriteLn(...)
 @desc Write the arguments to the @ref{StdOut} stream, followed by a line
       break. This is a shorthand for <tt>io::StdOut.writeLn</tt>.
 @end
 
 @fun ReadLn() as Str
-@desc Read a line from @ref{StdIn}, and return the line without the line 
+@desc Read a line from @ref{StdIn}, and return the line without the line
       ending. This is a shorthand for <tt>io::StdIn.readLn</tt>.
 @end
 
@@ -147,13 +147,13 @@ and its services are used by practically every Alore program.
       @end
       @see @ref{reflect::TypeOf}
       @end
-@end      
-  
+@end
+
 @fun Chr(n as Int) as Str
 @desc Return a single-character string with character code <tt>n</tt>.
     The valid range of values for <tt>n</tt> is from 0 to 65535, inclusive.
 @end
-  
+
 @fun Ord(ch as Str) as Int
 @desc Return the character code of a single-character string. The return value
      is an integer in the range from 0 to 65535, inclusive.
@@ -188,7 +188,7 @@ and its services are used by practically every Alore program.
 
 @fun Sort(sequence[, func])
 @desc Return an array that has the items of a sequence sorted in ascending
-    order (by default). The optional argument specifies a function 
+    order (by default). The optional argument specifies a function
     that can be used for
     evaluating the order of two items. The function must accept 2 arguments
     and return a boolean indicating whether the first argument should appear
@@ -220,7 +220,7 @@ and its services are used by practically every Alore program.
     reasons, the optimal maximum magnitude of hash values is typically about
     2**29.
 @end
-  
+
 @fun Exit([value as Int])
 @desc Exit the program. The optional argument specifies an integer return value
     to the operating system. The function is implemented by raising an
@@ -264,25 +264,25 @@ and its services are used by practically every Alore program.
 <!--
     @link interfaces.html
     -->
-    
+
 <dl>
   <dt><b>@href{Sequence}</b>
   <dd>A sequence of values
-  
+
   <dt><b>@href{Iterable}</b>
   <dd>An object that supports iteration
-  
+
   <dt><b>@href{Iterator}</b>
   <dd>An iterator object
-  
+
   <dt><b>@href{Comparable}</b>
   <dd>An object that supports comparisons using &lt; and &gt;
-  
+
   <dt><b>@href{Addable}</b>
   <dd>An object that supports addition
-  
+
   <dt><b>@href{Multipliable}</b>
-  <dd>An object that supports multiplication  
+  <dd>An object that supports multiplication
 </dl>
 
 <h2>Exceptions</h2>
@@ -320,23 +320,23 @@ hierarchy:
 
 @class Exception([message as Str])
 @desc The base class of all exceptions. <tt>Exception</tt> has a single
-      member, 
-      <tt>message</tt>, that contains the error message argument given to the 
+      member,
+      <tt>message</tt>, that contains the error message argument given to the
       constructor, or <tt>nil</tt> if the message argument was omitted or if
       it was <tt>nil</tt>.
 @end
 
 @class ValueError([message as Str])
 @desc Raised when the input values of an operation or a function have invalid
-    types or values. Typically, <tt>ValueError</tt> signifies a programming 
+    types or values. Typically, <tt>ValueError</tt> signifies a programming
     error, but
     it can be caught to recover from these situations. The several subclasses
     of <tt>ValueError</tt> indicate more specific conditions.
 @end
-    
+
 @class TypeError([message as Str])
 @desc Raised when the inputs of an operation or a function have unsupported
-    types. Note that <tt>MemberError</tt> will be often raised in similar 
+    types. Note that <tt>MemberError</tt> will be often raised in similar
     situations.
 @end
 
@@ -387,8 +387,8 @@ hierarchy:
 <h3><tt>ExitException</tt></h3>
 
 @class ExitException(code as Int)
-@desc Raised by the <tt>std::Exit</tt> function. The argument specifies the 
-      integer return value reported to the operating system. 
+@desc Raised by the <tt>std::Exit</tt> function. The argument specifies the
+      integer return value reported to the operating system.
 @end
 
 <h3><tt>IoError</tt></h3>

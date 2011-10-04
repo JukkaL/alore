@@ -20,12 +20,12 @@ locale-specific encodings that only support a subset of Unicode.
 
 @example
   "\u00c3\u00a4".decode(Utf8)             -- Decode "&#228;" in UTF-8 to 16-bit Unicode
-  
+
   "\u20ac".encode(Utf8)                   -- Encode the Euro sign using UTF-8
-  
+
   "s&#228;&#228;".encode(Ascii, Unstrict)           -- "s??" (replace characters that cannot be represented
                                           -- in ASCII with question marks)
-                                          
+
   TextStream("file.txt", Latin1)          -- Open encoded text file for reading
 @end
 
@@ -112,7 +112,7 @@ implement the interface @href{Encoding}.
 @var Koi8R as Encoding
 @desc The KOI8-R encoding for Russian.
 @end
-  
+
 @var Koi8U as Encoding
 @desc The KOI8-U encoding for Ukrainian.
 @end

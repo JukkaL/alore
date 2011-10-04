@@ -18,19 +18,19 @@ module) will be initialized. During module initialization:
   <li>Initializers and statements in a single file will be evaluated in the
     order they appear
     in the file, from the start of the file to the end.
-    If a module contains multiple files, these files will be initialized in an 
+    If a module contains multiple files, these files will be initialized in an
     arbitrary order.
     @note It may therefore be helpful to collect all
-    initialized global variable and constant definitions in a module to a 
+    initialized global variable and constant definitions in a module to a
     single source file to avoid problems with different evaluation orders.
     @end
-  <li>After the initialization is complete, the <tt>Main</tt> function of the 
-    module is called, if it is defined. The <tt>Main</tt> function 
+  <li>After the initialization is complete, the <tt>Main</tt> function of the
+    module is called, if it is defined. The <tt>Main</tt> function
     is not generally given any arguments.
  </ol>
- 
-<p>As an exception, the <tt>Main</tt> function of the main module may take a 
-single argument that will receive the command line arguments given to the 
+
+<p>As an exception, the <tt>Main</tt> function of the main module may take a
+single argument that will receive the command line arguments given to the
 program as an array of strings. The <tt>Main</tt> function is always optional.
 
 @h2 Module dependencies
@@ -50,19 +50,19 @@ program as an array of strings. The <tt>Main</tt> function is always optional.
 follow these constraints:
 
 <ol>
-  <li>If module <i>x</i> depends on module <i>y</i> but module <i>y</i> does 
+  <li>If module <i>x</i> depends on module <i>y</i> but module <i>y</i> does
     not depend on module <i>x</i>,
     module <i>y</i> will be initialized before module <i>x</i>.
   <li>Initialization of multiple modules cannot be interleaved, i.e. a single
-    module must first be fully initialized before another module can be 
+    module must first be fully initialized before another module can be
     initialized.
 </ol>
 
 <p>In practice, these rules mean that all imported modules will be initialized
-before the module that imports them, unless there are circular dependency 
+before the module that imports them, unless there are circular dependency
 chains.
-The main module will be initialized last (and thus the <tt>Main</tt> function 
-of the main source file will be run last after all modules have been 
+The main module will be initialized last (and thus the <tt>Main</tt> function
+of the main source file will be run last after all modules have been
 initialized).
 
 @h2 Calling objects
@@ -81,7 +81,7 @@ include these:
   <li>calling the <tt>create</tt> method during object construction
   <li>calling the <tt>hasNext</tt> and <tt>next</tt> methods in for loops
   <li>calling type constructors when built-in exceptions such as
-    @ref{std::TypeError} are raised implicitly during evaluation.  
+    @ref{std::TypeError} are raised implicitly during evaluation.
 </ul>
 
 <p>Both implicit and explicit calls are evaluated in the same fashion.

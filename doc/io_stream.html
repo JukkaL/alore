@@ -10,7 +10,7 @@
 <tt>Stream</tt> provides a high-level buffered interface for reading and
 writing strings, but does not implement the actual writing or reading.
 <tt>Stream</tt> subclasses must provide <tt>_write</tt> and/or <tt>_read</tt>
-methods for actually processing data. 
+methods for actually processing data.
 
 @class Stream(... as Constant)
 @desc Construct a Stream object. The arguments may include some of the options
@@ -33,7 +33,7 @@ methods for actually processing data.
 @desc Write the arguments to the stream, followed by a line break. Non-string
       arguments will be first converted to strings using the @ref{std::Str}
       constructor.
-@end      
+@end
 
 @fun read() as Str
 @desc Read the rest of the stream contents, until reaching the end of the
@@ -43,7 +43,7 @@ methods for actually processing data.
 
 @fun read(size as Int) as Str
 @desc Read up to the specified number of characters from the stream and return
-      them as a string. Read less than <i>size</i> characters only if the end 
+      them as a string. Read less than <i>size</i> characters only if the end
       of stream was encountered.
 @end
 
@@ -60,7 +60,7 @@ methods for actually processing data.
 @end
 
 @fun flush()
-@desc Flush the output buffer of the stream by writing its contents. If the 
+@desc Flush the output buffer of the stream by writing its contents. If the
       buffer is empty or does not exist, do nothing. This method can only
       be used on streams that support writing.
 @end

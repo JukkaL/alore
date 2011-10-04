@@ -10,8 +10,8 @@ source files.
 @end
 
 <p>Top-level definitions include variable (and constant), function and class
-definitions. They may be marked <i>private</i> by prefixing them with the 
-<tt>private</tt> keyword. Private definitions are only visible in the module 
+definitions. They may be marked <i>private</i> by prefixing them with the
+<tt>private</tt> keyword. Private definitions are only visible in the module
 that defines them. Definitions that are not private are <i>public</i>.
 The top-level may also include statements.
 
@@ -25,19 +25,19 @@ the definition is not prefixed with <tt>private</tt>.
   id-list :: id ("," id)*
 @end
 
-<p>The <tt>var</tt> keyword introduces global variables and the 
-<tt>const</tt> keyword introduces global constants. If the initialization 
+<p>The <tt>var</tt> keyword introduces global variables and the
+<tt>const</tt> keyword introduces global constants. If the initialization
 expression is omitted, the value of
-global variables will default to <tt>nil</tt>, and global constants will be 
+global variables will default to <tt>nil</tt>, and global constants will be
 assigned a @ref{Constant} object, whose name is the fully qualified name of
 the constant.
-For example, the uninitialized constant <tt>A</tt> in module <tt>y</tt> will 
+For example, the uninitialized constant <tt>A</tt> in module <tt>y</tt> will
 receive <tt>y::A</tt> as its name.
 
 <p>If the initialization expression is provided, the value of this expression
 is assigned to the variables / constants. The semantics are similar to the
-assignment statement. Before this expression has been evaluated (see 
-@href{Initialization} for details), the value of the variables / constants 
+assignment statement. Before this expression has been evaluated (see
+@href{Initialization} for details), the value of the variables / constants
 will be <tt>nil</tt>.
 
 <p>Constants differ from variables in that they cannot be lvalues, i.e. targets
@@ -54,12 +54,12 @@ of an assignment (other than the initialization).
 @end
 
 <p>The <tt>def</tt> keyword introduces a function. The name of the function
-is given after the <tt>def</tt> 
-keyword. The <i>formal</i> arguments for the function are within parentheses 
-after the name of the function, and the block after the argument list is the 
+is given after the <tt>def</tt>
+keyword. The <i>formal</i> arguments for the function are within parentheses
+after the name of the function, and the block after the argument list is the
 <i>body</i> of the function.
 
-<p>The definition constructs a @ref{std::Function} object that conforms to the 
+<p>The definition constructs a @ref{std::Function} object that conforms to the
 definition and
 assigns it to a constant specified by the name of the function. This object
 can be called to execute the body of the function (see section
@@ -67,7 +67,7 @@ can be called to execute the body of the function (see section
 details).
 
 <p>The formal arguments become local variables within the function body. Their
-values depend on the <i>actual</i> arguments (values) that are provided when 
+values depend on the <i>actual</i> arguments (values) that are provided when
 the function is called using the () operator.
 
 <p>If an argument has an assignment of an expression, this argument is
@@ -76,8 +76,8 @@ to evaluate the value of the argument if no value is provided by the caller.
 This expression may refer to global definitions and formal arguments defined
 before that argument within the function definition.
 
-<p>The formal arguments not prefixed by an asterisk  (<tt>*</tt>) are called 
-<i>fixed</i> arguments. Fixed arguments that are not optional are 
+<p>The formal arguments not prefixed by an asterisk  (<tt>*</tt>) are called
+<i>fixed</i> arguments. Fixed arguments that are not optional are
 <i>required</i> arguments. All
 required arguments must precede any optional arguments in the argument list.
 
@@ -96,13 +96,13 @@ the last formal argument.
   cdef :: [ "private" ] (member-var-def | method-def | getter-def | setter-def)
 @end
 
-<p>Use the <tt>class</tt> keyword to define a class (or a type; the terms are 
+<p>Use the <tt>class</tt> keyword to define a class (or a type; the terms are
 used more or less interchangeably). The name of
 the class is given after the <tt>class</tt> keyword. If the name is followed
-by 
-the <tt>is</tt> keyword and a reference to a class definition, the referenced 
-class is a <i>superclass</i> of the defined class. It is an error if the 
-global variable reference after <tt>is</tt> does not refer to a visible class 
+by
+the <tt>is</tt> keyword and a reference to a class definition, the referenced
+class is a <i>superclass</i> of the defined class. It is an error if the
+global variable reference after <tt>is</tt> does not refer to a visible class
 definition. If the superclass is not present, it defaults to @ref{std::Object}.
 
 <p>The <i>class header</i> is followed by the <i>class body</i>.
@@ -118,8 +118,8 @@ called the <i>type object</i> of the class.
 there is no explicit superclass, the class will inherit definitions from
 @ref{std::Object}.
 
-<p>Private definitions are marked with the <tt>private</tt> keyword. These 
-definitions can only be accessed through the <tt>self</tt> object in the class 
+<p>Private definitions are marked with the <tt>private</tt> keyword. These
+definitions can only be accessed through the <tt>self</tt> object in the class
 that contains the definitions. Other definitions are public and can be accessed
 without restriction.
 
@@ -127,15 +127,15 @@ without restriction.
 
 <p>The state of an object consists of the identity of the object, the type of
 the object (which cannot be modified after object construction) and the values
-of any value slots, including value slots associated to inherited member 
+of any value slots, including value slots associated to inherited member
 variables.
 Each constructed object has an identity that is separate from any other object.
 The type specifies the operations
 (methods and member getters and setters) supported by the object.
 
-<p>If the object does not overload the <tt>==</tt> operator (with the 
+<p>If the object does not overload the <tt>==</tt> operator (with the
 <tt>_eq</tt> method), the <tt>==</tt> operator can be used to test if an
-object 
+object
 reference is equal to another (i.e. if they have the same identity). This
 behavior is inherited from @ref{std::Object}.
 
@@ -143,10 +143,10 @@ behavior is inherited from @ref{std::Object}.
 
 <p>The type object can be called to create instances of the defined class,
 i.e. objects with the defined class as their type. The arguments to the type
-object are the same as to the <tt>create</tt> method of the class. The 
+object are the same as to the <tt>create</tt> method of the class. The
 <tt>create</tt> method
 can be either defined in the body of the class, inherited from the superclass
-or created automatically (<i>implicit create</i>; see below). 
+or created automatically (<i>implicit create</i>; see below).
 
 <p>The call of a type object is evaluated in several steps:
 
@@ -157,11 +157,11 @@ or created automatically (<i>implicit create</i>; see below).
     the superclasses, starting from the top of the class hierarchy.
   <li>Evaluate any initializer expressions of member variables and constants in
     the current class.
-  <li>Call the <tt>create</tt> method of the class. The original 
-    arguments given to the type object are given as the arguments of the 
+  <li>Call the <tt>create</tt> method of the class. The original
+    arguments given to the type object are given as the arguments of the
     method.
-  <li>If the <tt>create</tt> method is evaluated successfully, return a 
-    reference to the constructed object as the return value of the original 
+  <li>If the <tt>create</tt> method is evaluated successfully, return a
+    reference to the constructed object as the return value of the original
     call. If the <tt>create</tt> method returns a value, it is ignored.
 </ol>
 
@@ -170,14 +170,14 @@ definitions appear in the source file.
 
 <h3>Implicit create</h3>
 
-<p>The implicit <tt>create</tt> method is defined automatically for classes 
-that have no explicit or inherited <tt>create</tt> method. It takes a single 
+<p>The implicit <tt>create</tt> method is defined automatically for classes
+that have no explicit or inherited <tt>create</tt> method. It takes a single
 argument for
-each uninitialized member variable or constant defined in the class body. 
+each uninitialized member variable or constant defined in the class body.
 If the body contains no such members, it takes no arguments. The
-method simply assigns the argument values to the uninitialized member variables 
-and constants. The order of the arguments is the same as the order of the 
-corresponding members in the source file, so that the first argument is 
+method simply assigns the argument values to the uninitialized member variables
+and constants. The order of the arguments is the same as the order of the
+corresponding members in the source file, so that the first argument is
 assigned to the first uninitialized member, and so on.
 
 <h3>Method definitions</h3>
@@ -186,7 +186,7 @@ assigned to the first uninitialized member, and so on.
   method-def :: function-def
 @end
 
-<p>Methods are defined using the same syntax as functions (see 
+<p>Methods are defined using the same syntax as functions (see
 @href{Function definitions} above). Their behavior is similar to ordinary
 functions, but they can only be called in the context of an object of the
 enclosing class (or one of its subclasses, unless the method is private).
@@ -206,7 +206,7 @@ to execute the method (see sections @href{Member references} and
 
 <p>Member variables and constants can be defined <i>explicitly</i> with a
 syntax identical to global variable definitions. Like global variables, they
-may be given default values. 
+may be given default values.
 
 <p>The value of an explicit member variable or constant is stored in a
 <i>value slot</i>. Every instance of a class has a separate value slot
@@ -215,13 +215,13 @@ slot can refer to any object. All value slots are initialized to <tt>nil</tt>
 at the beginning of object creation, including those related to constants
 without initializers.
 
-<p>A getter method with the same name as the variable is automatically defined 
+<p>A getter method with the same name as the variable is automatically defined
 for each explicit member variable or constant, and a setter is defined for each
 explicit member variable.  The getter simply returns the value in the slot, and
 the setter modifies the value in the slot (see section @href{Member references}
 for details). The value of the slot is usually accessed
 or modified only through getter and setter methods. As an exception, the value
-of the initialization expression is assigned directly to the value slot, 
+of the initialization expression is assigned directly to the value slot,
 without invoking the setter method. The <tt>create</tt> method can also
 assign values to the value slots of member constants defined in the same class
 that contains the <tt>create</tt> method.
@@ -268,7 +268,7 @@ located in any
 superclasses by redefining them. A method in a superclass can be overridden
 by defining a method with the same name in a subclass. In a similar fashion, a
 getter or a setter method can be overridden by defining a getter or a setter,
-respectively, with the same name in a subclass. The method signatures 
+respectively, with the same name in a subclass. The method signatures
 (argument lists) of the
 original and the overriding (new) definitions do not have to be similar.
 
@@ -278,8 +278,8 @@ the dot (<tt>.</tt>) operator, direct references using only member names, and
 references made in inherited methods and accessors, refer to the new
 definitions.
 
-<p>The <tt>super</tt> keyword can be used to access the original, overridden 
-definitions of methods and accessors (see 
+<p>The <tt>super</tt> keyword can be used to access the original, overridden
+definitions of methods and accessors (see
 @href{Superclass member references}).
 
 @h2 Interface definitions

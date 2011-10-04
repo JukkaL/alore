@@ -304,7 +304,7 @@ object containing integers 1, 2, ..., n:
   {
       int i;
       int n = AGetInt(t, frame[0]);
-      
+
       frame[1] = AMakeArray(t, n);
       for (i = 0; i < n; i++) {
           frame[2] = AMakeInt(t, i + 1);
@@ -340,7 +340,7 @@ return ANil, which corresponds to the Alore nil value:
 @var AValue
 @desc This type represents a single Alore object reference. In addition, a
       few special values (AError, ADefault) are supported.
-      Note that these special values should not be used in all contexts. 
+      Note that these special values should not be used in all contexts.
 @end
 
 @var AThread *
@@ -441,7 +441,7 @@ return ANil, which corresponds to the Alore nil value:
 @fun ABool AIsNil(AValue v)
 @desc Return a boolean indicating whether the argument refers to the
       <tt>nil</tt> object.
-@end      
+@end
 
 <!-- -->
 @note You should not compare AValues using the C == operator. You should use
@@ -474,7 +474,7 @@ invalid:
     named using CamelCase, and they all start with 'A'.
   <li>Constants and macros that can be used outside functions are named like
     this: A_CONSTANT_NAME.
-  <li>Constant values that can only be used within functions 
+  <li>Constant values that can only be used within functions
     are named like functions. Examples:  ANil, AError and ATrue. Even though
     these might be implemented as C global variables, you must not try to
     create pointers to them.

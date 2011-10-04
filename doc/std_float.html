@@ -5,7 +5,7 @@
 
 @implements Comparable<Float>
 @supertypes
-  
+
 <p>Instances of the <tt>Float</tt> class are floating-point numbers (floats). A
 float is an approximation of a real number, and can represent whole and
 fractional numbers, both small and large in magnitude. Internally
@@ -15,8 +15,8 @@ with up to 15 significant digits of accuracy.
 @class Float(x)
 @desc Construct an object of the <tt>Float</tt> type. Call the
     <tt>_float()</tt> method of the argument and return a value equal to the
-    result, provided that it is a float. Of the primitive types, <tt>Str</tt> 
-    and <tt>Int</tt> objects provide a <tt>_float</tt> method. String arguments 
+    result, provided that it is a float. Of the primitive types, <tt>Str</tt>
+    and <tt>Int</tt> objects provide a <tt>_float</tt> method. String arguments
     may contain optional blank and tab characters before and after the number.
     Otherwise, the syntax of the string arguments must follow the Alore float
     literal syntax.
@@ -81,7 +81,7 @@ refers to a <tt>Float</tt> value):
 @desc Perform the exponentiation (power) operation. The right operand may be
       an integer or a float, and the result is a float. The operator
       follows the following rules in special conditions:
-      
+
       <ul class="sep">
         <li><tt>0.0 ** 0</tt> == 1.0
         <li><tt>0.0 ** 0.0</tt> == 1.0
@@ -92,7 +92,7 @@ refers to a <tt>Float</tt> value):
 
 @op -f @optype{-Float -> Float}
 @desc Return the negation of a float.
-@end  
+@end
 
 @op f == x @optype{Float == Object -> Boolean}
 @desc Floats can be compared for equality with arbitrary objects.

@@ -11,7 +11,7 @@ used for implementing automated unit tests for Alore programs.
 of related test cases. Typically test cases are implemented as methods of a
 test suite class. A test suite class must be a subclass of @ref{Suite}.
 
-<p>The class below is a simple test suite that tests functions in the 
+<p>The class below is a simple test suite that tests functions in the
 <tt>mymodule</tt> module, which we assume to define the function
 <tt>Add</tt> and <tt>Multiply</tt>:
 
@@ -23,7 +23,7 @@ class MySuite is Suite
   def testAdd()
     AssertEqual(Add(1, 1), 2)
   end
-  
+
   def testMultiply()
     AssertEqual(Multiply(2, 3), 6)
   end
@@ -40,7 +40,7 @@ equal.
   RunTest(MySuite())
 @end
 
-<p>The above program executes the two test cases <tt>testAdd</tt> and 
+<p>The above program executes the two test cases <tt>testAdd</tt> and
 <tt>testMultiply</tt>. Any
 test cases that raise an uncaught exception due to an assertion failure or
 any other reason are reported to the programmer.
@@ -58,8 +58,8 @@ test cases like this:
 <h2>Class <tt>Suite</tt></h2>
 
 @class Suite()
-@desc Construct a <tt>Suite</tt> object. All members defined in subclasses 
-      that start 
+@desc Construct a <tt>Suite</tt> object. All members defined in subclasses
+      that start
       with <tt>test</tt> are assumed to represent test cases or child suites.
       Members that are instances of <tt>Suite</tt> represent
       child suites and other members are assumed to represent test cases.
@@ -74,13 +74,13 @@ test cases like this:
 @end
 
 @fun setUp()
-@desc This method is called before executing each test case in the suite. 
+@desc This method is called before executing each test case in the suite.
       The default implementation does nothing. Override this to setup member
       variables, files and other common state needed by test cases.
 @end
 
 @fun tearDown()
-@desc This method is usually called after executing each test case in the 
+@desc This method is usually called after executing each test case in the
       suite, even if the test case failed.
       The default implementation does nothing. Override this to clean up the
       results of the <tt>setUp</tt> method or test cases.
@@ -105,18 +105,18 @@ test cases like this:
 
 @fun setUp()
 @desc If suite is defined, calls the <tt>setUp</tt>
-      method of the suite. <tt>setUp</tt> is called before running the test 
+      method of the suite. <tt>setUp</tt> is called before running the test
       case.
 @end
 
 @fun tearDown()
 @desc If suite is defined, calls the <tt>tearDown</tt>
-      method of the suite. <tt>tearDown</tt> is called after running the test 
+      method of the suite. <tt>tearDown</tt> is called after running the test
       case even if the test case failed.
 @end
 
 @fun run()
-@desc Run the test case. By default, calls the function given to the 
+@desc Run the test case. By default, calls the function given to the
       constructor or does nothing if the function was not provided. This method
       should raise an exception on test case failure.
 @end
@@ -134,9 +134,9 @@ test cases like this:
       causes the function to display the names of all test cases as they are
       being run. Finally, the args array may contain a test case filter
       pattern.
-      The pattern may contain asterisks (*) as wild card characters. It is 
+      The pattern may contain asterisks (*) as wild card characters. It is
       used to specify the names of test cases to run.
-      <p>Member <tt>test...</tt> of a test suite is named <tt>test..</tt>, 
+      <p>Member <tt>test...</tt> of a test suite is named <tt>test..</tt>,
       unless the test suite
       is a child suite, in which case the name is prefixed with the name of the
       parent test suite and a dot (.).
@@ -149,7 +149,7 @@ test cases like this:
 @end
 
 @fun Assert(bool as Boolean[, message as Str])
-@desc Raise @ref{AssertionFailure} if bool is not <tt>True</tt>. If the 
+@desc Raise @ref{AssertionFailure} if bool is not <tt>True</tt>. If the
       message is provided, it is associated with the exception.
 @end
 

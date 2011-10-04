@@ -49,7 +49,7 @@ the following line endings are accepted when reading lines:
   <dd>This class represents open text files with a particular character
     encoding.
 </dl>
-  
+
 <h2>Standard streams</h2>
 
 <p>The following constants refer to standard streams. They are available as
@@ -69,7 +69,7 @@ text stream objects using the platform default encoding:
 @end
 
 <p>The standard streams are also available as raw 8-bit streams:
-  
+
 @var RawStdIn as File
 @var RawStdOut as File
 @var RawStdErr as File
@@ -85,14 +85,14 @@ constructors. They are all symbolic constants:
 @var Input as Constant
 @desc Stream option for reading.
 @end
-  
+
 @var Output as Constant
 @desc Stream option for writing.
 @end
-  
+
 @var Append as Constant
-@desc <tt>File</tt> option for opening a file for writing. The existing 
-      file contents will be kept and the file pointer will be moved to the end 
+@desc <tt>File</tt> option for opening a file for writing. The existing
+      file contents will be kept and the file pointer will be moved to the end
       of the file when the file is opened.
 @end
 
@@ -101,7 +101,7 @@ constructors. They are all symbolic constants:
       flushed after every output operation and the use of an input buffer is
       minimized.
 @end
-  
+
 @var LineBuffered as Constant
 @desc Stream option for line buffered access. The stream will be
       automatically flushed after writing a line break. The output and input
@@ -116,7 +116,7 @@ constructors. They are all symbolic constants:
 @end
 
 @var Narrow as Constant
-@desc Stream option for creating a <i>narrow stream</i>. Narrow streams 
+@desc Stream option for creating a <i>narrow stream</i>. Narrow streams
       only process 8-bit (narrow) strings, i.e. strings with no character codes
       larger than 255.
 @end
@@ -127,7 +127,7 @@ constructors. They are all symbolic constants:
 @end
 
 <h2>Default encoding</h2>
-  
+
 <p>The platform default encoding class:
 
 @var DefaultEncoding as encodings::Encoding

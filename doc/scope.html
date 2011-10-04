@@ -2,14 +2,14 @@
 @title Scope of definitions
 
 <p>This section discusses the scope (visibility) of variables. Variables,
-functions and other definitions can only be accessed in expressions and other 
-contexts when they are visible. If a definition is not visible at some 
+functions and other definitions can only be accessed in expressions and other
+contexts when they are visible. If a definition is not visible at some
 location, its name has no special meaning at that location and acts as if the
 definition did not exist at all.
 
-<p>Sometimes another definition with the same name <i>shadows</i> a visible 
-definition. There are different ways of accessing global and member 
-definitions, and some of these can often be used to access shadowed 
+<p>Sometimes another definition with the same name <i>shadows</i> a visible
+definition. There are different ways of accessing global and member
+definitions, and some of these can often be used to access shadowed
 definitions.
 
 @h2 Global definitions
@@ -20,15 +20,15 @@ import the module that defines them.
 
 @h2 Class members
 
-<p>Class members can be accessed in two ways: through the <tt>self</tt> object 
-or through another object. Access through the <tt>self</tt> object is possible 
-by accessing the name of a member directly in the body of a class without the 
+<p>Class members can be accessed in two ways: through the <tt>self</tt> object
+or through another object. Access through the <tt>self</tt> object is possible
+by accessing the name of a member directly in the body of a class without the
 member access operator <tt>"."</tt> or by using the member access operator with
 the <tt>self</tt> keyword as the object.
 
 <p>All members defined in a class, public and private, and all public members
 defined in any superclass can be accessed through the
-<tt>self</tt> keyword. 
+<tt>self</tt> keyword.
 If members are accessed through any other means,
 only public members defined in the class or inherited from a superclass can be
 accessed.
@@ -40,7 +40,7 @@ superclass.
 
 @h2 Local variables
 
-<p>Local variables declared using the <tt>var</tt> keyword are visible only in 
+<p>Local variables declared using the <tt>var</tt> keyword are visible only in
 the block that defines them, and only in the statements succeeding the
 variable definition. Method and function formal arguments are visible in the
 entire body of the method or the function. A local variable is also visible
@@ -54,7 +54,7 @@ only in the block that follows the variable declaration.
 
 @h2 Precedence of names
 
-<p>If an identifier may refer to multiple visible definitions, these 
+<p>If an identifier may refer to multiple visible definitions, these
 ambiguities will be handled in the following manner:
 
 <ol>

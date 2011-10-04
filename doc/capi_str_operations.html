@@ -1,8 +1,8 @@
 @head
 @title Str operations
 
-<p>Several operations are provided for dealing with string objects. The 
-operations include creating string objects, converting between different 
+<p>Several operations are provided for dealing with string objects. The
+operations include creating string objects, converting between different
 string encodings, reading the contents of strings and creating substrings.
 
 @see You can use the @ref{AAdd} function to concatenate strings. String methods
@@ -12,7 +12,7 @@ string encodings, reading the contents of strings and creating substrings.
 <h2>Creating</h2>
 
 @fun AValue AMakeStr(AThread *t, const char *str)
-@desc Create a <tt>std::Str</tt> object from a a zero-terminated 8-bit string. 
+@desc Create a <tt>std::Str</tt> object from a a zero-terminated 8-bit string.
       The character values in the argument are mapped to range 1 to 255 in the
       result. @raise-direct
 @end
@@ -33,17 +33,17 @@ string encodings, reading the contents of strings and creating substrings.
 @end
 
 @fun AValue AMakeEmptyStr(AThread *t, Assize_t len)
-@desc Create a uninitialized <tt>std::Str</tt> object with the specified 
-      length. You must initialize the entire contents of the string using 
+@desc Create a uninitialized <tt>std::Str</tt> object with the specified
+      length. You must initialize the entire contents of the string using
       @ref{ASetStrItem} or @ref{AStrPtr} before exposing the object to Alore
-      code. You must only use 8-bit character codes, i.e. character values 
+      code. You must only use 8-bit character codes, i.e. character values
       between 0 and 255, when initializing the string.
       @raise-direct
 @end
 
 @fun AValue AMakeEmptyStrW(AThread *t, Assize_t len)
-@desc Create a uninitialized <tt>std::Str</tt> object with the specified 
-      length. You must initialize the entire contents of the string using 
+@desc Create a uninitialized <tt>std::Str</tt> object with the specified
+      length. You must initialize the entire contents of the string using
       @ref{ASetStrItem} or @ref{AStrPtrW} before exposing the object to Alore
       code.
       @raise-direct
@@ -51,15 +51,15 @@ string encodings, reading the contents of strings and creating substrings.
 
 @fun void ASetStrItem(AValue string, int index, AWideChar ch)
 @desc Initialize a character within a string at given index to value ch.
-      Only strings created using <tt>AMakeEmptyStr</tt> or 
+      Only strings created using <tt>AMakeEmptyStr</tt> or
       <tt>AMakeEmptyStrW</tt> can be initialized using this function.
-      The index (0-based) must be non-negative and less than the length of 
+      The index (0-based) must be non-negative and less than the length of
       the string. After a string has been initialized, its contents must not
       be changed. This function performs no error checking.
 @end
 
 @fun unsigned char *AStrPtr(AValue string)
-@desc Return a pointer to the contents of a string object created using 
+@desc Return a pointer to the contents of a string object created using
       @ref{AMakeEmptyStr}. This pointer can be used to initialize the contents
       of the string. Any operation that may cause the garbage collector to run
       will invalidate the pointer. You must not store a zero terminator in the
@@ -68,7 +68,7 @@ string encodings, reading the contents of strings and creating substrings.
 @end
 
 @fun AWideChar *AStrPtrW(AValue string)
-@desc Return a pointer to the contents of a string object created using 
+@desc Return a pointer to the contents of a string object created using
       @ref{AMakeEmptyStrW}. This pointer can be used to initialize the contents
       of the string. Any operation that may cause the garbage collector to run
       will invalidate the pointer. You must not store a zero terminator in the
@@ -84,8 +84,8 @@ string encodings, reading the contents of strings and creating substrings.
 <h2>Reading</h2>
 
 @fun Assize_t AStrLen(AValue string)
-@desc Return the length of a string. 
-      The argument must be a <tt>std::Str</tt> object, since this function 
+@desc Return the length of a string.
+      The argument must be a <tt>std::Str</tt> object, since this function
       performs no error checking.
 @end
 
@@ -117,18 +117,18 @@ string encodings, reading the contents of strings and creating substrings.
 
 @fun Assize_t AGetStrUtf8(AThread *t, AValue v, char *buf, Assize_t bufLen)
 @desc Store the contents of a <tt>Str</tt> object in a 8-bit buffer as a
-      zero-terminated UTF-8 encoded string. The bufLen argument specifies the 
+      zero-terminated UTF-8 encoded string. The bufLen argument specifies the
       size of the buffer. Return the length of the encoded string, without the
-      zero terminator. Raise an exception if the value does not refer to a 
-      <tt>Str</tt> or if the buffer is too small to contain the encoded string 
+      zero terminator. Raise an exception if the value does not refer to a
+      <tt>Str</tt> or if the buffer is too small to contain the encoded string
       contents and the zero terminator. @raise-direct
 @end
 
 @fun Assize_t AStrLenUtf8(AValue string)
 @desc Return the length of resulting string when a string is UTF-8 encoded,
-      without actually performing the encoding, not including the zero 
+      without actually performing the encoding, not including the zero
       terminator.
-      The argument must be a <tt>std::Str</tt> object, since this function 
+      The argument must be a <tt>std::Str</tt> object, since this function
       performs no error checking.
 @end
 
@@ -141,8 +141,8 @@ string encodings, reading the contents of strings and creating substrings.
 @end
 
 @fun AWideChar AGetCh(AThread *t, AValue v)
-@desc If the argument is a <tt>Str</tt> object of length 1, return the 
-      character value of the string. Otherwise, raise an exception. 
+@desc If the argument is a <tt>Str</tt> object of length 1, return the
+      character value of the string. Otherwise, raise an exception.
       @raise-direct
 @end
 
@@ -153,6 +153,6 @@ string encodings, reading the contents of strings and creating substrings.
 @end
 
 @fun void AExpectStr(AThread *t, AValue v)
-@desc Check if v is a <tt>Str</tt> object and raise a direct 
+@desc Check if v is a <tt>Str</tt> object and raise a direct
       @ref{std::TypeError} exception if it is not.
 @end

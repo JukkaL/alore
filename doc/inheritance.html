@@ -20,7 +20,7 @@ in <tt>File</tt> but not in <tt>Stream</tt>:
   f.seek(2)    -- Ok
   s.seek(2)    <span class="error">-- Error: member "seek" not defined in Stream</span>
 @end
-    
+
 @h2 The <tt>Object</tt> type
 
 <p>The <tt>Object</tt> is the top of the Alore class hierarchy: every other
@@ -125,7 +125,7 @@ equivalent to the superclass type. This example illustrates it:
     var i as Int
     var o as Object
   end
-  
+
   class Sub is Super
     def i as Int    -- Ok, same type as in superclass
       ...

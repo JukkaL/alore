@@ -25,7 +25,7 @@ tuple:
 @example
   ()             -- An empty tuple
   (True,)        -- A single-item tuple
-@end  
+@end
 
 <h2><tt>Tuple</tt> methods</h2>
 
@@ -46,7 +46,7 @@ tuple:
 @desc Access tuple items with the indexing
       operator. The index <tt>n</tt> must an integer, and it can be negative.
       Raise the @ref{IndexError} exception if the index is not within bounds.
-      
+
       @example
         var a = ("a", 1, True)
         a[0]        -- "a"
@@ -62,7 +62,7 @@ tuple:
 @end
 
 @op x, y, z = tuple
-@desc Tuple objects can be expanded in a multi-assignment or a variable 
+@desc Tuple objects can be expanded in a multi-assignment or a variable
       definition. The number of items
       in the lvalue must equal the length of the tuple.
       @example

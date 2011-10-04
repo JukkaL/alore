@@ -17,18 +17,18 @@ Besides arithmetic, integers are also used for indexing strings and arrays.
 @class Int(x[, base as Int])
 @desc Construct an object of the <tt>Int</tt> type. Call the <tt>_int()</tt>
     method of the first argument and return a value equal to the result,
-    provided that it is an integer. Of the primitive types, <tt>Str</tt> and 
+    provided that it is an integer. Of the primitive types, <tt>Str</tt> and
     <tt>Float</tt> objects provide an <tt>_int</tt> method. Float arguments are
     converted to integers by truncating any fractions. String arguments may
     contain optional blank and tab characters before and after the number,
     and the number must be in base 10 (decimal) by default.
-    
+
     <p>The <tt>base</tt> argument is only valid for conversions from strings.
-    It specifies the base of the string, overriding the default base 10. 
-    Valid values are from 2 to 36, inclusive. Digit values greater than 9 are 
-    represented as letters from "a" to "z", such that "a" or "A" is 10, "b" or 
+    It specifies the base of the string, overriding the default base 10.
+    Valid values are from 2 to 36, inclusive. Digit values greater than 9 are
+    represented as letters from "a" to "z", such that "a" or "A" is 10, "b" or
     "B" is 11, etc.
-   
+
     @see @ref{string::IntToStr} can be used to convert integers to strings in
       different bases.
     @end
@@ -100,12 +100,12 @@ refers to an <tt>Int</tt> value):
 
 @op n ** x @optype{Int ** Int -> Int; Int ** Float -> Float}
 @desc Return <tt>n</tt><sup><tt>x</tt></sup>, i.e., <tt>n</tt> raised to the
-      <tt>x</tt>th 
+      <tt>x</tt>th
       power. If <tt>x</tt> is an integer, the result is an integer, and if
       <tt>x</tt> is a float, the result is a float.
       The operator
       follows the following rules in special conditions:
-      
+
       <ul class="sep">
         <li><tt>0 ** 0</tt> == 1
         <li><tt>0 ** 0.0</tt> == 1.0
@@ -117,7 +117,7 @@ refers to an <tt>Int</tt> value):
 
 @op -n @optype{-Int -> Int}
 @desc Return the negation of an integer.
-@end  
+@end
 
 @op n == x @optype{Int == Object -> Boolean}
 @desc Integers can be compared for equality with arbitrary objects.

@@ -7,20 +7,20 @@
 reference to an object, i.e. it names a single object. A value always refers to
 an object &#8212; there is no notion of empty values. Alore programs can
 access objects only through values: an object is only visible to the program if
-there is a value that refers to it. Any number of values may refer to the same 
+there is a value that refers to it. Any number of values may refer to the same
 object.
 
 <p>Each instance of a variable is represented by a single value. Objects
 typically contain values as well. A <tt>Pair</tt> object, for
-example, 
-contains two values. Not all objects are composite objects. An integer object, 
+example,
+contains two values. Not all objects are composite objects. An integer object,
 for example, is not a composite object.
 
 @h2 Objects and types
 
 <p>All data processed by an Alore program is stored in objects or referenced
-by objects. Each object has a specific type that is constant across the 
-life-time of the object, and usually some <i>state</i>, that may be mutable 
+by objects. Each object has a specific type that is constant across the
+life-time of the object, and usually some <i>state</i>, that may be mutable
 or immutable (constant). The state of an object differentiates the object
 from other objects of the same type. All types are represented by objects as
 well.
@@ -31,12 +31,12 @@ associated with it. The <tt>nil</tt> object behaves otherwise like
 a @ref{std::Constant} object and supports the same operations.
 
 <p>For example, the type of the object 15 is @ref{std::Int} and its state is
-the value fifteen. This object, like all integers, is immutable. Therefore the 
+the value fifteen. This object, like all integers, is immutable. Therefore the
 object 15 cannot be modified to value 7 (or any other value).
 
 <p>In contrast, the
 type of the object <tt>[1, 2]</tt> is @ref{std::Array} and its state is
-composed of its length (2) and two references to <tt>Int</tt> objects 
+composed of its length (2) and two references to <tt>Int</tt> objects
 (1 and 2). Array objects are mutable: their length and the objects they contain
 can be changed, but only by using the methods provided by the <tt>Array</tt>
 type.
@@ -60,7 +60,7 @@ more or less equivalent ways:
 <p>Class objects have several uses:
 
 <ul>
-  <li>A class specifies the structure of all instances of the class. For 
+  <li>A class specifies the structure of all instances of the class. For
     example,
     it specifies which methods and members are included in the public
     interface of the instances, and it also specifies their behavior.
@@ -68,7 +68,7 @@ more or less equivalent ways:
     how the state of the instances is represented.
   <li>Instances of a class can (usually) be constructed by calling the class
     object.
-  <li>The <tt>is</tt> operator can be used with the class object to test if a 
+  <li>The <tt>is</tt> operator can be used with the class object to test if a
     object is an instance of the class or any subclass of the class.
 </ul>
 

@@ -1,43 +1,43 @@
 @head
 @title Int operations
 
-<p>The functions, types and constants described in this section are useful for 
-dealing with <tt>Int</tt> objects. Two basic modes of operation are supported: 
+<p>The functions, types and constants described in this section are useful for
+dealing with <tt>Int</tt> objects. Two basic modes of operation are supported:
 
 <ol>
-  <li>Converting between Alore <tt>Int</tt> objects and fixed-precision C 
+  <li>Converting between Alore <tt>Int</tt> objects and fixed-precision C
     integer types, potentially causing overflow errors during conversions.
   <li>Using only Alore <tt>Int</tt> objects to support arbitrary-precision
     arithmetic.
 </ol>
 
-<p>The first mode is usually sufficient, and when dealing with existing C 
-interfaces, it is usually the only realistic approach. It also makes dealing 
+<p>The first mode is usually sufficient, and when dealing with existing C
+interfaces, it is usually the only realistic approach. It also makes dealing
 with integer objects in C code relatively simple. Thus this mode is
-recommended 
-unless arbitrary precision is specifically required. An overview of using this 
+recommended
+unless arbitrary precision is specifically required. An overview of using this
 mode is given below:
 
 <ol>
   <li>Convert input Alore objects to C integer types using functions such as
     @ref{AGetInt}. If the inputs are out of range, a @ref{ValueError} exception
     will be raised.
-  <li>Perform any calculations using C integer types such as int or 
+  <li>Perform any calculations using C integer types such as int or
     @ref{AInt64}, without having to use the Alore C API.
-  <li>Any integer result objects that are returned from functions or stored in 
-    Alore objects can be created from C integer types using functions such as 
+  <li>Any integer result objects that are returned from functions or stored in
+    Alore objects can be created from C integer types using functions such as
     @ref{AMakeInt}.
 </ol>
-    
-<p>This approach usually results in efficient and easy-to-understand code, 
+
+<p>This approach usually results in efficient and easy-to-understand code,
 since the number of API function calls is minimized. A major downside of this
-approach is the loss of Alore integer semantics, which are replaced with the 
-often less desirable C semantics that include integer truncation and the 
+approach is the loss of Alore integer semantics, which are replaced with the
+often less desirable C semantics that include integer truncation and the
 limited range of integers.
 
 @see Operations described in sections @href{Arithmetic operations} and
      @href{Comparison operations} such as @ref{AAdd}, @ref{AMul} and
-     @ref{AIsEq} can be used with <tt>Int</tt> objects as well. They are 
+     @ref{AIsEq} can be used with <tt>Int</tt> objects as well. They are
      useful especially when dealing with arbitrary-precision integers.
 @end
 
@@ -123,7 +123,7 @@ have an unbounded size, and the functions described below are useful for
 dealing efficiently with arbitrary-precision integers.
 
 <p>Alore supports two different memory representations of <tt>Int</tt> objects.
-A <i>long integer</i> representation must be used for integers that are larger 
+A <i>long integer</i> representation must be used for integers that are larger
 than the constant <tt>A_SHORT_INT_MAX</tt> or smaller than
 <tt>A_SHORT_INT_MIN</tt>. Other integers are always represented using the
 fixed-size <i>short integer</i> representation.
@@ -131,10 +131,10 @@ fixed-size <i>short integer</i> representation.
 <p>A long Int object is composed of "digits", fixed-size binary integers,
 whose range is from 0 to 2**A_LONG_INT_DIGIT_BITS-1.
 The digits are numbered starting from 0 (the least significant digit) to n-1
-(the most significant digit), where n is the length of the long Int object. 
+(the most significant digit), where n is the length of the long Int object.
 The most significant digit must always be non-zero.
 
-<p>The magnitude of a long Int object can be calculated using this 
+<p>The magnitude of a long Int object can be calculated using this
 formula:
 
 @example
@@ -143,45 +143,45 @@ formula:
 
 <p>Here B is the base or radix (2**A_LONG_INT_DIGIT_BITS). Note that we use
 ** to mean exponentiation. Negative long Int objects have a sign
-flag set, so two's complement representation is not used internally to 
-represent negative long integers, although Alore code generally sees integers 
+flag set, so two's complement representation is not used internally to
+represent negative long integers, although Alore code generally sees integers
 following two's complement semantics.
 
 <p>Example: If each digit is 16 bits wide, B is 2**16 or 65536, and the value
-of each digit must be between 0 and 65535. Then consider a negative long Int 
-object with the following digits, starting from digit 0: 5, 4 and 3. 
-The integer value of this object is 
+of each digit must be between 0 and 65535. Then consider a negative long Int
+object with the following digits, starting from digit 0: 5, 4 and 3.
+The integer value of this object is
 -5 - 4 * 65536 - 3 * 65536**2 == -12885164037.
 
-<p>API functions that are useful for dealing with long Int objects are 
+<p>API functions that are useful for dealing with long Int objects are
 described below.
 
-@note It is an error to create a long Int object if it is in the short Int 
+@note It is an error to create a long Int object if it is in the short Int
       range, but the API does not enforce this constraint. Therefore you have
-      to be very careful or try to use higher-level operations such as 
-      @ref{AAdd} or @ref{AIsLt} that work with both short and long forms 
+      to be very careful or try to use higher-level operations such as
+      @ref{AAdd} or @ref{AIsLt} that work with both short and long forms
       transparently.
 @end
 
-<!-- FIX add some function for normalizing long integers so that it does not 
+<!-- FIX add some function for normalizing long integers so that it does not
          matter if a long int is too small or the most significant digits are
          0 -->
 
 @fun ABool AIsShortInt(AValue v)
 @desc Return a boolean indicating whether v is an Int object within the range
-  of a short Int object (i.e. <tt>A_SHORT_INT_MIN</tt> to 
+  of a short Int object (i.e. <tt>A_SHORT_INT_MIN</tt> to
   <tt>A_SHORT_INT_MAX</tt>).
 @end
 
 @fun ABool AIsLongInt(AValue v)
 @desc Return a boolean indicating whether v is an Int object outside the range
-  of a short Int object (i.e. <tt>A_SHORT_INT_MIN</tt> to 
+  of a short Int object (i.e. <tt>A_SHORT_INT_MIN</tt> to
   <tt>A_SHORT_INT_MAX</tt>). Note that if v is <tt>Int</tt>, either
   <tt>AIsShortInt</tt> or <tt>AIsLongInt</tt> is true, but never both.
 @end
 
 @fun AValue AMakeLongInt(AThread *t, int len, ABool isNeg)
-@desc Create an uninitialized long Int object with len digits 
+@desc Create an uninitialized long Int object with len digits
       (each A_LONG_INT_DIGIT_BITS bits wide), optionally negative. Use
       <tt>ASetLongIntDigit</tt> to initialize the contents of the object.
       After initialization, the most significant digit must not be zero, and
@@ -195,13 +195,13 @@ described below.
       The long Int object must have been created using <tt>AMakeLongInt</tt>.
       The least significant digit
       is numbered 0. Note that the value argument
-      must refer to a long Int object and num must be in 
+      must refer to a long Int object and num must be in
       the valid range, since no error checking is performed. After a long Int
       object has been initialized, its contents must not be modified.
 @end
 
 @fun ABool AIsNegLongInt(AValue longInt)
-@desc Return a boolean indicating whether a long Int object is negative. 
+@desc Return a boolean indicating whether a long Int object is negative.
       Note that the argument
       must refer to a long Int object, since no error checking is performed.
 @end
@@ -214,14 +214,14 @@ described below.
 @fun ALongIntDigit AGetLongIntDigit(AValue longInt, int num)
 @desc Return the digit num of a long Int object. The least significant digit
       is numbered 0. Note that the value argument
-      must refer to a long Int object and num must be in the valid range, since 
+      must refer to a long Int object and num must be in the valid range, since
       no error checking is performed.
 @end
 
 <h2>Types</h2>
 
 @var ALongIntDigit
-@desc An unsigned integral type that is <tt>A_LONG_INT_DIGIT_BITS</tt> bits 
+@desc An unsigned integral type that is <tt>A_LONG_INT_DIGIT_BITS</tt> bits
       wide (16, 32 or 64). It is used to
       represent a chunk of data, a "digit", in a long integer object.
 @end
