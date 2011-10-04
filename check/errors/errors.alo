@@ -71,11 +71,8 @@ class Errors
   -- Set the path of the current file.
   def setFile(file as Str)
     file = NormPath(file)
-    -- Remove ignored prefix, if set and present.
-    if self.ignorePrefix != nil and file.startsWith(self.ignorePrefix)
-      file = file[self.ignorePrefix.length():]
-    end
-    self.file = file
+    -- Remove ignored prefix (if set and present in the path).
+    self.file = RemovePathPrefix(file, self.ignorePrefix)
   end
 
   -- Set the current function or member short name (it can be nil).
@@ -183,6 +180,8 @@ class Errors
           else
             fmt += ":"
           end
+          -- Remove prefix to ignore from path (if present) to simplify path.
+          path = RemovePathPrefix(path, self.ignorePrefix)
           result.append((nil, -1, fmt.format(path, line)))
           i -= 1
         end
@@ -307,4 +306,15 @@ private def StableSort<T>(a as Sequence<T>,
     a3.append(x)
   end
   return a3
+end
+
+
+-- If path starts with prefix, return copy of path with the prefix removed.
+-- Otherwise, return path. If path is nil, return nil.
+private def RemovePathPrefix(path as Str, prefix as Str) as Str
+  if prefix != nil and path.startsWith(prefix)
+    return path[prefix.length():]
+  else
+    return path
+  end
 end
