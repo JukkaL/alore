@@ -181,6 +181,20 @@ statically-typed code, and vice versa:
 <tt>dynamic</tt> is compatible with any type. For example,
 <tt>Array&lt;dynamic&gt;</tt> is compatible with <tt>Array&lt;Str&gt;</tt>.
 
+@h2 Dynamic casts
+
+<p>You can use <tt>dynamic</tt> as the target type of a cast. This operation
+does nothing at the runtime, and it only selectively removes type checking
+from an expression. This allows you to bypass some restrictions of the
+type system:
+
+@example
+  var ao = [1] as Array&lt;Object&gt;
+  var ai as Array&lt;Int&gt;
+  ai = ao              <span class="error">-- Type check error</span>
+  ai = (ao as dynamic) -- Ok (but be careful!)
+@end
+
 @h2 Inheritance and mixed typing
 
 <p>A dynamically-typed class may inherit a statically-typed class, and
