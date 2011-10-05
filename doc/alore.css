@@ -211,7 +211,7 @@ ul.sep {
 }
 
 .hiliexample {
-    background-color: #ddddee;
+    background-color: #bbbbdd;
     padding: 1px;
 }
 
@@ -227,8 +227,14 @@ ul.sep {
 
 pre.ex {
     color: #3c3c3c;
-    margin-left: 0.55cm;
-    margin-right: 1.0cm;
+    /*margin-left: 0.55cm;
+    margin-right: 2.0cm;*/
+    padding-left: 0.2cm;
+    padding-right: 0.2cm;
+    padding-top: 0.2cm;
+    padding-bottom: 0.2cm;
+    background-color: #e5e5f2;
+    border: 1px solid #bbbbdd;
 }
 
 .kw {
