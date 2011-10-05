@@ -1,13 +1,193 @@
 @head
 @title Interfaces
 
-<ul>
-  <li>Motivation for interfaces
-  <li>Introduce interfaces with an example
-  <li>Interfaces have no implementations; only signatures
-  <li>Introduce generic interfaces by using interfaces in the standard
-    libraries (Iterable, Sequence, Comparable)
-  <li>For loop and Iterable
-  <li>Refer to later sections for additional information (defining generic
-    types, intersection types, generic interfaces)
-</ul>
+<p>Interfaces are like classes, but they don't include any implementation:
+all interface members are abstract. A class <i>implements</i> an interface
+by providing an implementation for all the interface members, and by telling
+the relationship using an <tt>implements</tt> declaration:
+
+@example
+  interface Closeable
+    def close() as void
+  end
+
+  class Resource implements Closeable
+    ...
+    def close() as void
+      <i>-- implementation of close</i>
+    end
+  end
+@end
+
+<p>Interfaces may have method and accessor members. The syntax resembles
+class members, but there is no method body or <tt>end</tt>.
+
+@h2 Multiple interface inheritance
+
+<p>A class may inherit only one class, but it can implement any number of
+interfaces. Alore supports <i>multiple interface inheritance</i> and
+<i>single implementation inheritance</i>. This tends to work well in practice.
+Multiple implementation inheritance is complex and plagued with problems
+such as diamond inheritance, whereas interface inheritance is mostly immune to
+these issues.
+
+<p>If a class implements multiple interfaces, separate the interface names
+by commas:
+
+@example
+  class A implements I1, I2, ...
+    ...
+  end
+@end
+
+@h2 Inheritance and interface implementation
+
+<p>If a class explicitly inherits another class and also implements some
+interfaces, give the superclass before the interfaces (here <tt>B</tt> is
+the inherited class):
+
+@example
+  class A is B implements I1, I2, ...
+    ...
+  end
+@end
+
+@h2 Standard library interfaces
+
+<p>The Alore standard library defines several interfaces, some of which are
+commonly used in programs. Here we describe the interfaces
+<tt>std::Iterable</tt>, <tt>std::Iterator</tt> and <tt>std::Sequence</tt>.
+
+<p>The definition of @ref{Iterable} is as follows:
+
+@example
+  interface Iterable&lt;T&gt;
+    def iterator() as Iterator&lt;T&gt;
+  end
+@end
+
+<p>The interface is generic. An <tt>Iterable</tt> object supports
+iteration, and the
+iteration produces objects of type T. Here is the definition of
+@ref{Iterator}:
+
+@example
+  interface Iterator&lt;T&gt;
+    def hasNext() as Boolean
+    def next() as T
+  end
+@end
+
+<p>For example, @ref{Range} implements <tt>Iterable&lt;Int&gt;</tt>,
+@ref{Str} implements <tt>Iterable&lt;Str&gt;</tt> and
+@ref{Array}<tt>&lt;T&gt;</tt> implements <tt>Iterable&lt;T&gt;</tt>.
+
+<p>The @ref{Sequence} interface is implemented by classes which support
+indexing with <tt>[]</tt> using integers, such as <tt>Array</tt> and
+<tt>Str</tt>. <tt>Sequence</tt> is defined like this:
+
+@example
+  interface Sequence&ltT&gt;
+    def _get(i as Int) as T    -- Operation sequence[i]
+    def length() as Int
+  end
+@end
+
+@h2 For loop and <tt>Iterable</tt>
+
+<p>The object to iterate in a for loop must implement
+<tt>Iterable&lt;T&gt;</tt>.
+The type of the loop variable is inferred from the type variable T of the
+iterated object. In the example below the iterated object has type
+<tt>Range</tt>, and <tt>Range</tt>
+implements <tt>Iterable&lt;Int&gt;</tt>; therefore the type of
+<tt>i</tt> will be <tt>Int</tt>:
+
+@example
+  for i in 0 to 5
+    Print(i + 1)
+  end
+@end
+
+<p>The above example is equivalent to the following code, with explicit types
+for clarity:
+
+@example
+  var iterable = 0 to 5 as Iterable&lt;Int&gt;
+  var iterator = iterable.iterator() as Iterator&lt;Int&gt;
+  while iterator.hasNext()
+    var i = iterator.next() as Int
+    Print(i + 1)
+  end
+@end
+
+<p>Note that the type of <tt>iterable</tt> could equally have been
+<tt>Range</tt>.
+
+@h2 Interface binding
+
+<p>You can also set an interface to be a supertype of an existing
+class, directly within the interface definition. Do this with a <tt>bind</tt>
+declaration:
+
+@example
+  class A
+    def length() as Int
+      ...
+    end
+  end
+
+  interface WithLength
+    <b>bind A</b>       -- Set WithLength to be supertype of A
+
+    def length() as Int
+  end
+@end
+
+<p>Now <tt>A</tt> implements <tt>WithLength</tt>, so the following is fine:
+
+@example
+  var l as WithLength
+  l = A()
+  l.length()
+@end
+
+<p>The above definitions are equivalent to the following code, where the
+class declares the implementation:
+
+@example
+  class A implements WithLength
+    def length() as Int
+  end
+
+  interface WithLength
+    def length() as Int
+  end
+@end
+
+<p>You can also bind interfaces to classes defined in other modules, including
+standard library classes. Sometimes it is even useful to bind interfaces to
+such basic types as <tt>Int</tt> or <tt>Str</tt>.
+
+@h2 Accessors and interfaces
+
+<p>Interfaces may not include member variables or constants, but they can
+define accessors. Classes that implement an interface may use variables or
+constants to implement the accessors:
+
+@example
+  interface Accessors
+    def n as Int
+    def n = x as Int
+  end
+
+  class Variables implements Accessors
+    var n as Int  -- Implementation of getter and setter for n
+  end
+@end
+
+@h2 Additional topics
+
+<p>We will discuss some additional topics that affect interfaces later in this
+document. These include definition of generic interfaces and the handling of
+interface name clashes using intersection types.
