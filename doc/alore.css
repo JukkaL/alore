@@ -117,12 +117,22 @@ h1 {
     font-weight: bold;
     margin-top: 1em;
     font-size: 200%;
+    border-bottom: 1px solid #ccccdd;
+}
+
+#header h1 {
+    border-bottom: none;
+}
+
+#contents-wrapper h1 {
+    border-bottom: none;
 }
 
 h2 {
     color: #000050;
     font-size: 145%;
     font-weight: bold;
+    border-bottom: 1px solid #ccccdd;
 }
 
 h3 {
