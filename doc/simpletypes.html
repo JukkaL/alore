@@ -15,7 +15,7 @@ instance of any subclass of that class.
   var i = 1 as Int
   s = 'foo'
   i += 1
-  s += 1    <span class="error">-- Type error</span>
+  s += 1    --E: Type error
 @end
 
 <p>The <tt>as</tt> keyword followed by a type declares the type of a
@@ -53,7 +53,7 @@ the type checker reports an error:
 
 @example
   var i as Int
-  i = Triangle(2, '*')    <span class="error">-- Error</span>
+  i = Triangle(2, '*')    -- Error
 @end
 
 <p>The return value type of a function is declared again using <tt>as</tt>,
@@ -71,7 +71,7 @@ identical to the dynamically-typed case:
 @example
   var s as Str
   s = Highlight('Hello')
-  var i = Highlight('Howdy') as Int  <span class="error">-- Type error</span>
+  var i = Highlight('Howdy') as Int  --E: Type error
 @end
 
 <p>You can also ignore the return value, even though it is not very useful
@@ -138,6 +138,6 @@ can verify that the members are used correctly:
   var p = Person('John Smith', Date('1982-12-03')) as Person
   p.show()                          -- Ok
   p.birthDate = Date(1982, 12, 4)   -- Ok
-  p.name = 2             <span class="error">-- Error: name must be a string</span>
-  p.show(True)           <span class="error">-- Error: show does not take any arguments</span>
+  p.name = 2             -- Error: name must be a string
+  p.show(True)           -- Error: show does not take any arguments
 @end

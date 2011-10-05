@@ -743,7 +743,7 @@ operations. The <tt>Int</tt> constructor is often used to convert
 <tt>Str</tt> objects to integers in arithmetic expressions:
 
 @example
-  1 + '2'       <span class="error">-- Error!</span>
+  1 + '2'       -- Error!
   1 + Int('2')  -- 3
 @end
 
@@ -805,7 +805,7 @@ single-quoted string literals (and similarly for double-quoted strings):
 <p>Strings are immutable:
 
 @example
-  a[1] = 'x'        <span class="error">-- Error (immutable)!</span>
+  a[1] = 'x'        -- Error (immutable)!
 @end
 
 <p><i>Slices</i> of strings (substrings) can be
@@ -1163,7 +1163,7 @@ tuples (without the surrounding square brackets):
 @example
   var t = 1, 'x'     -- Tuple with items 1 and 'x'
   t[0]               -- The first item in a tuple (1)
-  t[1] = 'y'         <span class="error">-- Error (immutable)</span>
+  t[1] = 'y'         -- Error (immutable)
 @end
 
 <p>Empty and single-item tuples have special syntax:
@@ -1283,7 +1283,7 @@ integers, the <tt>Map</tt> type allows indexing with values of almost any type:
   var m = Map('John': 34, 'Mary': 24)
   m['John']                 -- 34 (value associated with key 'John')
   m['Jane'] = 50            -- Assign value
-  m['Peter']                <span class="error">-- Error! (invalid key)</span>
+  m['Peter']                -- Error! (invalid key)
   m.hasKey('Jane')          -- True
   m[1, 'x'] = [2, 3]        -- Tuples can be used as keys
 @end
@@ -1473,7 +1473,7 @@ type, including objects of primitive types.
     p.name = 'Mary Smith'       -- Change name
     WriteLn(p.name)             -- Mary Smith
     WriteLn(p is Person)        -- True
-    p.address = '15 Juniper St.'  <span class="error">-- Error! (undefined member)</span>
+    p.address = '15 Juniper St.'  -- Error! (undefined member)
   end
 @end
 
@@ -1605,7 +1605,7 @@ overloading</a>.
 
   def Main()
     var p = Person('Tracy', 'ornithologist')
-    p.name = 'Mary'  <span class="error">-- Error!</span>
+    p.name = 'Mary'  -- Error!
   end
 @end
 
@@ -1641,7 +1641,7 @@ modifier:
     var list = MyList(5)
     list.add('John')
     list.add('Mary')
-    WriteLn(list.array)   <span class="error">-- Error!</span>
+    WriteLn(list.array)   -- Error!
   end
 @end
 
@@ -1657,7 +1657,7 @@ simply as "<tt>member</tt>". For example:
     end
 
     def method(x)
-      x.member()        <span class="error">-- Error! Invalid even if x has type Example or if x == self</span>
+      x.member()        -- Error! Invalid even if x has type Example or if x == self
       self.member()     -- Ok, since using self
       member()          -- Also ok (implicit self)
     end
@@ -2217,7 +2217,7 @@ resolution operator <tt>::</tt> (two colons):
   def Main()
     foo::Func()
     bar::Func()
-    Func()      <span class="error">-- Error: Ambiguous!</span>
+    Func()      -- Error: Ambiguous!
   end
 @end
 

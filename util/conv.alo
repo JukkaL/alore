@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import set
+import lex
 
 
 const Grammar
@@ -396,6 +397,8 @@ class Converter
         var ll = l
         if st.sectionType == Grammar
           ll = FormatGrammar(l, self.nameMap)
+        elif self.scope != 'capi'
+          ll = FormatAloreSource(l)
         end
         st.out.append(ll)
       end
@@ -987,4 +990,37 @@ def ObfuscateEmail(email)
             "</script>";
 
   return res
+end
+
+
+-- Convert Alore source code to HTML. Perform syntax highlighting.
+def FormatAloreSource(s)
+  var res = []
+  for t in Lex(s)
+    if '-- Error' in t.pre or '--E:' in t.pre
+      var ss = t.pre.replace('--E:', '--')
+      res.append('<span class="error">{}</span>'.format(ss))
+    elif '--' in t.pre
+      res.append('<span class="co">{}</span>'.format(t.pre))
+    else
+      res.append(t.pre)
+    end
+    var cls = nil
+    if t is StrLit
+      cls = 'st'
+    elif t is Keyword or t is Op and IsLetter(t.str[0]) or t.str == 'void'
+      cls = 'kw'
+    end
+    if cls != nil
+      res.append('<span class="{}">'.format(cls))
+    end
+    res.append(t.str)
+    if cls != nil
+      res.append('</span>')
+    end
+  end
+  s = ''.join(res)
+  s = s.replace('{{{', '<span class="hiliexample">')
+  s = s.replace('}}}', '</span>')
+  return s
 end

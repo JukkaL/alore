@@ -14,4 +14,6 @@ if [ x$VERSION = x ]; then
   VERSION_STR="Build $VERSION"
 fi
 
+export ALOREPATH=../check
+
 ../alore ../util/conv.alo index.html html "$VERSION_STR"

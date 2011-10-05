@@ -66,7 +66,7 @@ the types of some variables. The <tt>as</tt> keyword is used to introduce
 these type annotations (we highlight all changes):
 
 @example
-  def Triangle(n <span class="hiliexample">as Int</span>, ch <span class="hiliexample">as Str</span>)
+  def Triangle(n {{{as Int}}}, ch {{{as Str}}})
     for y in 0 to n
       WriteLn(ch * (y + 1))
     end
@@ -87,7 +87,7 @@ identical to the dynamically-typed version.
 second line of the example with the line below:
 
 @example
-  for y <span class="hiliexample">as Int</span> in 0 to n
+  for y {{{as Int}}} in 0 to n
 @end
 
 <p>Now let's add a new line to the end of both of the program variants:
@@ -96,7 +96,7 @@ second line of the example with the line below:
   ...
   Triangle(2, '*')
   Triangle(4, '\')
-  <span class="hiliexample">Triangle(3, 3)</span>
+  {{{Triangle(3, 3)}}}
 @end
 
 <p>The dynamically-typed program still produces some output, but perhaps not
@@ -109,9 +109,9 @@ what we'd expect (and without reporting a problem):
   \\
   \\\
   \\\\
-  <span class="hiliexample">1
+  {{{1
   3
-  9</span>
+  9}}}
 @end
 
 <p>However, static type checking produces the following error when type
@@ -127,7 +127,7 @@ checking the statically-typed program variant:
   ...
   Triangle(2, '*')
   Triangle(4, '\')
-  <span class="hiliexample">Triangle('#', 3)</span>
+  {{{Triangle('#', 3)}}}
 @end
 
 <p>Note that the arguments in the third call are in reverse order.
@@ -141,10 +141,10 @@ after producing some output:
   \\
   \\\
   \\\\
-  <span class="hiliexample">Traceback (most recent call last):
+  {{{Traceback (most recent call last):
     at main level (program3.alo, line 8)
     Triangle (program3.alo, line 2)
-  TypeError: Non-integer Range upper bound (Str)</span>
+  TypeError: Non-integer Range upper bound (Str)}}}
 @end
 
 <p>Static type checking again detects the above error without having to run the

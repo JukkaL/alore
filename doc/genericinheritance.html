@@ -14,16 +14,16 @@ implement a generic interface. We illustrate these by expanding the
 @ref{Iterable} interface (differences are highlighted):
 
 @example
-  class Stack&lt;T&gt; <span class="hiliexample">implements Iterable&lt;T&gt;</span>
+  class Stack&lt;T&gt; {{{implements Iterable&lt;T&gt;}}}
     private var array = [] as Array&lt;T&gt;
 
     def create() as void
     end
 
-  <span class="hiliexample">  def iterator() as Iterator&lt;T&gt;
+  {{{  def iterator() as Iterator&lt;T&gt;
       return self.array.iterator()
     end
-  </span>
+  }}}
     def isEmpty() as Boolean
       return self.array == []
     end

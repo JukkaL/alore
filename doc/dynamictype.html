@@ -25,7 +25,7 @@ operations on it are checked statically. Consider this example:
   var d as dynamic
   d = 'x'
   d = 1
-  d + 'y'           <span class="error">-- Runtime error</span>
+  d + 'y'           --E: Runtime error
 @end
 
 <p>Since <tt>d</tt> has type <tt>dynamic</tt>, the type checker does not give
@@ -191,7 +191,7 @@ type system:
 @example
   var ao = [1] as Array&lt;Object&gt;
   var ai as Array&lt;Int&gt;
-  ai = ao              <span class="error">-- Type check error</span>
+  ai = ao              --E: Type check error
   ai = (ao as dynamic) -- Ok (but be careful!)
 @end
 

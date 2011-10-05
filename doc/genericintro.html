@@ -79,7 +79,7 @@ initialize a local variable with an empty array:
 
 @example
   def F() as void
-    var a = []      <span class="error">-- Cannot infer type of a</span>
+    var a = []      --E: Cannot infer type of a
     a.append(1)
   end
 @end
@@ -225,7 +225,7 @@ same <tt>Array</tt> object.
   var a as Array&lt;Int&gt;
   var b as Array&lt;Object&gt;
   a = [1]
-  b = a     <span class="error">-- Error: incompatible types
+  b = a     -- Error: incompatible types
 @end
 
 <p>As an exception, if the type arguments include type <tt>dynamic</tt>

@@ -95,7 +95,7 @@ You need to cast the value to <tt>dynamic</tt> if you want to call it:
   end
 
   var f = Next as Function  -- Ok
-  f(2)               <span class="error">-- Error: cannot call value of type Function</span>
+  f(2)               -- Error: cannot call value of type Function</span>
   (f as dynamic)(2)  -- Ok
 @end
 

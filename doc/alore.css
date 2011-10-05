@@ -87,12 +87,6 @@ code, tt {
     color: #404080;
 }
 
-pre.ex {
-    color: #404080;
-    margin-left: 0.5cm;
-    margin-right: 1.0cm;
-}
-
 a:link {
     color: #404080;
 }
@@ -212,16 +206,12 @@ ul.sep {
     margin-top: 0;
 }
 
-.error {
-    color: red;
-}
-
 .deprecated {
     font-style: italic;
 }
 
 .hiliexample {
-    background-color: #dddddd;
+    background-color: #ddddee;
     padding: 1px;
 }
 
@@ -231,6 +221,32 @@ ul.sep {
 
 .contents li ul li {
     padding-top: 4px;
+}
+
+/* Alore source syntax highlighting */
+
+pre.ex {
+    color: #3c3c3c;
+    margin-left: 0.55cm;
+    margin-right: 1.0cm;
+}
+
+.kw {
+    color: #5c5ca0;
+}
+
+.st {
+    color: #771818;
+}
+
+.co {
+    color: #32923c;
+    font-style: italic;
+}
+
+.error {
+    color: red;
+    font-style: italic;
 }
 
 /* Formatting (specific) */

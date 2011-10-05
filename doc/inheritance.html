@@ -18,7 +18,7 @@ in <tt>File</tt> but not in <tt>Stream</tt>:
 
 @example
   f.seek(2)    -- Ok
-  s.seek(2)    <span class="error">-- Error: member "seek" not defined in Stream</span>
+  s.seek(2)    -- Error: member "seek" not defined in Stream</span>
 @end
 
 @h2 The <tt>Object</tt> type
@@ -131,7 +131,7 @@ equivalent to the superclass type. This example illustrates it:
       ...
     end
 
-    def o as Str    <span class="error">-- Error: Str incompatible with Object</span>
+    def o as Str    -- Error: Str incompatible with Object</span>
       ...
     end
   end

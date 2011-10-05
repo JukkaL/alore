@@ -12,7 +12,7 @@ but would like to convert the value to a more specific type (such as
 @example
   var o as Object         -- Declare o to have type Object
   o = 'foo'
-  o[0]                    <span class="error">-- Type check error: Object does not support [ ]</span>
+  o[0]                    --E: Type check error: Object does not support [ ]
   (o as Str)[0]           -- Ok after casting to Str (result 'f')
 @end
 
@@ -31,8 +31,8 @@ Place a cast within parentheses if it may be confused with a declaration:
   def F() as void
     var o = 'foo' as Object  -- Declaration, not a cast
     var s = (o as Str)       -- Cast; infer type Str for s
-    var s = o as Str         <span class="error">-- Type check error: declaration with an incompatible initializer
-                             -- (cannot assign Object to Str)</span>
+    var s = o as Str         --E: Type check error: declaration with an incompatible initializer
+                             --E: (cannot assign Object to Str)</span>
   end
 @end
 
@@ -42,7 +42,7 @@ rewrite it to use a separate assignment statement for initialization:
 @example
     ...
     var s as Str
-    s = o                    <span class="error">-- Type check error: incompatible types</span>
+    s = o                    --E: Type check error: incompatible types</span>
   end
 @end
 
@@ -56,7 +56,7 @@ expected value, it raises a <tt>CastError</tt> exception at runtime:
 
 @example
   var o = 'foo' as Object
-  (o as Int) + 2           <span class="error">-- CastError: Cannot cast from Str to Int</span>
+  (o as Int) + 2           --E: CastError: Cannot cast from Str to Int</span>
 @end
 
 @h2 The precedence of <tt>as</tt>
@@ -77,7 +77,7 @@ For example, casting an <tt>Int</tt> value to
 
 @example
   var i = 1 as Int
-  var f = (i as Float)     <span class="error">-- Type check error: Cast from Int to Float can never succeed</span>
+  var f = (i as Float)     --E: Type check error: Cast from Int to Float can never succeed</span>
 @end
 
 <p>The cast can never succeed if the source and target types do not have a

@@ -106,11 +106,11 @@ the variable or the object must be protected by the same mutex.
 var Shared = 1
 
 def F1()
-  Shared = 2 <span class="error">-- Error!</span>
+  Shared = 2 -- Error!
 end
 
 def F2()
-  if Shared == 2 <span class="error">-- Error!</span>
+  if Shared == 2 -- Error!
     DoSomething()
   end
 end
