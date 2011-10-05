@@ -1,9 +1,108 @@
 @head
 @title Function types
 
+<p>Alore functions are also objects. You can pass them as arguments to
+functions and store them in data structures like any objects. The type system
+has separate types for functions.
+
+@h2 Simple function types
+
+<p>A simple function type has the form <tt>def (A1, ..., An) as R</tt>. Here
+<tt>Ai</tt> are argument types and <tt>R</tt> is the return value type. If you
+omit <tt>R</tt>, it defaults to <tt>void</tt>.
+
+<p>Here is a simple example that defines a higher-order function
+<tt>Twice</tt> that calls the argument function twice:
+
+@example
+  def Twice(n as Int, f as def (n) as Int) as Int
+    return f(f(n))
+  end
+@end
+
+<p>We can now call the function; we need to pass a callable object as the
+second argument:
+
+@example
+  def Inc(n as Int) as Int
+    return n + 1
+  end
+
+  def Dec(n as Int) as Int
+    return n - 1
+  end
+
+  Print(Twice(3, Inc))   -- Ok; 5
+  Print(Twice(3, Dec))   -- Ok; 1
+@end
+
+<p>You can also use anonymous functions:
+
+@example
+  Twice(3, def (n as Int) as Int
+             return n * 2
+           end)                     -- 12 (3 * 2 * 2)
+@end
+
+<p>Type objects have also function types; their type depends on the signature
+of <tt>create</tt>. The return value type is derived from the class. Example:
+
+@example
+  class C
+    def create(n as Int)
+      ...
+    end
+  end
+  var f as def (n as Int) as C
+  f = C   -- Ok
+@end
+
+<p>Bound methods also have function types:
+
+@example
+  var app as def (Int)
+  var a = [1] as Array&lt;Int&gt;
+  app = a.append
+  app(5)
+  Print(a)      -- [1, 5]
+@end
+
+@h2 Default arguments values and varargs
+
+<p>Function types can have arguments with default values and variable-length
+argument lists. Default argument expressions are never present in types; they
+are only included in function definitions. Examples:
+
 <ul>
-  <li>Motivation: functions can be used as values
-  <li>Example of using function types
-  <li>Using methods as functions and their types
-  <li>Default argument values and varargs
+  <li>Type <tt>def (Int, Int=)</tt> accepts 1 or 2 integer arguments.
+  <li>Type <tt>def (Int, *Int)</tt> accepts 1 or more integer arguments.
 </ul>
+
+<p>A function type is compatible with a more restrictive function type.
+For example, <tt>def (Int, Int=)</tt> is compatible with both
+<tt>def (Int)</tt> and <tt>def (Int, Int)</tt> (but not vice versa).
+
+@h2 Types <tt>Function</tt> and <tt>Type</tt>
+
+<p>Every function definition is also a subtype of <tt>std::Function</tt>;
+every type object is also a subtype of <tt>std::Type</tt>. Since these are
+simple types, they cannot represent argument types or return value types.
+You need to cast the value to <tt>dynamic</tt> if you want to call it:
+
+@example
+  def Next(n as Int) as Int
+    return n + 1
+  end
+
+  var f = Next as Function  -- Ok
+  f(2)               <span class="error">-- Error: cannot call value of type Function</span>
+  (f as dynamic)(2)  -- Ok
+@end
+
+<p>The type <tt>std::Type</tt> supports the <tt>is</tt> operation and is often
+useful for that purpose:
+
+@example
+  var t = Int as Type
+  1 is t      -- Ok
+@end
