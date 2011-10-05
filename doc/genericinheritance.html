@@ -1,12 +1,96 @@
 @head
 @title Generic inheritance and generic interfaces
 
+@note This section is a stub.
+@end
+
+<p>This section explains how to inherit from a generic type and how to
+implement a generic interface. We illustrate these by expanding the
+<tt>Stack</tt> class defined in section @href{Defining a generic type}.
+
+@h2 Implementing a generic interface
+
+<p>Here is a modified version of the stack example that implements the
+@ref{Iterable} interface (differences are highlighted):
+
+@example
+  class Stack&lt;T&gt; <span class="hiliexample">implements Iterable&lt;T&gt;</span>
+    private var array = [] as Array&lt;T&gt;
+
+    def create() as void
+    end
+
+  <span class="hiliexample">  def iterator() as Iterator&lt;T&gt;
+      return self.array.iterator()
+    end
+  </span>
+    def isEmpty() as Boolean
+      return self.array == []
+    end
+
+    def push(o as T)
+      self.array.append(o)
+    end
+
+    def pop() as T
+      self.array.removeAt(-1)
+    end
+  end
+@end
+
+@h2 Inheriting from a generic class
+
+<p>We can define subclasses of a generic class such as <tt>Stack</tt>:
+
+@example
+  class IntStack is Stack&lt;Int&gt;
+  end
+
+  class ArrayStack&lt;S&gt; is Stack&lt;Array&lt;S&gt;&gt;
+  end
+@end
+
+<p>The <tt>IntStack</tt> class is a non-generic class that inherits
+<tt>Stack</tt>; it fixes the type variable T to <tt>Int</tt>.
+<tt>IntStack</tt> is compatible with
+<tt>Stack&lt;Int&gt;</tt>.
+<tt>ArrayStack</tt> also inherits <tt>Stack</tt>, but it is generic like
+<tt>Stack</tt>.
+<tt>ArrayStack&lt;Int&gt;</tt> is compatible with
+<tt>Stack&lt;Array&lt;Int&gt;&gt;</tt> (and similarly for other values of type
+variable S).
+
+<p>Note that a generic subclass may not define additional type variables
+not present in the superclass (unless the superclass is <tt>Object</tt>).
+Each type variable in a subclass must be mapped to a superclass type
+variable. The following class is not valid, since the subclass defines two
+type variable while the superclass only has one:
+
+@example
+  class TupleStack&lt;T1, T2&gt; is Stack&lt;(T1, T2)&gt;
+  end
+@end
+
+<p>This restriction does not apply to interface inheritance.
+
+@h2 Generic inheritance and mixed typing
+
+<p>You can also inherit a dynamically-typed class from a generic class:
+
+@example
+  class DynStack is Stack
+    def length()
+      return Array(iterator()).length()
+    end
+  end
+@end
+
+<p>In this case the type variable T of <tt>Stack</tt> defaults to
+<tt>dynamic</tt> for instances of <tt>DynStack</tt>.
+
+<!--
 <ul>
-  <li>Generic types may inherit other generic types
-  <li>Give a few examples: one that maps X&lt;T&gt; to T and one in which
-    the subtype is not generic but supertype is
-  <li>A generic subtype may not define additional type variables not present
-    in the supertype (unless the supertype is std::Object)
   <li>Subtyping and compatibility
   <li>Implicit and explicit dynamic inheritance
 </ul>
+-->
