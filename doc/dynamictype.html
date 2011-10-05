@@ -1,11 +1,218 @@
 @head
 @title The <tt>dynamic</tt> type and mixed typing
 
+<p>Alore programs may freely mix static and dynamic typing. You can do this in
+a few different ways:
+
 <ul>
-  <li>Functions and variables may have implicitly the dynamic type
-  <li>You can also declare dynamic type explicitly; examples
-  <li>Dynamic type allows statically all operations; examples; runtime checking
-  <li>Dynamic type is compatible with all types; examples
-  <li>Generics + dynamic type
-  <li>Inheritance + dynamic type
+  <li>You can give a variable, an argument or a function return value the type
+    <tt>dynamic</tt>.
+  <li>If you omit type declarations, a variable or function defaults to
+    dynamic typing. This is more or less equivalent to the above but often
+    more convenient.
 </ul>
+
+<p>Note that local variables are different: if the enclosing function is
+dynamically-typed, they will be dynamically-typed; otherwise their type will
+be inferred. This usually "just works".
+
+@h2 The type <tt>dynamic</tt>
+
+<p>If a variable has type <tt>dynamic</tt>, it is dynamically typed and no
+operations on it are checked statically. Consider this example:
+
+@example
+  var d as dynamic
+  d = 'x'
+  d = 1
+  d + 'y'           <span class="error">-- Runtime error</span>
+@end
+
+<p>Since <tt>d</tt> has type <tt>dynamic</tt>, the type checker does not give
+any errors. However, the program generates an exception at runtime.
+
+@h2 Implicit dynamic types
+
+<p>Global variables, member variables and functions are given dynamic types
+if they have no other types.
+
+<p>The following global variable definitions are equivalent:
+
+@example
+  var Foo
+  var Foo as dynamic
+@end
+
+<p>The following method signatures are equivalent:
+
+@example
+  def foo(a, b)
+    ...
+  end
+
+  def foo(a as dynamic, b as dynamic) as dynamic
+    ...
+  end
+@end
+
+<p>However, as the second method has explicit types (even though they are all
+<tt>dynamic</tt>), the body will use type
+inference. In the first method <tt>foo</tt>, the type checker will just ignore
+the body.
+
+@h2 Type compatibility
+
+<p>Every type is compatible with the type <tt>dynamic</tt>. This allows you to
+seamlessly integrate dynamically-typed and statically-typed code. Consider
+this example, which defines a dynamically-typed and a statically-typed
+function that call each other:
+
+@example
+  def D(n)
+    if n == 0
+      return 0
+    else
+      return S(n - 1) + 1
+    end
+  end
+
+  def S(n as Int) as Int
+    if n == 0
+      return 1
+    else
+      return D(n - 1) * 2
+    end
+  end
+@end
+
+<p>Note that <tt>S</tt> calls <tt>D</tt> with argument of type <tt>Int</tt>,
+while <tt>D</tt> expects <tt>dynamic</tt>; and vice versa. No casts are
+necessary.
+
+<p>Assignment works in a similar way:
+
+@example
+  var n = 0 as Int
+  var d = 1 as dynamic
+  d = n   -- Ok
+  n = d   -- Ok
+@end
+
+@h2 Running programs with mixed typing
+
+<p>When any programs is run, all type declarations are first erased. Static
+types are thus ignored at runtime. This happens transparently and is not
+directly visible to the programmer.
+
+<p>Here are a few examples of erasing types (we use <tt>==&gt;</tt> to denote
+the erasure):
+
+@example
+  var a = 5 as Int ==&gt;
+  var a = 5
+
+  def next(i as Int) as Int
+    return i + 1
+  end
+    ==&gt;
+  def next(i)
+    return i + 1
+  end
+
+  var a = [] as &lt;Int&gt; ==&gt;
+  var a = []
+@end
+
+<p>Note that normal <a href="casts.html">casts</a> are not erased, but
+dynamic casts are. For example:
+
+@example
+  var o = 1 as Object
+  var n = (o as Int)          -- Normal cast
+  var d = (o as dynamic)      -- Dynamic cast
+    ==&gt;
+  var o = 1
+  var n = (o as Int)
+  var d = (o)
+@end
+
+@h2 Runtime type errors and mixed typing
+
+<p>Due to type erasue, some apparent type errors do not result in type errors
+at runtime:
+
+@example
+  var i as Int
+  var d = 'x'
+  i = d          -- Ok
+@end
+
+<p>The example assign a <tt>Str</tt> object to an <tt>Int</tt> variable. There
+is no static error since <tt>d</tt> has type <tt>dynamic</tt>; there is no
+runtime error since the type <tt>Int</tt> of <tt>i</tt> is erased before
+running the program.
+
+<p>A future Alore version will likely allow catching these kinds of type
+error. It will probably have two execution modes:
+a <i>loose</i> mode is equivalent to type erasure, while
+a <i>strict</i> mode detects cases like the example above.
+
+@h2 Generic types and dynamic typing
+
+<p>Mixed typing also supports objects of generic types.
+You can create a generic instance
+such as <tt>Array</tt> in dynamically-typed code and pass it to
+statically-typed code, and vice versa:
+
+@example
+  var d = [1, 3] as dynamic
+  Sum(d)      -- Ok
+
+  def Sum(a as Array&lt;Int&gt;) as Int
+    var sum = 0
+    for n in a
+      sum += a
+    end
+    return sum
+  end
+@end
+
+<p>You can also use <tt>dynamic</tt> as a type argument. In this case,
+<tt>dynamic</tt> is compatible with any type. For example,
+<tt>Array&lt;dynamic&gt;</tt> is compatible with <tt>Array&lt;Str&gt;</tt>.
+
+@h2 Inheritance and mixed typing
+
+<p>A dynamically-typed class may inherit a statically-typed class, and
+override some of its methods:
+
+@example
+  class S
+    def next(n as Int) as Int
+      return n + 1
+    end
+  end
+
+  class D is S
+    def next(n)         -- Ok
+      return n + 2
+    end
+  end
+@end
+
+<p>This is useful especially in dynamically-typed programs that inherit
+statically-typed library classes. A dynamically-typed program or module does
+not need to care whether library modules that it uses use static typing or not.
+
+<p>A statically-typed class can also inherit a dynamically-typed class, but
+this is less useful. You can even change individual argument types to
+<tt>dynamic</tt> when overriding, while keeping other statically typed:
+
+@example
+  class S2
+    def f(i as Int, s as Str) ... end
+  end
+  class D2 is S2
+    def f(i as Int, s as dynamic) ... end
+  end
+@end
