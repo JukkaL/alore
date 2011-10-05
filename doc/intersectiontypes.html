@@ -1,14 +1,92 @@
 @head
 @title Intersection types
 
+@note This section is a stub.
+@end
+
+<p>Intersection types allow you to define multiple signatures for a single
+function, similar to function or method overloading in languages such as
+Java, C# and C++.
+Unlike the previous languages, Alore functions always have a single body.
+
+@h2 Intersection type basics
+
+<p>Specify an intersection type using the <tt>or</tt> keyword after a normal
+function signature, followed by another signature without the function name.
+This examples defines a function that can be called with either a
+<tt>Str</tt> or <tt>Int</tt> argument:
+
+@example
+  def IncStr(x as Str) as Str or
+            (x as Int) as Str
+    if x is Str
+      return Str(Int(x) + 1)
+    else
+      return Str((x as Int) + 1)
+    end
+  end
+
+  IncStr('6')  -- '7'
+  IncStr(5)    -- '6'
+@end
+
+<p>There a several things to note:
+
 <ul>
-  <li>Motivation: numeric operators
-  <li>Simple example with intersection types
-  <li>Explain: must be able to type check with all signatures separately
+  <li>The body of the function must type check for all signatures (both when
+    <tt>x</tt> is <tt>Str</tt> and when <tt>x</tt> is <tt>Int</tt>).
+    This is why we need the <tt>x as Int</tt> cast in
+    the else block.
+  <li>We use a runtime type check (<tt>if x is Str</tt>)
+    to determine the actual type of the argument.
+    In some functions with intersection types this is not necessary, but often
+    it is.
+  <li>The behavior of the function remains the same after type erasure
+    (see also @href{Running programs with mixed typing}).
+  <li>If the different signatures in an intersection type have different
+    return value types, you
+    may have to cast the return values to <tt>dynamic</tt> to avoid type
+    check errors.
+</ul>
+
+<p>Alore standard libraries use intersection types in several places, most
+notably for arithmetic operators such as +. They allow the following code
+to type check:
+
+@example
+  2 * 3       -- Int * Int
+  2 * 1.1     -- Int * Float
+  2 * 'x'     -- Int * Str
+@end
+
+@h2 Overlapping signatures
+
+<p>Signatures in intersection types must not be overlapping, unless they have
+identical return value types. Consider this example:
+
+@example
+  def f(x as Int) as Int
+       (x as Object) as Str
+    ...
+  end
+@end
+
+<p>When called with an <tt>Int</tt> argument, either of the signatures
+can match; they are overlapping. This would not be a problem if the
+return value types would
+be identical, but they are different (<tt>Int</tt> and <tt>Str</tt>).
+
+@h2 Interface methods and intersection types
+
+<p>If a class implements two interfaces with an identically-named method,
+you may be able to define an intersection type for the method that is
+compatible with both the interfaces.
+
+<!--
+<ul>
   <li>Subtyping (function types)
-  <li>Intersection type items must be non-overlapping, unless return values are
-    the same
   <li>Calling with dynamic types
   <li>Dealing with name clashes
   <li>Default argument values and varargs
 </ul>
+-->
