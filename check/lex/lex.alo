@@ -375,9 +375,12 @@ private class Lexer
       end
     end
     if s == ""
-      raise ValueError("Lex error at line {}".format(self.line))
+      -- Could not match any token; report an invalid character. This is
+      -- reached at least if the current character is '!' not followed by '='.
+      addToken(LexError(self.s[self.i], InvalidCharacter))
+    else
+      addToken(t(s))
     end
-    addToken(t(s))
   end
 
   -- Report an unknown character as a lexical analysis error.

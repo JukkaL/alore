@@ -80,6 +80,13 @@ file.alo, line 5: Unterminated string literal
 file.alo, line 1: Unrecognized character @
 file.alo, line 2: Unrecognized character #
 
+[case testIncompleteOperator]
+!
+#
+[out]
+file.alo, line 1: Unrecognized character !
+file.alo, line 2: Unrecognized character #
+
 [case testInvalidHashBang]
 #
 [out]
