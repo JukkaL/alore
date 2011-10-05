@@ -1,8 +1,8 @@
 @head
 @title Tuple types
 
-<p>Tuple objects are common in Alore programs. The type system has special
-support for representing tuples in a type-safe manner.
+<p>Tuple objects are common in Alore programs, and the type system has a rich
+set of types for representing tuples.
 
 @h2 Tuple basics
 
@@ -23,40 +23,20 @@ infers the type precisely:
   t[1]       -- Type Str
 @end
 
-@h2 Constructing tuples with explicit types
+@h2 Variable definition and type inference
 
-<p>The example program above relied on type inference when constructing the
-tuple. You can also give the types explicitly using the now-familiar syntax
-(note that the parentheses are necessary due to precedence):
-
-@example
-  t = (2, 'foo') as &lt;Int, Str&gt;
-@end
-
-@h2 General tuple types
-
-<p>More generally, a tuple type <tt>(T1, T2, ...)</tt> represents a tuple that
-has T1 as the first item type, T2 as the second item type, etc. Empty tuples
-and 1-tuples are special:
-
-<ul>
-  <li><tt>()</tt> is the empty tuple type.
-  <li><tt>(T,)</tt> is a 1-tuple (note the extra comma).
-</ul>
-
-@h2 Tuple types and multiple assignment
-
-<p>You can use tuple types for multiple assignment:
+<p>You can use tuples as rvalues in multiple variable definition (and
+assignment). Type inference works for local variables:
 
 @example
-  var t as (Int, Str)
-  var i as Int
-  var s as Str
-  t = (1, 'foo')     -- Parentheses are optional, but may improve clarity
-  i, s = t
+  def f() as void
+    var s, i = 'foo', 1   -- Infer s to be Str and i to be Int
+  end
 @end
 
-@h2 Tuple types and variable definition
+<p>Next we willl show how to give the variable types explicitly.
+
+@h2 Variable definition with explicit types
 
 <p>If you define multiple variables using <tt>var</tt> and cannot use type
 inference, you can define the variable types using a tuple type:
@@ -73,8 +53,53 @@ inference, you can define the variable types using a tuple type:
   var i, s = (1, 'foo') as (Int, Str)
 @end
 
-<p>Note that in the above example the <tt>as (...)</tt> construct is bound to
-the variable definition, not to the tuple expression.
+<p>Note that in the above example the <tt>as (...)</tt> construct applies to
+the variable definition (<tt>var i, s = ...</tt>), not to the tuple
+expression.
+
+@h2 Tuple types and multiple assignment
+
+<p>You can use tuple types for multiple assignment:
+
+@example
+  var i as Int
+  var s as Str
+  i, s = 1, 'foo'      -- Rvalue type is (Int, Str)
+@end
+
+<p>Note that parentheses are optional in tuple expressions, but not in tuple
+types.
+
+<p>Here is the above example spelled out with added steps for clarity:
+
+@example
+  var t as (Int, Str)  -- Parentheses are required here
+  var i as Int
+  var s as Str
+  t = (1, 'foo')       -- Parentheses are optional here
+  i, s = t
+@end
+
+@h2 General tuple types
+
+<p>More generally, a tuple type <tt>(T1, T2, ...)</tt> represents a tuple that
+has T1 as the first item type, T2 as the second item type, etc. Empty tuples
+and 1-tuples are special:
+
+<ul>
+  <li><tt>()</tt> is the empty tuple type.
+  <li><tt>(T,)</tt> is a 1-tuple (note the extra comma).
+</ul>
+
+@h2 Constructing tuples with explicit types
+
+<p>The example programs above relied on type inference when constructing
+tuples. You can also give the types explicitly using the now-familiar syntax
+(note that the parentheses are necessary due to precedence):
+
+@example
+  t = (2, 'foo') as &lt;Int, Str&gt;
+@end
 
 @h2 The <tt>Tuple</tt> type
 
