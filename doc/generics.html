@@ -1,12 +1,87 @@
 @head
 @title Defining generic types and functions
 
+@note This section is a stub.
+@end
+
+<p>We have showed how to use generic types, but not how to define them. This
+section explains how to define generic types. We also discuss generic
+functions.
+
+@h2 Defining a generic type
+
+<p>This is a simple generic stack type:
+
+@example
+  class Stack&lt;T&gt;
+    private var array = [] as Array&lt;T&gt;
+
+    def create() as void
+    end
+
+    def isEmpty() as Boolean
+      return self.array == []
+    end
+
+    def push(o as T)
+      self.array.append(o)
+    end
+
+    def pop() as T
+      self.array.removeAt(-1)
+    end
+  end
+@end
+
+<p>You can use it like this:
+
+@example
+  def Main() as void
+    var s = Stack() as &lt;Int&gt;
+    s.push(2)
+    s.push(5)
+    Print(s.pop())      -- 5
+    Print(s.isEmpty())  -- False
+  end
+@end
+
+<p>Keep these things in mind when you define generic types:
+
 <ul>
-  <li>We have showed how to use generic types, but not in any
-    detail how to define them
-  <li>Also explain generic functions: defining them and using them
-  <li>Calling a generic function is similar to constructing a generic instances
-  <li>Example type: stack
-  <li>Explain type variables
-  <li>Example generic functions and methods
+  <li>You can use type variables (T in the stack example) in type
+    declarations within a generic type, and they behave almost like
+    ordinary types.
+  <li>Two type variable types are not compatible with each other. A type
+    variable type is compatible with <tt>Object</tt>, however.
+  <li>Values with type variable
+    types only support operations available for the <tt>Object</tt> type,
+    such as assignment and the == operator.
+  <li>You cannot cast a value to a type variable type.
+  <li>You can mix static and dynamic typing within the body of a generic type.
 </ul>
+
+@h2 Generic functions
+
+<p>Alore also supports generic functions and methods. They have one or more
+type variables associated with them. Here is a simple generic function:
+
+@example
+  def First&lt;T&gt;(a as Array&lt;T&gt;) as T
+    return a[0]
+  end
+
+  var ai = [3, 5] as Array&lt;Int&gt;
+  var as = ['foo', 'bar'] as Array&lt;Str&gt;
+  First(ai)   -- 3
+  First(as)   -- 'foo'
+@end
+
+<p>You can replace the type variable (T in above example) with any type
+when calling the function. Usually the type checker can infer the value of
+the type variable, but you can also give it explicitly:
+
+@example
+  First(ai) as &lt;Int&gt;
+@end
+
+<p>Note that the syntax is similar to constructing instances of generic types.
