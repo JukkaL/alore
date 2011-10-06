@@ -12,9 +12,10 @@ a few different ways:
     more convenient.
 </ul>
 
-<p>Note that local variables are different: if the enclosing function is
-dynamically-typed, they will be dynamically-typed; otherwise their type will
-be inferred. This usually "just works".
+<p>Note that local variables are different. If the enclosing function is
+dynamically-typed, the type checker ignores them (defaulting to dynamic
+typing). If the enclosing function has a type signature, the type checker
+infers the types of local variables.
 
 @h2 The type <tt>dynamic</tt>
 
@@ -62,8 +63,9 @@ the body.
 
 @h2 Type compatibility
 
-<p>Every type is compatible with the type <tt>dynamic</tt>. This allows you to
-seamlessly integrate dynamically-typed and statically-typed code. Consider
+<p>Every type is compatible with the type <tt>dynamic</tt>, and vice versa.
+This allows you to
+smoothly integrate dynamically-typed and statically-typed code. Consider
 this example, which defines a dynamically-typed and a statically-typed
 function that call each other:
 
@@ -86,8 +88,8 @@ function that call each other:
 @end
 
 <p>Note that <tt>S</tt> calls <tt>D</tt> with argument of type <tt>Int</tt>,
-while <tt>D</tt> expects <tt>dynamic</tt>; and vice versa. No casts are
-necessary.
+while <tt>D</tt> expects <tt>dynamic</tt>; and vice versa. Neither needs any
+casts.
 
 <p>Assignment works in a similar way:
 
@@ -100,12 +102,12 @@ necessary.
 
 @h2 Running programs with mixed typing
 
-<p>When any programs is run, all type declarations are first erased. Static
-types are thus ignored at runtime. This happens transparently and is not
-directly visible to the programmer.
+<p>When you run a program, the interpreter first erases all type declarations.
+The interpreter thus ignores static types at runtime.
+This happens behind the scenes and is not directly visible.
 
-<p>Here are a few examples of erasing types (we use <tt>==&gt;</tt> to denote
-the erasure):
+<p>Here are a few examples of how erasing types works
+(we use <tt>==&gt;</tt> to mean erasure):
 
 @example
   var a = 5 as Int ==&gt;
@@ -123,8 +125,8 @@ the erasure):
   var a = []
 @end
 
-<p>Note that normal <a href="casts.html">casts</a> are not erased, but
-dynamic casts are. For example:
+<p>Note that erasure does not remove normal <a href="casts.html">casts</a>,
+but it removes dynamic casts. For example:
 
 @example
   var o = 1 as Object
@@ -216,17 +218,21 @@ override some of its methods:
 
 <p>This is useful especially in dynamically-typed programs that inherit
 statically-typed library classes. A dynamically-typed program or module does
-not need to care whether library modules that it uses use static typing or not.
+not need to care whether modules that it uses use static typing or not.
 
 <p>A statically-typed class can also inherit a dynamically-typed class, but
-this is less useful. You can even change individual argument types to
-<tt>dynamic</tt> when overriding, while keeping other statically typed:
+this is less commonly useful. You can even change individual argument types to
+<tt>dynamic</tt> when overriding, while keeping others statically typed:
 
 @example
   class S2
-    def f(i as Int, s as Str) ... end
+    def f(i as Int, s as Str)
+      ...
+    end
   end
   class D2 is S2
-    def f(i as Int, s as dynamic) ... end
+    def f(i as Int, s as dynamic)   -- Ok
+      ...
+    end
   end
 @end
