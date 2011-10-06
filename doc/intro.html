@@ -2475,6 +2475,28 @@ execution continues after the <tt>try</tt> statement.
 modules. The <a href="libmain.html">Alore Library Reference</a> is a complete
 reference to all the standard library modules.
 
+<h3>Type annotations in the library reference</h3>
+
+<p>Descriptions of functions, types and variables in the library reference
+usually include type annotations.
+For example, here is a partial description of the function
+@ref{std::Chr}:
+
+@fun Chr(n as Int) as Str
+@desc Return a ...
+@end
+
+<p>The type annotations in the function header tell us that
+<tt>Chr</tt> accepts a single integer
+argument (<tt>as Int</tt>), and it returns a string
+(<tt>as Str</tt>).
+
+<p>Container types such as <tt>Array</tt> have a type argument
+within <tt>&lt;</tt> and <tt>&gt;</tt> in annotations. The type argument
+indicates
+the type of items. For example, <tt>Array&lt;Str&gt;</tt> stands for an array
+of strings. Some types, such as @ref{Map}, have more than one type argument.
+
 <h3>The <a name="std"></a><tt>std</tt> module</h3>
 
 <p>The @ref{std} is a special module that is always implicitly imported in
