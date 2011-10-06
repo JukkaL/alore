@@ -122,11 +122,23 @@ understand and maintain.
 <p>Alore borrows ideas from many other programming languages. Python
 is the main source of influence, and there are many
 obvious similarities between Alore and Python in both syntax and libraries.
-Other influential languages include Java, Lua, Strongtalk, Boo and Pascal.
+Other influential languages include Java, C#, Lua, Strongtalk, Boo and Pascal.
 
-<p>Here is a quick list of some of the most significant Alore features:
+<p>Here is a quick list of some major Alore features:
 <ul>
   <li>clean, readable and concise syntax
+  <li>dynamic typing (objects have types, not variables)
+  <li>optional static typing
+    <ul>
+      <li>you may declare types of variables; type checking detects many
+        programming errors without running a program
+      <li>you can freely mix dynamic and static typing within a program
+      <li>you can always bypass type checking and run programs
+        immediately without a slow type checking or compilation step
+      <li>type declarations serve as automatically-checked documentation and
+        make maintenance easier
+      <li>powerful type system features such as generics and type inference
+    </ul>
   <li>simple and consistent semantics that
     <ul>
       <li>simplify learning</li>
@@ -134,36 +146,29 @@ Other influential languages include Java, Lua, Strongtalk, Boo and Pascal.
       <li>improve run-time efficiency</li>
       <li>make the formal specification and analysis of Alore practical
     </ul>
+  <li>support for native threads that can take advantage of multi-core
+    processors
   <li>classes with inheritance
   <li>everything is an object, including primitive types such as integers and
     booleans
-  <li>flexible and powerful high-level basic types, including
-    arbitrary-precision
-    integers, Unicode strings, growable arrays and hash-table-based maps
-  <li>dynamic typing (objects have types, not variables)
-  <li>optional static typing
-    <ul>
-      <li>variables may have declared types that allow many common programming
-        errors to be detected without running the program
-      <li>type checking can always be bypassed, and programs can always be run
-        immediately without a costly type checking or compilation step
-      <li>type declarations serve as automatically-checked documentation
-    </ul>
+  <li>flexible and powerful basic types, including arbitrary-precision
+    integers, Unicode strings, growable arrays, tuples and hash-table-based
+    maps
+  <li>carefully designed standard library with a high density of useful
+    features, and support for static and dynamic typing
   <li>automatic garbage collection (no need to manually free memory)
   <li>strong typing (few implicit type conversions, all objects have
       well-defined types)
-  <li>structured and extensible exception handling
   <li>safety from pointer errors and crashes (all error conditions in Alore
     code are checked by the virtual machine)
+  <li>anonymous functions and lexical closures
+  <li>hierarchical modules with separate namespaces
   <li>proper, language-enforced encapsulation both at class and module
     levels using private members or definitions
-  <li>hierarchical modules with separate namespaces
+  <li>structured and extensible exception handling
   <li>accessor methods for member variables (also known as properties)
-  <li>anonymous functions and lexical closures
-  <li>support for native threads that can take advantage of multi-core
-    processors
   <li>operator overloading
-  <li>a well-defined API for implementing extension modules in C
+  <li>a well-defined API for implementing extension modules in C.
 </ul>
 
 <p>This introduction uses a bottom-up approach: basics are introduced first,
