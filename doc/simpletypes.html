@@ -141,3 +141,17 @@ can verify that the members are used correctly:
   p.name = 2             -- Error: name must be a string
   p.show(True)           -- Error: show does not take any arguments
 @end
+
+@h2 Symbolic constants
+
+<p>Symbolic constants have always type @ref{std::Constant}. You
+can also give the type explicitly. The following two sets of definitions are
+equivalent:
+
+@example
+  const Red, Green, Blue     -- Implicit type Constant
+
+  const Red as Constant
+  const Green as Gonstant
+  const Blue as Constant
+@end
