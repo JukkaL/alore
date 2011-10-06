@@ -1400,9 +1400,18 @@ integer range:
   -- Now a is [3, 15, 9, 21].
 @end
 
-<p>Types are objects as well. They are used to construct values of a specific
-type
-and to check if a value has a specific type using the <tt>is</tt> operator.
+<p>Functions are objects that can be called. Like all other objects,
+they can be stored in variables or composite objects, passed as arguments to
+functions, etc.
+
+@example
+  var func = WriteLn    -- Functions are objects
+  func('hello, world')  -- Call WriteLn indirectly
+@end
+
+<p>Types are objects as well. You can use them to construct values of a
+specific type and to check if a value has a specific type using the <tt>is</tt>
+operator:
 
 @example
   Int('23')            -- 23 (Int object)
@@ -1410,18 +1419,37 @@ and to check if a value has a specific type using the <tt>is</tt> operator.
   23 is Str            -- False
   Int is Type          -- True
   Type is Type         -- True
+  WriteLn is Function  -- True
 @end
 
-<p>Functions are objects that can be called. Like types and all other objects,
-they can be stored in variables or composite objects, passed as arguments to
-functions, etc.
+<p>Type objects can also be used with the <tt>as</tt> operator in <i>cast
+expressions</i>. A cast expression checks if the left operand has a
+specific type. If successful, the left operand is the result; otherwise the
+cast expression generates a runtime error:
 
 @example
-  var func = WriteLn    -- Functions are objects
-  func('hello, world')  -- Call WriteLn indirectly
-  WriteLn is Function   -- True
+  1 as Int              -- 1
+  'x' + 'y' as Str      -- 'xy'
+  1 as Float            -- Error: 1 is Int, not Float
 @end
 
+<p>Cast expressions are useful in statically-typed code. An additional
+variant, cast to <tt>dynamic</tt>, actually serves no purpose in
+dynamically-typed code:
+
+@example
+  1 as dynamic          -- 1 (just return the left operand)
+  'x' as dynamic        -- 'x'
+@end
+
+<p>Cast expressions in variable initializers and in default argument
+values must be in parentheses, or otherwise they will be
+interpreted as type declarations:
+
+@example
+  var a = x as Int   -- Type declaration
+  var a = (x as Int) -- Cast
+@end
 
 <h2><a name="operators"></a>Operators</h2>
 
@@ -1441,6 +1469,7 @@ precedence:
   <li><tt>not</tt>
   <li><tt>and</tt>
   <li><tt>or</tt>
+  <li><tt>as</tt> (cast)
   <li><tt>,</tt> (tuple constructor)
 </ol>
 
