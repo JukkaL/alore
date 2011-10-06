@@ -166,6 +166,7 @@ Now the dynamically-typed program terminates with a runtime type error
 after producing some output:
 
 @example
+  $ <b>alore program3.alo</b>
   *
   **
   \
@@ -182,8 +183,9 @@ after producing some output:
 program:
 
 @example
-  program3.alo, line 8: Argument 1 to "Triangle" has incompatible type "Str"
-  program3.alo, line 8: Argument 2 to "Triangle" has incompatible type "Int"
+  $ <b>alore -c program4.alo</b>
+  program4.alo, line 8: Argument 1 to "Triangle" has incompatible type "Str"
+  program4.alo, line 8: Argument 2 to "Triangle" has incompatible type "Int"
 @end
 
 <p>The above examples highlight some of the differences between dynamic and
