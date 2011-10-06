@@ -190,6 +190,15 @@ program:
 static typing, although many details were omitted. The next section discusses
 the differences more broadly.
 
+@note Since Alore has an <i>optional</i> type system, you can always run
+      programs that have type check errors. Simply omit the <tt>-c</tt> or
+      <tt>-t</tt> option,
+      and the interpreter will skip all type declarations. This can be very
+      useful in the middle of a large program modification. It is nice to be
+      able to debug a program with potentially hundreds of type errors in it,
+      instead of being forced to wait until no type errors remain.
+@end
+
 @h2 Why both static and dynamic typing?
 
 <p>At the present,
@@ -273,7 +282,7 @@ The rest of this document introduces these features in more detail:
     Retroactive definition of interfaces for existing types is possible,
     and even for built-in types such as <tt>Int</tt> or <tt>Str</tt>,
     using <tt>bind</tt> declarations.
-  <li>Alore has a <i>quasi-optional type system</i>: declared types cannot
+  <li>Alore has an <i>optional type system</i>: declared types cannot
     arbitrarily change the behavior of programs. This allows selectively
     ignoring types when running programs, which makes it possible to run and
     debug programs with static type errors in them.
@@ -281,5 +290,5 @@ The rest of this document introduces these features in more detail:
     dynamically-typed programs to static typing.
   <li>Alore models function overloading by using <i>intersection types</i>.
     Unlike ordinary <i>static function overloading</i>, this is compatible
-    with a quasi-optional type system.
+    with an optional type system.
 </ul>
