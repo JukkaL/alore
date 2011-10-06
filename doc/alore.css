@@ -122,6 +122,7 @@ h1 {
     margin-top: 1em;
     font-size: 200%;
     border-bottom: 1px solid #ccccdd;
+    margin-bottom: 0.7em;
 }
 
 #header h1 {
@@ -137,6 +138,8 @@ h2 {
     font-size: 145%;
     font-weight: bold;
     border-bottom: 1px solid #ccccdd;
+    margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 h3 {
