@@ -5,8 +5,9 @@ Alore ReadMe
 What is Alore?
 --------------
 
-Alore is an object-oriented general-purpose programming language with an
-optional static type system. Its syntax and libraries resemble Python.
+Alore is an object-oriented general-purpose programming language that aims to
+combine the convenience and ease of Python with an optional static type system
+and a clean and elegant design.
 
 
 License
