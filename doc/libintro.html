@@ -6,3 +6,76 @@ your programs. This reference manual contains descriptions of all standard
 Alore modules. If you are just starting to learn Alore, start with
 <a href="intro.html">Introduction to Alore</a>. It contains a short overview of
 the standard library. After that, come back to this document for the details.
+
+@h2 Notation
+
+<p>This section gives an overview of the notation used in the library
+reference.
+
+<h3>Type declarations</h3>
+
+<p>Descriptions of functions, types and variables usually include type
+declarations. For example, consider the definition of function @ref{std::Chr}:
+
+@fun Chr(n as Int) as Str
+@desc Return a ...
+@end
+
+<p>The function header indicates that <tt>Chr</tt> accepts a single integer
+argument (due to <tt>as Int</tt>), and it returns a string
+(due to <tt>as Str</tt>).
+
+<p>Container types such <tt>Array</tt> have a type argument (or arguments)
+within <tt>&lt;</tt> and <tt>&gt;</tt> that indicates
+the type of items; for example <tt>Array&lt;Str&gt;</tt> stands for an array of
+integers, and <tt>Map&lt;Int, Str&gt;</tt> stands for a map from integers to
+strings.
+
+<h3>Operations</h3>
+
+<p>The type signatures of operations involving operators such as
+<tt>+</tt>, <tt>*</tt> or <tt>[]</tt>
+use a special notation for clarity.
+For example, consider the + operation for strings:
+
+@op x + y @optype{Str + Str -> Str}
+@desc Return the concatenation of two strings.
+@end
+
+<p>This means that you can add two string objects, and the result is a string.
+The first part (<tt>x + y</tt>) indicates the kind of the operation, and the
+second part indicates the types of the operands and the result
+(<tt>Str + Str &rArr; Str</tt>).
+The actual implementation method can be derived from the above description;
+in this case it is <tt>_add</tt> (the base type is <tt>Str</tt>):
+
+@fun _add(y as Str) as Str
+@end
+
+<p>Indexed array assignment is a more complex example:
+
+@op array[n] = x @optype{Array<T>[Int] = T}
+
+<p>Again the left part tells us that this is an indexed assignment operation.
+The second part says that if the base object has type <tt>Array&lt;T&gt;</tt>
+(for any T), and if the index has type <tt>Int</tt>, the rvalue must have
+type <tt>T</tt> (or any type that is compatible with T). We know that
+T can be replaced with any type from the definition of
+<a href="std_array.html"><tt>Array</tt></a>: it is
+given as <tt>Array&lt;T&gt;</tt>, which tells that T is a <i>type variable</i>.
+
+<h3>Multiple function signatures</h3>
+
+<p>If a function or an operation is given multiple descriptions or signatures,
+it has an
+<a href="intersectiontypes.html">intersection type</a> (which is similar to
+function overloading in other languages). For example,
+@ref{std::Abs} has two signatures:
+
+@fun Abs(x as Int) as Int
+@fun Abs(x as Float) as Float
+@desc Return the absolute value of an integer or a float.
+@end
+
+<p>It is not important to understand the details of intersection types to
+use these kinds of functions or operations.
