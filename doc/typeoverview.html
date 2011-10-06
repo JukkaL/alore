@@ -50,9 +50,11 @@ ASCII characters:
   Triangle(4, '\')
 @end
 
-<p>The output from the program looks like this:
+<p>Now let's save the program as <tt>program.alo</tt> and run the program.
+The output looks like this:
 
 @example
+  $ <b>alore program.alo</b>
   *
   **
   \
@@ -60,6 +62,8 @@ ASCII characters:
   \\\
   \\\\
 @end
+
+<h3>Declaring types</h3>
 
 <p>We can modify the program to be statically-typed by declaring
 the types of some variables. The <tt>as</tt> keyword is used to introduce
@@ -90,6 +94,31 @@ second line of the example with the line below:
   for y {{{as Int}}} in 0 to n
 @end
 
+<h3>Running the type checker</h3>
+
+<p>If you save the modified program as <tt>program2.alo</tt>, you can now type
+check it by running <tt>alore</tt> with the <tt>-c</tt> option:
+
+@example
+  $ <b>alore -c program2.alo</b>
+  $
+@end
+
+<p>There were no type errors since there was no output from the type checker.
+You can type check the program and also run it (if there are no errors) with
+the <tt>-t</tt> option:
+
+@example
+  $ <b>alore -t program2.alo</b>
+  *
+  **
+  \
+  \\
+  ...
+@end
+
+<h3>Introducing type errors</h3>
+
 <p>Now let's add a new line to the end of both of the program variants:
 
 @example
@@ -103,6 +132,7 @@ second line of the example with the line below:
 what we'd expect (and without reporting a problem):
 
 @example
+  $ <b>alore program.alo</b>
   *
   **
   \
@@ -118,6 +148,7 @@ what we'd expect (and without reporting a problem):
 checking the statically-typed program variant:
 
 @example
+  $ <b>alore -c program2.alo</b>
   program2.alo, line 8: Argument 2 to "Triangle" has incompatible type "Int"
 @end
 
