@@ -12,10 +12,10 @@ the standard library. After that, come back to this document for the details.
 <p>This section gives an overview of the notation used in the library
 reference.
 
-<h3>Type declarations</h3>
+<h3>Type annotations</h3>
 
 <p>Descriptions of functions, types and variables usually include type
-declarations. For example, consider the definition of function @ref{std::Chr}:
+annotations. For example, consider the definition of function @ref{std::Chr}:
 
 @fun Chr(n as Int) as Str
 @desc Return a ...
@@ -25,10 +25,10 @@ declarations. For example, consider the definition of function @ref{std::Chr}:
 argument (due to <tt>as Int</tt>), and it returns a string
 (due to <tt>as Str</tt>).
 
-<p>Container types such <tt>Array</tt> have a type argument (or arguments)
+<p>Container types such as <tt>Array</tt> have a type argument (or arguments)
 within <tt>&lt;</tt> and <tt>&gt;</tt> that indicates
 the type of items; for example <tt>Array&lt;Str&gt;</tt> stands for an array of
-integers, and <tt>Map&lt;Int, Str&gt;</tt> stands for a map from integers to
+strings, and <tt>Map&lt;Int, Str&gt;</tt> stands for a map from integers to
 strings.
 
 <h3>Operations</h3>
