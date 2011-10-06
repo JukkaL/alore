@@ -33,7 +33,6 @@ precedence:
 
 <ol>
   <li><tt>. () []</tt> (member access, function call, indexing)
-  <li><tt>()</tt> (cast)
   <li><tt>**</tt>
   <li><tt>-</tt> (unary)
   <li><tt>* / div mod</tt>
@@ -44,6 +43,7 @@ precedence:
   <li><tt>not</tt>
   <li><tt>and</tt>
   <li><tt>or</tt>
+  <li><tt>as</tt> (cast)
   <li><tt>,</tt> (array constructor)
 </ol>
 
@@ -556,7 +556,7 @@ as well as any members defined or overridden in the superclass.
 @h2 Cast expressions
 
 @grammar
-  cast-expression :: "(" cast-type ")" expression
+  cast-expression :: expression "as" cast-type
   cast-type :: gvar | "dynamic"
 @end
 
