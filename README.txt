@@ -107,8 +107,8 @@ Software requirements
 Alore has been successfully compiled and run on at least the following
 operating systems:
 
- * Windows 7, Windows Vista and Windows XP (32-bit)
  * Linux (several distributions; 32-bit and 64-bit)
+ * Windows 7, Windows Vista and Windows XP (32-bit)
  * Mac OS X (64-bit)
  * OpenSolaris (32-bit)
  * FreeBSD (32-bit)
