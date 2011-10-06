@@ -116,7 +116,7 @@ end
 
 -- Reserved words (not including operators)
 private const Keywords = Set([
-  "break", "class", "const", "elif", "else", "encoding",
+  "break", "case", "class", "const", "elif", "else", "encoding",
   "end", "except", "finally", "for", "if", "import",
   "module", "nil", "private", "raise", "repeat", "return",
   "self", "def", "super", "switch", "try", "until", "var",

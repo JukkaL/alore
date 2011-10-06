@@ -649,3 +649,13 @@ file.alo: In function "f":
 file.alo, line 1: Parse error before "a"
 file.alo: In function "g":
 file.alo, line 3: Parse error before (
+
+
+-- Regression tests
+-- ----------------
+
+
+[case testCaseKeyword]
+var case = 1
+[out]
+file.alo, line 1: Parse error before "case"
