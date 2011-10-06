@@ -2638,18 +2638,17 @@ the contents of a stream as an array of lines:
 the constants <tt>Pi</tt> and <tt>E</tt> (Euler's number):
 
 @example
+  Round(1.5)        -- 2.0 (round to nearest integer)
+  Floor(1.7)        -- 1.0 (round down to nearest integer)
+  Ceil(1.7)         -- 2.0 (round up to nearest integer)
+  Trunc(-1.7)       -- -1.0 (round towards zero)
   Sqrt(4)           -- 2.0 (square root)
-  Abs(-3)           -- 3 (absolute value)
   Sin(Pi / 2)       -- 1.0
   Cos(Pi / 2)       -- 0.0
   Tan(Pi / 4)       -- ~1.0
   ArcSin(1.0)       -- ~1.571 (Pi / 2)
   Exp(2)            -- ~7.39 (E**2)
   Log(E**2)         -- 2
-  Round(1.5)        -- 2.0 (round to nearest integer)
-  Floor(1.7)        -- 1.0 (round down to nearest integer)
-  Ceil(1.7)         -- 2.0 (round up to nearest integer)
-  Trunc(-1.7)       -- -1.0 (round towards zero)
 @end
 
 <h3>The <tt>bitop</tt> module</h3>
