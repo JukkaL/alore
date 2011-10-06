@@ -1,14 +1,12 @@
-Alore Readme (development version)
-==================================
-
-Copyright (c) 2010-2011 Jukka Lehtosalo
+Alore ReadMe
+============
 
 
-What's Alore?
--------------
+What is Alore?
+--------------
 
 Alore is an object-oriented general-purpose programming language with an
-optional static type system.
+optional static type system. Its syntax and libraries resemble Python.
 
 
 License
@@ -21,7 +19,8 @@ LICENSE.txt in the distribution.
 Quick start (Linux, OS X, Unix-like)
 ------------------------------------
 
-To get started under a Unix-like operating system, type
+To get started in a Unix-like operating system, clone the Alore git repository
+or download a source tarball and type
 
   ./configure
   make
@@ -78,6 +77,19 @@ under c:\Alore:
  6. Type "make install".
 
 
+Documentation
+-------------
+
+The documentation for the latest Alore release is available online at
+http://www.alorelang.org/doc/.
+
+You can build the documentation from sources using make:
+
+  make doc
+
+The documentation is generated in directory doc/html.
+
+
 Release notes
 -------------
 
@@ -85,7 +97,52 @@ Alore is still pre-beta software. Although Alore developers try to avoid
 unnecessary changes that break compatibility, this may happen occasionally.
 Documentation may not always be up-to-date.
 
-See also "Known bugs and limitations" below.
+See also "Known bugs and limitations" below and the issue tracker.
+
+
+Software requirements
+---------------------
+
+Alore has been successfully compiled and run on at least the following
+operating systems:
+
+ * Windows 7, Windows Vista and Windows XP (32-bit)
+ * Linux (several distributions; 32-bit and 64-bit)
+ * Mac OS X (64-bit)
+ * OpenSolaris (32-bit)
+ * FreeBSD (32-bit)
+
+The following tools are recommended for building Alore under Windows:
+
+ * MinGW (Minimalist GNU for Windows)
+ * MSYS (shell environment for Windows, part of the MinGW distribution)
+
+On other operating systems, the standard C build environment is supported.
+
+
+Discussion and feedback
+-----------------------
+
+Send any questions or comments about Alore and suggestions for future
+improvements to the Alore mailing list:
+
+  https://groups.google.com/group/alorelang
+
+
+Reporting bugs
+--------------
+
+Submit bug reports using the Alore issue tracker:
+
+  https://github.com/JukkaL/alore/issues
+
+
+Credits
+-------
+
+Alore was conceived, designed and implemented by Jukka Lehtosalo, with help
+and useful comments from many people; see the file CREDITS.txt for a list of
+contributors.
 
 
 Running tests
@@ -114,64 +171,6 @@ your PATH (the exact location of MinGW files may differ in your configuration):
 
 NOTE: The source code of your program is directly included in the generated
       executable file.
-
-
-Software requirements
----------------------
-
-Alore has been successfully compiled and run on at least the following
-operating systems:
-
- * Windows 7, Windows Vista and Windows XP (32-bit)
- * Linux (several distributions; 32-bit and 64-bit)
- * Mac OS X (64-bit)
- * OpenSolaris (32-bit)
- * FreeBSD (32-bit)
-
-The following tools are recommended for building Alore under Windows:
-
- * MinGW (Minimalist GNU for Windows)
- * MSYS (shell environment for Windows, part of the MinGW distribution)
-
-On other operating systems, the standard C build environment is supported.
-
-
-Documentation
--------------
-
-The documentation for the latest Alore release is available online at
-http://www.alorelang.org/doc/.
-
-You can build the documentation from sources using make:
-
-  make doc
-
-The documentation is generated in directory doc/html.
-
-
-Giving feedback
----------------
-
-Any comments (good or bad) about Alore and suggestions for future improvements
-are gladly accepted. Send feedback to jukka.lehtosalo@iki.fi.
-
-
-How to report bugs
-------------------
-
-If you believe that you have found a bug in Alore or a mistake in Alore
-documentation, please let the developers know about it so that the defect
-can be fixed.
-
-Send bug reports by email to bugs@alorelang.org.
-
-
-Credits
--------
-
-Alore was conceived, designed and implemented by Jukka Lehtosalo
-(jukka.lehtosalo@iki.fi), with help and useful comments from many people;
-see the file CREDITS.txt for a list of contributors.
 
 
 Known bugs and limitations
