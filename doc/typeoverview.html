@@ -227,8 +227,8 @@ best one for a particular task is not always easy.
 <p>Dynamic typing has a different, complementary set of benefits:
     <ul>
       <li>Dynamic typing is conceptually simpler and easier to understand
-        than static typing, especially with a relatively powerful static type
-        system such as the one in Alore.
+        than static typing, especially when using powerful container types
+        such as Alore arrays, tuples and maps.
         This effect is pronounced for non-expert programmers.
       <li>Dynamic typing is more flexible. A static
         type system always restricts what
@@ -239,9 +239,9 @@ best one for a particular task is not always easy.
     </ul>
 
 <p>The benefits of static typing are more pronounced for large and
-    complex programs. It offers few advantages over dynamic typing in many
-    scenarios (e.g. scripting and prototyping). In these cases it can mainly
-    slow down the programmer, and dynamic typing is preferable.
+    complex programs. It offers little benefit over dynamic typing when
+    writing short scripts and prototypes, for example. In these cases it mainly
+    slows down the programmer, and dynamic typing is preferable.
 
 @h2 Features of Alore type system
 
@@ -249,13 +249,6 @@ best one for a particular task is not always easy.
 The rest of this document introduces these features in more detail:
 
 <ul>
-  <li>Alore supports <i>generic types</i> and <i>generic functions</i>. Generic
-    types with parameters are most commonly used for collection types, e.g.
-    <tt>Array&lt;Int&gt;</tt> for an array of integers.
-    User-defined types can be generic.
-  <li>The type system supports <i>type inference</i> for local variables and
-    generic
-    type parameters. This greatly simplifies working with generic types.
   <li>Alore allows arbitrary mixing of dynamic and static typing within a
     program:
     <ul>
@@ -266,18 +259,26 @@ The rest of this document introduces these features in more detail:
       <li>Dynamic and static types can be mixed within a single function,
         a class or an expression.
     </ul>
+  <li>Alore supports <i>generic types</i> and <i>generic functions</i>. Generic
+    types with parameters are most commonly used for collection types, e.g.
+    <tt>Array&lt;Int&gt;</tt> for an array of integers.
+    User-defined types can be generic.
+  <li>The type system supports <i>type inference</i> for local variables and
+    generic
+    type parameters. This greatly simplifies working with generic types.
   <li>Alore has <i>tuple types</i> and functions types. For example,
     the 2-item tuple
     <tt>(2, 'x')</tt> has type <tt>(Int, Str)</tt>.
   <li>Interface types allow a simple form of multiple inheritance.
     Retroactive definition of interfaces for existing types is possible,
-    and even for built-in types such as <tt>Int</tt> or <tt>Str</tt>.
+    and even for built-in types such as <tt>Int</tt> or <tt>Str</tt>,
+    using <tt>bind</tt> declarations.
   <li>Alore has a <i>quasi-optional type system</i>: declared types cannot
     arbitrarily change the behavior of programs. This allows selectively
     ignoring types when running programs, which makes it possible to run and
     debug programs with static type errors in them.
-    It also makes it straightforward to evolve
-    dynamically-typed programs to use static typing.
+    It also enables smooth evolution from
+    dynamically-typed programs to static typing.
   <li>Alore models function overloading by using <i>intersection types</i>.
     Unlike ordinary <i>static function overloading</i>, this is compatible
     with a quasi-optional type system.
