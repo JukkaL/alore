@@ -188,13 +188,18 @@ a.annref:hover {
 }
 
 .note {
-    text-indent: -2em;
-    padding-left: 2em;
+    text-indent: -1.0cm;
+    padding-left: 1.2cm;
+    padding-right: 0.2cm;
+    padding-top: 0.2cm;
+    padding-bottom: 0.2cm;
+    background-color: #eeeeee;
+    border: 1px solid #dddddd;
 }
 
 .note-header {
     font-weight: bold;
-    padding-right: 1px;
+    padding-right: 3px;
 }
 
 .implements {
