@@ -1919,16 +1919,21 @@ later in the section <a href="#opoverload">Operator overloading</a>.
 of a simple
 interface is the <tt>_str</tt> interface: a class implements this interface if
 it defines a public <tt>_str</tt> method that takes no arguments and returns
-a string representation of the object. Interfaces are <i>implicit</i>: they
-are not visible
+a string representation of the object. Interfaces may be <i>implicit</i>
+in dynamically-typed Alore code: they are not visible
 in Alore code, other than potentially in comments. Therefore any class may
 implement any number of interfaces, but the interfaces may not be visible when
-observing the class definition.
+observing the class definition. Alternatively, you can define <i>explicit</i>
+interfaces using the <tt>interface</tt> construct, and declare that some
+classes implement the interfaces using the keyword <tt>implements</tt>. We
+ignore explicit interfaces for now; refer to
+<a href="typemain.html">Introduction to Alore Type System</a> for a discussion
+of explicit interfaces.
 
-<p>Objects conforming to the <i>iterable</i> interface can be iterated
+<p>Objects conforming to the <i>iterable</i> implicit interface can be iterated
 using for loops. They must define an <tt>iterator</tt> method that returns an
-object that conforms to the <i>iterator</i> interface. The iterator interface
-contains <tt>hasNext</tt> and <tt>next</tt> methods.
+object that conforms to the <i>iterator</i> implicit interface. The iterator
+interface contains <tt>hasNext</tt> and <tt>next</tt> methods.
 As an example, <tt>Array</tt> and <tt>Range</tt> objects provide the
 <tt>iterator</tt> method.
 
@@ -1954,8 +1959,8 @@ to clarify the iterable and iterator interfaces:
 <p>if the name <tt>e</tt> is replaced with a name that does not occur
 anywhere else in the program.
 
-<p>A <i>polymorphic function</i> or method accepts all objects that support a
-specific interface.
+<p>A form of <i>polymorphic function</i> or method accepts all objects that
+support a specific interface.
 In the example below, <tt>Show</tt>
 is a polymorphic function that displays the contents of any object that
 implements the <i>iterable</i> interface. The example also illustrates
