@@ -115,7 +115,7 @@ constructed using the <tt>*</tt> operator. Example:
 
 <p><tt>Array</tt> objects support the following operations:
 
-@op array[n] @optype{Array<T>[Int] -> Int}
+@op array[n] @optype{Array<T>[Int] -> T}
 @desc Access an array item at integer index <tt>n</tt>.
       Raise @ref{IndexError} if the index is out of bounds.
 
@@ -127,7 +127,7 @@ constructed using the <tt>*</tt> operator. Example:
       @end
 @end
 
-@op array[n] = x @optype{Array<T>[Int] = Int}
+@op array[n] = x @optype{Array<T>[Int] = T}
 @desc Modify an array item at integer index <tt>n</tt>. Raise @ref{IndexError}
       if the index is out of bounds.
 
