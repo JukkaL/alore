@@ -107,6 +107,10 @@ ul {
     list-style-type: disc;
 }
 
+dt {
+    margin-bottom: 4px;
+}
+
 dd {
     margin-top: 2px;
     margin-bottom: 0.25cm;
