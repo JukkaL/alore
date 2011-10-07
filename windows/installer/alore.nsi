@@ -82,6 +82,8 @@ Section "Core components" SecBasic
   File /R "C:\Alore\lib"
   File /R "C:\Alore\include"
   File /R "C:\Alore\share"
+  ; Install examples
+  File /R "..\..\demo"
   ; Install text files
   File "..\..\README.txt"
   File "..\..\LICENSE.txt"
@@ -188,6 +190,9 @@ Section "Uninstall"
   Delete "$INSTDIR\LICENSE.txt"
   Delete "$INSTDIR\CHANGELOG.txt"
   Delete "$INSTDIR\CREDITS.txt"
+  
+  ; Delete examples
+  RMDir /r "$INSTDIR\demo"
   
   ; Delete documentation files
   
