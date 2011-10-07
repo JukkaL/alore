@@ -92,6 +92,15 @@ You can build the documentation from sources using make:
 The documentation is generated in directory doc/html.
 
 
+Syntax highlighting in editors
+------------------------------
+
+The Alore Wiki explains how to enable Alore syntax highlighting in several
+popular text editors:
+
+  https://github.com/JukkaL/alore/wiki/Editor-support-for-alore
+
+
 Release notes
 -------------
 
