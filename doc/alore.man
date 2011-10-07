@@ -1,7 +1,7 @@
-.TH ALORE 1 "2011-09-14"
+.TH ALORE 1 "2011-10-07"
 
-./" Preview with groff:
-./"   groff -Tascii -man alore.man | less
+.\" Preview with groff:
+.\"   groff -Tascii -man alore.man | less
 
 .SH NAME
 alore \- Alore interpreter

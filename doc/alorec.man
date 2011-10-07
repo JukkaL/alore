@@ -1,7 +1,7 @@
-.TH ALOREC 1 "2010-10-11"
+.TH ALOREC 1 "2011-10-07"
 
-./" Preview with groff:
-./"   groff -Tascii -man alore.man | less
+.\" Preview with groff:
+.\"   groff -Tascii -man alore.man | less
 
 .SH NAME
 alorec \- Alore compiler
