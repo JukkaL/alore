@@ -92,6 +92,15 @@ cp util/*.alo $DEST/util
 mkdir $DEST/util/compiler
 cp util/compiler/*.alo $DEST/util/compiler
 
+# Copy the check directory contents.
+cp -R check $DEST/
+# Copy library stubs.
+cp -R stubs $DEST/
+# Copy examples.
+cp -R demo $DEST/
+# Copy windows-specific files.
+cp -R windows $DEST/
+
 # Copy the test directory contents.
 for dir in `find test -xtype d -a -regex '[a-z0-9/]*'`
 do
