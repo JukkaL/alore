@@ -1,6 +1,103 @@
 Alore ChangeLog
 ===============
 
+0.7.0 (October 2011)
+
+ * This release adds optional typing as the main new feature.
+
+   * This is arguably the single biggest change to Alore since its inception.
+   * This has several related changes. Some changes require changes to existing
+     programs (see below).
+   * As things will break anyway, a general library spring-clean was also
+     performed.
+   * The previous release only hinted at optional typing (it was basically
+     undocumented, and there was no type checker).
+
+ * Primary changes related to optional typing:
+
+   * Add optional typing and a type checker (run with "alore -c" or
+     "alore -t"). See the documentation for the whole story.
+   * Add documentation for optional typing.
+   * Add type signatures to library reference.
+   * New syntax for casts and type declarations (the "as" keyword).
+   * Disallow "bind" in interfaces with a superinterface.
+     * This would basically break modular type checking.
+   * Cannot access "self" via self in the class definition.
+     * This would compromise the type system, as create can be overriden with
+       an incompatible type.
+   * Redesign the encodings module to better support optional typing. See
+     the library reference for details.
+     * Also affects the io module and the Str class.
+   * thread::Thread constructor accepts only a single argument (a function
+     with no arguments).
+   * Simplify type::Time calling convention so that it can be more conveniently
+     typed.
+   * Make class pack::PackerBase public.
+
+ * Support single-quoted string literals ('foo') in addition to double-quoted.
+
+ * Additional changes that may cause breakage (many of these improve the
+   convenience of common tasks):
+
+   * Rename the reflection module to reflect.
+   * Rename os::JoinPath to Join.
+   * Rename os::DirSeparator to Separator.
+   * Stream read() now closes the stream, similar to readLines().
+   * Rename cgi::HtmlEncode to Html.
+   * Rename cgi::HtmlEncodeQuotes to HtmlQuot.
+   * Value of sys::Platform is now "mac" in Mac OS X (it was "osx").
+   * Do not automatically expand wildcards in command line arguments in
+     Windows.
+   * Map objects raise KeyError instead of IndexError if the key is missing.
+   * std::Repr('foo') returns "'foo'" instead of '"foo"'.
+
+ * New library features:
+
+   * Add errno module. IoError exceptions now usually contain a symbolic
+     description of the error.
+   * Add debugging facilities (std::Print and std::TypeName).
+   * Add std::Reversed.
+   * Add std::KeyError.
+   * Add Str encode and decode methods.
+   * Add Array extend and remove methods.
+   * Add constructor Array(iterable).
+   * Add Map get and items methods.
+   * Add Type interfaces method.
+   * std::Exception constructor accepts a nil message.
+   * time::Time objects have nanosecond precision (previously microsecond).
+   * Add Time toSeconds() and toNanoSeconds() methods.
+   * Add re::FindAll.
+   * Add several features to os module (MakeDirs, MakeSymLink, ReadSymLink,
+     NormPath, AbsPath, ExpandUser, AltSeparator).
+   * Add optional default argument to os::GetEnv.
+   * os::SetPerm and os::Stat support group permissions (in Unix-like operating
+     systems).
+
+ * Deprecated library features:
+
+   * Deprecate functions Encode and Decode in encodings (use Str encode
+     and decode methods instead).
+   * Deprecate Array find method.
+   * Deprecate Float(time) for time::Time objects (use toSeconds() instead).
+   * Deprecate re::MatchResult span member (use start and stop instead).
+
+ * Other changes:
+
+   * Significantly improve exception error messages. This is a huge help when
+     debugging.
+   * Add a Windows installer/uninstaller.
+   * Add several complete example programs under demo/, some of which use
+     optional typing.
+   * Change documentation formatting.
+     * Also add syntax highlighting to code fragments.
+   * Simplify the format of stack traces.
+   * Fix many bugs (too many to list here).
+   * Support files larger than 4 GB properly.
+   * Improve and clarify documentation in many places.
+   * Switch from svn to git and publish the git repository at github
+     (https://github.com/JukkaL/alore).
+   * Add issue tracker, wiki and mailing list.
+
 0.6.0 (January 2011)
 
  * Use "def" keyword instead "sub" to define functions.
@@ -52,4 +149,4 @@ Alore ChangeLog
 
 0.5.0 (October 2010)
 
- * First Alore release in wide distribution.
+ * First Alore release with public availability.
