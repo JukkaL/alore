@@ -25,7 +25,7 @@ const HtmlHeader = [
   "  <link rel=""stylesheet"" type=""text/css"" href=""alore.css"">"]
 
 
-const EmailAddress = "jukka@alorelang.org"
+const EmailAddress = "jukka.lehtosalo@iki.fi"
 
 
 def Main(args)
