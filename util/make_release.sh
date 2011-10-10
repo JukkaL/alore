@@ -161,6 +161,10 @@ then
   echo
   echo Running tests...
   make test
+  echo
+  echo Generating documentation...
+  make doc
+  echo
 fi
 
 # Remove temporary files.
