@@ -89,6 +89,7 @@ done
 # Copy the util directory contents.
 mkdir $DEST/util
 cp util/*.alo $DEST/util
+cp util/conv.sh $DEST/util
 mkdir $DEST/util/compiler
 cp util/compiler/*.alo $DEST/util/compiler
 
@@ -114,11 +115,11 @@ do
   done
 done
 
-# Copy the doc directory contents. (NOTE: Currently mostly skipped)
+# Copy the doc directory contents.
 mkdir $DEST/doc
 cp doc/*.man $DEST/doc
-##mkdir $DEST/doc/html
-##cp doc/{*.html,conv.alo,conv.sh,alore.css} $DEST/doc
+cp doc/{*.html,alore.css} $DEST/doc
+mkdir $DEST/doc/html
 
 # Create a tar.gz archive.
 DIR=`pwd`
