@@ -68,6 +68,7 @@ cp LICENSE.txt README.txt CREDITS.txt CHANGELOG.txt $DEST
 
 # Copy build files
 cp Makefile.in Makefile.depend config.h.in configure configure.ac $DEST
+cp install-sh $DEST
 
 # Copy the src directory contents.
 mkdir $DEST/src
