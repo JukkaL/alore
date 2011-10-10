@@ -143,7 +143,7 @@ echo Running configure...
 # Build.
 echo
 echo Building...
-make
+make -j2
 if [ -f alore ]
 then
   # Run tests.
