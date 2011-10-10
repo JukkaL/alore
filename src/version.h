@@ -19,7 +19,11 @@
 
 /* Alore version. Official releases are of the form "x.y" or "x.y.z",
    optionally followed by (alpha|beta)[1-9] to denote an alpha or beta version.
-   Development versions are of the form "development version (build XXX)".
+
+   Development versions are of the form
+     "development version (build x.y.z-dev-XXX-YYYYYYYY)"
+   (where XXX is a number and YYY... is a git commit hash prefix).
+
    Development snapshots are of the form "development snapshot YYYY-MM-DD
    (build XXX)". */
 A_APIVAR extern char AVersion[];
