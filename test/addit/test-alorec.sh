@@ -30,22 +30,24 @@ fi
 
 cd test
 
-# Compile unit tests.
-echo Compiling unit tests...
-../alorec test.alo
-if test $? != 0; then
-  echo ERROR: ../alorec test.alo failed
-  exit 1
-fi
+#export ALOREPATH=../check
 
-# Run a selection of unit tests (currently only a subset of all test cases).
-echo Running unit tests...
-./test "testI*"
-if test $? != 0; then
-  echo ERROR: Compiled test.alo failed
-  exit 1
-fi
-rm test
+## Compile unit tests.
+#echo Compiling unit tests...
+#../alorec test.alo
+#if test $? != 0; then
+#  echo ERROR: ../alorec test.alo failed
+#  exit 1
+#fi
+
+## Run a selection of unit tests (currently only a subset of all test cases).
+#echo Running unit tests...
+#./test "testI*"
+#if test $? != 0; then
+#  echo ERROR: Compiled test.alo failed
+#  exit 1
+#fi
+#rm test
 
 # Create a test application in a separate directory and compile it using
 # the alorec available at PATH.
@@ -57,7 +59,7 @@ fi
 mkdir $DIR
 FILEPATH=$DIR/hello.alo
 echo 'import time, socket, re, encodings, base64' > $FILEPATH
-echo 'sub Main()' >> $FILEPATH
+echo 'def Main()' >> $FILEPATH
 echo '  WriteLn("hello, world")' >> $FILEPATH
 echo 'end' >> $FILEPATH
 (cd $DIR; alorec hello.alo; ./hello >output)
