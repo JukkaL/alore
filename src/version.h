@@ -13,7 +13,7 @@
 
 
 /* Define Alore version for non-development versions here. */
-/* #define A_VERSION "x.y" */
+#define A_VERSION "0.7.0"
 /* #define A_SNAPSHOT "2007-05-05" */
 
 

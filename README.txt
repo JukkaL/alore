@@ -1,5 +1,5 @@
-Alore ReadMe
-============
+Alore ReadMe (version 0.7.0)
+============================
 
 
 What is Alore?
