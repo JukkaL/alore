@@ -163,6 +163,7 @@ distclean: clean
 	rm -f Makefile core
 	rm -f doc/html/*.html doc/html/*.css
 	rm -f release/alore-*.gz release/alore-*.zip
+	rm -f windows/installer/Alore-*.exe
 	find . '(' -name "*~" \
 		-o -name "#*#" \
                 -o -name "svn-commit*.tmp" ')' -exec rm -f {} ';'
