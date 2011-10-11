@@ -45,8 +45,7 @@ Quick start (Windows)
 ---------------------
 
 The easiest way to use Alore in Windows is to download the Windows installer
-from http://www.alorelang.org/ and use it to install Alore. [It should be
-available any day now... Until it is, build from source (see below).]
+from http://www.alorelang.org/ and use it to install Alore.
 
 You may also wish to add c:\Alore to your PATH (assuming you used the default
 target folder when installing). Do it like this in Command prompt:
