@@ -7,6 +7,7 @@ and in (more or less) alphabetical order.
  -- Jukka Lehtosalo
 
 Max Bolingbroke
+Peter Calvert
 Kathy Gray
 David J Greaves
 Jussi Hagman
@@ -14,7 +15,9 @@ Riitta Ikonen
 Terho Ikonen
 Laura Lehtosalo
 Seppo Mattila
+Robin Message
 Alan Mycroft
+Dominic Orchard
 Ilpo Riikonen
 Juha Sorva
 Jorma Tarhio
