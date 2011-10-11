@@ -57,7 +57,7 @@ fi
 mkdir $DIR
 FILEPATH=$DIR/hello.alo
 echo 'import time, socket, re, encodings, base64' > $FILEPATH
-echo 'sub Main()' >> $FILEPATH
+echo 'def Main()' >> $FILEPATH
 echo '  WriteLn("hello, world")' >> $FILEPATH
 echo 'end' >> $FILEPATH
 (cd $DIR; alorec hello.alo; ./hello >output)
