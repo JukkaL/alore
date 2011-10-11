@@ -3,6 +3,8 @@ Example scripts
 
 This directory contains several small example scripts.
 
+hello.alo:
+  Hello world.
 nlargest.alo:
   Find the largest subdirectories of a directory.
 wordfreq.alo:
