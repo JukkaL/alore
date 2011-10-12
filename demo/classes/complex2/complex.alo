@@ -1,20 +1,41 @@
 module complex2
 
--- A simple complex number class with static typing. This example illustrates
--- the following features:
+-- This is a more elaborate complex number class with static typing. See also
+-- module "complex" which shows a more straightforward implementation. 
 --
---   * class definition
+-- The main difference between these examples is that this example allows
+-- using mixed operations with Float objects, e.g. 1.0 + Complex(1.0, 2.0).
+--
+-- To make these operations type-safe, the class implements the standard 
+-- library interfaces Addable and Multipliable. These allow Complex objects to
+-- be used as arguments for Float _add and _mul methods, respectively.
+--
+-- This example illustrates the following features:
+--
 --   * module definition
+--   * class definition
 --   * operator overloading
---   * intersection types
+--   * interface binding
 --   * casts
 --   * interface implementation
+--   * using intersection types (Float _add and _mul methods)
 
 import math
 
 
-class Complex implements Addable<Float, Complex>,
-                         Multipliable<Float, Complex>
+-- A numeric value: a Complex or a Float.
+interface Numeric
+  bind Float
+  bind Complex
+end
+
+
+-- The implementation of Addable<Float, Complex> denotes that "if we add 
+-- Float to Complex, the result is Complex". It allows us to do operations such
+-- as 1.0 + Complex(...), where Complex is the right operand. Multipliable is 
+-- similar.
+class Complex implements std::Addable<Float, Complex>,
+                         std::Multipliable<Float, Complex>
   const re as Float
   const im as Float
 
@@ -23,14 +44,17 @@ class Complex implements Addable<Float, Complex>,
     self.im = Float(im)
   end
 
+  -- Absolute value.
   def abs() as Float
     return Sqrt(self.re**2 + self.im**2)
   end
 
+  -- Complex conjugate.
   def conj() as Complex
     return Complex(self.re, -self.im)
   end
 
+  -- Conversion to string; allows Str(complex).
   def _str() as Str
     if self.im >= 0
       return "({} + {}j)".format(self.re, self.im)
@@ -39,6 +63,7 @@ class Complex implements Addable<Float, Complex>,
     end
   end
 
+  -- The "==" operation.
   def _eq(n as Object) as Boolean
     if n is Complex
       var c = (n as Complex)
@@ -50,27 +75,27 @@ class Complex implements Addable<Float, Complex>,
     end
   end
 
-  def _add(n as Complex) as Complex or
-          (n as Float) as Complex
+  -- The "+" operation.
+  def _add(n as Numeric) as Complex
     var c = Coerce(n)
     return Complex(self.re + c.re, self.im + c.im)
   end
 
-  def _sub(n as Complex) as Complex or
-          (n as Float) as Complex
+  -- The "-" operation.
+  def _sub(n as Numeric) as Complex
     var c = Coerce(n)
     return Complex(self.re - c.re, self.im - c.im)
   end
-
-  def _mul(n as Complex) as Complex or
-          (n as Float) as Complex
+  
+  -- The "*" operation.
+  def _mul(n as Numeric) as Complex
     var c = Coerce(n)
     return Complex(self.re * c.re - self.im * c.im,
                    self.im * c.re + self.re * c.im)
   end
 
-  def _div(n as Complex) as Complex or
-          (n as Float) as Complex
+  -- The "/" operation.
+  def _div(n as Numeric) as Complex
     var c = Coerce(n)
     var d = c.re**2 + c.im**2
     return Complex((self.re * c.re + self.im * c.im) / d,
@@ -79,8 +104,8 @@ class Complex implements Addable<Float, Complex>,
 end
 
 
-private def Coerce(n as Complex) as Complex or
-                  (n as Float) as Complex
+-- Convert a numeric value to a complex number.
+private def Coerce(n as Numeric) as Complex
   if n is Complex
     return n as Complex
   else
