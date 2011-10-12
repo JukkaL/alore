@@ -1,6 +1,6 @@
 -- Simple unit testing example.
 
-import unittest, complex, sys
+import unittest, complex2, sys
 
 
 class ComplexSuite is Suite

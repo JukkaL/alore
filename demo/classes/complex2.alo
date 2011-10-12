@@ -1,6 +1,6 @@
 -- Complex numbers; see also module "complex".
 
-import complex
+import complex2
 
 def Main() as void
   var c1 = Complex(0.5, -2.0)

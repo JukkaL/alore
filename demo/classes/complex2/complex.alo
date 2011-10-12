@@ -1,4 +1,4 @@
-module complex
+module complex2
 
 -- A simple complex number class with static typing. This example illustrates
 -- the following features:
