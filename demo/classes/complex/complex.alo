@@ -13,37 +13,42 @@ module complex
 import math
 
 
+-- Examples:
+--   Complex(0.0, -2.0)                         (complex number -2.0j)
+--   Complex(0.0, 2.0) + Complex(1.5, -0.5)     (complex addition)
+
+
 class Complex
   const re as Float
   const im as Float
   
   -- Since we don't define a constructor, we get the default constructor 
   -- create(re, im).
-
+  
   -- Absolute value.
   def abs() as Float
-    return Sqrt(self.re**2 + self.im**2)
+    return Sqrt(re**2 + im**2)
   end
 
   -- Complex conjugate.
   def conj() as Complex
-    return Complex(self.re, -self.im)
+    return Complex(re, -im)
   end
 
   -- Conversion to string; allows Str(complex).
   def _str() as Str
-    if self.im >= 0
-      return '({} + {}j)'.format(self.re, self.im)
+    if im >= 0
+      return '({} + {}j)'.format(re, im)
     else
-      return '({} - {}j)'.format(self.re, -self.im)
+      return '({} - {}j)'.format(re, -im)
     end
   end
 
   -- The "==" operation.
   def _eq(n as Object) as Boolean
     if n is Complex
-      var c = (n as Complex)
-      return self.re == c.re and self.im == c.im
+      var c = (n as Complex)    -- Downcast to Complex
+      return re == c.re and im == c.im
     else
       return False
     end
@@ -51,24 +56,24 @@ class Complex
 
   -- The "+" operation.
   def _add(c as Complex) as Complex
-    return Complex(self.re + c.re, self.im + c.im)
+    return Complex(re + c.re, im + c.im)
   end
 
   -- The "-" operation.
   def _sub(c as Complex) as Complex
-    return Complex(self.re - c.re, self.im - c.im)
+    return Complex(re - c.re, im - c.im)
   end
 
   -- The "*" operation.
   def _mul(c as Complex) as Complex
-    return Complex(self.re * c.re - self.im * c.im,
-                   self.im * c.re + self.re * c.im)
+    return Complex(re * c.re - im * c.im,
+                   im * c.re + re * c.im)
   end
 
   -- The "/" operation.
   def _div(c as Complex) as Complex
     var d = c.re**2 + c.im**2
-    return Complex((self.re * c.re + self.im * c.im) / d,
-                   (self.im * c.re - self.re * c.im) / d)
+    return Complex((re * c.re + im * c.im) / d,
+                   (im * c.re - re * c.im) / d)
   end
 end
