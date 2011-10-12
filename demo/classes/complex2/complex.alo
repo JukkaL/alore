@@ -38,6 +38,11 @@ class Complex implements std::Addable<Float, Complex>,
                          std::Multipliable<Float, Complex>
   const re as Float
   const im as Float
+  
+  -- The "self." prefix is not necessary when accessing a member, unless a 
+  -- local variable shadows the member. We tend to use it anyway (for clarity)
+  -- when accessing member variables or constants (but not methods), even if 
+  -- there is no shadowing. So we write "self.re" instead of just "re".
 
   def create(re as Float, im as Float)
     self.re = Float(re)
