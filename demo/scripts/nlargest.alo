@@ -24,7 +24,7 @@ def LargestDirs(n, dir)
   DirSizes(dir, a)
   a = Reversed(Sort(a))
   for size, d in a[:n]
-    Print("{-8:} {}".format(size div 1024, d))
+    Print('{-8:} {}'.format(size div 1024, d))
   end
 end
 
