@@ -14,9 +14,11 @@ def Main(args as Array<Str>)
     Exit(1)
   end
 
+  -- Construct a map (hash table) from Str to Int.
   var map = Map() as <Str, Int>
   var n = Int(args[0])
 
+  -- Calculate word counts.
   for fnam in args[1:]
     var s = TextFile(fnam).read()
     for word in Subst(s, '\W', ' ').split()
@@ -24,11 +26,13 @@ def Main(args as Array<Str>)
     end
   end
 
+  -- Construct an array of (int, string) tuples.
   var a = [] as <(Int, Str)>
   for word, freq in map
     a.append((freq, word))
   end
 
+  -- Display the n most frequent words with frequencies.
   for freq, word in Reversed(Sort(a)[-n:])
     WriteLn('{-6:} {}'.format(freq, word))
   end
