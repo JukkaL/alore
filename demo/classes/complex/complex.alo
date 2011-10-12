@@ -1,11 +1,14 @@
 module complex
 
--- A simple complex number class with static typing. This example illustrates
+-- A basic complex number class with static typing. This example illustrates
 -- the following features:
 --
 --   * module definition
 --   * class definition
---   * operator overloading
+--   * operator overloading (methods such as _eq and _add)
+--
+-- See also the example "complex2" for a more elaborate implementation of
+-- complex numbers.
 
 import math
 
@@ -13,28 +16,30 @@ import math
 class Complex
   const re as Float
   const im as Float
+  
+  -- Since we don't define a constructor, we get the default constructor 
+  -- create(re, im).
 
-  def create(re as Float, im as Float)
-    self.re = Float(re)
-    self.im = Float(im)
-  end
-
+  -- Absolute value.
   def abs() as Float
     return Sqrt(self.re**2 + self.im**2)
   end
 
+  -- Complex conjugate.
   def conj() as Complex
     return Complex(self.re, -self.im)
   end
 
+  -- Conversion to string; allows Str(complex).
   def _str() as Str
     if self.im >= 0
-      return "({} + {}j)".format(self.re, self.im)
+      return '({} + {}j)'.format(self.re, self.im)
     else
-      return "({} - {}j)".format(self.re, -self.im)
+      return '({} - {}j)'.format(self.re, -self.im)
     end
   end
 
+  -- The "==" operation.
   def _eq(n as Object) as Boolean
     if n is Complex
       var c = (n as Complex)
@@ -44,19 +49,23 @@ class Complex
     end
   end
 
+  -- The "+" operation.
   def _add(c as Complex) as Complex
     return Complex(self.re + c.re, self.im + c.im)
   end
 
+  -- The "-" operation.
   def _sub(c as Complex) as Complex
     return Complex(self.re - c.re, self.im - c.im)
   end
 
+  -- The "*" operation.
   def _mul(c as Complex) as Complex
     return Complex(self.re * c.re - self.im * c.im,
                    self.im * c.re + self.re * c.im)
   end
 
+  -- The "/" operation.
   def _div(c as Complex) as Complex
     var d = c.re**2 + c.im**2
     return Complex((self.re * c.re + self.im * c.im) / d,
