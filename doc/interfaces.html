@@ -17,7 +17,7 @@ sequence. The interface includes the following operations:
 @desc Return the length of the sequence.
 @end
 
-@op sequence[n] @optype{Sequence<T>[Int] -> T}
+@fun _get(index as Int) as T
 @desc Return the element at the specified index. The first element has index 0,
       the second 1, etc.
       @note Negative index values need not be supported.
@@ -64,29 +64,56 @@ iteration over the items of a composite object. It provides these methods:
 
 @class-hidden Comparable
 
-@op o < x @optype{Comparable<T> < T -> Boolean}
-@op o > x @optype{Comparable<T> > T -> Boolean}
+<p><tt>Comparable</tt> defines these methods:
+
+@fun _lt(x as T) as Boolean
+@fun _gt(x as T) as Boolean
 @desc A <tt>Comparable</tt> object supports comparisons using &lt; and &gt;.
 @end
 
-<h2>Interface <tt>Addable&lt;OT, RT&gt;</tt></h2>
+<h2>Interface <tt>Addable&lt;OpT, RetT&gt;</tt></h2>
 
 @class-hidden Addable
 
-@op o + x @optype{Multipliable<OT, RT> + OT -> RT}
-@desc An instance that implements <tt>Addable</tt> supports the
-      + operation. The operand and result types depend are derived from the
-      type arguments.
+<p><tt>Addable</tt> defines one method:
+
+@fun _add(x as OpT) as RetT
+@desc If a class implements <tt>Addable</tt>, it supports the
+      + operation. The operand and result types are derived from the
+      type arguments (<tt>Opt</tt> and <tt>RetT</tt>, respectively).
+      <p>If the left operand <tt>o</tt> in operation <tt>o + x</tt> implements
+      <tt>Addable&lt;OpT, RetT&gt;</tt>, and the right operand <tt>x</tt> is
+      compatible with <tt>Opt</tt>, the result type of the operation
+      <tt>RetT</tt>.
+
+      @note A class may also support the + operation even if it does not
+            implement <tt>Addable</tt>. By implementing <tt>Addable</tt>,
+            the class may be used in type-safe generic operations that use
+            addition.
+      @end
 @end
 
-<h2>Interface <tt>Multipliable&lt;OT, RT&gt;</tt></h2>
+<p>@ref{Int} and @ref{Float} use <tt>Addable</tt> (for the generic +
+operation).
+
+<h2>Interface <tt>Multipliable&lt;OpT, RetT&gt;</tt></h2>
 
 @class-hidden Multipliable
 
-@op o * x @optype{Multipliable<OT, RT> * OT -> RT}
-@desc An instance that implements <tt>Multipliable</tt> supports the
-      * operation. The operand and result types depend are derived from the
-      type arguments.
+<p><tt>Multipliable</tt> defines one method:
+
+@fun _mul(x as OpT) as RetT
+@desc If a class implements <tt>Multipliable</tt>, it supports the
+      * operation. The operand and result types are derived from the
+      type arguments (<tt>Opt</tt> and <tt>RetT</tt>, respectively).
+      @note A class may also support the * operation even if it does not
+            implement <tt>Multipliable</tt>. By implementing
+            <tt>Multipliable</tt>,
+            the class may be used in type-safe generic operations that use
+            multiplication.
+      @end
 @end
 
-
+<p>@ref{Str} implements <tt>Multipliable</tt>.
+@ref{Int} and @ref{Float} use <tt>Multipliable</tt>
+(for the generic * operation).
