@@ -1,0 +1,65 @@
+module complex
+
+-- A simple complex number class with static typing. This example illustrates
+-- the following features:
+--
+--   * module definition
+--   * class definition
+--   * operator overloading
+
+import math
+
+
+class Complex
+  const re as Float
+  const im as Float
+
+  def create(re as Float, im as Float)
+    self.re = Float(re)
+    self.im = Float(im)
+  end
+
+  def abs() as Float
+    return Sqrt(self.re**2 + self.im**2)
+  end
+
+  def conj() as Complex
+    return Complex(self.re, -self.im)
+  end
+
+  def _str() as Str
+    if self.im >= 0
+      return "({} + {}j)".format(self.re, self.im)
+    else
+      return "({} - {}j)".format(self.re, -self.im)
+    end
+  end
+
+  def _eq(n as Object) as Boolean
+    if n is Complex
+      var c = (n as Complex)
+      return self.re == c.re and self.im == c.im
+    else
+      return False
+    end
+  end
+
+  def _add(c as Complex) as Complex
+    return Complex(self.re + c.re, self.im + c.im)
+  end
+
+  def _sub(c as Complex) as Complex
+    return Complex(self.re - c.re, self.im - c.im)
+  end
+
+  def _mul(c as Complex) as Complex
+    return Complex(self.re * c.re - self.im * c.im,
+                   self.im * c.re + self.re * c.im)
+  end
+
+  def _div(c as Complex) as Complex
+    var d = c.re**2 + c.im**2
+    return Complex((self.re * c.re + self.im * c.im) / d,
+                   (self.im * c.re - self.re * c.im) / d)
+  end
+end
