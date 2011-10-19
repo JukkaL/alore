@@ -1656,6 +1656,24 @@ file.alo: In function "f":
 file.alo, line 3: Parse error before end of line
 
 
+-- Regression test cases
+-- ---------------------
+
+
+[case testMultipleErrorsInExpression]
+-- This test case originally caused segfault in parser.
+([f(g(h), i(j, k)])
+[out]
+file.alo, line 1: "f" undefined
+file.alo, line 1: "g" undefined
+file.alo, line 1: "h" undefined
+file.alo, line 1: "i" undefined
+file.alo, line 1: "j" undefined
+file.alo, line 1: "k" undefined
+file.alo, line 1: Parse error before ]
+file.alo, line 1: Unbalanced parentheses
+
+
 -- IDEA Intersection type errors?
 --   missing type def ("as")
 --   too few arguments
