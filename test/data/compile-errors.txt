@@ -1673,6 +1673,12 @@ file.alo, line 1: "k" undefined
 file.alo, line 1: Parse error before ]
 file.alo, line 1: Unbalanced parentheses
 
+[case testInvalidBracketType]
+-- This test case originally caused segfault in parser.
+[1)
+[out]
+file.alo, line 1: Parse error before )
+
 
 -- IDEA Intersection type errors?
 --   missing type def ("as")

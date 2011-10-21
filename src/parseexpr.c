@@ -963,12 +963,12 @@ AToken *ParseSubExpression(AToken *tok, APrecedence prec, AExpression *result,
             if (tok->type != TT_RBRACKET) {
                 result->type = ET_ERROR;
                 if (left.type != ET_ERROR) {
-                    if (tok->type == TT_NEWLINE) {
+                    if (tok->type == TT_NEWLINE)
                         AGenerateError(tok->lineNumber,
                                       ErrUnbalancedParentheses);
-                        return tok;
-                    } else
+                    else
                         tok = AGenerateParseError(tok);
+                    return tok;
                 }
             }
         }
