@@ -184,7 +184,7 @@ AValue AOsSystem(AThread *t, AValue *frame)
 {
     /* IDEA: Can we analyze the return code and raise an exception or
        something -- but perhaps we'd better not. */
-    char cmd[1024]; /* IDEA: Use a constant for the size */
+    char cmd[16384]; /* IDEA: Use a constant for the size */
     int error;
 
     AGetStr(t, frame[0], cmd, sizeof(cmd));
