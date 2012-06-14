@@ -106,6 +106,17 @@ class ReSuite is Suite
     AssertMatch(".?", "#", True)
     AssertMatch(".?$", "aa", False)
   end
+  
+  def testMatchAnyAgainstBreak()
+    AssertMatch(".", CR, True)
+    AssertMatch(".", LF, True)
+    
+    AssertMatch(".*x", CR + "x", True)
+    AssertMatch(".*x", LF + "x", True)
+    
+    AssertMatch(".+", CR, True)
+    AssertMatch(".+", LF, True)
+  end
 
   def testMatchCharSet()
     AssertMatch("[a]", "a", True)
@@ -691,6 +702,8 @@ class ReSuite is Suite
     AssertMatch(".*?$", "xyzzdsf", True)
     AssertMatch(".+?$", "y", True)
     AssertMatch(".+?$", "", False)
+    AssertMatch(".+?x", LF + "x", True)
+    AssertMatch(".+?x", CR + "x", True)
 
     AssertMatch("[ab]*?$", "", True)
     AssertMatch("[ab]*?$", "aaaaaaa", True)
