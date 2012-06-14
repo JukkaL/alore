@@ -393,25 +393,19 @@ static int TRY_FN(MatchInfo *info, CHAR *str)
             if (str + min > strEnd)
                 goto Fail;
 
-            for (; min > 0; min--) {
-                if (*str == '\n' && ip[-1] <= A_ANY_REPEAT_MIN)
-                    goto Fail;
-                str++;
-            }
+            str += min;
 
             ip += 2;
 
             repeatEnd = AMin(str + opt, strEnd);
 
-            if (str == repeatEnd
-                || (*str == '\n' && ip[-3] <= A_ANY_REPEAT_MIN))
+            if (str == repeatEnd)
                 break;
 
             repeatBeg = str;
             do {
                 str++;
-            } while (str != repeatEnd && (*str != '\n' ||
-                                          ip[-3] > A_ANY_REPEAT_MIN));
+            } while (str != repeatEnd);
 
             if ((ip[-3] & 1) == (A_ANY_REPEAT & 1))
                 goto Repeat;
