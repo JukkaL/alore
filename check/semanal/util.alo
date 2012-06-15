@@ -42,12 +42,15 @@ def ModuleSources(id as Str, paths as Array<Str>) as Array<(Str, Str)>
       var a = [] as <(Str, Str)>
       try
         for fnam in Sort(ListDir(path, "*.alo"))
-          var fpath = Join(path, fnam)
-          var f = File(fpath)
-          try
-            a.append((f.read(), fpath))
-          finally
-            f.close()
+          -- Skip emacs temp files; they may cause IO errors.
+          if not fnam.startsWith('.#')
+            var fpath = Join(path, fnam)
+            var f = File(fpath)
+            try
+              a.append((f.read(), fpath))
+            finally
+              f.close()
+            end
           end
         end
       except IoError
