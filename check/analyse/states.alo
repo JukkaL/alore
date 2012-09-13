@@ -100,7 +100,9 @@ class WaitingFile is State
     end
 
     if self.id != "std"
-      importModule("std")
+      if not importModule("std")
+        fail(self.path, 1, 'Could not import "std"')
+      end
     end
 
     for i in tree.imports
