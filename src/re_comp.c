@@ -99,14 +99,15 @@ static void AddToWideSet(ParseInfo *info, WideCharSet *set, AWideChar lo,
 #define CC_COMP 128
 
 
-/* Conversion table for escaped lower case characters a .. z */
+/* Conversion table for escaped lower case characters a .. z; 0 = no special
+   meaning */
 /* IDEA: Make sure CC_x does not collide with the other characters.*/
 static const unsigned char CharConv[] = {
-    '\a', '\b', 'c',   CC_D, 'e', '\f',         /* a .. f */
-     'g',  'h', 'i',  'j',   'k',  'l',         /* g .. l */
-     'm', '\n', 'o',  'p',   'q', '\r',         /* m .. r */
-    CC_S, '\t', 'u', '\v',  CC_W,  'x',         /* s .. x */
-     'y',  'z'                                  /* y .. z */
+    '\a', '\b', 0,   CC_D, 0,    '\f',         /* a .. f */
+    0,    0,    0,   0,    0,    0,            /* g .. l */
+    0,    '\n', 0,   0,    0,    '\r',         /* m .. r */
+    CC_S, '\t', 0,   '\v', CC_W, 0,            /* s .. x */
+    0,     0,                                  /* y .. z */
 };
 
 
@@ -923,6 +924,8 @@ static int ParseChar(ParseInfo *info, AReOpcode *code)
         int conv = CharConv[c - 'a'];
         if (conv >= CC)
             *code = conv;
+        else if (conv == 0)
+            conv = c;
         return conv;
     }
 
