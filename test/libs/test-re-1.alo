@@ -1064,6 +1064,12 @@ class ReSuite is Suite
     AssertNotEqual(m, nil)
     AssertEqual(m.group(0), s)
   end
+  
+  def testEscapeOfOrdinaryChar()
+    -- \z in a regexp should be equivalent to just z
+    var s = Subst("az1", "\z1", def (m); return '!'; end)
+    AssertEqual(s, "a!")
+  end
 end
 
 
